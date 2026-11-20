@@ -31,10 +31,10 @@ public sealed class PostgreSqlOpenSearchCursorStore : IAsyncDisposable
     public PostgreSqlOpenSearchCursorStore(DbDataSource source, OpenSearchCursorStoreOptions? options = null,
         SearchDataSourceOwnership ownership = SearchDataSourceOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!Enum.IsDefined(ownership)) { throw new ArgumentOutOfRangeException(nameof(ownership)); }
         Options = options ?? new OpenSearchCursorStoreOptions();
-        ArgumentException.ThrowIfNullOrWhiteSpace(Options.Schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(Options.Schema);
         if (Options.Schema.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(Options.Schema) > 63 ||
             Options.MaxCandidates is < 1 or > 10_000 || Options.MaxSnapshotBytes is < 1 or > 256 * 1024 * 1024 ||
             Options.MaxSnapshotsPerTenantIndex is < 1 or > 10_000 || Options.MaxSnapshots is < 1 or > 100_000 ||
@@ -158,7 +158,7 @@ public sealed class PostgreSqlOpenSearchCursorStore : IAsyncDisposable
     }
     private async ValueTask EnterAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (!await _operations.WaitAsync(0, cancellationToken).ConfigureAwait(false)) { throw new SearchBackpressureException(); }
         if (Volatile.Read(ref _disposed) != 0) { _operations.Release(); throw new ObjectDisposedException(nameof(PostgreSqlOpenSearchCursorStore)); }
     }

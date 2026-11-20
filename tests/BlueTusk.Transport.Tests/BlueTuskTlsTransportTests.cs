@@ -23,7 +23,7 @@ public sealed class BlueTuskTlsTransportTests
         using var certificate = X509CertificateLoader.LoadPkcs12(
             ephemeralCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
 
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -92,7 +92,7 @@ public sealed class BlueTuskTlsTransportTests
         using var certificate = X509CertificateLoader.LoadPkcs12(
             ephemeralCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
 
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -146,7 +146,7 @@ public sealed class BlueTuskTlsTransportTests
         using var serverCertificate = X509CertificateLoader.LoadPkcs12(
             ephemeralServerCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
 
         using var clientKey = RSA.Create(2048);
         var clientRequest = new CertificateRequest(
@@ -162,7 +162,7 @@ public sealed class BlueTuskTlsTransportTests
         using var clientCertificate = X509CertificateLoader.LoadPkcs12(
             ephemeralClientCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable);
 
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();

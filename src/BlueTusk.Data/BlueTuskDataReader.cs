@@ -326,7 +326,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
 
     public override int GetOrdinal(string name)
     {
-        ArgumentNullException.ThrowIfNull(name);
+        BlueTuskGuard.NotNull(name);
         var fields = CurrentFields;
         if (fields.Count == 0)
         {
@@ -369,7 +369,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
 
     public override int GetValues(object[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         var count = Math.Min(values.Length, FieldCount);
         for (var index = 0; index < count; index++)
         {
@@ -758,8 +758,8 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
             }
 
             ValidateBufferArguments(buffer, bufferOffset, length);
-            ArgumentOutOfRangeException.ThrowIfNegative(dataOffset);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(dataOffset, rawValue.Length);
+            BlueTuskGuard.NotNegative(dataOffset);
+            BlueTuskGuard.NotGreaterThan(dataOffset, rawValue.Length);
             var count = Math.Min(length, rawValue.Length - checked((int)dataOffset));
             rawValue.Span.Slice(checked((int)dataOffset), count)
                 .CopyTo(buffer.AsSpan(bufferOffset, count));
@@ -1026,7 +1026,9 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
         base.Dispose(disposing);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public override async ValueTask DisposeAsync()
     {
         await CloseAsync().ConfigureAwait(false);
@@ -1159,7 +1161,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
                     long.MinValue => DateTimeOffset.MinValue,
                     _ => new DateTimeOffset(
                         checked(PostgreSqlEpochTicks +
-                            (microseconds * TimeSpan.TicksPerMicrosecond)),
+                            (microseconds * BlueTuskRuntime.TicksPerMicrosecond)),
                         TimeSpan.Zero),
                 };
                 return Unsafe.As<DateTimeOffset, T>(ref value);
@@ -1333,10 +1335,10 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
 
     private static long Copy<T>(T[] source, long dataOffset, T[]? destination, int destinationOffset, int length)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(dataOffset);
-        ArgumentOutOfRangeException.ThrowIfNegative(destinationOffset);
-        ArgumentOutOfRangeException.ThrowIfNegative(length);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(dataOffset, source.Length);
+        BlueTuskGuard.NotNegative(dataOffset);
+        BlueTuskGuard.NotNegative(destinationOffset);
+        BlueTuskGuard.NotNegative(length);
+        BlueTuskGuard.NotGreaterThan(dataOffset, source.Length);
 
         if (destination is null)
         {
@@ -1542,9 +1544,9 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator,
 
     private static void ValidateBufferArguments(byte[] buffer, int offset, int count)
     {
-        ArgumentNullException.ThrowIfNull(buffer);
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        BlueTuskGuard.NotNull(buffer);
+        BlueTuskGuard.NotNegative(offset);
+        BlueTuskGuard.NotNegative(count);
         if (offset > buffer.Length - count)
         {
             throw new ArgumentException("The buffer offset and length exceed the destination array.");
@@ -1588,8 +1590,8 @@ internal sealed class BlueTuskReadOnlyMemoryStream : Stream
         set
         {
             EnsureOpen();
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, _memory.Length);
+            BlueTuskGuard.NotNegative(value);
+            BlueTuskGuard.NotGreaterThan(value, _memory.Length);
             _position = checked((int)value);
         }
     }
@@ -1677,14 +1679,14 @@ internal sealed class BlueTuskReadOnlyMemoryStream : Stream
 
     private void EnsureOpen()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
     }
 
     private static void ValidateReadArguments(byte[] buffer, int offset, int count)
     {
-        ArgumentNullException.ThrowIfNull(buffer);
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        BlueTuskGuard.NotNull(buffer);
+        BlueTuskGuard.NotNegative(offset);
+        BlueTuskGuard.NotNegative(count);
         if (offset > buffer.Length - count)
         {
             throw new ArgumentException("The buffer offset and length exceed the destination array.");

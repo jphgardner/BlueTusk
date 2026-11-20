@@ -29,7 +29,7 @@ public sealed class BlueTuskMultiplexingOptions
 
     internal ResolvedMultiplexingOptions Resolve(int maximumPoolSize)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumPoolSize);
+        BlueTuskGuard.NotNegativeOrZero(maximumPoolSize);
 
         if (WorkerCount < 0)
         {

@@ -1,8 +1,10 @@
 using System.Data.Common;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
-using Xunit.Sdk;
 
 namespace BlueTusk.Data.DependencyInjection.Tests;
 
@@ -50,26 +52,22 @@ public sealed class BlueTuskDataHostingTests
         Assert.Contains("bluetusk", registration.Tags);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Health_check_completes_a_live_round_trip()
     {
         var connectionString =
-            Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw SkipException.ForSkip(
-                "BLUETUSK_TEST_CONNECTION_STRING is not configured.");
-        }
+            Environment.GetEnvironmentVariable(PostgreSqlFactAttribute.ConnectionStringVariable)!;
 
         var services = new ServiceCollection();
         services.AddDataSource(connectionString);
         await using var provider = services.BuildServiceProvider();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         var result = await provider
             .GetRequiredService<BlueTuskDataSourceHealthCheck>()
             .CheckHealthAsync(
                 new HealthCheckContext(),
-                TestContext.Current.CancellationToken);
+                timeout.Token);
 
         Assert.Equal(HealthStatus.Healthy, result.Status);
     }

@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Client;
@@ -37,7 +38,9 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     public int FetchSize { get; }
 
-    internal bool SyncSent { get; }
+    internal bool SyncSent { get; private set; }
+
+    internal void MarkSyncSent() => SyncSent = true;
 
     public string? CommandTag { get; private set; }
 
@@ -76,7 +79,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     public BlueTuskPortalRow? Read()
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed)
         {
             return null;
@@ -109,7 +112,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     public ValueTask<BlueTuskPortalRow?> ReadAsync(
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         cancellationToken.ThrowIfCancellationRequested();
         if (_completed)
         {
@@ -140,14 +143,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         {
             return CancelAndAbortAsync(cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
-            _session.AbortPortal(this);
-            throw;
+            return AbortAndThrowAsync(exception);
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskPortalRow?> FinishAndReadAsync(
         ValueTask finish,
         CancellationToken cancellationToken)
@@ -185,16 +189,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     private async ValueTask<BlueTuskPortalRow?> CancelAndAbortAsync(
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await _session!.CancelAsync(CancellationToken.None).ConfigureAwait(false);
-        }
-        finally
-        {
-            await _session!.AbortPortalAsync(this).ConfigureAwait(false);
-        }
-
+        await _session!.CancelPortalAsync(this).ConfigureAwait(false);
         throw new OperationCanceledException(cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskPortalRow?> AbortAndThrowAsync(Exception exception)
+    {
+        await _session!.AbortPortalAsync(this).ConfigureAwait(false);
+        ExceptionDispatchInfo.Capture(exception).Throw();
+        return null;
     }
 
     internal void SetCommandTag(string commandTag) => CommandTag = commandTag;
@@ -213,7 +216,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         _currentRow = null;
         try
         {
-            row?.Finish();
+            if (!_completed) { row?.Finish(); }
         }
         finally
         {
@@ -229,7 +232,9 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public async ValueTask DisposeAsync()
     {
         var session = Interlocked.Exchange(ref _session, null);
@@ -240,20 +245,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
         var row = _currentRow;
         _currentRow = null;
-        try
-        {
-            if (row is not null)
-            {
-                await row.FinishAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-        finally
-        {
-            if (!_completed)
-            {
-                await session.AbortPortalAsync(this).ConfigureAwait(false);
-            }
-        }
+        await session.DisposePortalAsync(this, row).ConfigureAwait(false);
 
         if (row is not null)
         {
@@ -412,7 +404,9 @@ public sealed class BlueTuskPortalRow
         throw new BlueTuskProtocolException("DataRow did not contain the requested field.");
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
         BlueTuskPortal portal,
@@ -612,14 +606,14 @@ public sealed class BlueTuskPortalRow
         long dataOffset,
         Span<byte> destination)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(dataOffset);
+        BlueTuskGuard.NotNegative(dataOffset);
         MoveToField(ordinal);
         if (_activeLength == -1)
         {
             throw new InvalidCastException("A database NULL cannot be read as bytes.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(dataOffset, _activeLength);
+        BlueTuskGuard.NotGreaterThan(dataOffset, _activeLength);
         if (dataOffset < _activePosition)
         {
             throw new InvalidOperationException(
@@ -706,7 +700,9 @@ public sealed class BlueTuskPortalRow
         return true;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask FinishSlowAsync(CancellationToken cancellationToken)
     {
 
@@ -970,7 +966,9 @@ public sealed class BlueTuskPortalRow
         return AwaitReadExactlySlowAsync(pendingRead, destination.Length);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitReadExactlySlowAsync(ValueTask pendingRead, int length)
     {
         await pendingRead.ConfigureAwait(false);
@@ -1080,8 +1078,8 @@ internal sealed class BlueTuskPortalFieldStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        ValidateBufferArguments(buffer, offset, count);
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskRuntime.ValidateBufferArguments(buffer, offset, count);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_remaining == 0 || count == 0)
         {
             return 0;
@@ -1096,7 +1094,7 @@ internal sealed class BlueTuskPortalFieldStream : Stream
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_remaining == 0 || buffer.IsEmpty)
         {
             return ValueTask.FromResult(0);

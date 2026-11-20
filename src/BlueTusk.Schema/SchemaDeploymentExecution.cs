@@ -12,15 +12,15 @@ public sealed class SchemaDeploymentAction
 {
     public SchemaDeploymentAction(string stepId, SchemaDeploymentActionKind kind, string content)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(content);
+        BlueTuskGuard.NotNullOrWhiteSpace(stepId);
+        BlueTuskGuard.NotNullOrWhiteSpace(content);
         if (!Enum.IsDefined(kind) || Encoding.UTF8.GetByteCount(stepId) > 256 ||
             Encoding.UTF8.GetByteCount(content) > (kind == SchemaDeploymentActionKind.TransactionalSql ? 1024 * 1024 : 4096))
         { throw new ArgumentException("Invalid or oversized deployment action."); }
         if (kind == SchemaDeploymentActionKind.TransactionalSql && !IsDdl(content))
         { throw new ArgumentException("Transactional SQL must begin with a reviewed DDL command.", nameof(content)); }
         StepId = stepId; Kind = kind; Content = content;
-        Fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
+        Fingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
     }
 
     public string StepId { get; }
@@ -50,13 +50,13 @@ public sealed class SchemaDeploymentDefinition
 
     public SchemaDeploymentDefinition(SchemaDeploymentPlan plan, IEnumerable<SchemaDeploymentAction> actions)
     {
-        ArgumentNullException.ThrowIfNull(plan); ArgumentNullException.ThrowIfNull(actions);
+        BlueTuskGuard.NotNull(plan); BlueTuskGuard.NotNull(actions);
         Plan = plan;
         var index = new Dictionary<string, SchemaDeploymentAction>(StringComparer.Ordinal);
         long bytes = 0;
         foreach (var action in actions)
         {
-            ArgumentNullException.ThrowIfNull(action);
+            BlueTuskGuard.NotNull(action);
             if (!plan.StepIndex.TryGetValue(action.StepId, out var step) || !index.TryAdd(action.StepId, action))
             { throw new ArgumentException("Actions must be unique and belong to the deployment plan.", nameof(actions)); }
             if (action.Kind == SchemaDeploymentActionKind.TransactionalSql &&
@@ -81,7 +81,7 @@ public sealed class SchemaDeploymentDefinition
         Add("BlueTusk.Schema.Execution:1"); Add(plan.Fingerprint);
         foreach (var action in Actions)
         { Add(action.StepId); Add(action.Kind.ToString()); Add(action.Fingerprint); }
-        Fingerprint = Convert.ToHexStringLower(hash.GetHashAndReset());
+        Fingerprint = BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     public SchemaDeploymentPlan Plan { get; }

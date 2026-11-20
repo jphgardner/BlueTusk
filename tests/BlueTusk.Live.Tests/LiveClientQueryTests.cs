@@ -7,7 +7,6 @@ using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Live.AspNetCore;
 using BlueTusk.Live.Testing;
-using Xunit.Sdk;
 
 namespace BlueTusk.Live.Tests;
 
@@ -300,11 +299,11 @@ public sealed class LiveClientQueryTests
                 TestContext.Current.CancellationToken).AsTask());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task PostgreSQL_client_query_is_parameterized_bounded_and_transaction_read_only()
     {
         var schema = "bluetusk_client_query_" + Guid.NewGuid().ToString("N");
-        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
         try
         {
             await ExecuteAsync(dataSource, $"CREATE SCHEMA \"{schema}\"");
@@ -429,12 +428,6 @@ public sealed class LiveClientQueryTests
             statementTimeout: TimeSpan.FromSeconds(2),
             lockTimeout: TimeSpan.FromMilliseconds(250));
 
-    private static string GetConnectionString() =>
-        Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } value
-            ? value
-            : throw SkipException.ForSkip(
-                "Set BLUETUSK_TEST_CONNECTION_STRING to run live client-query acceptance.");
-
     private static async Task ExecuteAsync(
         DbDataSource dataSource,
         string sql)
@@ -489,6 +482,27 @@ public sealed class LiveClientQueryTests
 
         protected override DbConnection CreateDbConnection() =>
             new QueryConnection(this);
+
+#if !NET7_0_OR_GREATER
+        protected override DbConnection OpenDbConnection()
+        {
+            var connection = CreateDbConnection();
+            connection.Open();
+            return connection;
+        }
+
+        protected override async ValueTask<DbConnection> OpenDbConnectionAsync(CancellationToken cancellationToken)
+        {
+            var connection = CreateDbConnection();
+            await connection.OpenAsync(cancellationToken);
+            return connection;
+        }
+
+        protected override DbCommand CreateDbCommand([AllowNull] string commandText) =>
+            new QueryCommand(this) { Connection = CreateDbConnection(), CommandText = commandText ?? string.Empty };
+
+        protected override DbBatch CreateDbBatch() => throw new NotSupportedException();
+#endif
 
         public void Record(QueryCommand command)
         {

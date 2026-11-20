@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Documents.Tests;
 
@@ -15,7 +14,7 @@ public sealed class DocumentInlineContentMigrationTests
         new("orders", TestJsonContext.Default.TestDocument, 2);
     private static readonly DocumentInlineContentMigration<TestDocument> Migration = new(1, 2, Extract);
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Byte_bounded_pages_move_inline_content_atomically_and_restart_without_repeating_rows() => WithStoreAsync(
         new DocumentStoreOptions { MaxDocumentBytes = 128 * 1024, MaxPageBytes = 128 * 1024, MaxSessionBytes = 256 * 1024 },
         async (store, source, schema) =>
@@ -55,7 +54,7 @@ public sealed class DocumentInlineContentMigrationTests
                 var content = (await store.LoadContentAsync("tenant", TargetCollection, id))!;
                 Assert.Equal(typed.Revision, content.Revision);
                 Assert.Equal(bytes, content.Bytes.ToArray());
-                Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(bytes)), content.Sha256);
+                Assert.Equal(BlueTuskRuntime.ToHexStringLower(SHA256.HashData(bytes)), content.Sha256);
             }
             Assert.Equal(3L, await ScalarAsync(source, $"SELECT count(*) FROM \"{schema}\".content_links"));
             Assert.Equal(0L, await ScalarAsync(source, $"SELECT count(*) FROM \"{schema}\".documents WHERE body ? 'contentBase64'"));
@@ -73,7 +72,7 @@ public sealed class DocumentInlineContentMigrationTests
             Assert.Null(await store.LoadContentAsync("tenant", SourceCollection, "d"));
         });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Large_first_output_fails_and_a_late_input_row_waits_for_the_next_page() => WithStoreAsync(
         new DocumentStoreOptions { MaxDocumentBytes = 128 * 1024, MaxPageBytes = 128 * 1024 },
         async (store, source, schema) =>
@@ -116,7 +115,7 @@ public sealed class DocumentInlineContentMigrationTests
             Assert.Equal(bytes, (await store.LoadContentAsync("tenant", TargetCollection, "b"))!.Bytes.ToArray());
         });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Concurrent_change_rolls_back_the_whole_page_and_existing_link_is_rejected() => WithStoreAsync(
         new DocumentStoreOptions(), async (store, source, schema) =>
         {
@@ -177,7 +176,7 @@ public sealed class DocumentInlineContentMigrationTests
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
         await using var source = BlueTuskDataSource.Create(connectionString);
         var schema = "documents_inline_" + Guid.NewGuid().ToString("N");

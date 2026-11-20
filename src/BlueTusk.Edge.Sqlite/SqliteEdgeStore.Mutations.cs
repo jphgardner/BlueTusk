@@ -9,7 +9,7 @@ public sealed partial class SqliteEdgeStore
 {
     public async ValueTask EnqueueAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         if (mutation.Payload.Length > Options.MaxRecordBytes)
         {
             throw new EdgeCapacityException("Queued payload exceeds the record budget.");
@@ -40,7 +40,7 @@ public sealed partial class SqliteEdgeStore
     public async ValueTask<IReadOnlyList<EdgeMutationLease>?> ClaimOrderedBatchAsync(EdgeScope scope, int maximum,
         TimeSpan leaseDuration, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         if (maximum is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(maximum)); }
         ValidateLeaseDuration(leaseDuration);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -159,14 +159,14 @@ public sealed partial class SqliteEdgeStore
     public async ValueTask AcknowledgeBatchAsync(IReadOnlyList<EdgeMutationAcknowledgement> acknowledgements,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(acknowledgements);
+        BlueTuskGuard.NotNull(acknowledgements);
         if (acknowledgements.Count is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(acknowledgements)); }
         var identities = new HashSet<Guid>();
         var validated = new List<(EdgeMutationAcknowledgement Acknowledgement, string Fingerprint)>(acknowledgements.Count);
         EdgeScope? scope = null;
         foreach (var acknowledgement in acknowledgements)
         {
-            ArgumentNullException.ThrowIfNull(acknowledgement);
+            BlueTuskGuard.NotNull(acknowledgement);
             var fingerprint = ValidateAcknowledgement(acknowledgement.Lease, acknowledgement.Outcome);
             if (scope is not null && scope != acknowledgement.Lease.Mutation.Scope ||
                 !identities.Add(acknowledgement.Lease.Mutation.Id))
@@ -187,13 +187,13 @@ public sealed partial class SqliteEdgeStore
     public async ValueTask ReleaseOrderedBatchAsync(IReadOnlyList<EdgeMutationLease> leases,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(leases);
+        BlueTuskGuard.NotNull(leases);
         if (leases.Count is < 1 or > 1000) { throw new ArgumentOutOfRangeException(nameof(leases)); }
         var identities = new HashSet<Guid>();
         EdgeScope? scope = null;
         foreach (var lease in leases)
         {
-            ArgumentNullException.ThrowIfNull(lease);
+            BlueTuskGuard.NotNull(lease);
             if (scope is not null && scope != lease.Mutation.Scope || !identities.Add(lease.Mutation.Id) ||
                 !EdgeOrderedMutationId.TryParse(lease.Mutation.Id, out _, out _))
             { throw new EdgeMutationIdentityException(); }
@@ -233,8 +233,8 @@ public sealed partial class SqliteEdgeStore
 
     private string ValidateAcknowledgement(EdgeMutationLease lease, EdgeMutationOutcome outcome)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(outcome);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(outcome);
         if (!Enum.IsDefined(outcome.Kind) || outcome.Kind is EdgeMutationOutcomeKind.Applied && outcome.ServerRecord is null ||
             outcome.ServerRecord is not null && !string.Equals(outcome.ServerRecord.Id, lease.Mutation.DocumentId, StringComparison.Ordinal))
         {
@@ -336,7 +336,7 @@ public sealed partial class SqliteEdgeStore
     /// <summary>Retires an explicit conflict and stages a new identity atomically. The caller chooses merge content and current expected revision.</summary>
     public async ValueTask ResolveConflictAsync(Guid conflictedMutationId, EdgeMutation replacement, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(replacement);
+        BlueTuskGuard.NotNull(replacement);
         if (replacement.Id == conflictedMutationId || replacement.Payload.Length > Options.MaxRecordBytes)
         {
             throw new EdgeMutationIdentityException();
@@ -391,8 +391,8 @@ public sealed partial class SqliteEdgeStore
 
     public async ValueTask<int> PruneReceiptsAsync(DateTimeOffset recordedBefore, int maxRecords = 100, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxRecords, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxRecords, 10_000);
+        BlueTuskGuard.NotLessThan(maxRecords, 1);
+        BlueTuskGuard.NotGreaterThan(maxRecords, 10_000);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, "DELETE FROM receipts WHERE rowid IN (SELECT r.rowid FROM receipts r WHERE r.recorded_at<@before AND NOT EXISTS(SELECT 1 FROM mutations m WHERE m.tenant=r.tenant AND m.scope_id=r.scope_id AND m.epoch=r.epoch AND m.mutation_id=r.mutation_id) ORDER BY r.recorded_at LIMIT @count)");
         command.Parameters.AddWithValue("before", recordedBefore.ToUnixTimeMilliseconds());
@@ -472,5 +472,5 @@ public sealed partial class SqliteEdgeStore
     }
 
     private static string OutcomeFingerprint(EdgeMutationOutcome outcome) => Convert.ToHexString(SHA256.HashData(
-        Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"{outcome.Kind}:{outcome.ServerRecord?.Revision}:{(outcome.ServerRecord is null ? "missing" : RecordFingerprint(outcome.ServerRecord))}"))));
+        Encoding.UTF8.GetBytes(BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{outcome.Kind}:{outcome.ServerRecord?.Revision}:{(outcome.ServerRecord is null ? "missing" : RecordFingerprint(outcome.ServerRecord))}"))));
 }

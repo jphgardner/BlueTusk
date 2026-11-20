@@ -9,7 +9,7 @@ public sealed class BlueTuskSparseVectorCodec : BlueTuskCodec<BlueTuskSparseVect
 
     public static int GetBinarySize(BlueTuskSparseVector value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return checked(HeaderSize + (value.Count * (sizeof(int) + sizeof(float))));
     }
 
@@ -18,7 +18,7 @@ public sealed class BlueTuskSparseVectorCodec : BlueTuskCodec<BlueTuskSparseVect
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskSparseVector.Parse(reader.ReadRemainingUtf8());
@@ -92,8 +92,8 @@ public sealed class BlueTuskSparseVectorCodec : BlueTuskCodec<BlueTuskSparseVect
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());

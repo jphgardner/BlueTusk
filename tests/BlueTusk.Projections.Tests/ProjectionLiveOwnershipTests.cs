@@ -6,7 +6,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionLiveOwnershipTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task IndependentNodesAcquireOneWriterFenceStaleSubscribersAndResumeReplacementResetWithoutGap()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -62,7 +62,7 @@ public sealed class ProjectionLiveOwnershipTests
         await connected.Connection.DisposeAsync();
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task OwnedAppendRetriesAreExactBoundedReadsRejectReplayOverflowAndPruningKeepsSequenceAndFenceTombstone()
     {
         using var listener = new System.Diagnostics.Metrics.MeterListener
@@ -100,7 +100,7 @@ public sealed class ProjectionLiveOwnershipTests
         Assert.Equal(6, Assert.Single((await store.ReadAsync(identity, 5, 16)).Events).Sequence);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task ExpiryInsideAppendRollsBackReplayAndAllowsReplacementAtUnchangedHead()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -119,7 +119,7 @@ public sealed class ProjectionLiveOwnershipTests
         Assert.Equal(1, (await store.ReadAsync(identity, 0, 10)).LastSequence);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task RetentionOnlyPrunesExpiredPrefixAndChangedReaderBoundsCannotSilentlySkipNextEvent()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

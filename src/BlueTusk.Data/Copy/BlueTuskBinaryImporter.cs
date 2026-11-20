@@ -42,8 +42,8 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         BlueTuskTypeRegistry registry,
         int columnCount)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(columnCount);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
+        BlueTuskGuard.NotNegative(columnCount);
+        BlueTuskGuard.NotGreaterThan(columnCount, short.MaxValue);
         _pipe = pipe;
         _copyTask = copyTask;
         _registry = registry;
@@ -56,8 +56,8 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         int columnCount,
         bool asynchronous = false)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(columnCount);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
+        BlueTuskGuard.NotNegative(columnCount);
+        BlueTuskGuard.NotGreaterThan(columnCount, short.MaxValue);
         _pipe = null!;
         _copyTask = null!;
         if (asynchronous)
@@ -87,7 +87,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitInitializeAsync(ValueTask capacity)
     {
         await capacity.ConfigureAwait(false);
@@ -132,7 +134,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitStartRowAsync(ValueTask capacity)
     {
         await capacity.ConfigureAwait(false);
@@ -193,7 +197,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteInt32Async(ValueTask capacity, int value)
     {
         await capacity.ConfigureAwait(false);
@@ -225,7 +231,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteBooleanAsync(ValueTask capacity, bool value)
     {
         await capacity.ConfigureAwait(false);
@@ -258,7 +266,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteGuidAsync(ValueTask capacity, Guid value)
     {
         await capacity.ConfigureAwait(false);
@@ -270,9 +280,8 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         const int payloadLength = 16;
         var destination = _writeBuffer.AsSpan(_writeBufferCount, sizeof(int) + payloadLength);
         BinaryPrimitives.WriteInt32BigEndian(destination, payloadLength);
-        if (!value.TryWriteBytes(
-                destination[sizeof(int)..],
-                bigEndian: true,
+        if (!BlueTuskRuntime.TryWriteGuidBigEndian(
+                value, destination[sizeof(int)..],
                 out var bytesWritten) ||
             bytesWritten != payloadLength)
         {
@@ -287,7 +296,7 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         string value,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         EnsureFieldWritable();
         var payloadLength = StrictUtf8.GetByteCount(value);
         var capacity = EnsureWriteCapacityAsync(
@@ -303,7 +312,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteStringAsync(
         ValueTask capacity,
         string value,
@@ -347,7 +358,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         _fieldIndex++;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public async ValueTask WriteAsync<T>(
         T? value,
         uint? postgreSqlTypeOid,
@@ -415,7 +428,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return rowsAffected;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     public async ValueTask<long> CompleteAsync(
         CancellationToken cancellationToken = default)
     {
@@ -483,7 +498,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return result.RowsAffected;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -546,7 +563,7 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
 
     private void EnsureWritable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_completed)
         {
             throw new InvalidOperationException("The binary COPY importer is already complete.");
@@ -626,7 +643,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteChunkAsync(
         ValueTask write,
         CancellationToken cancellationToken)
@@ -664,7 +683,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         return EnsureWriteCapacitySlowAsync(required, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask EnsureWriteCapacitySlowAsync(
         int required,
         CancellationToken cancellationToken)
@@ -678,7 +699,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask ObserveCompletedCopyAsync()
     {
         _ = await _copyTask.ConfigureAwait(false);
@@ -686,7 +709,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             "PostgreSQL completed binary COPY before receiving its trailer.");
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask FlushWriteBufferAsync(CancellationToken cancellationToken)
     {
         if (_writeBufferCount == 0)

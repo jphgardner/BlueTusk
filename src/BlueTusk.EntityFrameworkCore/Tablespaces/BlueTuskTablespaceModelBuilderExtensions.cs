@@ -15,7 +15,7 @@ public static class BlueTuskTablespaceModelBuilderExtensions
         string location,
         Action<BlueTuskTablespaceBuilder>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskTablespaceBuilder(name, location);
         configure?.Invoke(builder);
         return HasTablespace(modelBuilder, builder.Build());
@@ -26,7 +26,7 @@ public static class BlueTuskTablespaceModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskTablespaceDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskTablespaceMetadata.Validate(definition);
         definition = BlueTuskTablespaceMetadata.Normalize(definition);
         var definitions = BlueTuskTablespaceMetadata.Get(modelBuilder.Model);
@@ -39,8 +39,8 @@ public static class BlueTuskTablespaceModelBuilderExtensions
     /// <summary>Removes a provider-owned tablespace from the model.</summary>
     public static ModelBuilder HasNoTablespace(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskTablespaceMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskTablespaceDefinitionSet(
             definitions.Tablespaces.Where(item => item.Name != name).ToArray()));
@@ -49,7 +49,7 @@ public static class BlueTuskTablespaceModelBuilderExtensions
     /// <summary>Reads all provider-owned tablespaces from the model.</summary>
     public static BlueTuskTablespaceDefinitionSet GetTablespaces(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskTablespaceMetadata.Get(model);
     }
 
@@ -58,7 +58,7 @@ public static class BlueTuskTablespaceModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskTablespaceMetadata.Deserialize(serializedDefinitions));
     }
 

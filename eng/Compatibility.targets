@@ -1,0 +1,29 @@
+<Project>
+  <ItemGroup Condition="'$(BlueTuskRuntimeLibrary)' == 'true' or '$(BlueTuskRuntimeTests)' == 'true'">
+    <Using Include="$(RootNamespace).Compatibility" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+    <_BlueTuskCompatibilitySource Include="$(MSBuildThisFileDirectory)compatibility\*.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(BlueTuskRuntimeLibrary)' == 'true' or '$(BlueTuskRuntimeTests)' == 'true'">
+    <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BlueTuskRuntimeTests)' == 'true'">
+    <Using Include="BlueTusk.Testing.Compatibility" />
+    <Compile Include="$(MSBuildThisFileDirectory)compatibility\testing\*.cs" Link="Compatibility\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Each assembly gets its own namespace. InternalsVisibleTo must not make
+       source-linked extension methods ambiguous in consumers or test projects. -->
+  <Target Name="GenerateBlueTuskCompatibilitySources" BeforeTargets="BeforeCompile"
+          Condition="'$(TargetFramework)' != '' and ('$(BlueTuskRuntimeLibrary)' == 'true' or '$(BlueTuskRuntimeTests)' == 'true')">
+    <MakeDir Directories="$(IntermediateOutputPath)Compatibility" />
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)Compatibility/%(_BlueTuskCompatibilitySource.Filename).g.cs"
+      Lines="#nullable enable;$([MSBuild]::Escape($([System.IO.File]::ReadAllText('%(_BlueTuskCompatibilitySource.FullPath)').Replace('namespace BlueTusk.Compatibility;', 'namespace $(RootNamespace).Compatibility;'))))"
+      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="@(_BlueTuskCompatibilitySource->'$(IntermediateOutputPath)Compatibility/%(Filename).g.cs')" />
+    </ItemGroup>
+  </Target>
+</Project>

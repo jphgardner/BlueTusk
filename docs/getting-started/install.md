@@ -1,164 +1,69 @@
 # Install BlueTusk
 
-This page helps you choose the BlueTusk packages and the version you need, and
-add them to a .NET or JavaScript project.
+Start with the package that owns the feature you need. Check the target
+frameworks and dependencies of the exact version you install. Use one
+compatible set of package versions in each application and commit its lockfile.
 
-## Requirements
+## Start with a supported environment
 
-| Requirement | Version |
-| --- | --- |
-| .NET | .NET 10 (`net10.0`) |
-| EF Core (only for `BlueTusk.EntityFrameworkCore`) | 10.0.11 |
-| PostgreSQL | 15, 16, 17 or 18. PostgreSQL 19 is preview only. |
-| Node.js (only for the browser clients) | A current LTS release |
+The [first-query tutorial](quickstart.md) uses .NET 10, PostgreSQL 15–18,
+and the `BlueTusk.Data` 1.2.0 package. Use a current PostgreSQL
+minor release for the major version you run. For EF Core, match the EF Core
+runtime, design package, and `dotnet-ef` tool. See [runtime compatibility](runtime-compatibility.md) for the .NET 5–11 mappings and integration minimums.
 
-Streams, Sync and Live also need PostgreSQL logical replication:
-`wal_level = logical` on the server and a role with the `REPLICATION`
-attribute. The [Streams quick start](../streams/quickstart.md) shows the setup.
+These guides target BlueTusk 1.2. Use a feed that contains the 1.2.0 packages and check the prerequisites of the feature you are installing.
 
-The [support matrix](../../VERSIONING.md) is the authority on supported
-versions.
+## Choose packages by workload
 
-## Choose a version
+Use the [package catalog](https://bluetusk.io/packages) to find libraries, tools, templates, and browser clients with copyable 1.2.0 commands.
 
-All Core packages share one version number. Use the same exact version for
-every BlueTusk package in an application.
-
-| Version | Status | Use it when |
+| Workload | Package to start with | Add when needed |
 | --- | --- | --- |
-| `1.1.0` | Next release. In release qualification; **not published yet**. | When it is published, use it for all new and existing applications. |
-| `1.1.0-rc.1` | Public release candidate, published 2026-08-29. | You want to evaluate 1.1 before `1.1.0` is published. |
-| `1.0.0` | Stable release, published 2026-08-23. | You need a stable package today. |
+| ADO.NET commands and pooling | `BlueTusk.Data` | `BlueTusk.Data.DependencyInjection` for host registration |
+| LINQ, models, and migrations | `BlueTusk.EntityFrameworkCore` | `BlueTusk.EntityFrameworkCore.Design` and the matching EF toolchain |
+| PostgreSQL-specific extension types | See the [extensions guide](../extensions/README.md) | EF adapters for LINQ and migrations |
+| Committed PostgreSQL transactions | `BlueTusk.Streams` | A durable checkpoint store and hosting integration |
+| Destination synchronization | `BlueTusk.Sync` | The connector for your destination |
+| Authorized live query results | `BlueTusk.Live` | ASP.NET Core, SSE, SignalR, gRPC, or the browser client |
+| Property graphs | `BlueTusk.EntityFrameworkCore` | `BlueTusk.ContinuousGraph` for live graph results |
+| Instance and pipeline operations | `BlueTusk.ControlPlane` | `BlueTusk.Dashboard` and the required hosting or persistence adapter |
+| Application data services | See the [data services guide](../ecosystem/README.md) | Only the database, hosting, and transport adapters you use |
 
-When `1.1.0` is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on
-NuGet and npm and will point to `1.1.0`. To move an existing application, see
-the [upgrade guide](../operations/upgrade-guide.md).
+## Install the provider
 
-Some features documented here are new in `1.1.0` and are not in `1.0.0` or
-`1.1.0-rc.1`. Those pages say **New in 1.1.0**. The
-[1.1.0 release notes](../releases/1.1.0.md) list them all.
+From an existing .NET project:
 
-### Product status
-
-| Family | Version line | Status |
-| --- | --- | --- |
-| Provider (ADO.NET, EF Core, extensions, cloud identity, `bluetusk` tool) | 1.1.0 | Core |
-| Streams | 1.1.0 | Core |
-| Sync | 1.1.0 | Core |
-| Live (NuGet and npm) | 1.1.0 | Core |
-| Control Plane | 1.1.0 | Core |
-| Graph (SQL/PGQ) and Continuous Graph | Not part of 1.1.0 | Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. |
-| Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio, Edge | `0.1.0-preview.1` | Preview. Not published; each family is released when its own checks pass. |
-
-## Choose packages
-
-Install only what you use. Each row lists the package to start with and the
-packages you add for specific needs.
-
-| You want to | Start with | Add when needed |
-| --- | --- | --- |
-| Run SQL with ADO.NET | `BlueTusk.Data` | `BlueTusk.Data.DependencyInjection` for `IServiceCollection` registration |
-| Use EF Core | `BlueTusk.EntityFrameworkCore` | `BlueTusk.EntityFrameworkCore.Design` and `Microsoft.EntityFrameworkCore.Design` for migrations |
-| Use a PostgreSQL extension | `BlueTusk.Extensions.PgVector`, `.PostGIS`, `.TimescaleDB`, `.Citext`, `.HStore`, `.LTree` or `.PgTrgm` | The matching `.EntityFrameworkCore` package where one exists |
-| Sign in with a cloud identity | `BlueTusk.Identity.Aws`, `.Azure` or `.GoogleCloud` | |
-| React to committed changes | `BlueTusk.Streams` and one state store: `BlueTusk.Streams.Storage.PostgreSql`, `.Redis` or `.File` | `BlueTusk.Streams.DependencyInjection` for hosting and health checks |
-| Copy changes to another system | `BlueTusk.Sync.DependencyInjection` | One destination: `BlueTusk.Sync.PostgreSql`, `.Redis`, `.Nats`, `.OpenSearch`, `.Kafka`, `.S3` or `.Webhooks` |
-| Push live query results to clients | `BlueTusk.Live.EntityFrameworkCore` and `BlueTusk.Live.DependencyInjection` | A transport: `BlueTusk.Live.ServerSentEvents`, `.SignalR` or `.Grpc` |
-| Use Live from a browser | `@bluetusk/live` | `@bluetusk/live-angular`, `-react`, `-vue` or `-svelte` |
-| Operate the products from a dashboard | `BlueTusk.Dashboard` (includes `BlueTusk.ControlPlane`) | `BlueTusk.ControlPlane.Kubernetes` for Kubernetes |
-| Run them under .NET Aspire | `BlueTusk.Streams.Aspire`, `BlueTusk.Sync.Aspire` or `BlueTusk.Live.Aspire` | |
-| Test your code | `BlueTusk.Streams.Testing`, `BlueTusk.Sync.Testing` or `BlueTusk.Live.Testing` | |
-
-Each product page lists its packages in full.
-
-## Add .NET packages
-
-```powershell
-dotnet add package BlueTusk.Data
+```sh
+dotnet add package BlueTusk.Data --version 1.2.0
 ```
 
-Without `--version`, NuGet picks the latest stable version. To choose a
-version, add it explicitly, for example to evaluate the release candidate:
+See [BlueTusk.Data on NuGet](https://www.nuget.org/packages/BlueTusk.Data)
+for package information. Install the matching 1.2.0 version of each BlueTusk dependency.
 
-```powershell
-dotnet add package BlueTusk.Data --version 1.1.0-rc.1
+## Install the EF Core provider
+
+```sh
+dotnet add package BlueTusk.EntityFrameworkCore --version 1.2.0
 ```
 
-### Keep every BlueTusk package on one version
+For model creation and connection registration, follow the
+[EF Core setup guide](../ef-core/README.md). Provision PostgreSQL server
+extensions separately before running migrations that use their types or
+operators.
 
-If your solution uses
-[central package management](https://learn.microsoft.com/nuget/consume-packages/central-package-management),
-set the version once in `Directory.Packages.props`:
+## Add a browser client
 
-```xml
-<Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <BlueTuskVersion>1.1.0-rc.1</BlueTuskVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageVersion Include="BlueTusk.Data" Version="$(BlueTuskVersion)" />
-    <PackageVersion Include="BlueTusk.Data.DependencyInjection" Version="$(BlueTuskVersion)" />
-    <PackageVersion Include="BlueTusk.EntityFrameworkCore" Version="$(BlueTuskVersion)" />
-  </ItemGroup>
-</Project>
-```
+Use `@bluetusk/live` for the Live client, `@bluetusk/live-react` for React,
+or `@bluetusk/live-angular` for Angular. Choose the client version supported
+by your host and transport. The [Live reference](../live/reference.md)
+describes authentication, replay, and reconnect behavior.
 
-Do not use floating versions such as `1.*` in a production project. Mixed
-BlueTusk versions in one application are not supported.
+## Configure PostgreSQL access
 
-## Add the browser clients
+Use a dedicated database and a restricted login for your application.
+Provide credentials through your development secret store or deployment
+configuration. Verify server certificates in deployed environments. Use a
+separate role to run migrations and provision replication slots.
 
-```powershell
-npm install @bluetusk/live
-```
-
-Add the package for your framework:
-
-```powershell
-npm install @bluetusk/live-react    # or live-angular, live-vue, live-svelte
-```
-
-npm's `latest` tag points to the stable line. The release candidate is under
-the `rc` tag (`npm install @bluetusk/live@rc`). Commit your lockfile so every
-build uses the same exact version.
-
-## Install the command-line tool
-
-```powershell
-dotnet tool install --global BlueTusk.Tool
-```
-
-The `bluetusk` command scaffolds an EF Core model from a database
-(`bluetusk scaffold`) and, new in 1.1.0, checks that a server is ready for
-BlueTusk (`bluetusk doctor`). See the
-[tool README](../../tooling/BlueTusk.Tool/README.md).
-
-## Install the project templates
-
-```powershell
-dotnet new install BlueTusk.Production.Templates
-dotnet new bluetusk-production --name Contoso.Orders --ClientFramework react
-```
-
-**New in 1.1.0.** `bluetusk-production` creates a complete application: API,
-worker, EF Core migrations, tests, a browser client, containers and Helm
-charts. See the [template README](../../templates/BlueTusk.Production/README.md).
-
-`BlueTusk.Templates` provides `bluetusk-extension`, a starting point for
-writing your own PostgreSQL extension package.
-
-## Check what you installed
-
-List the resolved versions and confirm every BlueTusk package has the same one:
-
-```powershell
-dotnet list package --include-transitive
-npm ls @bluetusk/live
-```
-
-## Next steps
-
-1. Build the [5-minute first app](quickstart.md).
-2. Read the [core concepts](concepts.md).
-3. Open the guide for your product from the [documentation home](../README.md).
+Next, [run a first query](quickstart.md) or use the
+[deployment guide](../operations/deployment.md) to configure an existing app.

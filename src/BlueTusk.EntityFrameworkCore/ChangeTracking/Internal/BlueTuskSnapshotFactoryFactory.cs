@@ -145,7 +145,13 @@ internal abstract class BlueTuskSnapshotFactoryFactory
                                             declaringComplexType.ComplexProperty.DeclaringType.ContainingEntityType.ClrType),
                                         indicesExpression,
                                         fromDeclaringType: false,
+#if BLUETUSK_EF11_OR_GREATER
+                                        fromEntity: true,
+                                        shouldThrowIfMissing: true,
+                                        out _),
+#else
                                         fromEntity: true),
+#endif
                                 { ContainingEntryType: IComplexType collectionComplexType }
                                     => PropertyAccessorsFactory.CreateComplexCollectionElementAccess(
                                         collectionComplexType.ComplexProperty,
@@ -154,7 +160,13 @@ internal abstract class BlueTuskSnapshotFactoryFactory
                                             collectionComplexType.ComplexProperty.DeclaringType.ContainingEntityType.ClrType),
                                         indicesExpression,
                                         fromDeclaringType: false,
+#if BLUETUSK_EF11_OR_GREATER
+                                        fromEntity: true,
+                                        shouldThrowIfMissing: true,
+                                        out _),
+#else
                                         fromEntity: true),
+#endif
                                 _
                                     => Expression.Convert(
                                         Expression.Property(parameter!, nameof(IInternalEntry.Entity)),

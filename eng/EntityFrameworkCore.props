@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net5.0'">5</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net6.0'">7</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net7.0'">7</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net8.0'">8</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net9.0'">9</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == '' and '$(TargetFramework)' == 'net11.0'">11</BlueTuskEfCoreMajor>
+    <BlueTuskEfCoreMajor Condition="'$(BlueTuskEfCoreMajor)' == ''">10</BlueTuskEfCoreMajor>
+    <DefineConstants>$(DefineConstants);BLUETUSK_EF$(BlueTuskEfCoreMajor)</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 11">$(DefineConstants);BLUETUSK_EF11_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 10">$(DefineConstants);BLUETUSK_EF10_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 9">$(DefineConstants);BLUETUSK_EF9_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 8">$(DefineConstants);BLUETUSK_EF8_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 7">$(DefineConstants);BLUETUSK_EF7_OR_GREATER</DefineConstants>
+    <DefineConstants Condition="$(BlueTuskEfCoreMajor) &gt;= 6">$(DefineConstants);BLUETUSK_EF6_OR_GREATER</DefineConstants>
+  </PropertyGroup>
+</Project>

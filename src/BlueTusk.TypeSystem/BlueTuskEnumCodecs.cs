@@ -29,7 +29,7 @@ public sealed class BlueTuskEnumValueCodec : BlueTuskCodec<BlueTuskEnumValue>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value.Label);
+        BlueTuskGuard.NotNull(value.Label);
         ValidateCatalogueLabel(type, value.Label);
         writer.WriteUtf8(value.Label);
     }
@@ -139,7 +139,7 @@ TEnum> : BlueTuskCodec<TEnum>
 
     private static void ValidateLabel(string label)
     {
-        ArgumentNullException.ThrowIfNull(label);
+        BlueTuskGuard.NotNull(label);
         if (label.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("PostgreSQL enum labels cannot contain a null character.", nameof(label));

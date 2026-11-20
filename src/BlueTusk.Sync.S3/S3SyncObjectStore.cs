@@ -119,7 +119,7 @@ internal sealed class AwsS3SyncObjectStore(S3SyncOptions options) : IS3SyncObjec
         string contentType,
         CancellationToken cancellationToken)
     {
-        var hash = Convert.ToHexStringLower(SHA256.HashData(content));
+        var hash = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(content));
         await using var stream = new MemoryStream(content, writable: false);
         var request = new PutObjectRequest
         {

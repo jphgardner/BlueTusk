@@ -191,8 +191,9 @@ public sealed class DurableStateTests
     [Fact]
     public async Task Idle_consumer_keeps_its_lease_without_acknowledging()
     {
-        var leaseDuration = TimeSpan.FromMilliseconds(900);
-        var store = new MemoryChangeStreamStateStore();
+        var leaseDuration = TimeSpan.FromMilliseconds(300);
+        var clock = new ManualTimeProvider(Timestamp);
+        var store = new MemoryChangeStreamStateStore(clock);
         var identity = CheckpointIdentity();
         var key = ChangeStreamStateKey.Create(identity.Source, "orders");
         await using var observer = await CheckpointingChangeDeliveryObserver.AcquireAsync(
@@ -204,15 +205,24 @@ public sealed class DurableStateTests
             new RecordingFeedbackSender());
         var delivery = await ReadDeliveryAsync(observer);
 
-        // A slow destination: three lease periods pass before the delivery is acknowledged.
-        await Task.Delay(leaseDuration * 3);
+        // Advance three lease periods while the delivery is outstanding. Wait for
+        // each background renewal before advancing the store clock again.
+        var initialExpiry = observer.Lease.ExpiresAt;
+        for (var renewal = 0; renewal < 6; renewal++)
+        {
+            var previousExpiry = observer.Lease.ExpiresAt;
+            clock.Advance(leaseDuration / 2);
+            await WaitUntilAsync(() => observer.Lease.ExpiresAt > previousExpiry);
+        }
 
+        Assert.True(clock.GetUtcNow() > initialExpiry);
+        Assert.Null(await store.ReadAsync(key));
         var contender = await store.AcquireAsync(key, "worker-2", leaseDuration);
         Assert.Equal(ChangeLeaseAcquireStatus.HeldByAnotherOwner, contender.Status);
         Assert.Equal("worker-1", contender.Lease?.OwnerId);
         await delivery.AcknowledgeAsync();
         Assert.Equal(Lsn(21), observer.Checkpoint?.AcknowledgedCommitPosition);
-        Assert.True(observer.Lease.ExpiresAt > DateTimeOffset.UtcNow);
+        Assert.True(observer.Lease.ExpiresAt > clock.GetUtcNow());
     }
 
     [Fact]
@@ -349,11 +359,11 @@ public sealed class DurableStateTests
 
     private sealed class ManualTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {
-        private DateTimeOffset _utcNow = utcNow;
+        private long _utcTicks = utcNow.UtcTicks;
 
-        public override DateTimeOffset GetUtcNow() => _utcNow;
+        public override DateTimeOffset GetUtcNow() => new(Interlocked.Read(ref _utcTicks), TimeSpan.Zero);
 
-        public void Advance(TimeSpan duration) => _utcNow += duration;
+        public void Advance(TimeSpan duration) => Interlocked.Add(ref _utcTicks, duration.Ticks);
     }
 
     private sealed class RecordingFeedbackSender(List<string>? events = null)

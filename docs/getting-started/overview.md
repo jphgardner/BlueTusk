@@ -20,7 +20,7 @@ BlueTusk is a set of product families. Install only the families you need.
 | [Sync](../sync/README.md) | Applies those transactions to PostgreSQL, Redis, NATS, OpenSearch, Kafka, S3 or a webhook | `BlueTusk.Sync` | Core |
 | [Live](../live/README.md) | Pushes the result of an authorized query to browsers and .NET clients as it changes | `BlueTusk.Live` and `@bluetusk/live` | Core |
 | [Control Plane](../control-plane/README.md) | A dashboard and API to inspect and operate the other products | `BlueTusk.ControlPlane` | Core |
-| [Graph](../graph/README.md) and [Continuous Graph](../continuous-graph/README.md) | SQL/PGQ property-graph queries and incrementally maintained graph results | `BlueTusk.Data`, `BlueTusk.ContinuousGraph` | Preview, not part of 1.1.0 |
+| [Graph](../graph/README.md) and [Continuous Graph](../continuous-graph/README.md) | Portable EF graph queries and maintained results, with optional native SQL/PGQ | `BlueTusk.Data`, `BlueTusk.ContinuousGraph` | Preview, not part of 1.1.0 |
 | [Ecosystem](../ecosystem/release-qualification.md) | Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge | Several | Preview, not published |
 
 The provider also has optional packages for
@@ -74,9 +74,10 @@ The Core families (Provider, Streams, Sync, Live and Control Plane) share one
 version. When `1.1.0` is published, it supersedes `1.0.0` and `1.1.0-rc.1`,
 which will be deprecated.
 
-Graph and Continuous Graph are not part of the `1.1.0` release. They need a
-PostgreSQL server that provides SQL/PGQ, and PostgreSQL removed SQL/PGQ in
-PostgreSQL 19 Beta 4. They stay in preview until a PostgreSQL release ships it.
+BlueTusk Graphs and Continuous Graph have a separate release track. The
+portable implementation has been tested locally on PostgreSQL 15–18 without
+SQL/PGQ. The public release candidate predates that implementation. See
+[Graph availability](../graph/README.md).
 
 The ecosystem families are `0.1.0-preview.1` and are not published to a
 package feed. Each one is released when its own checks pass.

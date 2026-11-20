@@ -5,7 +5,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowTransactionTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TransactionalActivityRollsBackFailedAttemptThenCommitsEffectWithOutcome()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -55,7 +55,7 @@ public sealed class WorkflowTransactionTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TransactionalActivityDeadlineRollsBackBusinessEffectAndWorkflowCompletion()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

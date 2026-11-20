@@ -22,11 +22,11 @@ public sealed class BlueTuskHStore :
 
     public BlueTuskHStore(IEnumerable<KeyValuePair<string, string?>> pairs)
     {
-        ArgumentNullException.ThrowIfNull(pairs);
+        BlueTuskGuard.NotNull(pairs);
         _values = new Dictionary<string, string?>(StringComparer.Ordinal);
         foreach (var pair in pairs)
         {
-            ArgumentNullException.ThrowIfNull(pair.Key);
+            BlueTuskGuard.NotNull(pair.Key);
             if (!_values.TryAdd(pair.Key, pair.Value))
             {
                 throw new ArgumentException(
@@ -50,7 +50,7 @@ public sealed class BlueTuskHStore :
 
     public static BlueTuskHStore Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return Parser.Parse(value);
     }
 

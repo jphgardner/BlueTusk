@@ -21,7 +21,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
 
     public NatsSyncDestination(NatsSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
     }
@@ -37,7 +37,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         var expected = BuildStreamConfig(request);
         var stream = await GetOrCreateStreamAsync(expected, cancellationToken).ConfigureAwait(false);
         var result = ValidateStream(stream.Info.Config, request);
@@ -86,7 +86,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var pipeline = RequirePipeline(pipelineId, reset.Epoch.Source);
         var payload = NatsSyncEnvelopeCodec.EncodeSnapshotReset(
             pipelineId,
@@ -105,7 +105,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var pipeline = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         var payload = NatsSyncEnvelopeCodec.EncodeSnapshotStart(pipelineId, transform, start);
         await PublishAsync(
@@ -119,7 +119,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -144,7 +144,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var pipeline = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         var payload = NatsSyncEnvelopeCodec.EncodeSnapshotComplete(
             pipelineId,
@@ -161,7 +161,7 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 batch.Transform.Fingerprint,
@@ -186,9 +186,9 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         var duplicate = await PublishTransactionAsync(pipeline, batch, cancellationToken)
             .ConfigureAwait(false);
@@ -316,8 +316,8 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
         ChangeSourceIdentity source,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(source);
         var pipeline = Volatile.Read(ref _pipeline) ??
             throw new NatsSyncException(
                 "The NATS Sync destination must be provisioned successfully before publishing.");
@@ -394,11 +394,11 @@ public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineRepla
             Append(hash, value);
         }
 
-        return "bt-" + Convert.ToHexStringLower(hash.GetHashAndReset());
+        return "bt-" + BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static string Fingerprint(string value) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+        BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static void Append(IncrementalHash hash, string value)
     {

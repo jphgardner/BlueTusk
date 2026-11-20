@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $TrxPath,
-    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [ValidateSet('Core', 'ContinuousGraphPortable')]
     [string] $ReleaseTrack = 'Core'
 )
 

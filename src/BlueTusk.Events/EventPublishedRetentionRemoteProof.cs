@@ -39,7 +39,7 @@ public sealed partial class PostgreSqlEventStore
         DbTransaction transaction, EventPublishedRetentionRemoteTarget endpoint,
         EventPublishedConsumerRegistration member, CancellationToken cancellationToken)
     {
-        var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+        var fingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
             string.Join('\n', member.Source.SystemIdentifier, member.Source.DatabaseName,
                 member.Source.SlotName, member.Source.PublicationName))));
         await using var command = Command(connection, transaction, $"""

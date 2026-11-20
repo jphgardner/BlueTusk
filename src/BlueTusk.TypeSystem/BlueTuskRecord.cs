@@ -15,7 +15,7 @@ public sealed class BlueTuskRecord : IReadOnlyList<BlueTuskRecordField>
 
     public BlueTuskRecord(IEnumerable<BlueTuskRecordField> fields)
     {
-        ArgumentNullException.ThrowIfNull(fields);
+        BlueTuskGuard.NotNull(fields);
         _fields = fields.ToArray();
         if (_fields.Any(field => field is null))
         {
@@ -31,7 +31,7 @@ public sealed class BlueTuskRecord : IReadOnlyList<BlueTuskRecordField>
     {
         get
         {
-            ArgumentNullException.ThrowIfNull(name);
+            BlueTuskGuard.NotNull(name);
             return _fields.Single(field => string.Equals(field.Name, name, StringComparison.Ordinal));
         }
     }

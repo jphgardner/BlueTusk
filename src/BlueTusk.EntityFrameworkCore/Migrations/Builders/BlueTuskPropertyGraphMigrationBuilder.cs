@@ -11,7 +11,7 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
 
     internal BlueTuskPropertyGraphMigrationBuilder(string name, string? schema)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         _name = name;
         _schema = schema;
     }
@@ -22,7 +22,7 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
         string? schema,
         Action<BlueTuskPropertyGraphVertexMigrationBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var state = Add(alias, table, schema, BlueTuskGraphElementKind.Vertex);
         configure(new BlueTuskPropertyGraphVertexMigrationBuilder(state));
         return this;
@@ -34,7 +34,7 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
         string? schema,
         Action<BlueTuskPropertyGraphEdgeMigrationBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var state = Add(alias, table, schema, BlueTuskGraphElementKind.Edge);
         configure(new BlueTuskPropertyGraphEdgeMigrationBuilder(state));
         return this;
@@ -70,8 +70,8 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
         string? schema,
         BlueTuskGraphElementKind kind)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(alias);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(alias);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         if (_elements.Any(element => string.Equals(element.Alias, alias, StringComparison.Ordinal)))
         {
             throw new InvalidOperationException(
@@ -113,7 +113,7 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
 
         public void AddLabel(string name, Action<BlueTuskPropertyGraphLabelMigrationBuilder>? configure)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            BlueTuskGuard.NotNullOrWhiteSpace(name);
             if (_labels.Any(label => string.Equals(label.Name, name, StringComparison.Ordinal)))
             {
                 throw new InvalidOperationException(
@@ -160,7 +160,7 @@ public sealed class BlueTuskPropertyGraphMigrationBuilder
 
         public static string[] RequiredNames(IEnumerable<string> values, string description)
         {
-            ArgumentNullException.ThrowIfNull(values);
+            BlueTuskGuard.NotNull(values);
             var result = values.ToArray();
             if (result.Length == 0 || result.Any(string.IsNullOrWhiteSpace))
             {
@@ -241,7 +241,7 @@ public sealed class BlueTuskPropertyGraphEdgeMigrationBuilder
         IEnumerable<string> edgeKeyColumns,
         IEnumerable<string> vertexKeyColumns)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(vertexAlias);
+        BlueTuskGuard.NotNullOrWhiteSpace(vertexAlias);
         return new BlueTuskGraphEndpointDefinition(
             vertexAlias,
             BlueTuskPropertyGraphMigrationBuilder.ElementState.RequiredNames(
@@ -259,15 +259,15 @@ public sealed class BlueTuskPropertyGraphLabelMigrationBuilder
         string column,
         string? name = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(column);
+        BlueTuskGuard.NotNullOrWhiteSpace(column);
         Add(new BlueTuskGraphPropertyDefinition(column, name ?? column, IsColumn: true));
         return this;
     }
 
     public BlueTuskPropertyGraphLabelMigrationBuilder Expression(string expression, string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(expression);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(expression);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Add(new BlueTuskGraphPropertyDefinition(expression, name, IsColumn: false));
         return this;
     }

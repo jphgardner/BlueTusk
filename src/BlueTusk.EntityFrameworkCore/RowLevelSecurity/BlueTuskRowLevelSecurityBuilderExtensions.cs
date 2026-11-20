@@ -15,7 +15,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
         bool enabled = true,
         bool forced = false)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         var definition = new BlueTuskRowLevelSecurityDefinition(enabled, forced, []);
         entityBuilder.Metadata.SetAnnotation(
             BlueTuskRowLevelSecurityMetadata.AnnotationName,
@@ -26,7 +26,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
     /// <summary>Removes row-level security metadata from an entity table.</summary>
     public static EntityTypeBuilder HasNoRowLevelSecurity(this EntityTypeBuilder entityBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskRowLevelSecurityMetadata.AnnotationName);
         return entityBuilder;
     }
@@ -35,7 +35,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
     public static BlueTuskRowLevelSecurityDefinition? GetRowLevelSecurity(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskRowLevelSecurityMetadata.Get(entityType);
     }
 
@@ -44,7 +44,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         var definition = BlueTuskRowLevelSecurityMetadata.Deserialize(serializedDefinition);
         BlueTuskRowLevelSecurityBuilder.ValidateDefinition(definition);
         entityBuilder.Metadata.SetAnnotation(

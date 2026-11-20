@@ -4,7 +4,7 @@ namespace BlueTusk.Jobs.Tests;
 
 public sealed class JobWorkerTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TypedWorkerBoundsConcurrencyAndDrainsCooperativeHandlers()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -73,7 +73,7 @@ public sealed class JobWorkerTests
         Assert.Equal(0, active);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task HeartbeatsPreventReclaimAndCancellationRevokesCooperativeHandler()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -115,7 +115,7 @@ public sealed class JobWorkerTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task WorkerRetriesClassifiedAndUnexpectedFailuresWithoutPersistingExceptionText()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -150,7 +150,7 @@ public sealed class JobWorkerTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task InvalidTypedPayloadIsPermanentAndNeverInvokesHandler()
     {
         await using var database = await JobDatabase.CreateAsync();

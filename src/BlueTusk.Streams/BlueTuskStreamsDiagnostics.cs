@@ -47,7 +47,7 @@ public static class BlueTuskStreamsDiagnostics
             };
             try
             {
-                SpoolOperationDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tags);
+                SpoolOperationDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds, tags);
             }
             catch (Exception)
             {
@@ -115,7 +115,7 @@ public static class BlueTuskStreamsDiagnostics
         if (started != 0 && DeliveryDuration.Enabled)
         {
             DeliveryDuration.Record(
-                Stopwatch.GetElapsedTime(started).TotalSeconds,
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds,
                 tags);
         }
     }

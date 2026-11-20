@@ -1,6 +1,22 @@
 using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.Internal;
+#if BLUETUSK_EF10_OR_GREATER
+using System.Globalization;
+using System.Text;
+#endif
+#if !BLUETUSK_EF9_OR_GREATER
+using RelationalParameterBasedSqlProcessorParameters = System.Boolean;
+#endif
+#if BLUETUSK_EF7_OR_GREATER
+using BlueTuskSqlQueryExpression = System.Linq.Expressions.Expression;
+#else
+using BlueTuskSqlQueryExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SelectExpression;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
@@ -9,18 +25,176 @@ internal sealed class BlueTuskParameterBasedSqlProcessor(
     RelationalParameterBasedSqlProcessorParameters parameters)
     : RelationalParameterBasedSqlProcessor(dependencies, parameters)
 {
+#if BLUETUSK_EF10_OR_GREATER
     protected override Expression ProcessSqlNullability(
         Expression selectExpression,
         ParametersCacheDecorator parametersDecorator)
         => new BlueTuskSqlNullabilityProcessor(Dependencies, Parameters)
             .Process(selectExpression, parametersDecorator);
+
+#pragma warning disable EF1001 // Relational parameter expansion is EF's provider extension point.
+    protected override Expression ExpandFromSqlParameter(
+        Expression queryExpression,
+        ParametersCacheDecorator parametersDecorator)
+        => new BlueTuskGraphRelationalParameterProcessor(Dependencies).Expand(queryExpression, parametersDecorator);
+#pragma warning restore EF1001
+#else
+    protected override BlueTuskSqlQueryExpression ProcessSqlNullability(
+        BlueTuskSqlQueryExpression queryExpression,
+        IReadOnlyDictionary<string, object?> parameterValues,
+        out bool canCache)
+        => new BlueTuskSqlNullabilityProcessor(Dependencies,
+#if BLUETUSK_EF9_OR_GREATER
+            Parameters)
+#else
+            UseRelationalNulls)
+#endif
+            .Process(queryExpression, parameterValues, out canCache);
+
+    protected override BlueTuskSqlQueryExpression ExpandFromSqlParameter(
+        BlueTuskSqlQueryExpression queryExpression,
+        IReadOnlyDictionary<string, object?> parameterValues,
+        out bool canCache)
+        => base.ExpandFromSqlParameter((BlueTuskSqlQueryExpression)new GraphArgumentUnwrapper().Visit(queryExpression), parameterValues, out canCache);
+
+    private sealed class GraphArgumentUnwrapper : ExpressionVisitor
+    {
+        protected override Expression VisitExtension(Expression expression) => expression is
+            FromSqlExpression { Arguments: BlueTuskGraphSqlArguments arguments } fromSql
+                ? fromSql.Update(arguments.Values)
+                : base.VisitExtension(expression);
+    }
+#endif
 }
+
+#if BLUETUSK_EF10_OR_GREATER
+#pragma warning disable EF1001 // Uses the same relational binding and name allocation as EF's FromSql path.
+internal sealed class BlueTuskGraphRelationalParameterProcessor(RelationalParameterBasedSqlProcessorDependencies dependencies)
+    : RelationalParameterProcessor(dependencies)
+{
+    private Dictionary<FromSqlExpression, Expression>? _graphTables;
+
+    protected override Expression VisitExtension(Expression expression)
+    {
+        if (expression is SelectExpression
+            {
+                Tables: [FromSqlExpression
+                {
+                    Arguments: BlueTuskGraphSqlArguments { OrderedBranches: { } branches },
+                } table],
+                IsDistinct: false,
+                Predicate: null,
+                GroupBy.Count: 0,
+                Having: null,
+                Offset: null,
+                Limit: not null,
+                Orderings: [var ordering],
+                Projection: [{ Expression: ColumnExpression projection }],
+            } select &&
+            ordering.Expression is ColumnExpression orderColumn &&
+            orderColumn.TableAlias == table.Alias && orderColumn.Name == branches.OutputColumn &&
+            projection.TableAlias == table.Alias && projection.Name == branches.OutputColumn &&
+            !select.GetAnnotations().Any() && !table.GetAnnotations().Any())
+        {
+            // Use the final parameter names after EF's parameter expansion.
+            // The outer LIMIT still registers and binds this same parameter.
+            var visitedSelect = (SelectExpression)base.VisitExtension(select);
+            return ApplyGraphBranchLimit(visitedSelect, branches, ordering.IsAscending);
+        }
+
+        if (expression is not FromSqlExpression { Arguments: BlueTuskGraphSqlArguments arguments } fromSql)
+        {
+            return base.VisitExtension(expression);
+        }
+
+        if (arguments.Values is not QueryParameterExpression parameter)
+        {
+            return base.VisitExtension(fromSql.Update(arguments.Values));
+        }
+
+        _graphTables ??= new(ReferenceEqualityComparer.Instance);
+        if (_graphTables.TryGetValue(fromSql, out var visited))
+        {
+            return visited;
+        }
+
+        // Graph values have already been extracted into the current EF query
+        // context. Only their types and the invariant name enter the template.
+        var parameters = new IRelationalParameter[arguments.Types.Length];
+        for (var index = 0; index < parameters.Length; index++)
+        {
+            var type = arguments.Types[index];
+            var mapping = Dependencies.TypeMappingSource.GetMapping(type);
+            // The same EF argument can occur more than once in a composed
+            // query. Each table occurrence needs distinct command parameters.
+            var name = FormattableString.Invariant($"__g{_graphTables.Count}_{index}");
+            var sqlParameter = (SqlParameterExpression)base.VisitExtension(new SqlParameterExpression(
+                "bluetusk-graph:" + name, name, type, nullable: false, translationMode: null, mapping));
+            parameters[index] = new TypeMappedRelationalParameter(sqlParameter.Name, sqlParameter.Name, mapping, nullable: false);
+        }
+
+        return _graphTables[fromSql] = fromSql.Update(
+            Expression.Constant(new CompositeRelationalParameter(parameter.Name, parameters)));
+    }
+
+    private SelectExpression ApplyGraphBranchLimit(
+        SelectExpression select, BlueTuskGraphOrderedBranches branches, bool ascending)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var limit = select.Limit switch
+        {
+            SqlConstantExpression { Value: int and > 0 } constant =>
+                ((int)constant.Value).ToString(CultureInfo.InvariantCulture),
+            SqlParameterExpression { Type: var type } parameter when type == typeof(int) =>
+                helper.GenerateParameterNamePlaceholder(parameter.Name),
+            _ => null,
+        };
+        if (limit is null)
+        {
+            return select;
+        }
+
+        var column = helper.DelimitIdentifier(branches.OutputColumn)
+            .Replace("{", "{{", StringComparison.Ordinal)
+            .Replace("}", "}}", StringComparison.Ordinal);
+        var sql = new StringBuilder("SELECT ").Append(column).Append(" FROM (");
+        var branchSql = branches.Branches;
+        for (var index = 0; index < branchSql.Length; index++)
+        {
+            if (index > 0)
+            {
+                sql.Append(" UNION ALL ");
+            }
+
+            sql.Append('(').Append(branchSql[index]).Append(" ORDER BY ").Append(column)
+                .Append(ascending ? " ASC LIMIT " : " DESC LIMIT ").Append(limit).Append(')');
+        }
+
+        sql.Append(") AS \"__bluetusk_bounded_paths\"");
+        var table = (FromSqlExpression)select.Tables[0];
+        var boundedTable = new FromSqlExpression(table.Alias, table.Table, sql.ToString(), table.Arguments, annotations: null);
+        return select.Update([boundedTable], select.Predicate, select.GroupBy, select.Having,
+            select.Projection, select.Orderings, select.Offset, select.Limit);
+    }
+}
+#pragma warning restore EF1001
+#endif
 
 internal sealed class BlueTuskSqlNullabilityProcessor(
     RelationalParameterBasedSqlProcessorDependencies dependencies,
     RelationalParameterBasedSqlProcessorParameters parameters)
     : SqlNullabilityProcessor(dependencies, parameters)
 {
+#if !BLUETUSK_EF8_OR_GREATER
+    protected override TableExpressionBase Visit(TableExpressionBase tableExpressionBase) => tableExpressionBase switch
+    {
+        BlueTuskSetReturningFunctionTableExpression function => function.Update(
+            function.Arguments.Select(argument => Visit(argument, out _)).ToArray()),
+        BlueTuskUnnestExpression unnest => unnest.Update(Visit(unnest.Array, out _)),
+        _ => base.Visit(tableExpressionBase),
+    };
+#endif
+
     protected override SqlExpression VisitCustomSqlExpression(
         SqlExpression sqlExpression,
         bool allowOptimizedExpansion,

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>ControlPlane</BlueTuskProductFamily>
     <Description>Authorised operational dashboard endpoints for the BlueTusk control plane.</Description>
     <PackageTags>postgresql;cdc;dashboard;control-plane;aspnetcore</PackageTags>
@@ -9,6 +10,14 @@
   <Import Project="..\..\eng\versions\ControlPlane.props" />
 
   <ItemGroup>
+    <EmbeddedResource Include="Assets/dashboard.js" LogicalName="BlueTusk.Dashboard.dashboard.js" />
+    <EmbeddedResource Include="Assets/dashboard.css" LogicalName="BlueTusk.Dashboard.dashboard.css" />
+    <EmbeddedResource Include="Assets/brand.css" LogicalName="BlueTusk.Dashboard.brand.css" />
+    <EmbeddedResource Include="../../website/public/bluetusk-mark.png" LogicalName="BlueTusk.Dashboard.bluetusk-mark.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
   </ItemGroup>

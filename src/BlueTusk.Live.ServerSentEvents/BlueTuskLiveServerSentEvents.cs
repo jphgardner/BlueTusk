@@ -4,18 +4,31 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BlueTusk.Live.ServerSentEvents;
 
 public static class BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions
 {
+#if NET6_0_OR_GREATER
     public static RouteHandlerBuilder MapBlueTuskLiveServerSentEvents(
+#else
+    public static IEndpointConventionBuilder MapBlueTuskLiveServerSentEvents(
+#endif
         this IEndpointRouteBuilder endpoints,
         string pattern = "/bluetusk/live/sse")
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
+        BlueTuskGuard.NotNull(endpoints);
+        BlueTuskGuard.NotNullOrWhiteSpace(pattern);
+#if NET6_0_OR_GREATER
         return endpoints.MapPost(pattern, StreamAsync);
+#else
+        return endpoints.MapPost(pattern, context => StreamAsync(
+            context,
+            context.RequestServices.GetRequiredService<ILiveTransportSubscriptionResolver>(),
+            context.RequestServices.GetRequiredService<LiveResumeTokenProtector>(),
+            context.RequestServices.GetRequiredService<LiveAspNetCoreOptions>()));
+#endif
     }
 
     private static async Task StreamAsync(
@@ -85,6 +98,9 @@ public static class BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions
             {
                 LiveSubscriptionConnectStatus.QuotaExceeded => StatusCodes.Status429TooManyRequests,
                 LiveSubscriptionConnectStatus.NotStarted => StatusCodes.Status503ServiceUnavailable,
+                LiveSubscriptionConnectStatus.InvalidResumeToken
+                    when exception.TokenStatus is LiveResumeTokenValidationStatus.IdentityMismatch
+                    => StatusCodes.Status409Conflict,
                 LiveSubscriptionConnectStatus.InvalidResumeToken => StatusCodes.Status400BadRequest,
                 LiveSubscriptionConnectStatus.ResumeTokenExpired or
                 LiveSubscriptionConnectStatus.ReplayUnavailable or
@@ -96,7 +112,7 @@ public static class BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions
 
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = "text/event-stream";
-        context.Response.Headers.CacheControl = "no-cache, no-store";
+        context.Response.Headers["Cache-Control"] = "no-cache, no-store";
         context.Response.Headers.Append("X-Accel-Buffering", "no");
         context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
         await using (connection.ConfigureAwait(false))
@@ -121,8 +137,8 @@ public static class LiveSseWriter
         LiveTransportMessage message,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(response);
-        ArgumentNullException.ThrowIfNull(message);
+        BlueTuskGuard.NotNull(response);
+        BlueTuskGuard.NotNull(message);
         var eventName = message.Kind is LiveSubscriberMessageKind.Event ? "change" : "reset";
         if (message.Sequence is { } sequence)
         {

@@ -18,12 +18,12 @@ public sealed record RedisSyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Connection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(KeyPrefix);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTransactionBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan((long)MaxDocumentBytes, MaxTransactionBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxMutationsPerTransaction);
+        BlueTuskGuard.NotNull(Connection);
+        BlueTuskGuard.NotNullOrWhiteSpace(KeyPrefix);
+        BlueTuskGuard.NotNegativeOrZero(MaxDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxTransactionBytes);
+        BlueTuskGuard.NotGreaterThan((long)MaxDocumentBytes, MaxTransactionBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxMutationsPerTransaction);
         if (KeyPrefix.Contains('{') || KeyPrefix.Contains('}'))
         {
             throw new ArgumentException(

@@ -12,7 +12,7 @@ public static class BlueTuskPgOutputExtensions
         this BlueTuskPgOutputEnvelope envelope,
         out BlueTuskLogSequenceNumber position)
     {
-        ArgumentNullException.ThrowIfNull(envelope);
+        BlueTuskGuard.NotNull(envelope);
         position = envelope.Message switch
         {
             BlueTuskPgOutputCommit commit => commit.TransactionEndPosition,
@@ -32,7 +32,7 @@ public static class BlueTuskPgOutputExtensions
         BlueTuskPgOutputDecoderOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         var decoder = new BlueTuskPgOutputDecoder(
             options ?? new BlueTuskPgOutputDecoderOptions());
         await foreach (var message in source

@@ -68,7 +68,9 @@ internal sealed class BlueTuskCopyPipe : Stream
         return EnqueueWriteAsync(chunk, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask WriteCoalescedAsync(
         ReadOnlyMemory<byte> buffer,
         CancellationToken cancellationToken)
@@ -111,7 +113,9 @@ internal sealed class BlueTuskCopyPipe : Stream
         _channel.Writer.TryComplete(exception);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public async ValueTask CompleteWritingAsync(CancellationToken cancellationToken = default)
     {
         if (_pendingWriteCount != 0)
@@ -122,7 +126,9 @@ internal sealed class BlueTuskCopyPipe : Stream
         _channel.Writer.TryComplete();
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     public override async ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
@@ -203,7 +209,9 @@ internal sealed class BlueTuskCopyPipe : Stream
         _hasCurrent = false;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask EnqueuePendingWriteAsync(CancellationToken cancellationToken)
     {
         var bytes = _pendingWriteBuffer!;
@@ -223,7 +231,9 @@ internal sealed class BlueTuskCopyPipe : Stream
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask EnqueueWriteAsync(
         PooledChunk chunk,
         CancellationToken cancellationToken)

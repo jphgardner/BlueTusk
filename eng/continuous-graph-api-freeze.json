@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "baseline": "1.1.0-candidate",
   "normalization": "utf8-lf",
+  "developmentAdditions": [
+    {
+      "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
+      "memberPrefix": "static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileReachability<"
+    },
+    {
+      "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
+      "memberPrefix": "static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileNeighbors<"
+    },
+    {
+      "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
+      "memberPrefix": "static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileShortestPath<"
+    }
+  ],
   "files": [
     {
       "path": "src/BlueTusk.ContinuousGraph.ControlPlane/PublicAPI.Shipped.txt",
@@ -17,7 +31,7 @@
     },
     {
       "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
-      "sha256": "d94f6d1a156e0dc64bb777ec2dabf4e0ac6166c7102bb672155c208fda54cb24"
+      "sha256": "232223063ebde4518f1b4bd1ff91bcc23598495de329f3681016cf144fd50684"
     }
   ]
 }

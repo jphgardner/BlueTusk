@@ -6,7 +6,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <PackageId>BlueTusk.Extensions.TimescaleDB</PackageId>
     <Description>Optional PostgreSQL TimescaleDB hypertable and retention integration for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;timescaledb;hypertable;time-series</PackageTags>

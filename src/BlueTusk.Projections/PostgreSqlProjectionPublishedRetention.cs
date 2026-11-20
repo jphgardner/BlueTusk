@@ -20,13 +20,13 @@ public sealed partial class PostgreSqlProjectionStore
         ProjectionSourceLineage sourceLineage, EventPublishedConsumerRegistration registration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentNullException.ThrowIfNull(sourceLineage);
-        ArgumentNullException.ThrowIfNull(registration);
-        ArgumentNullException.ThrowIfNull(registration.Stream);
-        ArgumentNullException.ThrowIfNull(registration.Source);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNull(sourceLineage);
+        BlueTuskGuard.NotNull(registration);
+        BlueTuskGuard.NotNull(registration.Stream);
+        BlueTuskGuard.NotNull(registration.Source);
         ProjectionValidation.Key(registration.ConsumerGroup, nameof(registration));
-        if (System.Diagnostics.Stopwatch.GetElapsedTime(sourceLineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
+        if (BlueTuskRuntime.GetElapsedTime(sourceLineage.CaptureTimestamp) > TimeSpan.FromMinutes(1))
         {
             throw new InvalidOperationException("Capture fresh actual source lineage before binding a protected target registration.");
         }
@@ -135,8 +135,8 @@ public sealed partial class PostgreSqlProjectionStore
         ProjectionPublishedRetentionTargetOptions protectedRetention, CancellationToken cancellationToken)
     {
         ValidateDefinition(lease, definition);
-        ArgumentNullException.ThrowIfNull(delivery);
-        ArgumentNullException.ThrowIfNull(protectedRetention);
+        BlueTuskGuard.NotNull(delivery);
+        BlueTuskGuard.NotNull(protectedRetention);
         if (delivery.State != ChangeDeliveryState.Active ||
             protectedRetention.TargetIncarnation == Guid.Empty ||
             protectedRetention.Source is null ||

@@ -12,7 +12,9 @@
     "primaryHotPathMaximumP95Ratio": 0.8,
     "primaryHotPathMaximumAllocationRatio": 0.8,
     "trustedCdcMaximumFullRequeryRatio": 0.1,
-    "authoritativeDeltaMaximumFullRequeryRatio": 0.35
+    "authoritativeDeltaMaximumP95Ratio": 1.0,
+    "authoritativeDeltaTargetP95Ratio": 0.35,
+    "authoritativeDeltaMaximumAllocationRatio": 0.35
   },
   "environments": [
     {
@@ -32,7 +34,7 @@
     "Sync": "Debezium Server 3.6.1.Final plus native destination clients",
     "Live": "ASP.NET Core SignalR 10",
     "ControlPlane": "BlueTusk 1.0.0 plus absolute scaling budgets",
-    "ContinuousGraph": "prepared PostgreSQL GRAPH_TABLE plus BlueTusk 1.0.0 full requery"
+    "ContinuousGraph": "prepared PostgreSQL joins plus portable authoritative full requery"
   },
   "workloads": {
     "Provider": {
@@ -116,5 +118,5 @@
     "ControlPlane": 24,
     "ContinuousGraph": 24
   },
-  "graphStablePublicationRequiresQualifiedSqlPgqServer": true
+  "graphStablePublicationRequiresPortablePostgreSqlEvidence": true
 }

@@ -13,7 +13,7 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
         this MigrationBuilder builder,
         BlueTuskTablespaceDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         BlueTuskTablespaceMetadata.Validate(definition);
         var operation = new CreateTablespaceOperation
         {
@@ -34,7 +34,7 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
         BlueTuskTablespaceDefinition definition,
         BlueTuskTablespaceDefinition oldDefinition)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         BlueTuskTablespaceMetadata.Validate(definition);
         BlueTuskTablespaceMetadata.Validate(oldDefinition);
         if (!BlueTuskTablespaceMetadata.LocationEquals(definition, oldDefinition))
@@ -67,9 +67,9 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
         string name,
         string newName)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameTablespaceOperation { Name = name, NewName = newName };
         builder.Operations.Add(operation);
         return new OperationBuilder<RenameTablespaceOperation>(operation);
@@ -80,8 +80,8 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
         string name,
         bool ifExists = false)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropTablespaceOperation
         {
             Name = name,

@@ -19,7 +19,7 @@ internal static class BlueTuskTablespaceMetadata
 
     public static BlueTuskTablespaceDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var value = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(value) ? BlueTuskTablespaceDefinitionSet.Empty : Deserialize(value);
     }
@@ -32,7 +32,7 @@ internal static class BlueTuskTablespaceMetadata
 
     public static BlueTuskTablespaceDefinitionSet Deserialize(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         var definitions = JsonSerializer.Deserialize<BlueTuskTablespaceDefinitionSet>(value, SerializerOptions)
             ?? throw new ArgumentException("The tablespace definition set is empty.", nameof(value));
         Validate(definitions);
@@ -47,7 +47,7 @@ internal static class BlueTuskTablespaceMetadata
 
     public static BlueTuskTablespaceDefinition DeserializeDefinition(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         var definition = JsonSerializer.Deserialize<BlueTuskTablespaceDefinition>(value, SerializerOptions)
             ?? throw new ArgumentException("The tablespace definition is empty.", nameof(value));
         Validate(definition);
@@ -70,8 +70,8 @@ internal static class BlueTuskTablespaceMetadata
 
     public static void Validate(BlueTuskTablespaceDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Tablespaces);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Tablespaces);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions.Tablespaces)
         {
@@ -85,9 +85,9 @@ internal static class BlueTuskTablespaceMetadata
 
     public static void Validate(BlueTuskTablespaceDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Location);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Location);
         if (definition.Name.StartsWith("pg_", StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("PostgreSQL reserves tablespace names beginning with 'pg_'.",
@@ -96,16 +96,16 @@ internal static class BlueTuskTablespaceMetadata
 
         if (definition.Owner is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Owner);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Owner);
         }
 
-        ArgumentNullException.ThrowIfNull(definition.Options);
+        BlueTuskGuard.NotNull(definition.Options);
         var options = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var option in definition.Options)
         {
-            ArgumentNullException.ThrowIfNull(option);
-            ArgumentException.ThrowIfNullOrWhiteSpace(option.Name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(option.Value);
+            BlueTuskGuard.NotNull(option);
+            BlueTuskGuard.NotNullOrWhiteSpace(option.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(option.Value);
             if (!SupportedOptions.Contains(option.Name))
             {
                 throw new ArgumentException($"Unsupported PostgreSQL tablespace option '{option.Name}'.",

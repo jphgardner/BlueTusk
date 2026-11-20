@@ -4,7 +4,7 @@ namespace BlueTusk.Jobs.Tests;
 
 public sealed class FencedJobTransactionTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task FencedTransactionCommitsEffectAndChildJobTogether()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -24,7 +24,7 @@ public sealed class FencedJobTransactionTests
         Assert.Equal(1L, await count.ExecuteScalarAsync<long>(CancellationToken.None));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExpiryDuringCallbackRollsBackEffectAndChildEnqueue()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -47,7 +47,7 @@ public sealed class FencedJobTransactionTests
         Assert.Equal(0L, await count.ExecuteScalarAsync<long>(CancellationToken.None));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RevokedLeaseNeverEntersFencedCallback()
     {
         await using var database = await JobDatabase.CreateAsync();

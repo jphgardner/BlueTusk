@@ -8,7 +8,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventOutboxWalIntegrationTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ActualPgOutputOutboxTransactionIsDecodedAndHandledThroughAtomicInbox()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -232,7 +232,7 @@ public sealed class EventOutboxWalIntegrationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ControlOnlyPublicationCannotAcknowledgeAnotherPublicationsOutboxHistory()
     {
         await using var fixture = await EventDatabase.CreateAsync();

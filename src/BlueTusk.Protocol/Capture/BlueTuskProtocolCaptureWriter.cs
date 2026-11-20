@@ -14,7 +14,7 @@ public sealed class BlueTuskProtocolCaptureWriter
 
     public BlueTuskProtocolCaptureWriter(Stream output, DateTimeOffset? createdAt = null)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         if (!output.CanWrite)
         {
             throw new ArgumentException("The capture stream must be writable.", nameof(output));
@@ -69,7 +69,7 @@ public sealed class BlueTuskProtocolCaptureWriter
 
     private static void ValidateRecord(BlueTuskProtocolCaptureRecord record)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         if (!Enum.IsDefined(record.Direction))
         {
             throw new ArgumentOutOfRangeException(nameof(record), "The capture direction is invalid.");

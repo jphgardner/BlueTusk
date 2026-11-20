@@ -55,7 +55,7 @@ function Assert-CoreEvidenceInteger
 
 function Resolve-CoreEvidenceFile
 {
-    param([Parameter(Mandatory)][string] $Root, [Parameter(Mandatory)][string] $RelativePath)
+    param([Parameter(Mandatory)][string] $Root, [Parameter(Mandatory)][string] $RelativePath, [switch] $AllowEmpty)
     if ([IO.Path]::IsPathRooted($RelativePath) -or $RelativePath.Contains('\') -or
         $RelativePath.Contains(':') -or $RelativePath.Contains([char]0) -or
         @($RelativePath.Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -ne 0)
@@ -80,7 +80,7 @@ function Resolve-CoreEvidenceFile
         if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
         { throw 'Evidence paths must not traverse a symbolic link or junction.' }
     }
-    if ($item.PSIsContainer -or $item.Length -le 0)
+    if ($item.PSIsContainer -or (-not $AllowEmpty -and $item.Length -le 0))
     { throw "Evidence '$RelativePath' must be a nonempty file." }
     return $item.FullName
 }

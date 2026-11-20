@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Jobs</BlueTuskProductFamily>
     <Description>Durable PostgreSQL jobs with fenced leases, transactional enqueue, typed handlers, and bounded workers.</Description>
     <PackageTags>postgresql;jobs;background;durable;outbox</PackageTags>
@@ -8,5 +9,10 @@
   <Import Project="..\..\eng\versions\Jobs.props" />
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
+    <PackageReference Include="System.Collections.Immutable" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
   </ItemGroup>
 </Project>

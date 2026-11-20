@@ -36,4 +36,20 @@ internal sealed class DashboardPublicPreviewQueries :
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult(new ControlPlaneFleetOverview(DateTimeOffset.UtcNow, []));
     }
+
+    public ValueTask<ControlPlaneFleetOverview> GetDeploymentPageAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(new ControlPlaneFleetOverview(DateTimeOffset.UtcNow, []));
+    }
+
+    public ValueTask<ControlPlaneManagedDeploymentSnapshot?> GetDeploymentAsync(
+        string deploymentId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult<ControlPlaneManagedDeploymentSnapshot?>(null);
+    }
 }

@@ -408,11 +408,19 @@ public sealed class BlueTuskCopyIntegrationTests
     [Fact]
     public async Task Binary_import_start_cancellation_races_do_not_contaminate_the_next_command()
     {
-        await using var connection = new BlueTuskConnection(GetConnectionString());
-        await connection.OpenAsync(CancellationToken.None);
-        await ExecuteAsync(connection, "CREATE TEMP TABLE bluetusk_copy_start_race (id int4)");
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            Pooling = true,
+            MaximumPoolSize = 1,
+        };
+        await using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var identify = new BlueTuskCommand("SELECT pg_backend_pid()::int4", connection);
         for (var iteration = 0; iteration < 32; iteration++)
         {
+            await ExecuteAsync(connection, "CREATE TEMP TABLE IF NOT EXISTS bluetusk_copy_start_race (id int4)");
+            var backend = await identify.ExecuteScalarAsync<int>(CancellationToken.None);
+            var cancelled = false;
             using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(1));
             try
             {
@@ -421,7 +429,17 @@ public sealed class BlueTuskCopyIntegrationTests
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
             {
-                // Starting COPY and cancellation can each win; either outcome must drain fully.
+                cancelled = true;
+            }
+
+            // A drained response retains the session. If cancellation interrupted
+            // the frontend frame, the pool must replace that backend instead.
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                Assert.True(cancelled);
+                await connection.CloseAsync();
+                await connection.OpenAsync(CancellationToken.None);
+                Assert.NotEqual(backend, await identify.ExecuteScalarAsync<int>(CancellationToken.None));
             }
             await using var verify = new BlueTuskCommand("SELECT $1::int4", connection);
             verify.Parameters.Add(new BlueTuskParameter<int>(iteration));

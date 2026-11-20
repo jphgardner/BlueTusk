@@ -34,9 +34,9 @@ public sealed record LiveSharedSubscriptionOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSubscribers);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(SubscriberBufferCapacity);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumReplayEventsPerConnect);
+        BlueTuskGuard.NotNegativeOrZero(MaximumSubscribers);
+        BlueTuskGuard.NotNegativeOrZero(SubscriberBufferCapacity);
+        BlueTuskGuard.NotNegativeOrZero(MaximumReplayEventsPerConnect);
         if (MaximumReplayEventsPerConnect == int.MaxValue)
         {
             throw new ArgumentOutOfRangeException(
@@ -210,8 +210,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         ILiveReplayStore replayStore,
         LiveSharedSubscriptionOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(replayStore);
+        BlueTuskGuard.NotNull(session);
+        BlueTuskGuard.NotNull(replayStore);
         options ??= new LiveSharedSubscriptionOptions();
         options.Validate();
         _session = session;
@@ -236,7 +236,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         LiveSharedSubscriptionOptions? options)
         : this(session, replayStore, options)
     {
-        ArgumentNullException.ThrowIfNull(eventTypeInfo);
+        BlueTuskGuard.NotNull(eventTypeInfo);
         _eventTypeInfo = eventTypeInfo;
     }
 
@@ -338,7 +338,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         long afterSequence,
         CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
+        BlueTuskGuard.NotNegative(afterSequence);
         ThrowIfDisposed();
         Interlocked.Increment(ref _connectionOpenAttempts);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -436,8 +436,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         LiveResumeTokenProtector tokenProtector,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(resumeToken);
-        ArgumentNullException.ThrowIfNull(tokenProtector);
+        BlueTuskGuard.NotNullOrWhiteSpace(resumeToken);
+        BlueTuskGuard.NotNull(tokenProtector);
         Interlocked.Increment(ref _resumeAttempts);
         var validation = tokenProtector.Validate(resumeToken, Identity);
         LiveDiagnostics.RecordResumeValidation(validation.Status);
@@ -702,7 +702,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
     }
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    private void ThrowIfDisposed() => BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
 
     private sealed record Subscriber(Channel<LiveSubscriberMessage> Channel);
 }
@@ -711,7 +711,7 @@ public sealed record LiveSharedSubscriptionRegistryOptions
 {
     public int MaximumSharedSubscriptions { get; init; } = 10_000;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSharedSubscriptions);
+    internal void Validate() => BlueTuskGuard.NotNegativeOrZero(MaximumSharedSubscriptions);
 }
 
 public sealed record LiveSharedSubscriptionRegistryStatus(
@@ -751,8 +751,8 @@ public sealed class LiveSharedSubscriptionRegistry : IAsyncDisposable
         LiveSharedSubscription<T, TKey> subscription)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(subscription);
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotNull(subscription);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         lock (_mutationLock)
         {
             if (_subscriptions.TryGetValue(subscription.Identity.Fingerprint, out var existing))
@@ -781,7 +781,7 @@ public sealed class LiveSharedSubscriptionRegistry : IAsyncDisposable
     public async ValueTask<bool> RemoveAsync(
         LiveSubscriptionIdentity identity)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         if (!_subscriptions.TryRemove(identity.Fingerprint, out var subscription))
         {
             return false;

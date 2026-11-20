@@ -1,106 +1,49 @@
 # BlueTusk documentation
 
-BlueTusk is a PostgreSQL platform for .NET 10. Use this page to find the guide
-for what you want to do.
+These guides cover BlueTusk 1.2. BlueTusk connects .NET applications to PostgreSQL through ADO.NET and EF Core.
+Its other packages handle committed changes, live query results, connected
+data, and application workloads that need durable state.
 
 ## Start here
 
-New to BlueTusk? Read these in order. Together they take about 20 minutes.
+1. [Choose packages](getting-started/install.md) and check [runtime compatibility](getting-started/runtime-compatibility.md).
+2. [Run your first query](getting-started/quickstart.md) against a disposable database.
+3. [Learn the ownership model](getting-started/concepts.md) before configuring pooling, replication, or replay.
+4. [Explore working examples](getting-started/examples.md) when you need a complete application flow.
 
-1. [What is BlueTusk?](getting-started/overview.md): the products and how they fit together.
-2. [Install BlueTusk](getting-started/install.md): choose packages and a version.
-3. [5-minute first app](getting-started/quickstart.md): connect and run a query.
-4. [Core concepts](getting-started/concepts.md): the vocabulary every product uses.
+## Connect and query
 
-## Products
-
-Every product has the same set of pages, in the order you need them:
-an overview, a quick start, concepts, task guides, configuration and
-troubleshooting.
-
-| Product | What it does | Quick start | Concepts | Configuration | Troubleshooting |
-| --- | --- | --- | --- | --- | --- |
-| [ADO.NET](ado-net/README.md) | Connections, commands, transactions, COPY, notifications | [Quick start](ado-net/quickstart.md) | [Concepts](ado-net/concepts.md) | [Configuration](ado-net/configuration.md) | [Troubleshooting](ado-net/troubleshooting.md) |
-| [EF Core](ef-core/README.md) | LINQ, change tracking, migrations and scaffolding | [Quick start](ef-core/quickstart.md) | [Concepts](ef-core/concepts.md) | [Configuration](ef-core/configuration.md) | [Troubleshooting](ef-core/troubleshooting.md) |
-| [Streams](streams/README.md) | Process every committed change, in order | [Quick start](streams/quickstart.md) | [Concepts](streams/concepts.md) | [Configuration](streams/configuration.md) | [Troubleshooting](streams/troubleshooting.md) |
-| [Sync](sync/README.md) | Copy committed changes to another database, cache, broker or index | [Quick start](sync/quickstart.md) | [Concepts](sync/concepts.md) | [Configuration](sync/configuration.md) | [Troubleshooting](sync/troubleshooting.md) |
-| [Live](live/README.md) | Push live query results to browsers and .NET clients | [Quick start](live/quickstart.md) | [Concepts](live/concepts.md) | [Configuration](live/configuration.md) | [Troubleshooting](live/troubleshooting.md) |
-| [Control Plane](control-plane/README.md) | Inspect and operate running BlueTusk components | [Quick start](control-plane/quickstart.md) | [Concepts](control-plane/concepts.md) | [Configuration](control-plane/configuration.md) | [Troubleshooting](control-plane/troubleshooting.md) |
-
-Related provider topics:
-
-- [PostgreSQL types](types/README.md): how .NET values map to PostgreSQL types.
-- [PostgreSQL extensions](extensions/README.md): pgvector, PostGIS,
-  TimescaleDB, citext, hstore, ltree and pg_trgm.
-- [Cloud identity](ado-net/cloud-identity.md): AWS, Azure and Google Cloud
-  sign-in.
-- [Replication protocol](replication/README.md): raw logical and physical
-  replication, for when Streams is too high level.
-- [Pipeline mode](pipeline-mode.md): low-level PostgreSQL pipelining.
-
-Real-time products share one delivery model. Read
-[delivery guarantees](realtime-platform/contracts.md) once before you build
-with Streams, Sync or Live, and see
-[choosing a real-time product](realtime-platform/README.md) if you are not
-sure which one you need.
-
-## Preview products
-
-These are not part of the 1.1.0 release. You can evaluate them, but their API
-and behavior may change.
-
-- [Graph (SQL/PGQ)](graph/README.md) and
-  [Continuous Graph](continuous-graph/README.md) need a PostgreSQL server that
-  provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so
-  they wait for a PostgreSQL release that ships it.
-- The ecosystem families are `0.1.0-preview.1` and not published yet. Each is
-  released when its own checks pass:
-  [Events](events/README.md), [Jobs](jobs/README.md),
-  [Workflows](workflows/README.md), [Documents](documents/README.md),
-  [Schema](schema/README.md), [Projections](projections/README.md),
-  [Search](search/README.md), [Sql](sql/README.md), [Studio](studio/README.md)
-  and [Edge](edge/README.md). See the
-  [ecosystem release plan](ecosystem/release-qualification.md).
-
-## Run in production
-
-Work through the [production checklist](operations/production-checklist.md)
-first. Then use the guide for each task:
-
-| Task | Guide |
+| If you need to | Read |
 | --- | --- |
-| Deploy | [Deployment](operations/deployment.md) |
-| Secure | [Security](security.md) |
-| Monitor | [Observability](operations/observability.md) |
-| Size and tune | [Performance and capacity](operations/performance.md) |
-| Fix problems | [Troubleshooting](operations/troubleshooting.md) |
-| Upgrade or roll back | [Upgrade guide](operations/upgrade-guide.md) |
-| Recover real-time products | [Recovery and rebuilds](realtime-platform/operations.md) |
+| Execute SQL, manage transactions, or stream large results | [ADO.NET provider](ado-net/README.md) |
+| Configure dependency injection, credentials, and pooling | [Dependency injection](ado-net/dependency-injection.md), [authentication](ado-net/authentication.md), [pooling](ado-net/pooling.md) |
+| Model entities or scaffold an existing PostgreSQL schema | [EF Core](ef-core/README.md) |
+| Work with PostgreSQL types and extension codecs | [Types](types/README.md), [extensions](extensions/README.md) |
+| Bulk-load rows or inspect low-level replication | [COPY](ado-net/copy.md), [replication](replication/README.md) |
 
-## Reference
+## React to changes and query connected data
 
-For maintainers, reviewers and incident investigations:
+| If you need to | Read |
+| --- | --- |
+| Consume committed transactions | [Streams](streams/README.md) |
+| Deliver changes to another store or broker | [Sync](sync/README.md) |
+| Push authorized query results to a browser or app | [Live](live/README.md) |
+| Query a graph over existing tables | [Property graphs](graph/README.md), [bounded traversals](graph/traversals.md) |
+| Maintain graph results as data changes | [Continuous Graph](continuous-graph/README.md) |
+| Manage instances, replication slots, and registered pipelines | [Control Plane](control-plane/README.md) |
 
-- [Support matrix and versioning](../VERSIONING.md)
-- [Architecture overview](architecture/overview.md) and
-  [architecture decisions](architecture/decisions/)
-- [API compatibility](api-compatibility.md)
-- Product references: [EF Core](ef-core/reference.md),
-  [Sync](sync/reference.md), [Live](live/reference.md),
-  [Control Plane](control-plane/reference.md), [types](types/reference.md)
-- [Release process](release-process.md) and
-  [release readiness records](v1-release-readiness.md)
-- [Contributing](../CONTRIBUTING.md), [development setup](contributing/development.md),
-  [testing](contributing/testing.md) and
-  [repository layout](contributing/repository-layout.md)
+## Add a data service
 
-## Conventions in these docs
+Use the [data services guide](ecosystem/README.md) to choose among Documents,
+Events, Projections, Jobs, Workflows, Schema, SQL, Search, Edge, and Studio.
+Each product guide describes the package, the database objects it owns, and the
+application responsibilities that affect recovery.
 
-- Shell commands are PowerShell. Where bash differs, the page says so.
-- Examples use parameters for every value. Never build SQL from user input.
-- `SSL Mode=Disable` appears only in examples that use a local test container.
-  Keep the default, `VerifyFull`, everywhere else.
-- **New in 1.1.0** marks a feature that is not in `1.0.0` or `1.1.0-rc.1`.
+## Operate your application
 
-Found a mistake? Open an issue with the page URL, the package version, the
-PostgreSQL version and the smallest example that shows the problem.
+Start with the [production checklist](operations/production-checklist.md).
+Then configure [deployment](operations/deployment.md),
+[security](security.md), and [observability](operations/observability.md).
+Use [troubleshooting](operations/troubleshooting.md) for failures and the
+[upgrade guide](operations/upgrade-guide.md) before changing dependencies or
+database schema.

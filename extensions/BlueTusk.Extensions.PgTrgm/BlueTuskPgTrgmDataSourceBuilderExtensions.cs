@@ -9,7 +9,7 @@ public static class BlueTuskPgTrgmDataSourceBuilderExtensions
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return builder.UsePlugin(new BlueTuskPgTrgmPlugin(schema));
     }
 }

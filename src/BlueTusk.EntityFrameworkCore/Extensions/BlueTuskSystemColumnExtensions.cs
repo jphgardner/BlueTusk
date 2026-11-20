@@ -39,7 +39,7 @@ public static class BlueTuskSystemColumnExtensions
         this EntityTypeBuilder entityTypeBuilder,
         BlueTuskSystemColumn column)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
         if (!Enum.IsDefined(column))
         {
             throw new ArgumentOutOfRangeException(nameof(column), column, null);
@@ -86,7 +86,7 @@ public static class BlueTuskSystemColumnExtensions
     public static EntityTypeBuilder UseSystemColumns(
         this EntityTypeBuilder entityTypeBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
         foreach (var column in Enum.GetValues<BlueTuskSystemColumn>())
         {
             entityTypeBuilder.UseSystemColumn(column);
@@ -106,7 +106,7 @@ public static class BlueTuskSystemColumnExtensions
     public static EntityTypeBuilder UseXminConcurrencyToken(
         this EntityTypeBuilder entityTypeBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityTypeBuilder);
+        BlueTuskGuard.NotNull(entityTypeBuilder);
         entityTypeBuilder.UseSystemColumn(BlueTuskSystemColumn.Xmin);
         entityTypeBuilder.Property<BlueTuskTransactionId>(BlueTuskSystemColumns.Xmin)
             .IsConcurrencyToken();

@@ -55,8 +55,8 @@ public sealed class BlueTuskForeignDataWrapperBuilder
         string name,
         string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(value);
         options.RemoveAll(option => string.Equals(option.Name, name, StringComparison.Ordinal));
         options.Add(new BlueTuskForeignOptionDefinition(name, value));
     }
@@ -158,7 +158,7 @@ public sealed class BlueTuskForeignTableBuilder
     /// <summary>Adds or replaces an option for the mapped store column name.</summary>
     public BlueTuskForeignTableBuilder HasColumnOption(string columnName, string name, string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(columnName);
+        BlueTuskGuard.NotNullOrWhiteSpace(columnName);
         if (!_columns.TryGetValue(columnName, out var options))
         {
             options = [];

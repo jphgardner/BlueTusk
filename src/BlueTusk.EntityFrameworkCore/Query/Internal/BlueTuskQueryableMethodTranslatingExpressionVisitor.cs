@@ -1,27 +1,49 @@
 using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Graphs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
-internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
+internal sealed partial class BlueTuskQueryableMethodTranslatingExpressionVisitor
     : RelationalQueryableMethodTranslatingExpressionVisitor
 {
     private readonly RelationalQueryCompilationContext _queryCompilationContext;
+#if !BLUETUSK_EF8_OR_GREATER
+    private readonly RelationalSqlTranslatingExpressionVisitor _legacySqlTranslator;
+#endif
     private readonly IRelationalTypeMappingSource _typeMappingSource;
+#if !BLUETUSK_EF10_OR_GREATER
+    private readonly ISqlExpressionFactory _sqlExpressionFactory;
+#endif
 
     public BlueTuskQueryableMethodTranslatingExpressionVisitor(
         QueryableMethodTranslatingExpressionVisitorDependencies dependencies,
         RelationalQueryableMethodTranslatingExpressionVisitorDependencies relationalDependencies,
-        RelationalQueryCompilationContext queryCompilationContext)
+        RelationalQueryCompilationContext queryCompilationContext
+#if !BLUETUSK_EF7_OR_GREATER
+        , IRelationalTypeMappingSource typeMappingSource
+#endif
+    )
         : base(dependencies, relationalDependencies, queryCompilationContext)
     {
         _queryCompilationContext = queryCompilationContext;
+#if BLUETUSK_EF7_OR_GREATER
         _typeMappingSource = relationalDependencies.TypeMappingSource;
+#else
+        _typeMappingSource = typeMappingSource;
+#endif
+#if !BLUETUSK_EF8_OR_GREATER
+        _legacySqlTranslator = relationalDependencies.RelationalSqlTranslatingExpressionVisitorFactory.Create(queryCompilationContext, this);
+#endif
+#if !BLUETUSK_EF10_OR_GREATER
+        _sqlExpressionFactory = relationalDependencies.SqlExpressionFactory;
+#endif
     }
 
     private BlueTuskQueryableMethodTranslatingExpressionVisitor(
@@ -30,6 +52,15 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
     {
         _queryCompilationContext = parentVisitor._queryCompilationContext;
         _typeMappingSource = parentVisitor._typeMappingSource;
+#if !BLUETUSK_EF8_OR_GREATER
+        _legacySqlTranslator = RelationalDependencies.RelationalSqlTranslatingExpressionVisitorFactory.Create(_queryCompilationContext, this);
+#endif
+#if !BLUETUSK_EF9_OR_GREATER
+        _legacyAliases = parentVisitor._legacyAliases;
+#endif
+#if !BLUETUSK_EF10_OR_GREATER
+        _sqlExpressionFactory = parentVisitor._sqlExpressionFactory;
+#endif
     }
 
     protected override QueryableMethodTranslatingExpressionVisitor CreateSubqueryVisitor()
@@ -37,6 +68,12 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
     {
+#if BLUETUSK_EF8
+        if (TranslateLegacyJsonCollection(methodCallExpression) is { } jsonCollection)
+        {
+            return jsonCollection;
+        }
+#endif
         if (methodCallExpression.Method.DeclaringType != typeof(BlueTuskQueryableExtensions))
         {
             return base.VisitMethodCall(methodCallExpression);
@@ -45,7 +82,11 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         if (Visit(methodCallExpression.Arguments[0]) is not ShapedQueryExpression source
             || source.QueryExpression is not SelectExpression selectExpression)
         {
+#if BLUETUSK_EF6_OR_GREATER
             return QueryCompilationContext.NotTranslatedExpression;
+#else
+            return base.VisitMethodCall(methodCallExpression);
+#endif
         }
 
         return methodCallExpression.Method.Name switch
@@ -179,14 +220,25 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         IReadOnlyList<ExecuteUpdateSetter> setters)
     {
 #pragma warning disable EF1001 // Provider translation reuses EF's canonical ExecuteUpdate setter translator.
+#if BLUETUSK_EF11_OR_GREATER
+        var translatedSetters = TranslateSetters(source, setters, out var targetTable);
+#else
+#if BLUETUSK_EF10_OR_GREATER
         var settersTranslated = TryTranslateSetters(
+#else
+        var settersTranslated = TryTranslateReturningSetters(
+#endif
             source,
             setters,
             out var translatedSetters,
             out var targetTable);
+#endif
 #pragma warning restore EF1001
-        if (!settersTranslated
-            || targetTable is not TableExpression table
+        if (
+#if !BLUETUSK_EF11_OR_GREATER
+            !settersTranslated ||
+#endif
+            targetTable is not TableExpression table
             || selectExpression.Tables is not [TableExpression sourceTable]
             || table.Name != sourceTable.Name
             || table.Schema != sourceTable.Schema
@@ -202,6 +254,46 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             BlueTuskReturningModificationKind.Update,
             translatedSetters!);
     }
+
+#if !BLUETUSK_EF10_OR_GREATER
+    private bool TryTranslateReturningSetters(
+        ShapedQueryExpression source,
+        IReadOnlyList<ExecuteUpdateSetter> setters,
+        out IReadOnlyList<ColumnValueSetter>? translatedSetters,
+        out TableExpressionBase? targetTable)
+    {
+        translatedSetters = null;
+        targetTable = null;
+        if (source.QueryExpression is not SelectExpression { Tables: [TableExpression table] })
+        {
+            return false;
+        }
+
+        var result = new List<ColumnValueSetter>(setters.Count);
+        foreach (var setter in setters)
+        {
+            if (TranslateLambdaExpression(source, setter.PropertySelector) is not ColumnExpression column
+                || column.GetBlueTuskTableAlias() != table.Alias)
+            {
+                return false;
+            }
+
+            var value = setter.ValueExpression is LambdaExpression lambda
+                ? TranslateLambdaExpression(source, lambda)
+                : TranslateUntypedExpression(setter.ValueExpression);
+            if (value is null)
+            {
+                return false;
+            }
+
+            result.Add(new ColumnValueSetter(column, _sqlExpressionFactory.ApplyTypeMapping(value, column.TypeMapping)));
+        }
+
+        translatedSetters = result;
+        targetTable = table;
+        return true;
+    }
+#endif
 
     private ShapedQueryExpression TranslateReturningModification(
         ShapedQueryExpression source,
@@ -243,15 +335,30 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 
     protected override Expression VisitExtension(Expression extensionExpression)
     {
+#pragma warning disable EF1001 // Use EF's relational FromSql shaper for typed graph projections.
+        if (extensionExpression is BlueTuskGraphQueryRootExpression graph)
+        {
+            return base.VisitExtension(new FromSqlQueryRootExpression(
+                graph.EntityType, graph.Sql, graph.CreateSqlArguments()));
+        }
+#pragma warning restore EF1001
+
         if (extensionExpression is BlueTuskSetReturningFunctionQueryRootExpression function)
         {
-            return TranslateSetReturningFunction(function) ?? base.VisitExtension(extensionExpression);
+            var result = TranslateSetReturningFunction(function);
+#if !BLUETUSK_EF7_OR_GREATER
+            result = function.WrapResult(result);
+#endif
+            return result ?? base.VisitExtension(extensionExpression);
         }
 
         if (extensionExpression is BlueTuskRecordSetReturningFunctionQueryRootExpression recordFunction)
         {
-            return TranslateRecordSetReturningFunction(recordFunction)
-                ?? base.VisitExtension(extensionExpression);
+            var result = TranslateRecordSetReturningFunction(recordFunction);
+#if !BLUETUSK_EF7_OR_GREATER
+            result = recordFunction.WrapResult(result);
+#endif
+            return result ?? base.VisitExtension(extensionExpression);
         }
 
         if (extensionExpression is BlueTuskJsonToRecordsetQueryRootExpression jsonRecordset)
@@ -307,7 +414,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             var propertyValue = insertOnConflict.Values[index];
             if (insertOnConflict.EntityType.FindProperty(propertyValue.PropertyName) is not { } property
                 || relationalTable.FindColumn(property) is not { } column
-                || TranslateExpression(propertyValue.Value, applyDefaultTypeMapping: false) is not { } value)
+                || TranslateUntypedExpression(propertyValue.Value) is not { } value)
             {
                 throw new InvalidOperationException(
                     $"PostgreSQL INSERT ON CONFLICT value for mapped property '{propertyValue.PropertyName}' could not be translated from expression '{propertyValue.Value}'.");
@@ -317,7 +424,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 column.Name,
                 RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
                     value,
-                    column.StoreTypeMapping));
+                    column.GetBlueTuskStoreTypeMapping()));
         }
 
         var conflictColumns = GetInsertColumns(
@@ -485,8 +592,8 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         if (!string.Equals(
-                key.StoreTypeMapping.StoreType,
-                parentKey.StoreTypeMapping.StoreType,
+                key.GetBlueTuskStoreTypeMapping().StoreType,
+                parentKey.GetBlueTuskStoreTypeMapping().StoreType,
                 StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
@@ -530,13 +637,27 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         var tables = selectExpression.Tables.ToArray();
         tables[0] = tables[0].AddAnnotation(name, value);
 #pragma warning disable EF1001 // Provider query annotations require replacing the relational table node.
+#if BLUETUSK_EF10_OR_GREATER
         selectExpression.SetTables(tables);
+#else
+        var mutableTables = (List<TableExpressionBase>)selectExpression.Tables;
+        for (var index = 0; index < tables.Length; index++)
+        {
+            mutableTables[index] = tables[index];
+        }
+#endif
 #pragma warning restore EF1001
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     protected override ShapedQueryExpression TransformJsonQueryToTable(
         JsonQueryExpression jsonQueryExpression)
     {
+#if BLUETUSK_EF10_OR_GREATER
+        ITypeBase structuralType = jsonQueryExpression.StructuralType;
+#else
+        ITypeBase structuralType = jsonQueryExpression.EntityType;
+#endif
         var lastNamedPathSegment = jsonQueryExpression.Path.LastOrDefault(
             segment => segment.PropertyName is not null);
         var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias(
@@ -553,7 +674,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 
         var columnNames = new List<string>();
         var columnStoreTypes = new List<string?>();
-        foreach (var property in jsonQueryExpression.StructuralType.GetPropertiesInHierarchy())
+        foreach (var property in structuralType.GetPropertiesInHierarchy())
         {
             if (property.GetJsonPropertyName() is { } jsonPropertyName)
             {
@@ -562,7 +683,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             }
         }
 
-        switch (jsonQueryExpression.StructuralType)
+        switch (structuralType)
         {
             case IEntityType entityType:
                 foreach (var navigation in entityType.GetNavigationsInHierarchy()
@@ -622,7 +743,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         return new ShapedQueryExpression(
             selectExpression,
             new RelationalStructuralTypeShaperExpression(
-                jsonQueryExpression.StructuralType,
+                structuralType,
                 new ProjectionBindingExpression(
                     selectExpression,
                     new ProjectionMember(),
@@ -630,6 +751,9 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 nullable: false));
     }
 
+#endif
+
+#if BLUETUSK_EF9_OR_GREATER
     protected override ShapedQueryExpression? TranslatePrimitiveCollection(
         SqlExpression sqlExpression,
         IProperty? property,
@@ -734,11 +858,14 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         return new ShapedQueryExpression(selectExpression, shaperExpression);
     }
 
+#endif
+
+#if BLUETUSK_EF9_OR_GREATER
     private ShapedQueryExpression? TranslateSetReturningFunction(
         BlueTuskSetReturningFunctionQueryRootExpression function)
     {
         var elementTypeMapping = function.ResultStoreType is null
-            ? _typeMappingSource.FindMapping(function.ElementType, RelationalDependencies.Model)
+            ? _typeMappingSource.FindMapping(function.ElementType, _queryCompilationContext.Model)
             : _typeMappingSource.FindMapping(function.ResultStoreType);
         if (elementTypeMapping is null)
         {
@@ -825,6 +952,9 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 function.ElementType));
     }
 
+#endif
+
+#if BLUETUSK_EF9_OR_GREATER
     private ShapedQueryExpression? TranslateRecordSetReturningFunction(
         BlueTuskRecordSetReturningFunctionQueryRootExpression function)
     {
@@ -842,7 +972,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             var column = function.Columns[index];
             var columnClrType = Nullable.GetUnderlyingType(column.ClrType) ?? column.ClrType;
             var columnMapping = column.StoreType is null
-                ? _typeMappingSource.FindMapping(columnClrType, RelationalDependencies.Model)
+                ? _typeMappingSource.FindMapping(columnClrType, _queryCompilationContext.Model)
                 : _typeMappingSource.FindMapping(column.StoreType);
             if (columnMapping is null)
             {
@@ -918,6 +1048,8 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         return new ShapedQueryExpression(selectExpression, shaper);
     }
 
+#endif
+
     private SqlExpression[]? TranslateSetReturningArguments(
         IReadOnlyList<Expression> expressions,
         IReadOnlyList<string?> argumentStoreTypes)
@@ -926,16 +1058,14 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         for (var index = 0; index < expressions.Count; index++)
         {
             var argumentStoreType = argumentStoreTypes[index];
-            if (TranslateExpression(
-                    expressions[index],
-                    applyDefaultTypeMapping: false) is not { } argument)
+            if (TranslateUntypedExpression(expressions[index]) is not { } argument)
             {
                 throw new InvalidOperationException(
                     $"PostgreSQL set-returning argument {index + 1} could not be translated.");
             }
 
             var argumentTypeMapping = argumentStoreType is null
-                ? _typeMappingSource.FindMapping(expressions[index].Type, RelationalDependencies.Model)
+                ? FindStoreTypeMapping(expressions[index].Type)
                 : _typeMappingSource.FindMapping(argumentStoreType);
             if (argumentTypeMapping is null)
             {
@@ -952,6 +1082,21 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         return arguments;
     }
 
+    private RelationalTypeMapping? FindStoreTypeMapping(Type type) =>
+#if BLUETUSK_EF6_OR_GREATER
+        _typeMappingSource.FindMapping(type, _queryCompilationContext.Model);
+#else
+        _typeMappingSource.FindMapping(type);
+#endif
+
+    private SqlExpression? TranslateUntypedExpression(Expression expression) =>
+#if BLUETUSK_EF8_OR_GREATER
+        TranslateExpression(expression, applyDefaultTypeMapping: false);
+#else
+        _legacySqlTranslator.Visit(expression) as SqlExpression;
+#endif
+
+#if BLUETUSK_EF9_OR_GREATER
     private ShapedQueryExpression? TranslateJsonToRecordset(
         BlueTuskJsonToRecordsetQueryRootExpression function)
     {
@@ -982,7 +1127,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 return null;
             }
 
-            var typeMapping = column.StoreTypeMapping;
+            var typeMapping = column.GetBlueTuskStoreTypeMapping();
             propertyExpressions[property] = new ColumnExpression(
                 column.Name,
                 tableAlias,
@@ -1010,7 +1155,12 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         var projection = new StructuralTypeProjectionExpression(
             function.EntityType,
             propertyExpressions,
+#if BLUETUSK_EF11_OR_GREATER
+            new Dictionary<IComplexProperty, Expression>(),
+            tableMap: tableMap);
+#else
             tableMap);
+#endif
 
         var selectExpression = new SelectExpression(
             [tableExpression],
@@ -1029,6 +1179,8 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 nullable: false));
 #pragma warning restore EF1001
     }
+
+#endif
 
     private static Type? GetElementType(Type sequenceType)
     {

@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>ContinuousGraph</BlueTuskProductFamily>
-    <Description>Capability-guarded SQL/PGQ queries with bounded incremental maintenance and authoritative Live repair.</Description>
+    <Description>Portable PostgreSQL graph queries with bounded incremental maintenance and authoritative Live repair.</Description>
     <PackageTags>postgresql;sql-pgq;graph;live-query;realtime</PackageTags>
   </PropertyGroup>
 
   <Import Project="..\..\eng\versions\ContinuousGraph.props" />
+  <Import Project="..\..\eng\EntityFrameworkCore.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
@@ -14,5 +16,10 @@
     <ProjectReference Include="..\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
     <ProjectReference Include="..\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

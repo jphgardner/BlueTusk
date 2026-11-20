@@ -8,7 +8,7 @@ public readonly record struct BlueTuskPoint(double X, double Y)
 {
     public static BlueTuskPoint Parse(string value) => BlueTuskGeometricText.ParsePoint(value);
 
-    public override string ToString() => string.Create(
+    public override string ToString() => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"({X:R},{Y:R})");
 }
@@ -39,7 +39,7 @@ public readonly record struct BlueTuskLine
         return new BlueTuskLine(components[0], components[1], components[2]);
     }
 
-    public override string ToString() => string.Create(
+    public override string ToString() => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"{{{A:R},{B:R},{C:R}}}");
 }
@@ -78,7 +78,7 @@ public readonly record struct BlueTuskBox
 
     public static BlueTuskBox Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var points = BlueTuskGeometricText.ParsePointSequence(value.AsSpan().Trim());
         if (points.Length != 2)
         {
@@ -97,7 +97,7 @@ public sealed class BlueTuskPath : IReadOnlyList<BlueTuskPoint>, IEquatable<Blue
 
     public BlueTuskPath(IEnumerable<BlueTuskPoint> points, bool isClosed)
     {
-        ArgumentNullException.ThrowIfNull(points);
+        BlueTuskGuard.NotNull(points);
         _points = points.ToArray();
         if (_points.Length == 0)
         {
@@ -115,7 +115,7 @@ public sealed class BlueTuskPath : IReadOnlyList<BlueTuskPoint>, IEquatable<Blue
 
     public static BlueTuskPath Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Length < 2)
         {
@@ -165,7 +165,7 @@ public sealed class BlueTuskPolygon : IReadOnlyList<BlueTuskPoint>, IEquatable<B
 
     public BlueTuskPolygon(IEnumerable<BlueTuskPoint> points)
     {
-        ArgumentNullException.ThrowIfNull(points);
+        BlueTuskGuard.NotNull(points);
         _points = points.ToArray();
         if (_points.Length == 0)
         {
@@ -179,7 +179,7 @@ public sealed class BlueTuskPolygon : IReadOnlyList<BlueTuskPoint>, IEquatable<B
 
     public static BlueTuskPolygon Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Length < 2 || text[0] != '(' || text[^1] != ')')
         {
@@ -232,7 +232,7 @@ public readonly record struct BlueTuskCircle
 
     public static BlueTuskCircle Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Length < 6 || text[0] != '<' || text[^1] != '>')
         {
@@ -250,7 +250,7 @@ public readonly record struct BlueTuskCircle
         return new BlueTuskCircle(center, radius);
     }
 
-    public override string ToString() => string.Create(
+    public override string ToString() => BlueTuskRuntime.Format(
         CultureInfo.InvariantCulture,
         $"<{Center},{Radius:R}>");
 }
@@ -259,7 +259,7 @@ internal static class BlueTuskGeometricText
 {
     public static BlueTuskPoint ParsePoint(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return ParsePoint(value.AsSpan());
     }
 
@@ -285,7 +285,7 @@ internal static class BlueTuskGeometricText
 
     public static double[] ParseScalars(string value, char open, char close, int count)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Length < 2 || text[0] != open || text[^1] != close)
         {
@@ -323,7 +323,7 @@ internal static class BlueTuskGeometricText
 
     public static BlueTuskPoint[] ParsePointList(string value, char open, char close)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         if (text.Length < 2 || text[0] != open || text[^1] != close)
         {

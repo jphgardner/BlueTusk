@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: "41 4 * * 2"
   workflow_dispatch:
+    inputs:
+      submit_nuget_dependencies:
+        description: Restore the exact candidate and submit its NuGet dependency graph
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -48,3 +53,42 @@ jobs:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: low
+
+  submit-nuget-dependencies:
+    name: Submit candidate NuGet dependencies
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.submit_nuget_dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Stage the candidate package feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+      - name: Restore and verify dependency inputs
+        shell: pwsh
+        run: |
+          dotnet restore BlueTusk.slnx
+          if ($LASTEXITCODE -ne 0) { throw 'The repository NuGet restore failed.' }
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            --configfile eng/nuget/applications-candidate.config `
+            --packages artifacts/application-nuget-cache `
+            --force-evaluate `
+            --no-http-cache
+          if ($LASTEXITCODE -ne 0) { throw 'The application candidate restore failed.' }
+          ./eng/verify-application-candidate-restore.ps1
+      - name: Submit the resolved NuGet snapshot
+        uses: advanced-security/component-detection-dependency-submission-action@a02aeda7a175ad4dd38a13c4d3ff2df9da8f2cf0 # v0.2.0
+        with:
+          detectorsCategories: NuGet
+          directoryExclusionList: artifacts
+          fail-on-empty: true
+          correlator: bluetusk-nuget

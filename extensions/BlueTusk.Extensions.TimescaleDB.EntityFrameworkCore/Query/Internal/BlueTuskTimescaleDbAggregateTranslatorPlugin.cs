@@ -6,6 +6,12 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
+#if !BLUETUSK_EF7_OR_GREATER
+using BlueTusk.EntityFrameworkCore.Query.Internal;
+using IAggregateMethodCallTranslator = BlueTusk.EntityFrameworkCore.Query.Internal.IBlueTuskLegacyAggregateTranslator;
+using IAggregateMethodCallTranslatorPlugin = BlueTusk.EntityFrameworkCore.Query.Internal.IBlueTuskLegacyAggregateTranslatorPlugin;
+#pragma warning disable EF1001 // BlueTusk's legacy provider and extension are versioned together.
+#endif
 
 namespace BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Query.Internal;
 
@@ -34,6 +40,13 @@ internal sealed class BlueTuskTimescaleDbAggregateTranslator(
     string schema)
     : IAggregateMethodCallTranslator
 {
+#if !BLUETUSK_EF7_OR_GREATER
+    public bool CanTranslate(MethodInfo method) => method.DeclaringType == typeof(BlueTuskTimescaleDbFunctionsExtensions)
+        && method.Name is nameof(BlueTuskTimescaleDbFunctionsExtensions.TimescaleFirst)
+            or nameof(BlueTuskTimescaleDbFunctionsExtensions.TimescaleLast)
+            or nameof(BlueTuskTimescaleDbFunctionsExtensions.TimescaleHistogram);
+#endif
+
     public SqlExpression? Translate(
         MethodInfo method,
         EnumerableExpression source,

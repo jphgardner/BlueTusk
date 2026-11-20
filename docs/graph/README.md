@@ -1,115 +1,81 @@
-# Query a PostgreSQL property graph
+# Query a property graph
 
-> **Preview, not part of 1.1.0.** Graph needs a PostgreSQL server that
-> provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this
-> feature waits for a PostgreSQL release that ships it. Do not use it in
-> production. See [product status](../getting-started/install.md#product-status).
+Map existing PostgreSQL tables as vertices and edges. With the default
+BlueTusk Graphs compatibility mode, EF Core translates a typed graph pattern
+into parameterized joins over those tables. Use PostgreSQL 15–18 and a
+BlueTusk 1.2.
 
-PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables
-and query relationships with `GRAPH_TABLE`. BlueTusk supports raw parameterized
-SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query
-builder.
+Bounded neighbor, reachability, and shortest-path operations prefer the
+[BlueTusk server engine](engine.md) when a compatible extension and a matching
+graph registration are available. They use portable traversal when those
+prerequisites are unavailable. `Match(...).Select(...)` composes over
+relational joins independently of the traversal engine.
 
-This feature requires the server to report SQL/PGQ capability. Do not enable it
-from a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19
-Beta 4. This is preview functionality on the pinned historical Beta 3 fixture,
-not a production PostgreSQL 19 feature. Keep it on the separate
-[Graph release track](../releases/release-tracks.md); other products do not wait
-for its future availability.
+## 1. Map existing tables
 
-## Run the complete example
-
-```powershell
-docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
-$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project samples/BlueTusk.Samples.Graph
-```
-
-The sample creates temporary tables and a temporary graph, queries one edge,
-prints `Ada knows Grace`, and removes the graph. TLS is disabled only for the
-isolated local container.
-
-## 1. Check capability
+Configure normal EF table mappings first. This example uses `people` as
+vertices and `friendships` as directed edges, with a foreign key at each
+endpoint.
 
 ```csharp
-await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
-await using var connection = await dataSource.OpenConnectionAsync();
-
-if (connection.ServerCapabilities is not { SupportsSqlPgq: true })
-    throw new NotSupportedException("This PostgreSQL server does not expose SQL/PGQ.");
-```
-
-BlueTusk probes PostgreSQL's documented information-schema graph views. A major
-version check is not sufficient.
-
-## 2. Define a graph over relational tables
-
-```sql
-CREATE PROPERTY GRAPH people_graph
-    VERTEX TABLES (app.people KEY (id) LABEL person)
-    EDGE TABLES (
-        app.knows KEY (id)
-            SOURCE KEY (source_id) REFERENCES app.people (id)
-            DESTINATION KEY (destination_id) REFERENCES app.people (id)
-            LABEL knows);
-```
-
-The relational tables remain authoritative. A property graph defines how their
-keys, labels, endpoints, and properties form a graph view.
-
-## 3. Query it safely
-
-```csharp
-await using var command = connection.CreateCommand();
-command.CommandText =
-    """
-    SELECT source_name, destination_name
-    FROM GRAPH_TABLE (
-        people_graph
-        MATCH (source IS person)-[IS knows]->(destination IS person)
-        COLUMNS (
-            source.name AS source_name,
-            destination.name AS destination_name))
-    WHERE source_name = @name
-    """;
-command.Parameters.Add(new BlueTuskParameter<string>("Ada")
+modelBuilder.HasPropertyGraph("social", graph =>
 {
-    ParameterName = "name",
-});
+    graph.Vertex<Person>("people", vertex => vertex
+        .HasLabel("person")
+        .HasKey(x => x.Id)
+        .Properties(x => new { x.Id, x.Name }));
 
-await using var reader = await command.ExecuteReaderAsync();
-while (await reader.ReadAsync())
-    Console.WriteLine($"{reader.GetString(0)} knows {reader.GetString(1)}");
+    graph.Edge<Friendship>("friendships", edge => edge
+        .HasLabel("follows")
+        .HasKey(x => x.Id)
+        .Properties(x => new { x.Id })
+        .HasSource<Person>(x => x.FromPersonId, x => x.Id)
+        .HasDestination<Person>(x => x.ToPersonId, x => x.Id));
+});
 ```
 
-Parameters are bound outside the SQL text. Graph names and labels are schema
-identifiers and should come from trusted application configuration, not user
-input.
+Migrate the underlying tables and endpoint indexes as usual. Portable graph
+mappings are stored in EF metadata, and their migrations create only
+relational database objects.
 
-## 4. Inspect an existing graph
+## 2. Query a directed hop
 
 ```csharp
-var inspector = new BlueTuskPropertyGraphSchemaInspector(dataSource);
-var graphs = await inspector.InspectAsync(
-    new BlueTuskPropertyGraphInspectionOptions
-    {
-        Schema = "app",
-        Name = "people_graph",
-    },
-    cancellationToken);
+var matches = await db.PropertyGraph("social")
+    .Match(pattern => pattern
+        .Vertex<Person>("source", person => person.Id == personId)
+        .Outgoing<Friendship>("follow")
+        .Vertex<Person>("target"))
+    .Select<FollowMatch>(projection => projection
+        .Property<Friendship, long>("follow", edge => edge.Id, row => row.EdgeId)
+        .Property<Person, string>("target", person => person.Name, row => row.Name))
+    .OrderBy(row => row.EdgeId)
+    .Take(50)
+    .ToListAsync(cancellationToken);
 ```
 
-Use discovery for diagnostics, tooling, or validation. Define production graph
-changes through reviewed migrations.
+Define `FollowMatch` as a class with writable `long EdgeId` and `string Name`
+properties. You can compose ordinary EF filtering, ordering, and limits on
+the projected rows. Each matching walk produces a row. Parallel edges can
+therefore return the same target more than once.
 
-## What to use next
+## 3. Index the direction you traverse
 
-- Use EF graph configuration when the application owns graph migrations.
-- Use the typed EF graph builder when you need compile-time entity/property
-  selection and a supported bounded pattern.
-- Use [Continuous Graph](../continuous-graph/README.md) when a bounded graph
-  result must remain current after committed changes.
+Index the edge’s source columns for outgoing queries and destination columns
+for incoming queries. Keep both indexes for undirected traversal. Index
+composite endpoint keys together in the declared key order. Use an anchor
+predicate, a bounded path, and a timeout for high-degree vertices. Check
+`EXPLAIN (ANALYZE, BUFFERS)` against representative data before relying on a
+particular plan.
 
-The [SQL/PGQ reference](reference.md) documents EF configuration, migrations,
-reverse engineering, typed matching, the exact supported query subset, and
-the PostgreSQL 19 verification boundary.
+The database role needs access to the mapped vertex and edge tables. Apply
+tenant restrictions through PostgreSQL RLS or explicit predicates in the graph
+query. EF filters on a source entity do not automatically constrain the
+vertices and edges inside the generated SQL.
+
+## Choose the next operation
+
+- Use the [Graph reference](reference.md) for bounded patterns, composite keys, native SQL/PGQ, and migration compatibility.
+- Use [bounded traversals](traversals.md) for neighbors, reachability, and shortest paths.
+- Use [Continuous Graph](../continuous-graph/README.md) for authorized results that refresh after relevant commits.
+- Run the [Graph sample](../../samples/BlueTusk.Samples.Graph/) from a checkout to see a complete model and query.

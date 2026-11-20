@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Net.Sockets;
 using BlueTusk.Transport;
 
 namespace BlueTusk.Protocol;
@@ -11,8 +12,8 @@ public static class BlueTuskCancellationChannel
         BlueTuskTransportOptions transportOptions,
         BlueTuskBackendKeyData backendKeyData)
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(transportOptions);
+        BlueTuskGuard.NotNull(endpoint);
+        BlueTuskGuard.NotNull(transportOptions);
         var output = CreateRequest(backendKeyData);
         using var transport = new BlueTuskSocketTransport();
         transport.Connect(endpoint, transportOptions);
@@ -27,8 +28,8 @@ public static class BlueTuskCancellationChannel
         BlueTuskBackendKeyData backendKeyData,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(transportOptions);
+        BlueTuskGuard.NotNull(endpoint);
+        BlueTuskGuard.NotNull(transportOptions);
         var output = CreateRequest(backendKeyData);
         await using var transport = new BlueTuskSocketTransport();
         await transport.ConnectAsync(endpoint, transportOptions, cancellationToken).ConfigureAwait(false);
@@ -40,9 +41,16 @@ public static class BlueTuskCancellationChannel
     private static void WaitForServerClose(BlueTuskSocketTransport transport)
     {
         Span<byte> response = stackalloc byte[1];
-        while (transport.Read(response) != 0)
+        try
         {
-            // PostgreSQL sends no response and closes the one-shot cancellation connection.
+            while (transport.Read(response) != 0)
+            {
+                // PostgreSQL sends no response and closes the one-shot cancellation connection.
+            }
+        }
+        catch (SocketException exception) when (exception.SocketErrorCode == SocketError.ConnectionReset)
+        {
+            // The server can reset this connection after consuming the cancellation request.
         }
     }
 
@@ -51,9 +59,16 @@ public static class BlueTuskCancellationChannel
         CancellationToken cancellationToken)
     {
         var response = new byte[1];
-        while (await transport.ReadAsync(response, cancellationToken).ConfigureAwait(false) != 0)
+        try
         {
-            // PostgreSQL sends no response and closes the one-shot cancellation connection.
+            while (await transport.ReadAsync(response, cancellationToken).ConfigureAwait(false) != 0)
+            {
+                // PostgreSQL sends no response and closes the one-shot cancellation connection.
+            }
+        }
+        catch (SocketException exception) when (exception.SocketErrorCode == SocketError.ConnectionReset)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
         }
     }
 

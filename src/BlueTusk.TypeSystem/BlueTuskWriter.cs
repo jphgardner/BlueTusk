@@ -47,7 +47,7 @@ public ref struct BlueTuskWriter
 
     public void WriteInt32BigEndianAt(int offset, int value)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        BlueTuskGuard.NotNegative(offset);
         if (offset > _offset - sizeof(int))
         {
             throw new ArgumentOutOfRangeException(
@@ -92,7 +92,7 @@ public ref struct BlueTuskWriter
 
     public void WriteUtf8(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var count = StrictUtf8.GetByteCount(value);
         EnsureRemaining(count);
         _offset += StrictUtf8.GetBytes(value, _buffer[_offset..]);

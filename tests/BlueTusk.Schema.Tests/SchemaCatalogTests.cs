@@ -67,7 +67,7 @@ public sealed class SchemaCatalogTests
         Assert.True(SchemaCatalogCompatibility.Compare(before, removed).HasIncompatibleChanges);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Live_enum_domain_routine_acl_and_publication_drift_share_one_repeatable_read_snapshot()
     {
         await using var dataSource = BlueTuskDataSource.Create(Connection());
@@ -125,7 +125,7 @@ public sealed class SchemaCatalogTests
         finally { await Execute(dataSource, $"DROP PUBLICATION IF EXISTS \"{publication}\"; DROP SCHEMA IF EXISTS \"{schema}\" CASCADE"); }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Live_limits_reject_large_bodies_before_wire_allocation_and_leave_pool_healthy()
     {
         await using var dataSource = BlueTuskDataSource.Create(Connection());
@@ -189,7 +189,7 @@ public sealed class SchemaCatalogTests
             new() { Relations = new() { MaximumStringBytes = decodedBytes - 1 } }));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Empty_acl_security_definer_and_publication_owner_changes_alter_fingerprints()
     {
         await using var source = BlueTuskDataSource.Create(Connection());
@@ -223,7 +223,7 @@ public sealed class SchemaCatalogTests
         { await Execute(source, $"DROP PUBLICATION IF EXISTS \"{publication}\"; DROP SCHEMA IF EXISTS \"{schema}\" CASCADE; DROP ROLE IF EXISTS \"{role}\""); }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Latin1_catalogue_and_nested_relation_admission_bound_negotiated_UTF8_bytes()
     {
         await using var administrator = BlueTuskDataSource.Create(Connection());
@@ -258,7 +258,7 @@ public sealed class SchemaCatalogTests
     private static async Task Execute(BlueTuskDataSource source, string sql)
     { await using var command = source.CreateCommand(sql); await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken); }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Publication_schema_all_table_and_partition_root_contracts_are_scoped_MVCC_rows()
     {
         await using var source = BlueTuskDataSource.Create(Connection());
@@ -289,7 +289,7 @@ public sealed class SchemaCatalogTests
         { await Execute(source, $"DROP PUBLICATION IF EXISTS \"{explicitPublication}\",\"{schemaPublication}\",\"{allPublication}\"; DROP SCHEMA IF EXISTS \"{schema}\" CASCADE"); }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Transient_publication_add_drop_never_returns_intermediate_cached_membership()
     {
         await using var source = BlueTuskDataSource.Create(Connection());

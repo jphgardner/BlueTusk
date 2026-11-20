@@ -3,10 +3,10 @@ using System.Diagnostics.Metrics;
 
 namespace BlueTusk.Streams.Tests;
 
-[CollectionDefinition(DisableParallelization = true)]
+[CollectionDefinition(nameof(SpoolTelemetryIsolation), DisableParallelization = true)]
 public sealed class SpoolTelemetryIsolation;
 
-[Collection(typeof(SpoolTelemetryIsolation))]
+[Collection(nameof(SpoolTelemetryIsolation))]
 public sealed class SpoolTelemetryTests
 {
     [Theory]
@@ -35,7 +35,7 @@ public sealed class SpoolTelemetryTests
             if (throwListener) { throw new InvalidOperationException("Injected listener failure."); }
         });
         listener.Start();
-        var directory = Directory.CreateTempSubdirectory("bluetusk-spool-metrics-").FullName;
+        var directory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"bluetusk-spool-metrics-{Guid.NewGuid():N}")).FullName;
         try
         {
             var spool = new FileTransactionSpool(new FileTransactionSpoolOptions { DirectoryPath = directory });

@@ -24,7 +24,7 @@ public sealed class BlueTuskInt16VectorCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Binary)
         {
             BlueTuskCatalogueVectorBinary.WriteHeader(
@@ -145,7 +145,7 @@ public sealed class BlueTuskObjectIdentifierVectorCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (format == BlueTuskDataFormat.Binary)
         {
             BlueTuskCatalogueVectorBinary.WriteHeader(

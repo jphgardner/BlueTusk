@@ -33,7 +33,3 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_system() TO schema_capture_role;
 The tested PostgreSQL 15–18 fixtures already allow this function through the default PUBLIC permission. An operator who revoked that permission must grant the function explicitly to the capture role. The helper does not install functions, grant privileges or modify catalogue settings. Its other reads require SELECT on the listed catalogue key/version columns and EXECUTE on the built-in identity functions; the tested fixtures expose those ordinary catalogue reads publicly.
 
 ## Evidence
-
-`PostgreSqlCatalogAttestationTests` exercises actual PostgreSQL connections in uniquely named disposable databases. It covers current-cache routine drift, function replace/revert, shared-role cache rename/revert, narrow ordinary-role permissions, borrowed transaction settings/ownership, wrong-database verification, metadata admission, cancellation and a saturated pool deadline. Selected measured TRX artifacts are kept under `docs/schema/evidence/attestation`; fresh run output belongs under ignored `artifacts/schema-attestation`.
-
-These checks establish the exercised consistency boundaries. They do not qualify every PostgreSQL deparser dependency, every failover/router topology or production endurance.

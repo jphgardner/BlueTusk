@@ -36,8 +36,6 @@ Set `Transaction` to enlist the complete protocol cycle in the connection's acti
 
 ## Several statements in one command
 
-> **Note:** New in 1.1.0. Not available in 1.0.0 or 1.1.0-rc.1.
-
 A buffered `BlueTuskCommand` also accepts ordinary parameterized,
 semicolon-separated statements. EF Core uses this path for its write batches:
 

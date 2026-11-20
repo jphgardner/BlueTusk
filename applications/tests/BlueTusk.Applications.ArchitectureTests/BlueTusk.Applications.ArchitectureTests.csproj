@@ -1,15 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <PropertyGroup Condition="'$(BlueTuskCorePackagesOnly)' == 'true'">
+    <DefineConstants>$(DefineConstants);BLUETUSK_CORE_PACKAGES_ONLY</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\OrderOperations\BlueTusk.OrderOperations.Domain\BlueTusk.OrderOperations.Domain.csproj" />
     <ProjectReference Include="..\..\src\OrderOperations\BlueTusk.OrderOperations.Application\BlueTusk.OrderOperations.Application.csproj" />
     <ProjectReference Include="..\..\src\OrderOperations\BlueTusk.OrderOperations.Infrastructure\BlueTusk.OrderOperations.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BlueTuskCorePackagesOnly)' != 'true'">
     <ProjectReference Include="..\..\src\ServiceTopology\BlueTusk.ServiceTopology.Domain\BlueTusk.ServiceTopology.Domain.csproj" />
     <ProjectReference Include="..\..\src\ServiceTopology\BlueTusk.ServiceTopology.Application\BlueTusk.ServiceTopology.Application.csproj" />
     <ProjectReference Include="..\..\src\ServiceTopology\BlueTusk.ServiceTopology.Infrastructure\BlueTusk.ServiceTopology.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FraudInvestigation\BlueTusk.FraudInvestigation.Domain\BlueTusk.FraudInvestigation.Domain.csproj" />
     <ProjectReference Include="..\..\src\FraudInvestigation\BlueTusk.FraudInvestigation.Application\BlueTusk.FraudInvestigation.Application.csproj" />
     <ProjectReference Include="..\..\src\FraudInvestigation\BlueTusk.FraudInvestigation.Infrastructure\BlueTusk.FraudInvestigation.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />

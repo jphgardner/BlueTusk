@@ -12,7 +12,7 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         BlueTuskPublicationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskPublicationMetadata.Validate(definition);
         var operation = new CreatePublicationOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
@@ -30,7 +30,7 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         BlueTuskPublicationDefinition oldDefinition,
         BlueTuskPublicationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskPublicationMetadata.Validate(oldDefinition);
         BlueTuskPublicationMetadata.Validate(definition);
         var operation = new AlterPublicationOperation
@@ -56,8 +56,8 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropPublicationOperation { Name = name, IsDestructiveChange = true };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<DropPublicationOperation>(operation);
@@ -68,9 +68,9 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         string name,
         string newName)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenamePublicationOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<RenamePublicationOperation>(operation);

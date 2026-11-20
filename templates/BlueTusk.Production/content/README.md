@@ -23,12 +23,29 @@ It is deliberately more than a hello-world sample.
 docker compose up -d
 dotnet tool install --global BlueTusk.Tool --version 1.1.0
 bluetusk doctor --connection "Host=localhost;Database=bluetusk_orders;Username=bluetusk;Password=local-development-only" --require-streams
+```
+
+Before migrating, set `ConnectionStrings__Primary` to the Orders database,
+`BlueTusk__Live__ResumeSigningKey` to a base64-encoded 32-byte secret, and
+`BlueTusk__Live__TenantConnectionStrings__<tenant>` to the connection for a
+tenant-specific read-only role protected by PostgreSQL row-level security.
+Then apply the Orders migration:
+
+```console
 dotnet run --project applications/src/OrderOperations/BlueTusk.OrderOperations.Api -- --migrate
 ```
 
-Then provide the production-hosting settings described in
-`applications/docs/order-operations-runbook.md`, run the API and Worker, and
-start the selected web client with `npm ci && npm run dev`.
+With the .NET EF CLI installed, use the Infrastructure project for both
+arguments when checking whether the Orders model has changed since the last
+migration. The Infrastructure project contains the design-time DbContext factory.
+
+```console
+dotnet ef migrations has-pending-model-changes --project applications/src/OrderOperations/BlueTusk.OrderOperations.Infrastructure --startup-project applications/src/OrderOperations/BlueTusk.OrderOperations.Infrastructure
+```
+
+Finish configuring authentication, run the API and Worker, and start the
+selected web client with `npm ci && npm run dev`. See
+`applications/docs/order-operations-runbook.md` for operational procedures.
 
 The Compose credentials are intentionally local-only. Kubernetes deployments
 must use external Secrets, immutable image digests, TLS, and the checked-in Helm

@@ -18,7 +18,7 @@ public sealed record ChangeSourceIdentity
         DatabaseName = RequireValue(databaseName, nameof(databaseName));
         SlotName = RequireValue(slotName, nameof(slotName));
         PublicationFingerprint = RequireValue(publicationFingerprint, nameof(publicationFingerprint));
-        Fingerprint = Convert.ToHexStringLower(
+        Fingerprint = BlueTuskRuntime.ToHexStringLower(
             SHA256.HashData(Encoding.UTF8.GetBytes(
                 string.Join('\n', SystemIdentifier, DatabaseName, SlotName, PublicationFingerprint))));
     }
@@ -35,7 +35,7 @@ public sealed record ChangeSourceIdentity
 
     private static string RequireValue(string value, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         return value;
     }
 }
@@ -78,8 +78,8 @@ public sealed class ChangeTable
         char replicaIdentity,
         ChangeColumn[] columns)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
 
         RelationId = relationId;
         Schema = schema;
@@ -153,7 +153,7 @@ public sealed class ChangeTable
         char replicaIdentity,
         ChangeColumn[] columns)
     {
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNull(columns);
         return new ChangeTable(relationId, schema, name, replicaIdentity, columns);
     }
 
@@ -161,7 +161,7 @@ public sealed class ChangeTable
 
     private static ChangeColumn[] MaterializeColumns(IEnumerable<ChangeColumn> columns)
     {
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNull(columns);
         return columns.ToArray();
     }
 }
@@ -235,7 +235,7 @@ public sealed class ChangeColumnValue : IEquatable<ChangeColumnValue>
 
     public static ChangeColumnValue DecodingFailure(ReadOnlySpan<byte> data, ChangeValueEncoding encoding, string error)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        BlueTuskGuard.NotNullOrWhiteSpace(error);
         return new ChangeColumnValue(ChangeColumnState.DecodingFailure, encoding, data, error);
     }
 
@@ -274,7 +274,7 @@ public sealed class ChangeRow : IReadOnlyList<ChangeColumnValue>
 
     private ChangeRow(ChangeTable table, ChangeColumnValue[] values)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         Table = table;
         if (values.Length != table.Columns.Count)
         {
@@ -301,13 +301,13 @@ public sealed class ChangeRow : IReadOnlyList<ChangeColumnValue>
 
     internal static ChangeRow CreateOwned(ChangeTable table, ChangeColumnValue[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         return new ChangeRow(table, values);
     }
 
     private static ChangeColumnValue[] MaterializeValues(IEnumerable<ChangeColumnValue> values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         return values.ToArray();
     }
 }
@@ -316,7 +316,7 @@ public sealed class ChangeRow<T>
 {
     public ChangeRow(ChangeRow columns, T? value, bool hasValue)
     {
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNull(columns);
         Columns = columns;
         Value = value;
         HasValue = hasValue;
@@ -335,9 +335,9 @@ public sealed class ChangedColumnSet
 
     public ChangedColumnSet(bool isExact, IEnumerable<int> ordinals)
     {
-        ArgumentNullException.ThrowIfNull(ordinals);
+        BlueTuskGuard.NotNull(ordinals);
         IsExact = isExact;
-        _ordinals = Array.AsReadOnly(ordinals.Distinct().Order().ToArray());
+        _ordinals = Array.AsReadOnly(ordinals.Distinct().OrderBy(static value => value).ToArray());
     }
 
     public bool IsExact { get; }

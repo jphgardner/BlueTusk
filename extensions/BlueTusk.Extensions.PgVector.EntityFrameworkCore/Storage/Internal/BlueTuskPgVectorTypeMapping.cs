@@ -66,6 +66,7 @@ internal sealed class BlueTuskPgVectorArrayTypeMapping<TValue> : RelationalTypeM
     where TValue : class
 {
     private readonly string _postgreSqlTypeName;
+    private readonly RelationalTypeMapping _arrayElementMapping;
 
     public BlueTuskPgVectorArrayTypeMapping(
         string schema,
@@ -74,20 +75,21 @@ internal sealed class BlueTuskPgVectorArrayTypeMapping<TValue> : RelationalTypeM
         string? storeType = null)
         : this(
             CreateParameters(schema, typeName, elementMapping, storeType),
-            $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]")
+            $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]", elementMapping)
     {
     }
 
     private BlueTuskPgVectorArrayTypeMapping(
         RelationalTypeMappingParameters parameters,
-        string postgreSqlTypeName)
+        string postgreSqlTypeName, RelationalTypeMapping elementMapping)
         : base(parameters)
     {
         _postgreSqlTypeName = postgreSqlTypeName;
+        _arrayElementMapping = elementMapping;
     }
 
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) =>
-        new BlueTuskPgVectorArrayTypeMapping<TValue>(parameters, _postgreSqlTypeName);
+        new BlueTuskPgVectorArrayTypeMapping<TValue>(parameters, _postgreSqlTypeName, _arrayElementMapping);
 
     protected override void ConfigureParameter(DbParameter parameter)
     {
@@ -109,7 +111,11 @@ internal sealed class BlueTuskPgVectorArrayTypeMapping<TValue> : RelationalTypeM
                 builder.Append(',');
             }
 
+#if BLUETUSK_EF8_OR_GREATER
             builder.Append(((RelationalTypeMapping)ElementTypeMapping!).GenerateSqlLiteral(values[index]));
+#else
+            builder.Append(_arrayElementMapping.GenerateSqlLiteral(values[index]));
+#endif
         }
 
         return builder.Append("]::").Append(StoreType).ToString();
@@ -129,8 +135,11 @@ internal sealed class BlueTuskPgVectorArrayTypeMapping<TValue> : RelationalTypeM
             new CoreTypeMappingParameters(
                 typeof(TValue[]),
                 comparer: comparer,
-                keyComparer: comparer,
-                elementMapping: elementMapping),
+                keyComparer: comparer
+#if NET8_0_OR_GREATER
+                , elementMapping: elementMapping
+#endif
+            ),
             storeType ?? $"{BlueTuskSqlIdentifier.Delimit(typeName, schema)}[]",
             StoreTypePostfix.None,
             System.Data.DbType.Object);

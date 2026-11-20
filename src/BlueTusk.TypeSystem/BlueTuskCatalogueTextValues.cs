@@ -5,7 +5,7 @@ public readonly record struct BlueTuskRefCursor
 {
     public BlueTuskRefCursor(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 
@@ -19,7 +19,7 @@ public readonly record struct BlueTuskNodeTree
 {
     public BlueTuskNodeTree(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 
@@ -33,7 +33,7 @@ public readonly record struct BlueTuskJsonPath
 {
     public BlueTuskJsonPath(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 
@@ -50,7 +50,7 @@ public readonly record struct BlueTuskAccessControlItem
 {
     public BlueTuskAccessControlItem(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 
@@ -66,7 +66,7 @@ public readonly record struct BlueTuskGistTextSearchVector
 {
     public BlueTuskGistTextSearchVector(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 

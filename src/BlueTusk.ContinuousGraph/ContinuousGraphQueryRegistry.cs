@@ -21,13 +21,13 @@ public sealed class ContinuousGraphQueryDescriptor
         int maximumResultCount,
         LiveQueryCapabilities capabilities)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
-        ArgumentException.ThrowIfNullOrWhiteSpace(graphName);
-        ArgumentNullException.ThrowIfNull(elementTableAliases);
-        ArgumentNullException.ThrowIfNull(dependencies);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(graphName);
+        BlueTuskGuard.NotNull(elementTableAliases);
+        BlueTuskGuard.NotNull(dependencies);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
         var aliases = elementTableAliases.Distinct(StringComparer.Ordinal).ToArray();
         var dependencyArray = dependencies.Distinct().ToArray();
         if (aliases.Length == 0 || dependencyArray.Length == 0)
@@ -76,7 +76,7 @@ public sealed class ContinuousGraphQueryRegistry
 
     public bool Register(ContinuousGraphQueryDescriptor descriptor)
     {
-        ArgumentNullException.ThrowIfNull(descriptor);
+        BlueTuskGuard.NotNull(descriptor);
         return _queries.TryAdd(descriptor.Fingerprint, descriptor);
     }
 
@@ -84,7 +84,7 @@ public sealed class ContinuousGraphQueryRegistry
         where TResult : class
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(plan);
+        BlueTuskGuard.NotNull(plan);
         return Register(new ContinuousGraphQueryDescriptor(
             plan.Name,
             plan.LivePlan.DatabaseIdentity,
@@ -99,7 +99,7 @@ public sealed class ContinuousGraphQueryRegistry
 
     public bool Unregister(string fingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint);
         return _queries.TryRemove(fingerprint, out _);
     }
 

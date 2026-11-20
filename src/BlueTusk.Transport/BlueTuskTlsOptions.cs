@@ -21,7 +21,7 @@ public sealed record BlueTuskTlsOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(TargetHost);
-        ArgumentNullException.ThrowIfNull(ClientCertificates);
+        BlueTuskGuard.NotNullOrWhiteSpace(TargetHost);
+        BlueTuskGuard.NotNull(ClientCertificates);
     }
 }

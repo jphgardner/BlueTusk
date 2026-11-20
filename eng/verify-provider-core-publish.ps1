@@ -122,7 +122,7 @@ foreach ($definition in $definitions)
     $files = @(Get-ChildItem -LiteralPath $publishDirectory -File -Recurse)
     $totalBytes = [long]($files | Measure-Object -Property Length -Sum).Sum
     $deployableFiles = @($files | Where-Object {
-            $_.Extension -notin @('.pdb', '.xml')
+            $_.Extension -notin @('.pdb', '.xml') -and $_.Name -cne "$executableName.dbg"
         })
     $deployableBytes = [long](
         $deployableFiles | Measure-Object -Property Length -Sum).Sum

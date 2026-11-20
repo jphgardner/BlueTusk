@@ -39,7 +39,7 @@ public static class BlueTuskTypeCatalogue
         BlueTuskTypeRegistry? configuredTypes = null,
         BlueTuskMoneyFormat? moneyFormat = null)
     {
-        ArgumentNullException.ThrowIfNull(catalogueTypes);
+        BlueTuskGuard.NotNull(catalogueTypes);
         var builder = new BlueTuskTypeRegistryBuilder();
         var descriptors = new Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor>();
         Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> deferredCodecs =
@@ -47,7 +47,7 @@ public static class BlueTuskTypeCatalogue
         var hasDiscoveredTypes = false;
         foreach (var catalogueType in catalogueTypes)
         {
-            ArgumentNullException.ThrowIfNull(catalogueType);
+            BlueTuskGuard.NotNull(catalogueType);
             hasDiscoveredTypes = true;
             var descriptor = CreateDescriptor(catalogueType);
             if (!descriptors.TryAdd(descriptor.Id, descriptor))
@@ -86,7 +86,7 @@ public static class BlueTuskTypeCatalogue
 
     public static BlueTuskTypeDescriptor CreateDescriptor(BlueTuskCatalogueType type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return new BlueTuskTypeDescriptor
         {
             Id = type.Id,

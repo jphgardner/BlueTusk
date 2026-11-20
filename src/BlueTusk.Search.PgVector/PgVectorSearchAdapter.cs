@@ -11,8 +11,8 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
 
     public PgVectorSearchAdapter(int dimensions, string extensionSchema = "public")
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(dimensions, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(dimensions, 16_000);
+        BlueTuskGuard.NotLessThan(dimensions, 1);
+        BlueTuskGuard.NotGreaterThan(dimensions, 16_000);
         _quotedExtensionSchema = Quote(extensionSchema);
         ExtensionSchema = extensionSchema;
         Dimensions = dimensions;
@@ -20,8 +20,8 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
 
     public string ExtensionSchema { get; }
     public int Dimensions { get; }
-    public string StorageContract => string.Create(CultureInfo.InvariantCulture, $"pgvector:cosine:{ExtensionSchema}:{Dimensions}:v1");
-    public string ColumnTypeSql => string.Create(CultureInfo.InvariantCulture, $"{_quotedExtensionSchema}.vector({Dimensions})");
+    public string StorageContract => BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"pgvector:cosine:{ExtensionSchema}:{Dimensions}:v1");
+    public string ColumnTypeSql => BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{_quotedExtensionSchema}.vector({Dimensions})");
 
     public string ParameterSql(string trustedParameterSql) => $"CAST({trustedParameterSql} AS {_quotedExtensionSchema}.vector)";
 
@@ -64,8 +64,8 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
 
     public async ValueTask ValidateInstallationAsync(DbConnection connection, DbTransaction transaction, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNull(transaction);
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = "SELECT n.nspname,e.extversion FROM pg_extension e JOIN pg_namespace n ON n.oid=e.extnamespace WHERE e.extname='vector'";
@@ -81,16 +81,16 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
     /// <summary>Builds an optional HNSW index during deployment. Retrieval stays exact unless the caller explicitly selects approximate search.</summary>
     public async ValueTask CreateHnswIndexAsync(DbDataSource source, string searchSchema, string indexName = "chunks_embedding_cosine", int connectionsPerLayer = 16, int constructionCandidates = 64, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (Dimensions > 2000)
         {
             throw new InvalidOperationException("pgvector HNSW vector indexes support at most 2000 dimensions; use a different storage adapter for larger indexed embeddings.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(connectionsPerLayer, 2);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(connectionsPerLayer, 100);
-        ArgumentOutOfRangeException.ThrowIfLessThan(constructionCandidates, 4);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(constructionCandidates, 1000);
+        BlueTuskGuard.NotLessThan(connectionsPerLayer, 2);
+        BlueTuskGuard.NotGreaterThan(connectionsPerLayer, 100);
+        BlueTuskGuard.NotLessThan(constructionCandidates, 4);
+        BlueTuskGuard.NotGreaterThan(constructionCandidates, 1000);
         var schema = Quote(searchSchema);
         var name = Quote(indexName);
         await using var connection = await source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -98,14 +98,14 @@ public sealed class PgVectorSearchAdapter : IPostgreSqlSearchVectorAdapter
         await ValidateInstallationAsync(connection, transaction, cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = string.Create(CultureInfo.InvariantCulture, $"CREATE INDEX IF NOT EXISTS {name} ON {schema}.chunks USING hnsw (embedding {_quotedExtensionSchema}.vector_cosine_ops) WITH (m={connectionsPerLayer},ef_construction={constructionCandidates})");
+        command.CommandText = BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"CREATE INDEX IF NOT EXISTS {name} ON {schema}.chunks USING hnsw (embedding {_quotedExtensionSchema}.vector_cosine_ops) WITH (m={connectionsPerLayer},ef_construction={constructionCandidates})");
         _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static string Quote(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(value) > 63)
         {
             throw new ArgumentException("PostgreSQL identifiers must fit within 63 UTF-8 bytes and cannot contain NUL.", nameof(value));

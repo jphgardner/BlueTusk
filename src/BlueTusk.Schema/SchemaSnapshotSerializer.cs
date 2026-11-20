@@ -10,9 +10,9 @@ public static class SchemaSnapshotSerializer
 
     public static byte[] Serialize(SchemaSnapshot snapshot, int maximumDocumentBytes = MaximumDocumentBytes)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDocumentBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDocumentBytes, MaximumDocumentBytes);
+        BlueTuskGuard.NotNull(snapshot);
+        BlueTuskGuard.NotLessThan(maximumDocumentBytes, 1);
+        BlueTuskGuard.NotGreaterThan(maximumDocumentBytes, MaximumDocumentBytes);
         var document = new SchemaSnapshotEnvelope(SchemaSnapshot.CurrentFormatVersion, snapshot.Fingerprint,
             snapshot.Relations.Select(relation => new SchemaRelationDocument(relation.Identity.Schema, relation.Identity.Name,
                 relation.Kind, relation.RowSecurity, relation.ForceRowSecurity, relation.ReplicaIdentity,
@@ -142,7 +142,7 @@ public static class SchemaSnapshotSerializer
 
         private void Ensure(int sizeHint)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            BlueTuskGuard.NotNegative(sizeHint);
             sizeHint = Math.Max(sizeHint, 1);
             // Utf8JsonWriter asks for growth hints larger than its eventual writes.
             // Keep one bounded slack block while Advance enforces the exact output cap.

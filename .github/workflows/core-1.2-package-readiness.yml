@@ -1,0 +1,126 @@
+name: Core 1.2 package readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact 40-character candidate SHA and workflow dispatch head
+        required: true
+        type: string
+      build_run_id:
+        description: Successful manual package and test build run ID
+        required: true
+        type: string
+      runtime_run_id:
+        description: Successful runtime workflow run ID with require_complete enabled
+        required: true
+        type: string
+      security_run_id:
+        description: Successful manual security run ID
+        required: true
+        type: string
+      fuzzing_run_id:
+        description: Successful manual one-hour fuzzing run ID
+        required: true
+        type: string
+      performance_run_id:
+        description: Successful qualified Core performance evidence run ID
+        required: true
+        type: string
+      streams_run_id:
+        description: Successful 72-hour Streams endurance run ID
+        required: true
+        type: string
+      sync_run_id:
+        description: Successful 24-hour Sync endurance run ID
+        required: true
+        type: string
+      live_control_plane_run_id:
+        description: Successful 24-hour Live and Control Plane endurance run ID
+        required: true
+        type: string
+      confirmation:
+        description: Type VERIFY-1.2-CORE-PACKAGES
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: core-1.2-package-readiness
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify exact Core package readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: v1-candidate-readiness
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require exact dispatch SHA and protected governance
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+        run: |
+          if ($env:CONFIRMATION -cne 'VERIFY-1.2-CORE-PACKAGES') {
+            throw 'Type VERIFY-1.2-CORE-PACKAGES to verify the candidate.'
+          }
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$' -or $env:CANDIDATE_SHA -cne $env:GITHUB_SHA) {
+            throw 'Dispatch this workflow at the exact candidate commit.'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
+            throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
+          }
+          ./eng/verify-github-governance.ps1 -Mode Remote -Scope CorePackages -Token $env:V1_GOVERNANCE_TOKEN
+
+      - name: Verify packages and readiness evidence
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          RUNTIME_RUN_ID: ${{ inputs.runtime_run_id }}
+          SECURITY_RUN_ID: ${{ inputs.security_run_id }}
+          FUZZING_RUN_ID: ${{ inputs.fuzzing_run_id }}
+          PERFORMANCE_RUN_ID: ${{ inputs.performance_run_id }}
+          STREAMS_RUN_ID: ${{ inputs.streams_run_id }}
+          SYNC_RUN_ID: ${{ inputs.sync_run_id }}
+          LIVE_CONTROL_PLANE_RUN_ID: ${{ inputs.live_control_plane_run_id }}
+          PROTECTED_EVIDENCE: ${{ secrets.V1_2_CORE_EVIDENCE_BASE64 }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:PROTECTED_EVIDENCE)) {
+            throw 'The protected environment has no V1_2_CORE_EVIDENCE_BASE64 secret.'
+          }
+          $arguments = @{
+            ExpectedCommit = $env:CANDIDATE_SHA
+            ProtectedEvidenceBase64 = $env:PROTECTED_EVIDENCE
+            RunIds = @{
+              build = $env:BUILD_RUN_ID
+              runtime = $env:RUNTIME_RUN_ID
+              security = $env:SECURITY_RUN_ID
+              fuzzing = $env:FUZZING_RUN_ID
+              performance = $env:PERFORMANCE_RUN_ID
+              streams = $env:STREAMS_RUN_ID
+              sync = $env:SYNC_RUN_ID
+              liveControlPlane = $env:LIVE_CONTROL_PLANE_RUN_ID
+            }
+          }
+          ./eng/verify-core-1.2-package-readiness.ps1 @arguments
+
+      - name: Retain validated package readiness summary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-core-1.2-package-readiness-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/core-1.2-package-readiness/verified-core-package-readiness.json
+          if-no-files-found: error
+          retention-days: 90

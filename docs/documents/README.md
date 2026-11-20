@@ -1,10 +1,6 @@
 # BlueTusk.Documents
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
-BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly.
+BlueTusk.Documents provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly.
 
 ```csharp
 await using var source = BlueTuskDataSource.Create(connectionString);
@@ -170,7 +166,7 @@ Historical or future document schema versions are explicit and are not deseriali
 
 `BlueTusk.Documents.Live` creates an ID-ordered bounded query plan over the typed store. It snapshots JSONB containment filters, fingerprints schema/collection/schema version/filter/window/limit, declares the document-table dependency and compares rows using document revisions. The tenant resolver receives the server's authenticated `LiveSecurityScope`; no tenant query argument is accepted from the client. The caller versions authorization/query behavior through the plan and scope policy versions. The result is the first bounded page, including the store's byte limit; it is a live window rather than a full collection subscription.
 
-Use the existing `PostgreSqlLiveInvalidationStore` and `LiveInvalidationConsumer` to persist committed Streams invalidations before acknowledging WAL, then refresh Live sessions authoritatively. Table dependencies currently invalidate all windows over that table; query execution rechecks each authenticated tenant filter. This does not provide row-level ACL policy automatically. The actual PostgreSQL integration test publishes the document table, consumes real pgoutput, maps one atomic replace/insert transaction, deduplicates its durable invalidation, and verifies tenant-scoped Live update/add/remove diffs. It runs in its own database because a slot created while other sessions create and write tables in the same database can fail permanently; see [creating a slot while the schema changes](../streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber).
+Use the existing `PostgreSqlLiveInvalidationStore` and `LiveInvalidationConsumer` to persist committed Streams invalidations before acknowledging WAL, then refresh Live sessions authoritatively. Table dependencies currently invalidate all windows over that table; query execution rechecks each authenticated tenant filter. This does not provide row-level ACL policy automatically. The actual PostgreSQL integration test publishes the document table, consumes real pgoutput, maps one atomic replace/insert transaction, deduplicates its durable invalidation, and verifies tenant-scoped Live update/add/remove diffs.
 
 ## Operator readiness
 
@@ -191,34 +187,10 @@ The probe can run with SELECT-only privileges on `storage_metadata` and column S
 
 `BlueTusk.Documents.Health` emits `bluetusk.documents.health.probes` and `bluetusk.documents.health.duration` in seconds. Its only tag is fixed `status` (`healthy`, `degraded`, `unhealthy`, `cancelled`); it contains no tenant, collection, ID, SQL parameters, connection strings, payload or provider error messages. Duration measures the reported result, not eventual late-driver completion. Hosts supply metrics export and alerts. Session/write/query throughput instrumentation and physical database health remain separate integrations.
 
-## Verification and production qualification
+## Recover document content
 
-Run the unit and live PostgreSQL suite with `BLUETUSK_TEST_CONNECTION_STRING` set:
-
-```powershell
-dotnet test tests/BlueTusk.Documents.Tests/BlueTusk.Documents.Tests.csproj -c Release -nr:false
-```
-
-The suite passes 38 tests with no skips. Tests cover source-generated JSON round trips, competing inserts and updates, cross-batch atomic rollback, missing-document conflicts, tenant and collection separation, keyset/byte-bounded pagination, ordered patches, deletion/recreation revision fencing, migration and downgrade protection, declarative index/catalog drift, cancellation, source ownership, initialization and bounded admission. Eight content-sidecar tests add tenant/digest isolation, CAS rollback, delete/reinsert, a GC/attachment race, schema drift, bounded cursor sweeps and repeated 64 KiB attachment without rewriting its content row, link row or JSONB body. The serialization cases include exact UTF8 byte-limit and invalid-root rejection plus large/small owned JSON round trips. Five operator cases additionally check SELECT-only roles with denied payload access, fixed scope/role-protected actual HTTP readiness (401/403), storage/byte-contract drift, metadata-lock deadlines/cancellation/recovery, retained admission for late driver work and status-only metrics. A bounded concurrent workload checks committed row counts and no lost successful increments; it is functional workload evidence, not a throughput or endurance certification.
-
-The core and optional ASP.NET adapter enable NativeAOT/trimming analyzers. The combined `tests/BlueTusk.Edge.NativeAotSmoke` executable was published as win-x64 NativeAOT without warnings and run against disposable PostgreSQL/pgvector databases and a real SQLite file. It verifies Documents source-generated JSON, CAS and complete session rollback, plus authenticated readiness, incompatible storage detection and recovery through the ASP.NET adapter. Search and Edge paths pass in the same executable. Set both `BLUETUSK_TEST_CONNECTION_STRING` and `BLUETUSK_SEARCH_VECTOR_CONNECTION_STRING` when running it. This qualifies the exercised paths on this architecture; the optional Streams/Live adapters are not included in that native smoke.
-
-The [source-frozen 600-second Documents comparison](evidence/2026-09-28-maintenance-pair.md)
-adds real process-kill recovery and measured PostgreSQL/TOAST/WAL resource profiles. Its
-fixed-cardinality write workload still grew the Documents relation to 16.20 GB with package
-defaults and 9.06 GB with aggressive fixture-only TOAST vacuum. Neither profile established a
-physical storage bound, and the aggressive profile had lower throughput and worse tail latency.
-The [clean-commit attached-content 600-second run](evidence/2026-09-28-attached-content-600s/README.md)
-kept distinct stable 64 KiB content for 256 documents while changing small
-JSONB metadata: 1,326,904 transitions at 2,211/s, 100 ms save p99, 19.0 MB
-peak owned relations and 375 MB WAL. It passed a 120-second idle drain,
-capacity budgets, exact content/revision checks, hard-killed writer recovery
-and source/binary binding. This dedicated-fixture, shared-host local run is a
-finite result for immutable attachments, not a qualified comparison with the
-earlier inline-JSONB run or a production capacity bound. Repeated 30-minute
-campaigns, independent load and more failure operation remain necessary.
-Architecture-specific qualification beyond the exercised Windows x64 paths, ambiguous COMMIT
-and connection-loss injection, longer endurance, sustained hot-key performance, online index
-deployment, RLS guidance, session/query/write telemetry, two-phase document consumers,
-snapshot-cutover application recipes and immutable cross-version release gates remain outstanding.
-Production-scale performance and efficiency are not yet proven.
+Back up the database and any external content store together. Verify that a
+restored document can read its attached content and that its expected revision
+matches before accepting writes. Test interruption during attachment upload,
+publication, and tombstone cleanup. Retain content until consumers no longer
+need it and size storage for both active content and unapplied cleanup.

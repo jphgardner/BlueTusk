@@ -12,7 +12,7 @@ internal sealed class BlueTuskNativeTypeMapping : RelationalTypeMapping
     public BlueTuskNativeTypeMapping(string storeType, Type clrType, uint postgreSqlTypeOid)
         : base(storeType, clrType, System.Data.DbType.Object)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(postgreSqlTypeOid);
+        BlueTuskGuard.NotZero(postgreSqlTypeOid);
 
         _postgreSqlTypeOid = postgreSqlTypeOid;
     }

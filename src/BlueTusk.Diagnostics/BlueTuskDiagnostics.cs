@@ -250,7 +250,7 @@ public static class BlueTuskDiagnostics
         if (started != 0 && MultiplexingQueueWaitDuration.Enabled)
         {
             MultiplexingQueueWaitDuration.Record(
-                Stopwatch.GetElapsedTime(started).TotalSeconds);
+                BlueTuskRuntime.GetElapsedTime(started).TotalSeconds);
         }
     }
 

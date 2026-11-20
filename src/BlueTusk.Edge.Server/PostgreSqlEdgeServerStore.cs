@@ -14,7 +14,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
 
     public PostgreSqlEdgeServerStore(DbDataSource source, EdgeServerOptions? options = null, EdgeServerDataSourceOwnership ownership = EdgeServerDataSourceOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         if (!Enum.IsDefined(ownership)) { throw new ArgumentOutOfRangeException(nameof(ownership)); }
         Options = options ?? new EdgeServerOptions();
         EdgeValidation.Key(Options.Schema, nameof(options), 63);
@@ -91,7 +91,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
     /// <summary>Administrative epoch activation. Newer epochs explicitly discard the prior scope's data and replay identities.</summary>
     public async ValueTask ActivateScopeAsync(EdgeScope scope, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using (var guard = Command(connection, transaction, "SELECT pg_advisory_xact_lock(hashtextextended(@schema,1))"))
@@ -138,14 +138,14 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
         Func<DbConnection, DbTransaction, EdgeMutation, EdgeRecord, CancellationToken, ValueTask> writeBusiness,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(writeBusiness);
+        BlueTuskGuard.NotNull(writeBusiness);
         return ApplyMutationCoreAsync(mutation, writeBusiness, cancellationToken);
     }
 
     private async ValueTask<EdgeMutationOutcome> ApplyMutationCoreAsync(EdgeMutation mutation,
         Func<DbConnection, DbTransaction, EdgeMutation, EdgeRecord, CancellationToken, ValueTask>? writeBusiness, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         if (mutation.Payload.Length > Options.MaxRecordBytes) { throw new EdgeCapacityException("Server mutation exceeds the record byte budget."); }
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -255,7 +255,7 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
     /// <summary>After a client durably acknowledges an outcome, release its payload while retaining the permanent UUID/fingerprint retry fence. Confirmation is idempotent.</summary>
     public async ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         _ = await LockScopeAsync(connection, transaction, mutation.Scope, cancellationToken).ConfigureAwait(false);
@@ -340,12 +340,12 @@ public sealed partial class PostgreSqlEdgeServerStore : IAsyncDisposable
 
     private async ValueTask<DbConnection> OpenAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         return await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
     }
     private async ValueTask<ScopeState> LockScopeAsync(DbConnection connection, DbTransaction transaction, EdgeScope scope, CancellationToken cancellationToken, bool write = true)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var command = Scoped(connection, transaction, $"SELECT epoch,head,floor,record_count,record_bytes,receipt_count,receipt_bytes,change_count,change_bytes FROM {_schema}.scopes WHERE tenant=@tenant AND scope=@scope " + (write ? "FOR UPDATE" : "FOR SHARE"), scope);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false) || reader.GetInt64(0) != scope.Epoch) { throw new EdgeScopeMismatchException(); }

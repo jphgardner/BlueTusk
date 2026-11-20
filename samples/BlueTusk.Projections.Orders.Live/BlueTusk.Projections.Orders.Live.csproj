@@ -5,9 +5,14 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Projections.props" />
-  <ItemGroup>
+  <ItemGroup Condition="'$(BlueTuskOrdersPackageVersion)' == ''">
     <ProjectReference Include="..\..\src\BlueTusk.Projections.Live\BlueTusk.Projections.Live.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.ServerSentEvents\BlueTusk.Live.ServerSentEvents.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BlueTuskOrdersPackageVersion)' != ''">
+    <PackageReference Include="BlueTusk.Projections.Live" VersionOverride="[$(BlueTuskOrdersPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Live.DependencyInjection" VersionOverride="[$(BlueTuskOrdersPackageVersion)]" />
+    <PackageReference Include="BlueTusk.Live.ServerSentEvents" VersionOverride="[$(BlueTuskOrdersPackageVersion)]" />
   </ItemGroup>
 </Project>

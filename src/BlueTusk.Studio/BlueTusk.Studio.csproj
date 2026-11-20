@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Studio</BlueTuskProductFamily>
     <Description>Authorized PostgreSQL developer workspace with bounded read-only queries, explain plans, schema contracts, and audited execution.</Description>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Studio.props" />
+  <Import Project="..\..\eng\StudioLegacyApi.targets" />
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\BlueTusk.Schema\BlueTusk.Schema.csproj" />
     <ProjectReference Include="..\BlueTusk.Sql\BlueTusk.Sql.csproj" />
     <EmbeddedResource Include="Assets\*" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

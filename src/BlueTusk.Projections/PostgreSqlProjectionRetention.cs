@@ -6,7 +6,7 @@ public sealed partial class PostgreSqlProjectionStore
     public async ValueTask RetireAsync(ProjectionLease lease, int expectedActiveVersion, CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedActiveVersion);
+        BlueTuskGuard.NotNegativeOrZero(expectedActiveVersion);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await LockHeadAsync(connection, transaction, lease.Identity.Name, cancellationToken).ConfigureAwait(false);
@@ -36,9 +36,9 @@ public sealed partial class PostgreSqlProjectionStore
     public async ValueTask<ProjectionRetentionResult> PruneRetiredAsync(ProjectionIdentity identity, int maximumRows = 1024,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumRows);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, 65_536);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNegativeOrZero(maximumRows);
+        BlueTuskGuard.NotGreaterThan(maximumRows, 65_536);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using (var command = IdentityCommand(connection, transaction, identity, $"""

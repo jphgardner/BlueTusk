@@ -31,7 +31,7 @@ T> : BlueTuskCodec<T>, IBlueTuskDeferredCodec
 
     public BlueTuskCompositeCodec(BlueTuskCompositeMapping<T> mapping)
     {
-        ArgumentNullException.ThrowIfNull(mapping);
+        BlueTuskGuard.NotNull(mapping);
         _generatedMapping = mapping;
     }
 

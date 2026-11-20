@@ -15,7 +15,7 @@ public sealed class EventOutboxChangeDecoderTests
         var timestamp = new DateTimeOffset(2026, 9, 27, 12, 34, 56, TimeSpan.Zero).AddTicks(123_450);
         var payload = new byte[] { 0, 127, 128, 255, 92, 65 };
         var text = Row("bluetusk_events", "tenant", "orders", "42", identity.ToString("D"), "order.placed", "2",
-            timestamp.ToString("O", CultureInfo.InvariantCulture), "\\x" + Convert.ToHexStringLower(payload));
+            timestamp.ToString("O", CultureInfo.InvariantCulture), "\\x" + BlueTuskRuntime.ToHexStringLower(payload));
         var sequence = new byte[8];
         BinaryPrimitives.WriteInt64BigEndian(sequence, 42);
         var version = new byte[4];
@@ -25,7 +25,7 @@ public sealed class EventOutboxChangeDecoderTests
         var table = Table("bluetusk_events");
         var binary = new ChangeRow(table, new[]
         {
-            "tenant"u8.ToArray(), "orders"u8.ToArray(), sequence, identity.ToByteArray(bigEndian: true),
+            "tenant"u8.ToArray(), "orders"u8.ToArray(), sequence, Convert.FromHexString(identity.ToString("N")),
             "order.placed"u8.ToArray(), version, occurred, payload
         }.Select(static value => ChangeColumnValue.FromValue(value, ChangeValueEncoding.Binary)));
         var decoder = new EventOutboxChangeDecoder();

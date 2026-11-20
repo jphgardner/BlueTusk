@@ -29,17 +29,17 @@ public sealed record TransactionAssemblyOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(MaxInMemoryTransactionBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTransactionBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxSpoolBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxChangesPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRelationsPerTransaction);
+        BlueTuskGuard.NotNegative(MaxInMemoryTransactionBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxTransactionBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxSpoolBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxChangesPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaxRelationsPerTransaction);
         if (!Enum.IsDefined(PreparedTransactionMode))
         {
             throw new ArgumentOutOfRangeException(nameof(PreparedTransactionMode));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(SpoolDirectory);
+        BlueTuskGuard.NotNullOrWhiteSpace(SpoolDirectory);
         if (MaxInMemoryTransactionBytes > MaxTransactionBytes)
         {
             throw new ArgumentException(
@@ -121,8 +121,8 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
             (failure, cancellationToken) =>
                 observer.NackAsync(transaction, failure, cancellationToken))
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(observer);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(observer);
     }
 
     internal ChangeTransactionDelivery(
@@ -321,8 +321,8 @@ public sealed class PgOutputChangeStream : IChangeStream
         uint? replicationDatabaseOid = null,
         uint? replicationPublicationOid = null)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(sourceIdentity);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(sourceIdentity);
         var effectiveOptions = options ?? new TransactionAssemblyOptions();
         effectiveOptions.Validate();
         _source = source;

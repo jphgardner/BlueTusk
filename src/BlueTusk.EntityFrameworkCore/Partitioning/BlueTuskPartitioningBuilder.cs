@@ -23,8 +23,8 @@ public sealed class BlueTuskPartitioningBuilder
         BlueTuskPartitionBound bound,
         string? schema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(bound);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(bound);
         UpdateCurrent(
             definition =>
             {
@@ -57,7 +57,7 @@ public sealed class BlueTuskPartitioningBuilder
         IReadOnlyList<BlueTuskPartitionValue> values,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         return HasPartition(name, BlueTuskPartitionBound.List(values.ToArray()), schema);
     }
 
@@ -76,7 +76,7 @@ public sealed class BlueTuskPartitioningBuilder
     /// <summary>Removes a configured child partition.</summary>
     public BlueTuskPartitioningBuilder HasNoPartition(string name, string? schema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         UpdateCurrent(
             definition => definition with
             {
@@ -97,9 +97,9 @@ public sealed class BlueTuskPartitioningBuilder
         Action<BlueTuskPartitioningBuilder> configure,
         string? partitionSchema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(partitionName);
-        ArgumentNullException.ThrowIfNull(keys);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNullOrWhiteSpace(partitionName);
+        BlueTuskGuard.NotNull(keys);
+        BlueTuskGuard.NotNull(configure);
         ValidateKeys(keys, keySql: null);
         var subpartitioning = new BlueTuskPartitioningDefinition(strategy, keys.ToArray(), []);
         UpdateCurrent(
@@ -193,9 +193,9 @@ public sealed class BlueTuskPartitioningBuilder
 
     internal static void ValidateDefinition(BlueTuskPartitioningDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentNullException.ThrowIfNull(definition.Keys);
-        ArgumentNullException.ThrowIfNull(definition.Partitions);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNull(definition.Keys);
+        BlueTuskGuard.NotNull(definition.Partitions);
         if (!Enum.IsDefined(definition.Strategy))
         {
             throw new ArgumentOutOfRangeException(
@@ -226,8 +226,8 @@ public sealed class BlueTuskPartitioningBuilder
 
         foreach (var partition in definition.Partitions)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(partition.Name);
-            ArgumentNullException.ThrowIfNull(partition.Bound);
+            BlueTuskGuard.NotNullOrWhiteSpace(partition.Name);
+            BlueTuskGuard.NotNull(partition.Bound);
             ValidateBound(definition, partition.Bound);
             if (partition.Partitioning is { } subpartitioning)
             {
@@ -247,8 +247,8 @@ public sealed class BlueTuskPartitioningBuilder
 
         foreach (var key in keys)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            ArgumentException.ThrowIfNullOrWhiteSpace(key.Expression);
+            BlueTuskGuard.NotNull(key);
+            BlueTuskGuard.NotNullOrWhiteSpace(key.Expression);
             ValidateQualifiedIdentifier(key.Collation, nameof(key.Collation));
             ValidateQualifiedIdentifier(key.OperatorClass, nameof(key.OperatorClass));
         }
@@ -268,7 +268,7 @@ public sealed class BlueTuskPartitioningBuilder
         BlueTuskPartitioningDefinition definition,
         BlueTuskPartitionBound bound)
     {
-        ArgumentNullException.ThrowIfNull(bound);
+        BlueTuskGuard.NotNull(bound);
         if (!Enum.IsDefined(bound.Kind))
         {
             throw new ArgumentOutOfRangeException(nameof(bound), bound.Kind, "Unknown partition bound kind.");
@@ -276,7 +276,7 @@ public sealed class BlueTuskPartitioningBuilder
 
         if (bound.Kind == BlueTuskPartitionBoundKind.Sql)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(bound.Sql);
+            BlueTuskGuard.NotNullOrWhiteSpace(bound.Sql);
             return;
         }
 

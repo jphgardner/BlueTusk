@@ -13,7 +13,7 @@ public sealed class BlueTuskHalfVector : IReadOnlyList<Half>, IEquatable<BlueTus
 
     public BlueTuskHalfVector(params Half[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         Validate(values);
         _values = values.ToArray();
     }
@@ -26,7 +26,7 @@ public sealed class BlueTuskHalfVector : IReadOnlyList<Half>, IEquatable<BlueTus
 
     public static BlueTuskHalfVector FromSinglePrecision(params float[] values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         var converted = new Half[values.Length];
         for (var index = 0; index < values.Length; index++)
         {
@@ -49,7 +49,7 @@ public sealed class BlueTuskHalfVector : IReadOnlyList<Half>, IEquatable<BlueTus
 
     public static BlueTuskHalfVector Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var dense = BlueTuskVector.Parse(value);
         return FromSinglePrecision(dense.ToArray());
     }

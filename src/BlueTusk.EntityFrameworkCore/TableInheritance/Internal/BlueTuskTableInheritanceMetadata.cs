@@ -14,20 +14,20 @@ internal static class BlueTuskTableInheritanceMetadata
 
     public static BlueTuskTableInheritanceDefinition? Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? null : Deserialize(json);
     }
 
     public static string Serialize(BlueTuskTableInheritanceDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         return JsonSerializer.Serialize(Normalize(definition), SerializerOptions);
     }
 
     public static string Serialize(IEnumerable<BlueTuskTableInheritanceTableDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         return JsonSerializer.Serialize(
             definitions
                 .Select(definition => definition with
@@ -41,7 +41,7 @@ internal static class BlueTuskTableInheritanceMetadata
 
     public static BlueTuskTableInheritanceDefinition Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskTableInheritanceDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The table-inheritance definition is empty.", nameof(json));
         definition = Normalize(definition);
@@ -97,10 +97,10 @@ internal static class BlueTuskTableInheritanceMetadata
 
     public static BlueTuskTableInheritanceDefinition? GetTableDefinition(ITable table)
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
         foreach (var mapping in table.EntityTypeMappings)
         {
-            if (mapping.TypeBase is not IReadOnlyEntityType entityType || Get(entityType) is not { } definition)
+            if (mapping.GetBlueTuskEntityType() is not IReadOnlyEntityType entityType || Get(entityType) is not { } definition)
             {
                 continue;
             }
@@ -118,8 +118,8 @@ internal static class BlueTuskTableInheritanceMetadata
         string? childName = null,
         string? childSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentNullException.ThrowIfNull(definition.Parents);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNull(definition.Parents);
         if (definition.Parents.Count == 0)
         {
             throw new ArgumentException("Table inheritance requires at least one direct parent.", nameof(definition));
@@ -128,11 +128,11 @@ internal static class BlueTuskTableInheritanceMetadata
         var parents = new HashSet<(string? Schema, string Name)>();
         foreach (var parent in definition.Parents)
         {
-            ArgumentNullException.ThrowIfNull(parent);
-            ArgumentException.ThrowIfNullOrWhiteSpace(parent.Name);
+            BlueTuskGuard.NotNull(parent);
+            BlueTuskGuard.NotNullOrWhiteSpace(parent.Name);
             if (parent.Schema is not null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(parent.Schema);
+                BlueTuskGuard.NotNullOrWhiteSpace(parent.Schema);
             }
 
             var key = (parent.Schema, parent.Name);
@@ -156,8 +156,8 @@ internal static class BlueTuskTableInheritanceMetadata
         BlueTuskTableInheritanceDefinition definition,
         string? childSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentNullException.ThrowIfNull(definition.Parents);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNull(definition.Parents);
         return definition with
         {
             Parents = definition.Parents

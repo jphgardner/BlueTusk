@@ -1,3 +1,4 @@
+#if BLUETUSK_EF7_OR_GREATER
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
@@ -17,3 +18,4 @@ internal sealed class BlueTuskAggregateMethodCallTranslatorProvider
         ]);
     }
 }
+#endif

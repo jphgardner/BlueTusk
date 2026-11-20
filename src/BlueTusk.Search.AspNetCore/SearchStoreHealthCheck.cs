@@ -20,7 +20,7 @@ public sealed class SearchStoreHealthCheck : IHealthCheck
     private readonly BoundedHealthProbe _probe;
     public SearchStoreHealthCheck(PostgreSqlSearchStore store, SearchScope scope, SearchStoreHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(store); ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(store); BlueTuskGuard.NotNull(scope);
         Options = options ?? new(); BoundedHealthProbe.Validate(Options.Timeout, Options.MaxConcurrentProbes);
         _probe = new("search", Options.Timeout, Options.MaxConcurrentProbes, async cancellationToken =>
         {
@@ -39,7 +39,7 @@ public static class SearchStoreHealthCheckExtensions
     public static IHealthChecksBuilder AddBlueTuskSearch(this IHealthChecksBuilder builder, string name, PostgreSqlSearchStore store,
         SearchScope scope, SearchStoreHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(builder); ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder); BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Length > 128 || name.Contains('\0', StringComparison.Ordinal)) { throw new ArgumentException("Health check name exceeds its bounded identity limit.", nameof(name)); }
         var check = new SearchStoreHealthCheck(store, scope, options);
         return builder.Add(new HealthCheckRegistration(name, _ => check, HealthStatus.Unhealthy, ["ready"]));

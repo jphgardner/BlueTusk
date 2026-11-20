@@ -9,7 +9,7 @@ public static class BlueTuskCitextDataSourceBuilderExtensions
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return builder.UsePlugin(new BlueTuskCitextPlugin(schema));
     }
 }

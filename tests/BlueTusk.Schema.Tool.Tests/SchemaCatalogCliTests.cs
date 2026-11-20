@@ -1,6 +1,5 @@
 using System.Text.Json;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Schema.Tool.Tests;
 
@@ -28,11 +27,10 @@ public sealed class SchemaCatalogCliTests
         finally { DeleteOwned(directory); }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Catalogue_capture_and_check_detect_drift_which_relation_format_does_not_observe()
     {
-        var connection = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } value
-            ? value : throw SkipException.ForSkip("A disposable PostgreSQL fixture is required.");
+        var connection = Environment.GetEnvironmentVariable(PostgreSqlFactAttribute.ConnectionStringVariable)!;
         await using var source = BlueTuskDataSource.Create(connection);
         var schema = "catalog_cli_" + Guid.NewGuid().ToString("N");
         var directory = Path.Combine(Path.GetTempPath(), "bluetusk-schema-catalog-" + Guid.NewGuid().ToString("N"));

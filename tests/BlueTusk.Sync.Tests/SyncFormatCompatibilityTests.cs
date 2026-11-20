@@ -52,7 +52,7 @@ public sealed class SyncFormatCompatibilityTests
                 "stable-fingerprint"),
         };
 
-        Assert.Equal(expected.Keys.Order(), registered.Select(format => format.Id).Order());
+        Assert.Equal(expected.Keys.OrderBy(id => id), registered.Select(format => format.Id).OrderBy(id => id));
         foreach (var format in registered)
         {
             var contract = expected[format.Id];

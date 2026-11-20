@@ -13,7 +13,16 @@ namespace BlueTusk.Documents.Tests;
 /// DROP DATABASE forces a checkpoint.
 /// </summary>
 public sealed class DocumentWalDatabaseFixture : IAsyncDisposable
+#if !NET8_0_OR_GREATER
+    , IAsyncLifetime
+#endif
 {
+#if !NET8_0_OR_GREATER
+    Task IAsyncLifetime.InitializeAsync() => Task.CompletedTask;
+
+    Task IAsyncLifetime.DisposeAsync() => DisposeAsync().AsTask();
+#endif
+
     private readonly SemaphoreSlim _gate = new(1, 1);
     private BlueTuskDataSource? _admin;
     private string? _name;

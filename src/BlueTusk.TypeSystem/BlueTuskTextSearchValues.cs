@@ -49,7 +49,7 @@ public readonly record struct BlueTuskTextSearchPosition
 
     public override string ToString() => Weight == BlueTuskTextSearchWeight.D
         ? Position.ToString(CultureInfo.InvariantCulture)
-        : string.Create(CultureInfo.InvariantCulture, $"{Position}{Weight}");
+        : BlueTuskRuntime.Format(CultureInfo.InvariantCulture, $"{Position}{Weight}");
 }
 
 public sealed class BlueTuskTextSearchVectorEntry : IEquatable<BlueTuskTextSearchVectorEntry>
@@ -144,7 +144,7 @@ public sealed class BlueTuskTextSearchVector : IReadOnlyList<BlueTuskTextSearchV
 
     public BlueTuskTextSearchVector(IEnumerable<BlueTuskTextSearchVectorEntry> entries)
     {
-        ArgumentNullException.ThrowIfNull(entries);
+        BlueTuskGuard.NotNull(entries);
         _entries = entries
             .GroupBy(entry => entry?.Lexeme ?? throw new ArgumentException("A tsvector entry cannot be null.", nameof(entries)))
             .Select(group => new BlueTuskTextSearchVectorEntry(
@@ -218,7 +218,7 @@ public sealed record BlueTuskTextSearchQueryNot : BlueTuskTextSearchQueryNode
 {
     public BlueTuskTextSearchQueryNot(BlueTuskTextSearchQueryNode operand)
     {
-        ArgumentNullException.ThrowIfNull(operand);
+        BlueTuskGuard.NotNull(operand);
         Operand = operand;
     }
 
@@ -245,8 +245,8 @@ public sealed record BlueTuskTextSearchQueryBinary : BlueTuskTextSearchQueryNode
             throw new ArgumentOutOfRangeException(nameof(@operator));
         }
 
-        ArgumentNullException.ThrowIfNull(left);
-        ArgumentNullException.ThrowIfNull(right);
+        BlueTuskGuard.NotNull(left);
+        BlueTuskGuard.NotNull(right);
         if (@operator == BlueTuskTextSearchQueryOperator.Phrase && phraseDistance is < 0 or > 16_384)
         {
             throw new ArgumentOutOfRangeException(
@@ -319,7 +319,7 @@ internal static class BlueTuskTextSearchText
 
     public static void ValidateLexeme(string lexeme, int maximumByteCount)
     {
-        ArgumentNullException.ThrowIfNull(lexeme);
+        BlueTuskGuard.NotNull(lexeme);
         if (lexeme.Length == 0 || lexeme.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("A PostgreSQL text-search lexeme cannot be empty or contain a null character.", nameof(lexeme));
@@ -337,14 +337,14 @@ internal static class BlueTuskTextSearchText
 
     public static BlueTuskTextSearchVector ParseVector(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var parser = new VectorParser(value);
         return parser.Parse();
     }
 
     public static BlueTuskTextSearchQuery ParseQuery(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var parser = new QueryParser(value);
         return parser.Parse();
     }
@@ -468,7 +468,7 @@ internal static class BlueTuskTextSearchText
         private int ReadInteger()
         {
             var start = _offset;
-            while (_offset < _value.Length && char.IsAsciiDigit(_value[_offset]))
+            while (_offset < _value.Length && BlueTuskRuntime.IsAsciiDigit(_value[_offset]))
             {
                 _offset++;
             }

@@ -9,7 +9,9 @@ namespace BlueTusk.EntityFrameworkCore.Migrations.Internal;
 internal sealed class BlueTuskHistoryRepository(HistoryRepositoryDependencies dependencies)
     : HistoryRepository(dependencies)
 {
+#if BLUETUSK_EF9_OR_GREATER
     public override LockReleaseBehavior LockReleaseBehavior => LockReleaseBehavior.Transaction;
+#endif
 
     protected override string ExistsSql
     {
@@ -21,6 +23,7 @@ internal sealed class BlueTuskHistoryRepository(HistoryRepositoryDependencies de
         }
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     public override IMigrationsDatabaseLock AcquireDatabaseLock()
     {
         Dependencies.MigrationsLogger.AcquiringMigrationLock();
@@ -40,6 +43,7 @@ internal sealed class BlueTuskHistoryRepository(HistoryRepositoryDependencies de
             .ConfigureAwait(false);
         return new BlueTuskMigrationsDatabaseLock(this);
     }
+#endif
 
     protected override bool InterpretExistsResult(object? value) => value is true;
 
@@ -56,12 +60,13 @@ internal sealed class BlueTuskHistoryRepository(HistoryRepositoryDependencies de
 
     private string GetBeginConditionalScript(string migrationId, bool negate)
     {
-        ArgumentException.ThrowIfNullOrEmpty(migrationId);
+        BlueTuskGuard.NotNullOrEmpty(migrationId);
         var escapedMigrationId = migrationId.Replace("'", "''", StringComparison.Ordinal);
         var condition = negate ? "NOT EXISTS" : "EXISTS";
         return $"DO $EF$\nBEGIN\n    IF {condition} (SELECT 1 FROM {SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WHERE {SqlGenerationHelper.DelimitIdentifier(MigrationIdColumnName)} = '{escapedMigrationId}') THEN" + Environment.NewLine;
     }
 
+#if BLUETUSK_EF9_OR_GREATER
     private RelationalCommandParameterObject CreateCommandParameters()
         => new(
             Dependencies.Connection,
@@ -82,6 +87,7 @@ internal sealed class BlueTuskHistoryRepository(HistoryRepositoryDependencies de
 
         public ValueTask DisposeAsync() => default;
     }
+#endif
 }
 
 #pragma warning restore EF1001

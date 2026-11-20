@@ -21,7 +21,7 @@ public static class BlueTuskPropertyBuilderExtensions
         this PropertyBuilder propertyBuilder,
         BlueTuskIdentityGeneration generation = BlueTuskIdentityGeneration.ByDefault)
     {
-        ArgumentNullException.ThrowIfNull(propertyBuilder);
+        BlueTuskGuard.NotNull(propertyBuilder);
         if (!Enum.IsDefined(generation))
         {
             throw new ArgumentOutOfRangeException(nameof(generation));

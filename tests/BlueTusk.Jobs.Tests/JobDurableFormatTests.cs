@@ -3,7 +3,7 @@ namespace BlueTusk.Jobs.Tests;
 public sealed class JobDurableFormatTests
 {
     private static readonly string[] ExpectedOutcomes = ["succeeded", "failed"];
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SameFormatReopenAndOperationalTuningRollbackPreserveLeaseHistoryAndDeduplication()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -36,7 +36,7 @@ public sealed class JobDurableFormatTests
         Assert.Equal(JobStatus.Succeeded, (await database.Store.ReadAsync(database.Scope, id))!.Status);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task UnsupportedFormatAndDurableLimitMismatchRejectInitializationWithoutRewritingExistingState()
     {
         await using var database = await JobDatabase.CreateAsync();

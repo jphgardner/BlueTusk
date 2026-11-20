@@ -33,7 +33,7 @@ public sealed class BlueTuskRecordCodec : BlueTuskCodec<BlueTuskRecord>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (_namedFields is null)
         {
             throw new NotSupportedException("PostgreSQL does not support binary input for an anonymous record type.");
@@ -286,9 +286,9 @@ public sealed class BlueTuskRecordCodec : BlueTuskCodec<BlueTuskRecord>
                 binding.Codec.Write(ref writer, value, BlueTuskDataFormat.Text, binding.Type);
                 return StrictUtf8.GetString(bytes, 0, writer.WrittenCount);
             }
-            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
             {
-                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
             }
         }
     }

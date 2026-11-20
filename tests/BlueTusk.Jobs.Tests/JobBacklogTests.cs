@@ -5,7 +5,7 @@ namespace BlueTusk.Jobs.Tests;
 
 public sealed class JobBacklogTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task BoundedConcurrentClaimsDrainBacklogWithRetainedTerminalRows()
     {
         await using var database = await JobDatabase.CreateAsync();

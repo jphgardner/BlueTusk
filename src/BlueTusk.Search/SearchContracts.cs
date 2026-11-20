@@ -46,9 +46,9 @@ public sealed class SearchDocument
     {
         Scope = new SearchScope(tenant, index, principals);
         SearchValidation.Key(id, nameof(id), 512);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
-        ArgumentNullException.ThrowIfNull(title);
-        ArgumentNullException.ThrowIfNull(content);
+        BlueTuskGuard.NotNegativeOrZero(version);
+        BlueTuskGuard.NotNull(title);
+        BlueTuskGuard.NotNull(content);
         if (title.Contains('\0', StringComparison.Ordinal) || content.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Indexed text cannot contain NUL.");
@@ -116,25 +116,25 @@ public sealed record SearchStoreOptions
     internal void Validate()
     {
         _ = SearchValidation.Identifier(Schema);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTitleBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxMetadataBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxChunksPerDocument);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxChunkCharacters);
-        ArgumentOutOfRangeException.ThrowIfNegative(ChunkOverlapCharacters);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(ChunkOverlapCharacters, MaxChunkCharacters);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(EmbeddingBatchSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxConcurrentIngestions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxConcurrentRankings);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCandidateCount);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxActiveQueriesPerScope);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedQueries);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedRankRows);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRetainedRankBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRerankingBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxPageBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegativeOrZero(MaxDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxTitleBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxMetadataBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxChunksPerDocument);
+        BlueTuskGuard.NotNegativeOrZero(MaxChunkCharacters);
+        BlueTuskGuard.NotNegative(ChunkOverlapCharacters);
+        BlueTuskGuard.NotGreaterThanOrEqual(ChunkOverlapCharacters, MaxChunkCharacters);
+        BlueTuskGuard.NotNegativeOrZero(EmbeddingBatchSize);
+        BlueTuskGuard.NotNegativeOrZero(MaxConcurrentIngestions);
+        BlueTuskGuard.NotNegativeOrZero(MaxConcurrentRankings);
+        BlueTuskGuard.NotNegativeOrZero(MaxCandidateCount);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageSize);
+        BlueTuskGuard.NotNegativeOrZero(MaxActiveQueriesPerScope);
+        BlueTuskGuard.NotNegativeOrZero(MaxRetainedQueries);
+        BlueTuskGuard.NotNegativeOrZero(MaxRetainedRankRows);
+        BlueTuskGuard.NotNegativeOrZero(MaxRetainedRankBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxRerankingBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxPageBytes);
+        BlueTuskGuard.NotNegativeOrZero(CommandTimeoutSeconds);
         if (MaxChunksPerDocument > 4096 || MaxChunkCharacters is < 2 or > 16_384 || EmbeddingBatchSize > 256 ||
             MaxConcurrentIngestions > 256 || MaxConcurrentRankings > 256 || MaxCandidateCount > 10_000 || MaxPageSize > MaxCandidateCount ||
             MaxActiveQueriesPerScope > 10_000 || MaxRetainedQueries > 1_000_000 ||
@@ -205,7 +205,7 @@ internal static class SearchValidation
 {
     internal static void Key(string value, string name, int maxBytes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, name);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, name);
         if (value.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(value) > maxBytes)
         {
             throw new ArgumentException($"Value must fit within {maxBytes} UTF-8 bytes and cannot contain NUL.", name);
@@ -235,7 +235,7 @@ internal static class SearchValidation
             Key(principal, nameof(input), 256);
         }
 
-        return input.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+        return input.Distinct(StringComparer.Ordinal).OrderBy(static value => value, StringComparer.Ordinal).ToArray();
     }
 
     internal static string Hash(string input) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input)));

@@ -9,7 +9,7 @@ public sealed class BlueTuskTimeWithTimeZoneCodec : BlueTuskCodec<BlueTuskTimeWi
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskTimeWithTimeZone.Parse(reader.ReadRemainingUtf8());
@@ -29,7 +29,7 @@ public sealed class BlueTuskTimeWithTimeZoneCodec : BlueTuskCodec<BlueTuskTimeWi
         }
 
         return new BlueTuskTimeWithTimeZone(
-            TimeSpan.FromTicks(checked(microseconds * TimeSpan.TicksPerMicrosecond)),
+            TimeSpan.FromTicks(checked(microseconds * BlueTuskRuntime.TicksPerMicrosecond)),
             TimeSpan.FromSeconds(checked(-secondsWestOfUtc)));
     }
 
@@ -39,14 +39,14 @@ public sealed class BlueTuskTimeWithTimeZoneCodec : BlueTuskCodec<BlueTuskTimeWi
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
         }
         else if (format == BlueTuskDataFormat.Binary)
         {
-            writer.WriteInt64BigEndian(value.TimeOfDay.Ticks / TimeSpan.TicksPerMicrosecond);
+            writer.WriteInt64BigEndian(value.TimeOfDay.Ticks / BlueTuskRuntime.TicksPerMicrosecond);
             writer.WriteInt32BigEndian(checked(-(int)value.UtcOffset.TotalSeconds));
         }
         else
@@ -66,7 +66,7 @@ public sealed class BlueTuskIntervalCodec : BlueTuskCodec<BlueTuskInterval>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskInterval.Parse(reader.ReadRemainingUtf8());
@@ -99,7 +99,7 @@ public sealed class BlueTuskIntervalCodec : BlueTuskCodec<BlueTuskInterval>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -144,7 +144,7 @@ public sealed class BlueTuskBitStringCodec : BlueTuskCodec<BlueTuskBitString>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return new BlueTuskBitString(reader.ReadRemainingUtf8());
@@ -179,7 +179,7 @@ public sealed class BlueTuskBitStringCodec : BlueTuskCodec<BlueTuskBitString>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());
@@ -240,7 +240,7 @@ public sealed class BlueTuskLogSequenceNumberCodec : BlueTuskCodec<BlueTuskLogSe
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteUInt64BigEndian(value.Value);
@@ -277,7 +277,7 @@ public sealed class BlueTuskTupleIdCodec : BlueTuskCodec<BlueTuskTupleId>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteUInt32BigEndian(value.BlockNumber);

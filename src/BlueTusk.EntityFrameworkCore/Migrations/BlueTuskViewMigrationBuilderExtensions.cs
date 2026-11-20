@@ -66,7 +66,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         return Add(migrationBuilder, new DropViewOperation
         {
             Kind = kind,
@@ -84,8 +84,8 @@ public static class BlueTuskViewMigrationBuilderExtensions
         string? schema = null,
         string? newSchema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         return Add(migrationBuilder, new RenameViewOperation
         {
             Kind = kind,
@@ -103,7 +103,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
         bool concurrently = false,
         bool withData = true)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (concurrently && !withData)
         {
             throw new ArgumentException(
@@ -160,8 +160,8 @@ public static class BlueTuskViewMigrationBuilderExtensions
         TOperation operation)
         where TOperation : MigrationOperation
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentNullException.ThrowIfNull(operation);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNull(operation);
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<TOperation>(operation);
     }

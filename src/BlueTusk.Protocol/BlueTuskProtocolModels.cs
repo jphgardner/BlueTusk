@@ -43,9 +43,9 @@ internal sealed class BlueTuskDataRowValues : IReadOnlyList<ReadOnlyMemory<byte>
 
     internal BlueTuskDataRowValues(byte[] payload, int rowOffset, int count)
     {
-        ArgumentNullException.ThrowIfNull(payload);
-        ArgumentOutOfRangeException.ThrowIfNegative(rowOffset);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(rowOffset, payload.Length);
+        BlueTuskGuard.NotNull(payload);
+        BlueTuskGuard.NotNegative(rowOffset);
+        BlueTuskGuard.NotGreaterThan(rowOffset, payload.Length);
 
         _payload = payload;
         _rowOffset = rowOffset;
@@ -89,8 +89,8 @@ internal sealed class BlueTuskDataRowValues : IReadOnlyList<ReadOnlyMemory<byte>
         ref int nextField,
         ref int offset)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, fieldCount);
+        BlueTuskGuard.NotNegative(index);
+        BlueTuskGuard.NotGreaterThanOrEqual(index, fieldCount);
         if (index < nextField || nextField > fieldCount)
         {
             nextField = 0;

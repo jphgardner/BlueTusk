@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using BlueTusk.Live;
 using BlueTusk.Streams;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.ContinuousGraph;
 
@@ -22,6 +23,10 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
     where TResult : class
     where TKey : notnull
 {
+    private readonly Dictionary<(string Schema, string Table), ContinuousGraphAutomaticTableImpact[]> _tableImpacts =
+        tableImpacts.GroupBy(static impact => (impact.Schema, impact.Table))
+            .ToDictionary(static group => group.Key, static group => group.ToArray());
+
     public async ValueTask<ContinuousGraphIncrementalResult<TResult, TKey>> EvaluateAsync(
         ChangeTransaction transaction,
         LiveQueryExecutionContext context,
@@ -84,20 +89,15 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
                 continue;
             }
 
-            var rows = change switch
+            var (first, second) = change switch
             {
-                InsertChange insert => new[] { insert.NewRow },
-                UpdateChange update => new[] { update.OldRow, update.NewRow },
-                DeleteChange delete => new[] { delete.OldRow },
-                _ => [],
+                InsertChange insert => (insert.NewRow, (ChangeRow?)null),
+                UpdateChange update => (update.OldRow, update.NewRow),
+                DeleteChange delete => (delete.OldRow, (ChangeRow?)null),
+                _ => ((ChangeRow?)null, (ChangeRow?)null),
             };
-            if (rows.Length == 0)
-            {
-                continue;
-            }
-
-            var impacts = FindImpacts(rows[0].Table);
-            if (impacts.Length == 0)
+            if (first is null ||
+                !_tableImpacts.TryGetValue((first.Table.Schema, first.Table.Name), out var impacts))
             {
                 continue;
             }
@@ -109,8 +109,14 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
                     .RequiresRepair("unscopable-relevant-element");
             }
 
-            foreach (var row in rows)
+            for (var index = 0; index < 2; index++)
             {
+                var row = index == 0 ? first : second;
+                if (row is null)
+                {
+                    break;
+                }
+
                 foreach (var impact in impacts)
                 {
                     if (!TryAddKeys(row, impact.ResultKeyColumns, affected))
@@ -151,13 +157,7 @@ internal sealed class ContinuousGraphTieredEvaluator<TResult, TKey>(
             "compiler-generated-key-scope");
     }
 
-    private bool IsRelevant(ChangeTable table) => FindImpacts(table).Length > 0;
-
-    private ContinuousGraphAutomaticTableImpact[] FindImpacts(
-        ChangeTable table) =>
-        tableImpacts.Where(impact =>
-            string.Equals(impact.Schema, table.Schema, StringComparison.Ordinal) &&
-            string.Equals(impact.Table, table.Name, StringComparison.Ordinal)).ToArray();
+    private bool IsRelevant(ChangeTable table) => _tableImpacts.ContainsKey((table.Schema, table.Name));
 
     private static bool TryAddKeys(
         ChangeRow row,
@@ -205,9 +205,9 @@ internal static class ContinuousGraphKeyScope
         IReadOnlyCollection<TKey> affectedKeys)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(query);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentNullException.ThrowIfNull(affectedKeys);
+        BlueTuskGuard.NotNull(query);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNull(affectedKeys);
         if (affectedKeys.Count == 0)
         {
             throw new ArgumentException(
@@ -223,14 +223,8 @@ internal static class ContinuousGraphKeyScope
             source = call.Arguments[0];
         }
 
-        var contains = Expression.Call(
-            typeof(Enumerable),
-            nameof(Enumerable.Contains),
-            [typeof(TKey)],
-            Expression.Constant(affectedKeys.ToArray()),
-            keySelector.Body);
         var predicate = Expression.Lambda<Func<TResult, bool>>(
-            contains,
+            CreateKeyFilter<TKey>(keySelector.Body, affectedKeys),
             keySelector.Parameters);
         source = Expression.Call(
             typeof(Queryable),
@@ -249,12 +243,43 @@ internal static class ContinuousGraphKeyScope
         return query.Provider.CreateQuery<TResult>(source);
     }
 
+    private static MethodCallExpression CreateKeyFilter<TKey>(Expression key, IReadOnlyCollection<TKey> affectedKeys)
+    {
+        // Use scalar equality for the common one-key delta. EF can reuse the
+        // parameterized statement and PostgreSQL can use the endpoint index directly.
+        if (affectedKeys.Count == 1)
+        {
+            var value = affectedKeys.First();
+            Expression<Func<TKey>> parameter = () => value;
+            return CreateScalarKeyFilter(key, parameter.Body);
+        }
+
+        var keys = affectedKeys.ToArray();
+        Expression<Func<TKey[]>> keyParameter = () => keys;
+        return Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Contains),
+            [typeof(TKey)],
+            keyParameter.Body,
+            key);
+    }
+
+    internal static MethodCallExpression CreateScalarKeyFilter(Expression key, Expression value) =>
+        Expression.Call(
+            typeof(object),
+            nameof(object.Equals),
+            Type.EmptyTypes,
+            Expression.Convert(key, typeof(object)),
+            Expression.Convert(value, typeof(object)));
+
     private static bool IsTrailingOperation(MethodCallExpression call) =>
-        call.Method.DeclaringType == typeof(Queryable) &&
+        (call.Method.DeclaringType == typeof(Queryable) &&
         call.Method.Name is
             nameof(Queryable.OrderBy) or
             nameof(Queryable.OrderByDescending) or
             nameof(Queryable.ThenBy) or
             nameof(Queryable.ThenByDescending) or
-            nameof(Queryable.Take);
+            nameof(Queryable.Take)) ||
+        (call.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+            call.Method.Name == nameof(EntityFrameworkQueryableExtensions.AsNoTracking));
 }

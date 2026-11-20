@@ -19,14 +19,14 @@ public sealed record ChangeRelayBackupOptions
 
     public bool IncludeDeadLetters { get; init; } = true;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFrameBytes);
+    internal void Validate() => BlueTuskGuard.NotNegativeOrZero(MaxFrameBytes);
 }
 
 public sealed record ChangeRelayRestoreOptions
 {
     public int MaxFrameBytes { get; init; } = 257 * 1024 * 1024;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFrameBytes);
+    internal void Validate() => BlueTuskGuard.NotNegativeOrZero(MaxFrameBytes);
 }
 
 public sealed record ChangeRelayBackupResult(
@@ -55,8 +55,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelayBackupOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(destination);
         if (!destination.CanWrite)
         {
             throw new ArgumentException("The relay backup destination must be writable.", nameof(destination));
@@ -300,8 +300,8 @@ public sealed partial class PostgreSqlDurableChangeRelay
         ChangeRelayRestoreOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(backup);
-        ArgumentException.ThrowIfNullOrWhiteSpace(confirmation);
+        BlueTuskGuard.NotNull(backup);
+        BlueTuskGuard.NotNullOrWhiteSpace(confirmation);
         if (!backup.CanRead)
         {
             throw new ArgumentException("The relay backup source must be readable.", nameof(backup));
@@ -883,7 +883,7 @@ public sealed partial class PostgreSqlDurableChangeRelay
 
     private static void WriteString(BinaryWriter writer, string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         writer.Write(value);
     }
 

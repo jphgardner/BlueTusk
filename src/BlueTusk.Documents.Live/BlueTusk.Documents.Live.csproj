@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <BlueTuskProductFamily>Documents</BlueTuskProductFamily>
     <Description>Authenticated tenant document query plans and revision-aware diffs for BlueTusk Live.</Description>
     <PackageTags>postgresql;documents;live;jsonb</PackageTags>
@@ -9,5 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Documents\BlueTusk.Documents.csproj" />
     <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

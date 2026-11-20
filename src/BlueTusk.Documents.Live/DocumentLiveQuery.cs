@@ -19,11 +19,11 @@ public static class DocumentLiveQuery
         JsonElement? contains = null,
         string? afterId = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(collection);
-        ArgumentNullException.ThrowIfNull(authenticatedTenant);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumResults, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumResults, store.Options.MaxPageSize);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(collection);
+        BlueTuskGuard.NotNull(authenticatedTenant);
+        BlueTuskGuard.NotLessThan(maximumResults, 1);
+        BlueTuskGuard.NotGreaterThan(maximumResults, store.Options.MaxPageSize);
         if (contains is not null && contains.Value.ValueKind is not JsonValueKind.Object)
         {
             throw new ArgumentException("Document containment must be a JSON object.", nameof(contains));

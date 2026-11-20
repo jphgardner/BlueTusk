@@ -7,7 +7,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class PostgreSqlProjectionStoreTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task SnapshotFromBothTablesBuildsJoinAndAggregateThenPublishesAtomically()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -22,7 +22,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Throws<InvalidOperationException>(() => _ = definition.LastContext!.Connection);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task SnapshotCompletenessSequenceAndContentAreEnforcedAndRetriesDoNotDoubleAggregate()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -49,7 +49,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(100UL, state.Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task SnapshotFailureRollsBackOutputAggregateAndBatchLedger()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -68,7 +68,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(10m, await fixture.AggregateAsync());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task RepeatedSourceRowInDifferentSnapshotBatchCannotDoubleAggregate()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -81,7 +81,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(1, (await fixture.Store.ReadStateAsync(lease.Identity)).SnapshotRows);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task CustomerUpdateInvalidatesEveryPageOfDependentJoinedDocuments()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -102,7 +102,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(200UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task ChangingOrderCustomerReconcilesFanOutToTheNewCustomer()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -153,7 +153,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(10m, await fixture.AggregateAsync());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task CdcBatchStagesAllSourceTablesBeforeRenderingJoinAndCommitsAggregateExactlyOnce()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -172,7 +172,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(22.34m, await fixture.AggregateAsync());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task CdcFailureDoesNotAdvanceCheckpointOrAcknowledgeAndCanRetryAfterRestart()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -195,7 +195,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(30m, await fixture.AggregateAsync());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task IncompleteDependencyPaginationRollsBackAllWritesAndCheckpoint()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -211,7 +211,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(100UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task FanOutBoundFailureCannotBeSwallowedToCheckpointPartialWork()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync(maximumInvalidations: 2);
@@ -232,7 +232,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(100UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task VersionedRebuildKeepsOldReadsAndRequiresCatchUpBeforeAtomicCutover()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -257,7 +257,7 @@ public sealed class PostgreSqlProjectionStoreTests
             await fixture.Store.StartSnapshotAsync(secondLease, new SnapshotStart(SnapshotEpoch.Create(fixture.Source, new BlueTuskLogSequenceNumber(300)), 2)));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task AbandonedSnapshotEpochResetsOnlyUnpublishedVersionAndRejectsOldBatches()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -273,7 +273,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(replacement.Value, (await fixture.Store.ReadStateAsync(lease.Identity)).SnapshotEpoch);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task TenantJoinsDependenciesAndAggregatesRemainIsolated()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -291,7 +291,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(20m, await fixture.AggregateAsync(tenant: "second"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task DeletesRemoveDependenciesAndAggregateWhileOrphanJoinCanRecover()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -323,7 +323,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(0m, await fixture.AggregateAsync());
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task ConcurrentDuplicateCdcDeliveriesChangeModelsOnce()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -337,7 +337,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(200UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task OldOwnerAndExpiryCannotCheckpointEvenAfterHandlerWrites()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -356,7 +356,7 @@ public sealed class PostgreSqlProjectionStoreTests
         Assert.Equal(100UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task SameVersionCannotRebindDefinitionSourceAndRejectsTwoPhase()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();

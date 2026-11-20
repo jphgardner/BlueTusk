@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <Publish>true</Publish>
@@ -16,8 +17,11 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>bluetusk</ToolCommandName>
     <PackageId>BlueTusk.Tool</PackageId>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <Description>Command-line tooling for BlueTusk database and EF Core development workflows.</Description>
   </PropertyGroup>
 
+  <Import Project="..\..\eng\EntityFrameworkCore.props" />
 </Project>

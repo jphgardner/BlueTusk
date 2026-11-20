@@ -21,16 +21,16 @@ public sealed partial class PostgreSqlProjectionStore
     {
         ProjectionValidation.Key(projectionName, nameof(projectionName));
         ProjectionValidation.Key(tenantId, nameof(tenantId));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumDocuments);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDocuments, _options.MaximumDependencyPageSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumPayloadBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumPayloadBytes, _options.MaximumWriteBatchBytes);
+        BlueTuskGuard.NotNegativeOrZero(maximumDocuments);
+        BlueTuskGuard.NotGreaterThan(maximumDocuments, _options.MaximumDependencyPageSize);
+        BlueTuskGuard.NotNegativeOrZero(maximumPayloadBytes);
+        BlueTuskGuard.NotGreaterThan(maximumPayloadBytes, _options.MaximumWriteBatchBytes);
         if (afterKey is not null) { ProjectionValidation.Key(afterKey, nameof(afterKey)); }
         if (throughKey is not null) { ProjectionValidation.Key(throughKey, nameof(throughKey)); }
         if (after is not null)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(after.Version);
-            ArgumentOutOfRangeException.ThrowIfNegative(after.Revision);
+            BlueTuskGuard.NotNegativeOrZero(after.Version);
+            BlueTuskGuard.NotNegative(after.Revision);
             ProjectionValidation.Key(after.AfterKey, nameof(after));
             if (afterKey is not null) { throw new ArgumentException("Supply either a continuation or an initial lower key bound.", nameof(after)); }
         }

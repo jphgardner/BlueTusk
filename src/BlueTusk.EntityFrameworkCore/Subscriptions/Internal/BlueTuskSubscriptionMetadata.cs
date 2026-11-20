@@ -13,7 +13,7 @@ internal static partial class BlueTuskSubscriptionMetadata
 
     public static BlueTuskSubscriptionDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskSubscriptionDefinitionSet.Empty : Deserialize(json);
     }
@@ -32,7 +32,7 @@ internal static partial class BlueTuskSubscriptionMetadata
 
     public static BlueTuskSubscriptionDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskSubscriptionDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The subscription definition set is empty.", nameof(json));
         ValidateForModel(definitions);
@@ -41,7 +41,7 @@ internal static partial class BlueTuskSubscriptionMetadata
 
     public static BlueTuskSubscriptionDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskSubscriptionDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The subscription definition is empty.", nameof(json));
         ValidateForModel(definition);
@@ -76,8 +76,8 @@ internal static partial class BlueTuskSubscriptionMetadata
 
     public static void Validate(BlueTuskSubscriptionDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Subscriptions);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Subscriptions);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions.Subscriptions)
         {
@@ -91,9 +91,9 @@ internal static partial class BlueTuskSubscriptionMetadata
 
     public static void Validate(BlueTuskSubscriptionDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentNullException.ThrowIfNull(definition.Connection);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition.Connection);
         if (!Enum.IsDefined(definition.Connection.Kind) ||
             !Enum.IsDefined(definition.Streaming) ||
             !Enum.IsDefined(definition.SynchronousCommit) ||
@@ -111,10 +111,10 @@ internal static partial class BlueTuskSubscriptionMetadata
         }
         else
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Connection.Value);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Connection.Value);
         }
 
-        ArgumentNullException.ThrowIfNull(definition.Publications);
+        BlueTuskGuard.NotNull(definition.Publications);
         if (definition.Publications.Count == 0)
         {
             throw new ArgumentException("A subscription requires at least one publication.");
@@ -123,7 +123,7 @@ internal static partial class BlueTuskSubscriptionMetadata
         var publications = new HashSet<string>(StringComparer.Ordinal);
         foreach (var publication in definition.Publications)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(publication);
+            BlueTuskGuard.NotNullOrWhiteSpace(publication);
             if (!publications.Add(publication))
             {
                 throw new ArgumentException($"Subscription publication '{publication}' is configured more than once.");
@@ -132,7 +132,7 @@ internal static partial class BlueTuskSubscriptionMetadata
 
         if (definition.SlotName is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.SlotName);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.SlotName);
         }
 
         if (definition.MaxRetentionDuration < 0)
@@ -144,7 +144,7 @@ internal static partial class BlueTuskSubscriptionMetadata
 
         if (definition.WalReceiverTimeout is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.WalReceiverTimeout);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.WalReceiverTimeout);
         }
 
         if (definition.Connection.Kind != BlueTuskSubscriptionConnectionKind.Redacted)
@@ -183,7 +183,7 @@ internal static partial class BlueTuskSubscriptionMetadata
         definition with
         {
             Connection = definition.Connection with { Value = definition.Connection.Value?.Trim() },
-            Publications = definition.Publications.Order(StringComparer.Ordinal).ToArray(),
+            Publications = definition.Publications.OrderBy(value => value, StringComparer.Ordinal).ToArray(),
             WalReceiverTimeout = definition.WalReceiverTimeout is "-1" ? null : definition.WalReceiverTimeout?.Trim(),
         };
 
@@ -243,6 +243,11 @@ internal static partial class BlueTuskSubscriptionMetadata
         return options;
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex(@"(?:^|[\s;?&])(?:password|pwd|sslpassword)\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex SensitiveKeywordRegex();
+#else
+    private static readonly Regex _sensitiveKeywordRegex = new(@"(?:^|[\s;?&])(?:password|pwd|sslpassword)\s*=", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static Regex SensitiveKeywordRegex() => _sensitiveKeywordRegex;
+#endif
 }

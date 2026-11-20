@@ -62,8 +62,8 @@ ancestor-commit evidence does not pass.
 - [ ] Sync has an exact 24-hour report when it is in the dependency chain.
 - [ ] Live and Control Plane have the shared exact 24-hour report when either is
       in the dependency chain.
-- [ ] Continuous Graph has its exact 24-hour PostgreSQL 19 GA report when it is
-      in the dependency chain.
+- [ ] Portable Continuous Graph has its exact 24-hour recovery report when
+      qualifying the portable Graph track. See [current Graph criteria](releases/release-tracks.md#portable-graph-status).
 - [ ] The exact Streams, Sync, Live/Control Plane, and Continuous Graph
       endurance windows contain process death, network interruption,
       controlled storage exhaustion, credential rotation, primary failover,

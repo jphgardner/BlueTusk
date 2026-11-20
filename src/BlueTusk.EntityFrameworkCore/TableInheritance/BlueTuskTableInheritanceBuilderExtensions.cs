@@ -15,11 +15,11 @@ public static class BlueTuskTableInheritanceBuilderExtensions
         string parentTable,
         string? parentSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parentTable);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(parentTable);
         if (parentSchema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(parentSchema);
+            BlueTuskGuard.NotNullOrWhiteSpace(parentSchema);
         }
 
         var existing = BlueTuskTableInheritanceMetadata.Get(entityBuilder.Metadata);
@@ -34,7 +34,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
         this EntityTypeBuilder entityBuilder)
         where TParent : class
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         var parent = entityBuilder.Metadata.Model.FindEntityType(typeof(TParent))
             ?? throw new InvalidOperationException(
                 $"Entity type '{typeof(TParent).Name}' must be added to the model before it can be an inheritance parent.");
@@ -50,8 +50,8 @@ public static class BlueTuskTableInheritanceBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         params BlueTuskInheritedTableDefinition[] parents)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentNullException.ThrowIfNull(parents);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNull(parents);
         Set(entityBuilder, new BlueTuskTableInheritanceDefinition(parents));
         return entityBuilder;
     }
@@ -59,7 +59,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     /// <summary>Removes PostgreSQL table-inheritance metadata from an entity table.</summary>
     public static EntityTypeBuilder HasNoTableInheritance(this EntityTypeBuilder entityBuilder)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskTableInheritanceMetadata.AnnotationName);
         return entityBuilder;
     }
@@ -68,7 +68,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     public static BlueTuskTableInheritanceDefinition? GetTableInheritance(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskTableInheritanceMetadata.Get(entityType);
     }
 
@@ -77,7 +77,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         Set(entityBuilder, BlueTuskTableInheritanceMetadata.Deserialize(serializedDefinition));
         return entityBuilder;
     }

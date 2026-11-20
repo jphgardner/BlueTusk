@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+#if !BLUETUSK_EF6_OR_GREATER
+using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
+#endif
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -26,14 +29,24 @@ internal sealed class BlueTuskMigrator(
     IRelationalConnection connection,
     ISqlGenerationHelper sqlGenerationHelper,
     ICurrentDbContext currentContext,
+#if BLUETUSK_EF6_OR_GREATER
     IModelRuntimeInitializer modelRuntimeInitializer,
+#else
+    IConventionSetBuilder conventionSetBuilder,
+#endif
     IDiagnosticsLogger<DbLoggerCategory.Migrations> logger,
+#if BLUETUSK_EF6_OR_GREATER
     IRelationalCommandDiagnosticsLogger commandLogger,
+#else
+    IDiagnosticsLogger<DbLoggerCategory.Database.Command> commandLogger,
+#endif
     IDatabaseProvider databaseProvider,
+#if BLUETUSK_EF9_OR_GREATER
     IMigrationsModelDiffer migrationsModelDiffer,
     IDesignTimeModel designTimeModel,
     IDbContextOptions contextOptions,
     IExecutionStrategy executionStrategy,
+#endif
     IProviderServices providerServices)
     : Migrator(
         migrationsAssembly,
@@ -45,14 +58,22 @@ internal sealed class BlueTuskMigrator(
         connection,
         sqlGenerationHelper,
         currentContext,
+#if BLUETUSK_EF6_OR_GREATER
         modelRuntimeInitializer,
+#else
+        conventionSetBuilder,
+#endif
         logger,
         commandLogger,
+#if BLUETUSK_EF9_OR_GREATER
         databaseProvider,
         migrationsModelDiffer,
         designTimeModel,
         contextOptions,
         executionStrategy)
+#else
+        databaseProvider)
+#endif
 {
     // Kept explicitly: the base Migrator also receives the connection.
     private readonly IRelationalConnection _connection = connection;

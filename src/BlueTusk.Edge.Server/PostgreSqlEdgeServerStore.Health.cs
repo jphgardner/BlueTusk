@@ -29,7 +29,7 @@ public sealed partial class PostgreSqlEdgeServerStore
     /// <summary>Reads exact counters and at most the configured scope snapshot bound, without fetching payloads or changing state.</summary>
     public async ValueTask<EdgeServerHealthSnapshot> ReadHealthAsync(EdgeScope scope, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var state = await LockScopeAsync(connection, transaction, scope, cancellationToken, write: false).ConfigureAwait(false);

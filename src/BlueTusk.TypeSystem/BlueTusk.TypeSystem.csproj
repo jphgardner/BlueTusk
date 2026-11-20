@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <Description>PostgreSQL type metadata, codecs, catalogue discovery, and CLR mapping primitives.</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Portable.System.DateTimeOnly" Condition="'$(TargetFramework)' == 'net5.0'" />
     <InternalsVisibleTo Include="BlueTusk.Data" />
     <InternalsVisibleTo Include="BlueTusk.TypeSystem.Tests" />
   </ItemGroup>

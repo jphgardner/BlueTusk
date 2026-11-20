@@ -136,7 +136,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);
 
+#if NET6_0_OR_GREATER
     public override bool CanCreateBatch => true;
+#else
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Retain the instance ADO.NET connection API on .NET 5, where the BCL lacks batching.")]
+    public bool CanCreateBatch => true;
+#endif
 
     protected override DbProviderFactory DbProviderFactory => BlueTuskProviderFactory.Instance;
 
@@ -461,7 +466,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     internal BlueTuskResolvedField[] ResolveRowFields(
         IReadOnlyList<BlueTuskFieldDescription> fields)
     {
-        ArgumentNullException.ThrowIfNull(fields);
+        BlueTuskGuard.NotNull(fields);
         var types = TypeRegistry;
         var optional = Volatile.Read(ref _optionalState) ?? Optional;
         if (ReferenceEquals(optional.ResolvedRowDescription, fields) &&
@@ -556,14 +561,14 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     /// <summary>Reloads PostgreSQL type metadata for this open connection.</summary>
     public void ReloadTypes()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         _typeMetadata.Reload(Session);
     }
 
     /// <summary>Reloads PostgreSQL type metadata for this open connection.</summary>
     public ValueTask ReloadTypesAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         return _typeMetadata.ReloadAsync(Session, cancellationToken);
     }
 
@@ -615,7 +620,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     public override void Open()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_state != ConnectionState.Closed)
         {
             throw new InvalidOperationException("The connection is already open or opening.");
@@ -666,7 +671,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     public override Task OpenAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_state != ConnectionState.Closed)
         {
             throw new InvalidOperationException("The connection is already open or opening.");
@@ -721,7 +726,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             return OpenAsync(cancellationToken);
         }
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_state != ConnectionState.Closed)
         {
             throw new InvalidOperationException("The connection is already open or opening.");
@@ -1153,7 +1158,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     /// <summary>Deletes a PostgreSQL large object.</summary>
     public void DeleteLargeObject(uint objectId)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        BlueTuskGuard.NotZero(objectId);
         var deleted = ExecuteLargeObjectTransaction(
             transaction => BlueTuskLargeObjectOperations.ExecuteScalar<int>(
                 this,
@@ -1170,7 +1175,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     /// <summary>Opens a transactional stream over a PostgreSQL large object.</summary>
     public BlueTuskLargeObjectStream OpenLargeObject(uint objectId, FileAccess access)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        BlueTuskGuard.NotZero(objectId);
         if (access is < FileAccess.Read or > FileAccess.ReadWrite)
         {
             throw new ArgumentOutOfRangeException(nameof(access));
@@ -1264,7 +1269,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         uint objectId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        BlueTuskGuard.NotZero(objectId);
         var deleted = await ExecuteLargeObjectTransactionAsync(
             (transaction, token) => BlueTuskLargeObjectOperations.ExecuteScalarAsync<int>(
                 this,
@@ -1286,7 +1291,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         FileAccess access,
         CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        BlueTuskGuard.NotZero(objectId);
         if (access is < FileAccess.Read or > FileAccess.ReadWrite)
         {
             throw new ArgumentOutOfRangeException(nameof(access));
@@ -1475,7 +1480,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     public async ValueTask<BlueTuskBinaryImporter> BeginBinaryImportAsync(
         string copyCommand,
         CancellationToken cancellationToken = default)
@@ -1522,7 +1529,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     public async ValueTask<BlueTuskBinaryExporter> BeginBinaryExportAsync(
         string copyCommand,
         CancellationToken cancellationToken = default)
@@ -1605,7 +1614,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskRawCopyResult> CopyFromCoreAsync(
         string copyCommand,
         Stream source,
@@ -1690,14 +1701,14 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     public BlueTuskRawCopyResult CopyTextFrom(string copyCommand, TextReader source)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         using var stream = new BlueTuskCopyTextReaderStream(source);
         return CopyFrom(copyCommand, stream);
     }
 
     public BlueTuskRawCopyResult CopyTextTo(string copyCommand, TextWriter destination)
     {
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(destination);
         using var stream = new BlueTuskCopyTextWriterStream(destination);
         var result = CopyTo(copyCommand, stream);
         stream.Complete();
@@ -1709,7 +1720,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         TextReader source,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         await using var stream = new BlueTuskCopyTextReaderStream(source);
         return await CopyFromAsync(
             copyCommand,
@@ -1722,7 +1733,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         TextWriter destination,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(destination);
         await using var stream = new BlueTuskCopyTextWriterStream(destination);
         var result = await CopyToAsync(
             copyCommand,
@@ -1785,9 +1796,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         ForceBinaryResultsInTransaction = _preferBinaryResults,
     };
 
+#if NET6_0_OR_GREATER
     protected override DbBatch CreateDbBatch() => new BlueTuskBatch(this);
-
     public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
+#else
+    public BlueTuskBatch CreateBatch() => new(this);
+#endif
 
     protected override void Dispose(bool disposing)
     {
@@ -1921,7 +1935,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         BlueTuskTransaction transaction,
         bool commit)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         LargeObjectGate.Wait();
         try
         {
@@ -1941,7 +1955,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         bool commit,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         await LargeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -1962,7 +1976,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         Func<BlueTuskTransaction, CancellationToken, ValueTask<T>> operation,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(operation);
+        BlueTuskGuard.NotNull(operation);
         await LargeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         BlueTuskTransaction? transaction = null;
         var ownsTransaction = false;
@@ -2018,7 +2032,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     private T ExecuteLargeObjectTransaction<T>(Func<BlueTuskTransaction, T> operation)
     {
-        ArgumentNullException.ThrowIfNull(operation);
+        BlueTuskGuard.NotNull(operation);
         LargeObjectGate.Wait();
         BlueTuskTransaction? transaction = null;
         var ownsTransaction = false;
@@ -2206,7 +2220,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     private void EnsureNotificationsAvailable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_state != ConnectionState.Open)
         {
             throw new InvalidOperationException(
@@ -2356,7 +2370,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     private void EnsureLargeObjectsAvailable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_state != ConnectionState.Open)
         {
             throw new InvalidOperationException(
@@ -2476,7 +2490,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
         public void Start(Task pump)
         {
-            ArgumentNullException.ThrowIfNull(pump);
+            BlueTuskGuard.NotNull(pump);
             if (!ReferenceEquals(_pump, Task.CompletedTask))
             {
                 throw new InvalidOperationException("The notification subscription has already started.");

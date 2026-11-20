@@ -33,7 +33,7 @@ public sealed class BlueTuskMultirangeCodec<T> :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         switch (format)
         {
             case BlueTuskDataFormat.Binary:

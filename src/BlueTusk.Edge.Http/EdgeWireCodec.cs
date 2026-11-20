@@ -20,7 +20,7 @@ public static class EdgeWireCodec
     }
     public static byte[] SerializeMutation(EdgeMutation mutation)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         return JsonSerializer.SerializeToUtf8Bytes(new WireMutation(mutation.Id.ToString("D"), mutation.DocumentId, Number(mutation.ExpectedRevision),
             mutation.Kind is EdgeMutationKind.Upsert ? "upsert" : "delete", Convert.ToBase64String(mutation.Payload.Span)), EdgeWireJsonContext.Default.WireMutation);
     }
@@ -62,7 +62,7 @@ public static class EdgeWireCodec
     }
     public static string Number(long value)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(value);
+        BlueTuskGuard.NotNegative(value);
         return value.ToString(CultureInfo.InvariantCulture);
     }
     public static long ParseNumber(string value)
@@ -75,7 +75,7 @@ public static class EdgeWireCodec
     private static EdgeRecord Record(WireRecord record, int maxPayloadBytes) => new(record.Id, ParseNumber(record.Revision), Payload(record.Payload, maxPayloadBytes), record.Deleted);
     private static byte[] Payload(string value, int maximum)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximum);
+        BlueTuskGuard.NotNegativeOrZero(maximum);
         if (value is null || value.Length > (maximum + 2L) / 3 * 4) { throw new JsonException("Payload exceeds its byte budget."); }
         var bytes = Convert.FromBase64String(value);
         if (bytes.Length > maximum) { throw new JsonException("Payload exceeds its byte budget."); }

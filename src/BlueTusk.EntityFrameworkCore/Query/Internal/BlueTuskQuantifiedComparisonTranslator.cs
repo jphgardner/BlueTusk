@@ -50,7 +50,12 @@ internal sealed class BlueTuskQuantifiedComparisonTranslator(
         }
 
         var array = sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]);
-        var elementMapping = (RelationalTypeMapping?)array.TypeMapping?.ElementTypeMapping
+        var elementMapping =
+#if BLUETUSK_EF8_OR_GREATER
+            (RelationalTypeMapping?)array.TypeMapping?.ElementTypeMapping
+#else
+            (array.TypeMapping as BlueTusk.EntityFrameworkCore.Storage.Internal.BlueTuskArrayTypeMapping)?.ElementTypeMapping
+#endif
             ?? arguments[1].TypeMapping
             ?? typeMappingSource.FindMapping(arguments[1].Type);
         if (array.TypeMapping is null || elementMapping is null)

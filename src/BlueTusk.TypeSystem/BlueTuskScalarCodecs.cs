@@ -33,7 +33,7 @@ public sealed class BlueTuskBooleanCodec : BlueTuskCodec<bool>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         switch (format)
         {
             case BlueTuskDataFormat.Binary:
@@ -73,7 +73,7 @@ public sealed class BlueTuskInt16Codec : BlueTuskCodec<short>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteInt16BigEndian(value);
@@ -121,7 +121,7 @@ public sealed class BlueTuskInt64Codec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteInt64BigEndian(value);
@@ -162,7 +162,7 @@ public sealed class BlueTuskUInt32Codec : BlueTuskCodec<uint>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteUInt32BigEndian(value);
@@ -200,7 +200,7 @@ public sealed class BlueTuskSingleCodec : BlueTuskCodec<float>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteSingleBigEndian(value);
@@ -238,7 +238,7 @@ public sealed class BlueTuskDoubleCodec : BlueTuskCodec<double>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteDoubleBigEndian(value);
@@ -264,7 +264,7 @@ public sealed class BlueTuskStringCodec : BlueTuskCodec<string>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format is BlueTuskDataFormat.Text or BlueTuskDataFormat.Binary
             ? reader.ReadRemainingUtf8()
             : throw new ArgumentOutOfRangeException(nameof(format));
@@ -276,7 +276,7 @@ public sealed class BlueTuskStringCodec : BlueTuskCodec<string>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format is not (BlueTuskDataFormat.Text or BlueTuskDataFormat.Binary))
         {
             throw new ArgumentOutOfRangeException(nameof(format));
@@ -293,7 +293,7 @@ public sealed class BlueTuskByteArrayCodec : BlueTuskCodec<byte[]>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format switch
         {
             BlueTuskDataFormat.Binary => reader.ReadRemainingBytes().ToArray(),
@@ -308,7 +308,7 @@ public sealed class BlueTuskByteArrayCodec : BlueTuskCodec<byte[]>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteBytes(value);
@@ -387,9 +387,7 @@ public sealed class BlueTuskGuidCodec : BlueTuskCodec<Guid>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type) => format switch
         {
-            BlueTuskDataFormat.Binary when reader.Remaining == 16 => new Guid(
-                reader.ReadBytes(16),
-                bigEndian: true),
+            BlueTuskDataFormat.Binary when reader.Remaining == 16 => BlueTuskRuntime.ReadGuidBigEndian(reader.ReadBytes(16)),
             BlueTuskDataFormat.Binary => throw new InvalidOperationException(
                 $"PostgreSQL {type.QualifiedName} binary values must contain exactly 16 bytes."),
             BlueTuskDataFormat.Text => Guid.Parse(reader.ReadRemainingUtf8()),
@@ -402,11 +400,11 @@ public sealed class BlueTuskGuidCodec : BlueTuskCodec<Guid>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             Span<byte> bytes = stackalloc byte[16];
-            if (!value.TryWriteBytes(bytes, bigEndian: true, out var bytesWritten) || bytesWritten != bytes.Length)
+            if (!BlueTuskRuntime.TryWriteGuidBigEndian(value, bytes, out var bytesWritten) || bytesWritten != bytes.Length)
             {
                 throw new InvalidOperationException("Could not encode a UUID value.");
             }
@@ -431,7 +429,7 @@ public sealed class BlueTuskJsonbCodec : BlueTuskCodec<string>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return reader.ReadRemainingUtf8();
@@ -456,7 +454,7 @@ public sealed class BlueTuskJsonbCodec : BlueTuskCodec<string>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteByte(1);

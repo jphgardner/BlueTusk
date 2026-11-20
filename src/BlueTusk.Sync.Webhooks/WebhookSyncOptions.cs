@@ -24,10 +24,10 @@ public sealed record WebhookSyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Client);
-        ArgumentNullException.ThrowIfNull(Endpoint);
-        ArgumentNullException.ThrowIfNull(TimeProvider);
-        ArgumentException.ThrowIfNullOrWhiteSpace(KeyId);
+        BlueTuskGuard.NotNull(Client);
+        BlueTuskGuard.NotNull(Endpoint);
+        BlueTuskGuard.NotNull(TimeProvider);
+        BlueTuskGuard.NotNullOrWhiteSpace(KeyId);
         if (!Endpoint.IsAbsoluteUri ||
             (!string.Equals(Endpoint.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
              !(AllowInsecureHttp && string.Equals(
@@ -61,10 +61,10 @@ public sealed record WebhookSyncOptions
                 nameof(SigningKey));
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxEnvelopeBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxEnvelopeBytes, 64 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumAttempts, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumAttempts, 10);
+        BlueTuskGuard.NotLessThan(MaxEnvelopeBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaxEnvelopeBytes, 64 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(MaximumAttempts, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumAttempts, 10);
         if (InitialRetryDelay < TimeSpan.Zero || InitialRetryDelay > TimeSpan.FromSeconds(30))
         {
             throw new ArgumentOutOfRangeException(nameof(InitialRetryDelay));

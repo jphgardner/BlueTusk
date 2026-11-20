@@ -18,12 +18,12 @@ public sealed record JobHealthCheckOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumObserved, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumObserved, 100000);
-        ArgumentOutOfRangeException.ThrowIfNegative(MaximumPending);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumPending, MaximumObserved);
-        ArgumentOutOfRangeException.ThrowIfNegative(MaximumExpiredLeases);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumExpiredLeases, MaximumObserved);
+        BlueTuskGuard.NotLessThan(MaximumObserved, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumObserved, 100000);
+        BlueTuskGuard.NotNegative(MaximumPending);
+        BlueTuskGuard.NotGreaterThan(MaximumPending, MaximumObserved);
+        BlueTuskGuard.NotNegative(MaximumExpiredLeases);
+        BlueTuskGuard.NotGreaterThan(MaximumExpiredLeases, MaximumObserved);
         if (MaximumReadyAge < TimeSpan.FromMilliseconds(1) || MaximumReadyAge > TimeSpan.FromDays(365))
         {
             throw new ArgumentOutOfRangeException(nameof(MaximumReadyAge));

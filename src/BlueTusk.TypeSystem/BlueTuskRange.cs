@@ -105,7 +105,7 @@ public sealed class BlueTuskMultirange<T> :
 
     public BlueTuskMultirange(IEnumerable<BlueTuskRange<T>> ranges)
     {
-        ArgumentNullException.ThrowIfNull(ranges);
+        BlueTuskGuard.NotNull(ranges);
         _ranges = ranges.ToArray();
     }
 

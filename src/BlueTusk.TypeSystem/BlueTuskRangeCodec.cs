@@ -261,9 +261,9 @@ public sealed class BlueTuskRangeCodec<T> :
                 WriteSubtype(ref writer, value, BlueTuskDataFormat.Text);
                 return StrictUtf8.GetString(bytes, 0, writer.WrittenCount);
             }
-            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
             {
-                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
             }
         }
     }

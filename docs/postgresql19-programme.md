@@ -1,15 +1,15 @@
 # PostgreSQL 19 compatibility programme
 
-PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified
-milestone is Beta 3; Beta 4 is recorded as **not yet tested**, not silently
-promoted to supported status. The official roadmap now targets October 2026.
-Beta images are for compatibility development, not production dependencies.
+[PostgreSQL 19](https://www.postgresql.org/about/news/postgresql-19-released-3449/)
+was released on 19 November 2026. BlueTusk's last verified milestone is Beta 3.
+Beta 4, RC 1, RC 2 and 19.0 have pending compatibility records.
 
 The [Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
 removed SQL/PGQ, including `GRAPH_TABLE`, from PostgreSQL 19. A later PostgreSQL
-major may restore it; no version is promised here. Graph stays available as
-preview development on the historical Beta 3 fixture. The other five BlueTusk
-families have a separate [release track](releases/release-tracks.md).
+major may restore it. Native SQL/PGQ regression coverage remains on the pinned
+historical Beta 3 fixture. [Portable BlueTusk Graphs](graph/README.md) uses
+ordinary joins on PostgreSQL 15–18 and qualifies on a separate
+[release track](releases/release-tracks.md#portable-graph-status).
 
 `eng/postgresql19-programme.json` is the machine-readable cadence. The checked
 Beta 3 container is pinned by OCI digest, the scheduled official-branch
@@ -22,7 +22,10 @@ The main build's existing `PostgreSQL 19 live matrix` protected status now runs
 provider preview compatibility, excluding native SQL/PGQ integration scenarios.
 It does not depend on Continuous Graph. The full historical preview matrix and
 both Graph application journeys run separately in `postgresql-preview.yml`.
-Core application integration uses the stable PostgreSQL 18 fixture instead.
+Core application integration uses the stable PostgreSQL 18 fixture. Scheduled
+and full manual builds include the branch snapshot, replication endurance and
+provider stress jobs. The Core-only manual build uses the stable qualification
+matrix without running the PostgreSQL 19 preview jobs.
 Capability tests compare `SupportsSqlPgq` with the actual server catalogue;
 major version 19 alone must not imply support.
 
@@ -46,10 +49,8 @@ For every later beta and every release candidate:
 5. Archive test results, server version, image digest, source commit and
    package hashes; then update the programme record.
 
-The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) remains
-fixed: linear typed paths and direct scalar predicates are supported; the rest
-stays available through parameterised raw SQL. Unsupported typed forms fail
-without a string-concatenation fallback.
+See the [Graph reference](graph/reference.md) for the typed query boundary.
+Native raw SQL still requires the server's SQL/PGQ capability.
 
 BlueTusk 1.2 also has a first-class API for PostgreSQL 19's native `REPACK`
 statement, including synchronous and asynchronous execution, every documented
@@ -64,6 +65,6 @@ Promoting PostgreSQL 19 from preview to stable compatibility still requires
 GA image, and exact-candidate compatibility evidence. Core 1.2 publication does
 not require that optional compatibility promotion. Its supported stable matrix
 is PostgreSQL 15–18; its own performance, durability and release gates remain.
-Graph needs separate supported-server SQL/PGQ qualification, not a PostgreSQL 19
-GA version check. The [V1 publication record](releases/1.0.0-publication-record.md)
+Native Graph requires a capability check. Portable Graph has its own PostgreSQL
+15–18 qualification. The [V1 publication record](releases/1.0.0-publication-record.md)
 is historical and does not qualify later releases.

@@ -30,7 +30,7 @@ public sealed record BlueTuskMoneyFormat
 {
     public BlueTuskMoneyFormat(string locale, int fractionalDigits)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(locale);
+        BlueTuskGuard.NotNullOrWhiteSpace(locale);
         if (fractionalDigits is < 0 or > 127)
         {
             throw new ArgumentOutOfRangeException(nameof(fractionalDigits));
@@ -91,7 +91,7 @@ public sealed class BlueTuskMoneyCodec : BlueTuskCodec<BlueTuskMoney>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format switch
         {
             BlueTuskDataFormat.Text => ParseText(reader.ReadRemainingUtf8()),
@@ -109,7 +109,7 @@ public sealed class BlueTuskMoneyCodec : BlueTuskCodec<BlueTuskMoney>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         EnsureScale(value);
         if (format == BlueTuskDataFormat.Binary)
         {
@@ -131,7 +131,7 @@ public sealed class BlueTuskMoneyCodec : BlueTuskCodec<BlueTuskMoney>
         var digits = new StringBuilder(text.Length);
         foreach (var character in text)
         {
-            if (char.IsAsciiDigit(character))
+            if (BlueTuskRuntime.IsAsciiDigit(character))
             {
                 digits.Append(character);
             }

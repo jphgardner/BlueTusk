@@ -9,8 +9,8 @@ public sealed class EventContract<T>
     public EventContract(string name, int version, JsonTypeInfo<T> jsonTypeInfo)
     {
         EventValidation.Key(name, nameof(name));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
-        ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+        BlueTuskGuard.NotNegativeOrZero(version);
+        BlueTuskGuard.NotNull(jsonTypeInfo);
         Name = name;
         Version = version;
         JsonTypeInfo = jsonTypeInfo;
@@ -25,7 +25,7 @@ public sealed class EventContract<T>
 
     public T? Deserialize(StoredEvent value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (!string.Equals(value.EventType, Name, StringComparison.Ordinal) || value.Version != Version)
         {
             throw new InvalidOperationException($"Expected event contract {Name} v{Version}, received {value.EventType} v{value.Version}.");

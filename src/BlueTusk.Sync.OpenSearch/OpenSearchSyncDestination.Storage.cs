@@ -569,7 +569,7 @@ public sealed partial class OpenSearchSyncDestination
                     operation.Collection.Collection,
                     operation.Key,
                     SyncReconciler.GetKeyHash(operation.Key),
-                    Convert.ToHexStringLower(
+                    BlueTuskRuntime.ToHexStringLower(
                         System.Security.Cryptography.SHA256.HashData(operation.Content.Span)),
                     operation.ContentType,
                     operation.Routing);
@@ -891,7 +891,7 @@ public sealed partial class OpenSearchSyncDestination
 
         public void Advance(int count)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            BlueTuskGuard.NotNegative(count);
             Count = checked(Count + count);
         }
 

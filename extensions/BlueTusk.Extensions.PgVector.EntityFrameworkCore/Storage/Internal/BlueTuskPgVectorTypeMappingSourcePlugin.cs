@@ -19,7 +19,7 @@ internal sealed class BlueTuskPgVectorTypeMappingSourcePlugin : IRelationalTypeM
 
     public BlueTuskPgVectorTypeMappingSourcePlugin(BlueTuskPgVectorTypeMappingOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         _schema = options.Schema;
         foreach (var definition in Definitions)
         {

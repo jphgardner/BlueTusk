@@ -124,7 +124,23 @@
           "sync-v1.1.0",
           "live-v1.1.0",
           "control-plane-v1.1.0",
-          "continuous-graph-v1.1.0"
+          "continuous-graph-v1.1.0",
+          "provider-v1.2.0",
+          "streams-v1.2.0",
+          "sync-v1.2.0",
+          "live-v1.2.0",
+          "control-plane-v1.2.0",
+          "continuous-graph-v1.2.0",
+          "events-v1.2.0",
+          "jobs-v1.2.0",
+          "documents-v1.2.0",
+          "schema-v1.2.0",
+          "projections-v1.2.0",
+          "search-v1.2.0",
+          "sql-v1.2.0",
+          "studio-v1.2.0",
+          "edge-v1.2.0",
+          "workflows-v1.2.0"
         ]
       }
     },

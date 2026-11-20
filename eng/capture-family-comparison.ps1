@@ -4,6 +4,10 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateRange(1, 50)][int] $Trials = 10,
+    [double] $WarmupSeconds = 5,
+    [double] $MeasurementSeconds = 10,
+    [string] $RunId,
+    [string] $Owner = 'core-performance-evidence',
     [switch] $Diagnostic,
     # Print the harness contract for this family and exit successfully without capturing.
     [switch] $Describe
@@ -11,9 +15,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-# Comparison harnesses for the non-Provider Core families are NOT implemented yet. This entry point
-# exists so the workflow, plan and assembler are complete and pluggable; it fails closed until a
-# harness writes a performance-trial-index/1 input. Nothing here may write placeholder measurements.
+# Family adapters emit performance-trial-index/1. An unavailable adapter stops the capture.
 $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
 $contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
 $specification = switch ($Family)
@@ -43,6 +45,19 @@ $specification.format = 'performance-trial-index/1 (see docs/operations/core-per
 if ($Describe)
 {
     $specification | ConvertTo-Json -Depth 4
+    return
+}
+if ($Family -ceq 'ControlPlane')
+{
+    if ($WarmupSeconds % 1 -ne 0 -or $MeasurementSeconds % 1 -ne 0)
+    { throw 'Control Plane capture windows use whole seconds.' }
+    $capture = @{
+        ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Trials = $Trials
+        WarmupSeconds = [int]$WarmupSeconds; MeasurementSeconds = [int]$MeasurementSeconds
+        Owner = $Owner; Qualification = -not $Diagnostic
+    }
+    if ($RunId) { $capture.RunId = $RunId }
+    & (Join-Path $PSScriptRoot 'capture-control-plane-inventory.ps1') @capture
     return
 }
 throw ("The $Family comparison harness is not implemented; the capture fails closed and writes nothing. " +

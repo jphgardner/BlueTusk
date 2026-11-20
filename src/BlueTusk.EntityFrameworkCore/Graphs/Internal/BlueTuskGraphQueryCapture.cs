@@ -1,46 +1,44 @@
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace BlueTusk.EntityFrameworkCore.Graphs;
 
 /// <summary>
-/// Carries the immutable typed graph translation metadata to a coordinating compiler.
-/// The capture is scoped to the short-lived registration context and never affects
-/// ordinary query execution.
+/// Associates a typed graph plan with the exact EF query root produced by the builder.
 /// </summary>
 internal static class BlueTuskGraphQueryCapture
 {
-    private static readonly ConditionalWeakTable<DbContext, Capture> Captures = new();
+    private static readonly ConditionalWeakTable<Expression, Capture> Captures = new();
 
-    public static void Record(DbContext context, BlueTuskGraphQueryImpactPlan plan)
+    public static void Record(DbContext context, Expression root, BlueTuskGraphQueryImpactPlan plan) =>
+        Captures.Add(root, new Capture(context, plan));
+
+    public static BlueTuskGraphQueryImpactPlan? Find(DbContext context, Expression root) =>
+        Captures.TryGetValue(root, out var capture) && ReferenceEquals(capture.Context, context)
+            ? capture.Plan
+            : null;
+
+    // Keep existing replay identities stable when the same graph is rendered
+    // through the typed parameter path. Only the diagnostic expression changes;
+    // provenance is still checked against the original root.
+    public static string Describe(Expression expression) =>
+        LegacyRootDescription.Instance.Visit(expression).ToString();
+
+    private sealed class LegacyRootDescription : ExpressionVisitor
     {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(plan);
-        var capture = Captures.GetOrCreateValue(context);
-        lock (capture)
+        public static LegacyRootDescription Instance { get; } = new();
+
+        protected override Expression VisitExtension(Expression node)
         {
-            capture.Plan = plan;
+#pragma warning disable EF1001 // Preserve the pre-existing Continuous Graph fingerprint format.
+            return node is BlueTuskGraphQueryRootExpression graph
+                ? new FromSqlQueryRootExpression(graph.EntityType, graph.Sql, graph.Values)
+                : base.VisitExtension(node);
+#pragma warning restore EF1001
         }
     }
 
-    public static BlueTuskGraphQueryImpactPlan? Consume(DbContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        if (!Captures.TryGetValue(context, out var capture))
-        {
-            return null;
-        }
-
-        lock (capture)
-        {
-            var plan = capture.Plan;
-            capture.Plan = null;
-            return plan;
-        }
-    }
-
-    private sealed class Capture
-    {
-        public BlueTuskGraphQueryImpactPlan? Plan { get; set; }
-    }
+    private sealed record Capture(DbContext Context, BlueTuskGraphQueryImpactPlan Plan);
 }

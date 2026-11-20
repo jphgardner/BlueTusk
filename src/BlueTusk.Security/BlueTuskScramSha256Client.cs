@@ -27,8 +27,8 @@ public sealed class BlueTuskScramSha256Client : IDisposable
         string? clientNonce = null,
         ReadOnlyMemory<byte>? channelBindingData = null)
     {
-        ArgumentNullException.ThrowIfNull(username);
-        ArgumentNullException.ThrowIfNull(password);
+        BlueTuskGuard.NotNull(username);
+        BlueTuskGuard.NotNull(password);
 
         ClientNonce = clientNonce ?? CreateNonce();
         ValidateNonce(ClientNonce);
@@ -49,8 +49,8 @@ public sealed class BlueTuskScramSha256Client : IDisposable
 
     public string CreateClientFinalMessage(string serverFirstMessage)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverFirstMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverFirstMessage);
         if (_clientFinalCreated)
         {
             throw new InvalidOperationException("The SCRAM client-final message has already been created.");
@@ -103,12 +103,19 @@ public sealed class BlueTuskScramSha256Client : IDisposable
         byte[]? proof = null;
         try
         {
+#if NET6_0_OR_GREATER
             saltedPassword = Rfc2898DeriveBytes.Pbkdf2(
                 _passwordBytes,
                 salt,
                 iterationCount,
                 HashAlgorithmName.SHA256,
                 DerivedKeyLength);
+#else
+            using (var derivation = new Rfc2898DeriveBytes(_passwordBytes, salt, iterationCount, HashAlgorithmName.SHA256))
+            {
+                saltedPassword = derivation.GetBytes(DerivedKeyLength);
+            }
+#endif
             clientKey = Hmac(saltedPassword, "Client Key"u8);
             storedKey = SHA256.HashData(clientKey);
             clientSignature = Hmac(storedKey, authenticationBytes);
@@ -140,8 +147,8 @@ public sealed class BlueTuskScramSha256Client : IDisposable
 
     public void VerifyServerFinalMessage(string serverFinalMessage)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverFinalMessage);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverFinalMessage);
         if (!_clientFinalCreated || _expectedServerSignature is null)
         {
             throw new InvalidOperationException("A SCRAM client-final message must be created before verifying the server.");
@@ -180,7 +187,7 @@ public sealed class BlueTuskScramSha256Client : IDisposable
 
     public void EnsureVerified()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_verified)
         {
             throw new BlueTuskAuthenticationException("The SCRAM exchange did not produce a verified server signature.");
@@ -241,7 +248,20 @@ public sealed class BlueTuskScramSha256Client : IDisposable
             : throw new BlueTuskAuthenticationException($"The SCRAM server message omitted the '{name}' attribute.");
 
     private static byte[] Hmac(byte[] key, ReadOnlySpan<byte> data)
-        => HMACSHA256.HashData(key, data);
+    {
+#if NET6_0_OR_GREATER
+        return HMACSHA256.HashData(key, data);
+#else
+        using var hmac = new HMACSHA256(key);
+        var hash = new byte[DerivedKeyLength];
+        if (!hmac.TryComputeHash(data, hash, out _))
+        {
+            throw new CryptographicException("The SCRAM HMAC output buffer is too small.");
+        }
+
+        return hash;
+#endif
+    }
 
     private static string EscapeUsername(string username)
     {
@@ -262,7 +282,7 @@ public sealed class BlueTuskScramSha256Client : IDisposable
 
     private static void ValidateNonce(string nonce)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
+        BlueTuskGuard.NotNullOrWhiteSpace(nonce);
         if (nonce.Contains(',', StringComparison.Ordinal))
         {
             throw new ArgumentException("A SCRAM nonce cannot contain a comma.", nameof(nonce));

@@ -37,7 +37,7 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         BlueTuskClientOptions options,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         var session = await BlueTuskSession.OpenAsync(
             options with { ReplicationMode = BlueTuskReplicationMode.Database },
             cancellationToken).ConfigureAwait(false);
@@ -49,7 +49,7 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
     internal async ValueTask<BlueTuskLogicalPublicationBinding> ReadPublicationBindingAsync(
         string publicationName, string? slotName, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(publicationName);
+        BlueTuskGuard.NotNullOrWhiteSpace(publicationName);
         var slotPredicate = slotName is null
             ? "false"
             : $"r.slot_name = {BlueTuskSql.QuoteLiteral(slotName)}";
@@ -169,11 +169,11 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         BlueTuskLogicalReplicationCheckpoint checkpoint,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(checkpoint);
-        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.SystemIdentifier);
-        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.DatabaseName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.SlotName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.OutputPlugin);
+        BlueTuskGuard.NotNull(checkpoint);
+        BlueTuskGuard.NotNullOrWhiteSpace(checkpoint.SystemIdentifier);
+        BlueTuskGuard.NotNullOrWhiteSpace(checkpoint.DatabaseName);
+        BlueTuskGuard.NotNullOrWhiteSpace(checkpoint.SlotName);
+        BlueTuskGuard.NotNullOrWhiteSpace(checkpoint.OutputPlugin);
         if (checkpoint.AppliedPosition == BlueTuskLogSequenceNumber.Zero)
         {
             throw new ArgumentException(
@@ -279,7 +279,7 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         BlueTuskPgOutputReplicationOptions options,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         var pluginOptions = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
@@ -339,9 +339,9 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         BlueTuskLogicalReplicationRequest request,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.SlotName);
-        ArgumentNullException.ThrowIfNull(request.PluginOptions);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.SlotName);
+        BlueTuskGuard.NotNull(request.PluginOptions);
 
         var command = new StringBuilder()
             .Append("START_REPLICATION SLOT ")
@@ -401,9 +401,9 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         BlueTuskLogicalReplicationSlotCreationOptions options,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.SlotName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.OutputPlugin);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.SlotName);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.OutputPlugin);
         if (!Enum.IsDefined(options.SnapshotMode))
         {
             throw new ArgumentOutOfRangeException(nameof(options), "Unknown logical slot snapshot mode.");

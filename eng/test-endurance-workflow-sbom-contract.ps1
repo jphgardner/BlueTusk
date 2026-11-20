@@ -16,6 +16,15 @@ foreach ($workflowName in $workflowNames)
 {
     $workflowPath = Join-Path $repositoryRoot ".github/workflows/$workflowName"
     $source = Get-Content -LiteralPath $workflowPath -Raw
+    if ($workflowName -cne 'continuous-graph-release-endurance.yml')
+    {
+        if (-not $source.Contains('./eng/receive-core-package-candidate.ps1', [StringComparison]::Ordinal) -or
+            -not $source.Contains('-ExpectedCommit $env:GITHUB_SHA', [StringComparison]::Ordinal) -or
+            -not $source.Contains('-BuildRunId $env:PACKAGE_RUN_ID', [StringComparison]::Ordinal) -or
+            $source -match '\./eng/generate-sbom\.ps1')
+        { throw "Core endurance workflow '$workflowName' must consume exact canonical package provenance." }
+        continue
+    }
     $restoreMatches = [regex]::Matches(
         $source,
         '(?m)^\s*dotnet restore BlueTusk\.slnx --locked-mode\s*$')
@@ -99,6 +108,5 @@ if ($deploymentSource -match
 }
 
 Write-Output (
-    'Endurance workflow contract passed: Streams, Sync, Live/Control Plane, ' +
-    'and ContinuousGraph restore the complete locked dependency graph, accept ' +
-    'detached exact-SHA checkouts, and retain cross-platform evidence downloads.')
+    'Endurance workflow contract passed: Core runs verify canonical package evidence, ' +
+    'ContinuousGraph retains locked SBOM generation, and both support detached checkouts.')

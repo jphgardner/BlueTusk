@@ -1,4 +1,7 @@
 using System.Data.Common;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -56,9 +59,9 @@ public static class BlueTuskDataServiceCollectionExtensions
         Action<BlueTuskDataSourceBuilder>? configure = null,
         string healthCheckName = "bluetusk")
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-        ArgumentException.ThrowIfNullOrWhiteSpace(healthCheckName);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNullOrWhiteSpace(connectionString);
+        BlueTuskGuard.NotNullOrWhiteSpace(healthCheckName);
 
         services.TryAddSingleton(_ =>
         {

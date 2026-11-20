@@ -4,7 +4,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowHealthTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ActiveInspectionIsBoundedAndScoped()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

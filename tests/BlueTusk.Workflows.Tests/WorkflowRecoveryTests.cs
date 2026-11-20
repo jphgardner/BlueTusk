@@ -2,7 +2,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowRecoveryTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExpiredActivityCannotPersistResultBeforeOrAfterReclaim()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -25,7 +25,7 @@ public sealed class WorkflowRecoveryTests
         Assert.Single(await database.Store.ReadHistoryAsync(key, 0, 128), entry => entry.Event == "activity_completed");
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CrashedFinalAttemptIsReconciledToTerminalFailure()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -41,7 +41,7 @@ public sealed class WorkflowRecoveryTests
         Assert.Equal(0, (await database.Store.ReconcileAsync(database.Scope, 128)).Recovered);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task RecoveryCursorCanReachTerminalDispatchBehindLiveCandidates()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

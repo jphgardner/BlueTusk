@@ -17,7 +17,7 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
         Action<BlueTuskEventTriggerBuilder>? configure = null,
         string? functionSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskEventTriggerBuilder(name, @event, functionName, functionSchema);
         configure?.Invoke(builder);
         return HasEventTrigger(modelBuilder, builder.Build());
@@ -28,7 +28,7 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskEventTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskEventTriggerMetadata.Validate(definition);
         definition = BlueTuskEventTriggerMetadata.Normalize(definition);
         var definitions = BlueTuskEventTriggerMetadata.Get(modelBuilder.Model);
@@ -41,7 +41,7 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
     /// <summary>Reads all provider-owned event triggers from the model.</summary>
     public static BlueTuskEventTriggerDefinitionSet GetEventTriggers(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskEventTriggerMetadata.Get(model);
     }
 
@@ -50,7 +50,7 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskEventTriggerMetadata.Deserialize(serializedDefinitions));
     }
 

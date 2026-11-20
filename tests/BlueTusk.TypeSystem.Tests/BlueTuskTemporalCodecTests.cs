@@ -23,7 +23,7 @@ public sealed class BlueTuskTemporalCodecTests
     [Fact]
     public void Timestamp_binary_has_microsecond_precision()
     {
-        var value = new DateTime(2000, 1, 1).AddTicks(TimeSpan.TicksPerMicrosecond);
+        var value = new DateTime(2000, 1, 1).AddTicks(10);
         var bytes = WriteBinary(
             new BlueTuskTimestampCodec(),
             BlueTuskBuiltInTypes.Timestamp,

@@ -11,6 +11,10 @@ public interface IManagedDeploymentStore
         string? tenantId = null,
         CancellationToken cancellationToken = default);
 
+    ValueTask<ManagedDeploymentPage> QueryAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This deployment store does not support bounded inventory queries.");
+
     ValueTask<ManagedDeployment> PutAsync(
         ManagedDeploymentSpec spec,
         long expectedGeneration,
@@ -106,7 +110,7 @@ public sealed class ManagedDeploymentValidationException : Exception
     public ManagedDeploymentValidationException(string code, string message)
         : base(message)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        BlueTuskGuard.NotNullOrWhiteSpace(code);
         Code = code;
     }
 

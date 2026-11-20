@@ -1,21 +1,56 @@
-# Core products and Graph preview
+# Core products and Graph qualification
 
-BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control
-Plane can qualify for release without waiting for Graph. Continuous Graph is
-retained as preview work, including its compiler, incremental engine, dashboard
-and examples. Sharing a source version does not make every family production
-qualified.
+Provider, Streams, Sync, Live and Control Plane can qualify for release
+independently of Graph. Portable BlueTusk Graphs and Continuous Graph have
+their own release gate on PostgreSQL 15–18. Native SQL/PGQ regression coverage
+uses a separate historical fixture.
 
 | Track | Server support | Required evidence |
 | --- | --- | --- |
 | Five core families | PostgreSQL 15–18 stable; PostgreSQL 19 preview | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
-| Continuous Graph preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ | Separate preview tests and performance results; not production evidence |
-| Future Graph stable | A supported server release that actually provides SQL/PGQ | Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval |
+| Portable Graph preview | PostgreSQL 15–18, with a digest-pinned PostgreSQL 18 release fixture | Exact candidate packages, differential and security tests, Windows and Linux performance, 24-hour recovery, and independent approval |
+| Native SQL/PGQ preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture | Capability checks and native regression evidence on the pinned fixture. A future native release also requires result parity and permissions checks. |
 
 PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/).
-PostgreSQL 19 GA alone will therefore not qualify Graph. A future server version
-has not been assigned here. Native PostgreSQL 19 `REPACK` remains preview
+Native mode requires the actual server capability. Native PostgreSQL 19 `REPACK` remains preview
 compatibility work until the GA matrix passes.
+
+## BlueTusk graph engine
+
+The Continuous Graph release workflow builds and tests `bluetusk_graph` from
+the managed package commit. It retains Linux x86-64 extension archives for the
+pinned PostgreSQL 15–18 Alpine builds, including the install and upgrade SQL,
+checksums, and source and server image identifiers. Continuous Graph publication
+requires that job to pass.
+
+Once a database administrator [installs the engine and registers the graph](../../extensions/bluetusk_graph/README.md#install-and-register),
+EF and Continuous Graph use it by default for supported bounded traversals.
+The portable qualification and recovery gates also apply to the release.
+
+## Portable Graph status
+
+The standalone Graph baseline at `ff925b188dc32866d16212c21b4af4d84fcab612`
+passed 63 graph tests without skips on each of PostgreSQL 15, 16, 17, and 18.
+The Topology and Fraud application journeys also passed with packages built
+from that baseline. Selective directed and undirected queries used endpoint
+indexes on the million-edge fixture. Separate native regression checks passed
+on the pinned PostgreSQL 19 Beta 3 fixture.
+
+At 1,000 edges and top 1,000, the standalone baseline recorded full-requery
+P95 of 1.730 ms on Windows and 1.672 ms on Linux (WSL2). Scoped-update P95 was
+46.8% and 47.2% of full repair respectively. Recovery smoke tests completed
+402 committed evaluations across both clients with zero ordering or
+reconciliation errors.
+
+The public `1.1.0-rc.1` packages predate the portable backend. The integrated
+candidate still needs exact-candidate compatibility, package-consumer,
+performance, and recovery evidence. Full-requery P95 must be at most **3.61 ms**
+and scoped updates must beat full repair P95 on every matched workload.
+Scoped allocation must stay at or below **35%** of full repair. The P95
+tuning target is **35%**. Trusted CDC keeps its **10%** P95 and allocation
+limits. The 24-hour recovery run requires at least 100,000 evaluations,
+at least 99.9% committed outcomes, lifecycle P95 at or below one second, and
+zero ordering or reconciliation errors.
 
 ## Verify the track and its measurements
 
@@ -36,25 +71,74 @@ Continuous Graph. All stable package-publication flags remain disabled.
     -ExpectedCommit <full-40-character-sha> -Scope Core
 ```
 
-Performance evidence schema 3 names `Core` or `ContinuousGraphPreview`.
+Core and Graph use separate performance evidence tied to their source commits.
 `Core` requires every declared core workload, including all seven Sync
-destinations, on both Windows and Linux. `ContinuousGraphPreview` requires its
-own complete matrix and cannot certify a core release. Preview results cannot
+destinations, on both Windows and Linux. Portable Graph requires its own
+complete matrix. Historical native preview results cannot
 substitute for missing core workloads. Confidence intervals, allocation,
 latency, CPU and memory limits have not been reduced. Verifier self-tests use
 synthetic fixtures only; their success is not a performance result.
 
-## Remaining release wiring
+## Core 1.2 package readiness
+
+The package track covers Provider, Streams, Sync, Live, and Control Plane on
+stable PostgreSQL 15–18. Continuous Graph qualifies through its own release
+track. Website deployment has its own scope.
+
+Use the exact candidate SHA on `main` for final qualification. The protected
+candidate-readiness workflow accepts only `main` and requires the dispatch SHA
+to match every producer. Checks on the pull request give pre-merge feedback.
+
+1. Run the build with the Core packages-only option. It retains the five
+   package families, their SBOMs and provenance, and the regression and stable
+   PostgreSQL test matrices. The Orders API and worker build from that exact
+   package feed, and the Orders migration and tenant-isolation test runs on the
+   stable database fixture. The website and PostgreSQL 19 preview jobs continue
+   to run in their ordinary build contexts.
+2. Run the runtime compatibility workflow with full coverage required. Run
+   security, one-hour fuzzing, and the Core performance qualification workflow.
+   Use the qualification evidence class and the [v1.2 Provider topology](../../eng/performance-cross-os-proposal.md).
+3. Give the successful package build run ID to the Streams, Sync, and Live /
+   Control Plane endurance workflows. They verify the same package archive
+   before the 72-hour, 24-hour, and 24-hour runs respectively.
+4. In the protected candidate-readiness environment, supply the real approval
+   and disturbance records for that SHA through the existing ZIP evidence
+   handoff. Use the V1_2_CORE_EVIDENCE_BASE64 secret for the 1.2 Core records.
+   Run the Core 1.2 package readiness workflow with the eight producer run IDs.
+
+The endurance workflows use one-job Kubernetes runners. Apply
+[`kubernetes-endurance-namespace.yaml`](../../eng/runners/kubernetes-endurance-namespace.yaml)
+to the runner cluster before dispatching the first run. Run the launcher below once per Core track.
+The launcher checks the candidate and package build, dispatches the workflow, and registers a runner
+for its unique queued job. Keep the runner namespace on nodes that support pod user namespaces.
+
+```powershell
+./eng/runners/invoke-kubernetes-endurance.ps1 -Track Streams -Ref $ref -Candidate $sha `
+    -PackageRunId $buildRunId -KubernetesContext $context
+```
+
+The other Core tracks are `Sync` and `LiveControlPlane`. `ContinuousGraph` uses its own release track
+and does not take a Core package run ID.
+
+The release keeps both independent application pilots, independent review,
+security, backup and restore, rollback, the incident response exercise, SLO
+approval, and maintainer sign-off. These approvals bind the candidate and must
+follow the producer runs. The protected package-production approval still
+applies to tag publication. Maintainer sign-off identifies the exact candidate
+package manifest SHA-256. The readiness workflow retains a summary binding
+the candidate to the verified package manifest, provenance, and workflow
+attempts.
+
+## Historical Core 1.1 release wiring
 
 The build workflow now measures stable PostgreSQL 15–18 compatibility and
 produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
 the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
 stable qualification. Compile-time and shared API checks still cover Graph.
-The package-only application job runs Orders on the pinned stable database.
-Topology and Fraud integration tests are retained in that manual preview
-workflow. Their absence from core runtime validation is explicit, not a set of
-skipped Graph tests reported as successful Graph qualification.
+The Core package-only application job runs Orders on its pinned stable database.
+The portable Graph workflow runs Topology and Fraud against the exact candidate
+packages on pinned PostgreSQL 18.
 
 The existing protected `PostgreSQL 19 live matrix` status is preserved as a
 provider-only check on the last verified historical fixture; it does not run
@@ -64,12 +148,11 @@ This historical compatibility check is not a claim that Beta 4 or GA passed.
 
 ```powershell
 ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core
-./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPortable
 ./eng/test-application-postgresql-tracks.ps1
 ```
 
-Application plans deliberately use `lastVerifiedMilestone`, not the latest
-announced milestone. Core plans never read the PostgreSQL 19 programme. The
+Each application track selects its own pinned stable PostgreSQL image. The
 reader requires exactly the named test set for each track and rejects skips,
 failures, substitutions, mismatched counters and cross-track results. A new
 capture directory preserves the TRX and hash; local results do not replace the
@@ -114,7 +197,7 @@ Use a new output directory for each capture; existing evidence is not overwritte
 `eng/v1.1-candidate-readiness.json` is a draft aggregation contract, explicitly
 marked as migration in progress. `eng/build-core-candidate-envelope.ps1` now
 builds its schema 4 envelope from seven run records, fourteen canonical artifact
-roles and ten approval records. `eng/verify-core-candidate-bindings.ps1` verifies
+roles and eight approval records. `eng/verify-core-candidate-bindings.ps1` verifies
 exact commit and producer bindings, file digests and sizes, root containment,
 approval schemas and approval ordering. Its self-test exercises a synthetic
 binding set and rejects malformed or stale substitutions; it is part of the
@@ -281,8 +364,7 @@ any candidate can be approved. Hashing report JSON alone cannot qualify them.
 
 The historical `v1-candidate-readiness.yml` aggregator and its V1 evidence schema
 still describe a six-family, PostgreSQL-19-GA-qualified 1.0 candidate. They are
-not a valid 1.2 core release gate. The 1.2 candidate aggregator must be migrated
-to this track policy, exact 1.2 versions, the scoped performance manifest,
+not a valid 1.1 Core release gate. The Core candidate aggregator must apply this track policy, exact 1.1 versions, the scoped performance manifest,
 Live/Control Plane endurance and current connector evidence before publication
 can be enabled. Keep the existing protections and independent approvals;
 do not bypass the old aggregator or reinterpret its historical artifacts.

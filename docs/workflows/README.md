@@ -1,9 +1,5 @@
 # BlueTusk.Workflows
 
-> **Preview.** This family is `0.1.0-preview.1` and is not published to a
-> package feed yet. It is not part of the 1.1.0 release and its API may change.
-> Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status).
-
 Use the shared [storage maintenance contract](../jobs/maintenance.md) for
 workflow state and its dispatch Jobs. [Durable-format support](../jobs/durable-format.md)
 documents same-format restart/configuration rollback and the unsupported
@@ -17,8 +13,7 @@ BlueTusk.Workflows executes immutable, versioned directed acyclic graphs in
 PostgreSQL. Activities, joins, timers, buffered signals, results, compensation,
 history and dispatch state survive worker restarts. Jobs supplies transactional
 dispatch, bounded workers, database-clock leases, retries and fencing. The
-package targets .NET 10 and is `0.1.0-preview.1`. Current implementation evidence
-does not establish qualification for massive production workloads.
+package integrates with the Jobs worker.
 
 ## Define and execute
 
@@ -214,30 +209,3 @@ for reproducible local load, pool pressure and real process/COMMIT fault scenari
 The [Jobs/Workflows physical promotion rehearsal](../jobs/failover.md) covers
 persisted timers, signals, activity replay and compensation on synchronous
 standby promotion, with retained passing and failing exploratory results.
-
-## Evidence and qualification
-
-The live suite covers branches/joins, timer deadlines, buffered signals,
-rollback/deduplication, tenant/signal caps, retry identities, stale owners before/
-after reclaim, final crash and cursor recovery, store/worker restart, ordered
-compensation/failure, active cancellation, retention, migration, immutable/
-corrupt definitions, fan-in/read byte budgets, history limits and replay/drift.
-
-```powershell
-$env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=127.0.0.1;Port=55418;Username=postgres;Password=postgres;Database=bluetusk_ecosystem;SSL Mode=Disable;Channel Binding=Disable'
-dotnet test tests/BlueTusk.Workflows.Tests/BlueTusk.Workflows.Tests.csproj -c Release -nr:false
-dotnet publish tests/BlueTusk.Workflows.AotSmoke/BlueTusk.Workflows.AotSmoke.csproj -c Release -r win-x64 -nr:false
-& tests/BlueTusk.Workflows.AotSmoke/bin/Release/net10.0/win-x64/publish/BlueTusk.Workflows.AotSmoke.exe
-```
-
-The Windows x64 NativeAOT executable has been published without warnings and
-passed against live PostgreSQL: generated typed Jobs/workflow handlers, fenced
-effect, source/worker restart, signal, timer, compensation and replay. It uses
-unique disposable schemas. This is one AOT scenario, not universal deployment
-qualification.
-
-Still required: sustained backlog/tenant/fan-in/payload/concurrency sweeps,
-P50/P95/P99/allocation/memory/WAL evidence, overload fairness, abrupt process
-death, partitions, failover, clock movement, format upgrade/rollback, Linux,
-supported PostgreSQL releases, security and operator release gates in
-`../ecosystem/implementation-programme.md`.

@@ -5,561 +5,19 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
-    "slug": "handbook",
-    "listed": false,
-    "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
-    "keywords": [
-      "documentation",
-      "handbook",
-      "navigation",
-      "v1"
-    ],
-    "order": 1,
-    "title": "BlueTusk documentation",
-    "sourcePath": "docs/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-documentation",
-        "text": "BlueTusk documentation",
-        "level": 1
-      },
-      {
-        "id": "start-here",
-        "text": "Start here",
-        "level": 2
-      },
-      {
-        "id": "products",
-        "text": "Products",
-        "level": 2
-      },
-      {
-        "id": "preview-products",
-        "text": "Preview products",
-        "level": 2
-      },
-      {
-        "id": "run-in-production",
-        "text": "Run in production",
-        "level": 2
-      },
-      {
-        "id": "reference",
-        "text": "Reference",
-        "level": 2
-      },
-      {
-        "id": "conventions-in-these-docs",
-        "text": "Conventions in these docs",
-        "level": 2
-      }
-    ],
-    "wordCount": 637,
-    "readMinutes": 3,
-    "searchText": "BlueTusk documentation BlueTusk is a PostgreSQL platform for .NET 10. Use this page to find the guide for what you want to do. Start here New to BlueTusk? Read these in order. Together they take about 20 minutes. [What is BlueTusk?](getting-started/overview.md): the products and how they fit together. [Install BlueTusk](getting-started/install.md): choose packages and a version. [5-minute first app](getting-started/quickstart.md): connect and run a query. [Core concepts](getting-started/concepts.md): the vocabulary every product uses. Products Every product has the same set of pages, in the order you need them: an overview, a quick start, concepts, task guides, configuration and troubleshooting. Product What it does Quick start Concepts Configuration Troubleshooting [ADO.NET](ado-net/README.md) Connections, commands, transactions, COPY, notifications [Quick start](ado-net/quickstart.md) [Concepts](ado-net/concepts.md) [Configuration](ado-net/configuration.md) [Troubleshooting](ado-net/troubleshooting.md) [EF Core](ef-core/README.md) LINQ, change tracking, migrations and scaffolding [Quick start](ef-core/quickstart.md) [Concepts](ef-core/concepts.md) [Configuration](ef-core/configuration.md) [Troubleshooting](ef-core/troubleshooting.md) [Streams](streams/README.md) Process every committed change, in order [Quick start](streams/quickstart.md) [Concepts](streams/concepts.md) [Configuration](streams/configuration.md) [Troubleshooting](streams/troubleshooting.md) [Sync](sync/README.md) Copy committed changes to another database, cache, broker or index [Quick start](sync/quickstart.md) [Concepts](sync/concepts.md) [Configuration](sync/configuration.md) [Troubleshooting](sync/troubleshooting.md) [Live](live/README.md) Push live query results to browsers and .NET clients [Quick start](live/quickstart.md) [Concepts](live/concepts.md) [Configuration](live/configuration.md) [Troubleshooting](live/troubleshooting.md) [Control Plane](control-plane/README.md) Inspect and operate ",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk documentation</h1>\n<p>BlueTusk is a PostgreSQL platform for .NET 10. Use this page to find the guide\nfor what you want to do.</p>\n<h2>Start here</h2>\n<p>New to BlueTusk? Read these in order. Together they take about 20 minutes.</p>\n<ol>\n<li><a href=\"/documentation/getting-started/overview\">What is BlueTusk?</a>: the products and how they fit together.</li>\n<li><a href=\"/documentation/getting-started/install\">Install BlueTusk</a>: choose packages and a version.</li>\n<li><a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>: connect and run a query.</li>\n<li><a href=\"/documentation/getting-started/concepts\">Core concepts</a>: the vocabulary every product uses.</li>\n</ol>\n<h2>Products</h2>\n<p>Every product has the same set of pages, in the order you need them:\nan overview, a quick start, concepts, task guides, configuration and\ntroubleshooting.</p>\n<table>\n<thead>\n<tr>\n<th>Product</th>\n<th>What it does</th>\n<th>Quick start</th>\n<th>Concepts</th>\n<th>Configuration</th>\n<th>Troubleshooting</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><a href=\"/documentation/getting-started/provider-overview\">ADO.NET</a></td>\n<td>Connections, commands, transactions, COPY, notifications</td>\n<td><a href=\"/documentation/provider/quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/provider/concepts\">Concepts</a></td>\n<td><a href=\"/documentation/provider/configuration\">Configuration</a></td>\n<td><a href=\"/documentation/provider/troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td><a href=\"/documentation/ef-core/overview\">EF Core</a></td>\n<td>LINQ, change tracking, migrations and scaffolding</td>\n<td><a href=\"/documentation/ef-core/quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/ef-core/concepts\">Concepts</a></td>\n<td><a href=\"/documentation/ef-core/configuration\">Configuration</a></td>\n<td><a href=\"/documentation/ef-core/troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td>Process every committed change, in order</td>\n<td><a href=\"/documentation/real-time/streams-quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/real-time/streams-concepts\">Concepts</a></td>\n<td><a href=\"/documentation/real-time/streams-configuration\">Configuration</a></td>\n<td><a href=\"/documentation/real-time/streams-troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td>Copy committed changes to another database, cache, broker or index</td>\n<td><a href=\"/documentation/real-time/sync-quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/real-time/sync-concepts\">Concepts</a></td>\n<td><a href=\"/documentation/real-time/sync-configuration\">Configuration</a></td>\n<td><a href=\"/documentation/real-time/sync-troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td>Push live query results to browsers and .NET clients</td>\n<td><a href=\"/documentation/real-time/live-quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/real-time/live-concepts\">Concepts</a></td>\n<td><a href=\"/documentation/real-time/live-configuration\">Configuration</a></td>\n<td><a href=\"/documentation/real-time/live-troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/control-plane\">Control Plane</a></td>\n<td>Inspect and operate running BlueTusk components</td>\n<td><a href=\"/documentation/real-time/control-plane-quickstart\">Quick start</a></td>\n<td><a href=\"/documentation/real-time/control-plane-concepts\">Concepts</a></td>\n<td><a href=\"/documentation/real-time/control-plane-configuration\">Configuration</a></td>\n<td><a href=\"/documentation/real-time/control-plane-troubleshooting\">Troubleshooting</a></td>\n</tr>\n</tbody>\n</table>\n<p>Related provider topics:</p>\n<ul>\n<li><a href=\"/documentation/provider/types\">PostgreSQL types</a>: how .NET values map to PostgreSQL types.</li>\n<li><a href=\"/documentation/extensions/catalog\">PostgreSQL extensions</a>: pgvector, PostGIS,\nTimescaleDB, citext, hstore, ltree and pg_trgm.</li>\n<li><a href=\"/documentation/provider/cloud-identity\">Cloud identity</a>: AWS, Azure and Google Cloud\nsign-in.</li>\n<li><a href=\"/documentation/provider/replication\">Replication protocol</a>: raw logical and physical\nreplication, for when Streams is too high level.</li>\n<li><a href=\"/documentation/provider/pipeline-mode\">Pipeline mode</a>: low-level PostgreSQL pipelining.</li>\n</ul>\n<p>Real-time products share one delivery model. Read\n<a href=\"/documentation/real-time/contracts\">delivery guarantees</a> once before you build\nwith Streams, Sync or Live, and see\n<a href=\"/documentation/real-time/platform\">choosing a real-time product</a> if you are not\nsure which one you need.</p>\n<h2>Preview products</h2>\n<p>These are not part of the 1.1.0 release. You can evaluate them, but their API\nand behavior may change.</p>\n<ul>\n<li><a href=\"/documentation/graph/sql-pgq\">Graph (SQL/PGQ)</a> and\n<a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a> need a PostgreSQL server that\nprovides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so\nthey wait for a PostgreSQL release that ships it.</li>\n<li>The ecosystem families are <code>0.1.0-preview.1</code> and not published yet. Each is\nreleased when its own checks pass:\n<a href=\"/documentation/operations/events\">Events</a>, <a href=\"/documentation/operations/jobs\">Jobs</a>,\n<a href=\"/documentation/operations/workflows\">Workflows</a>, <a href=\"/documentation/operations/documents\">Documents</a>,\n<a href=\"/documentation/operations/schema\">Schema</a>, <a href=\"/documentation/operations/projections\">Projections</a>,\n<a href=\"/documentation/operations/search\">Search</a>, <a href=\"/documentation/operations/sql\">Sql</a>, <a href=\"/documentation/operations/studio\">Studio</a>\nand <a href=\"/documentation/operations/edge\">Edge</a>. See the\n<a href=\"/documentation/operations/ecosystem-release-qualification\">ecosystem release plan</a>.</li>\n</ul>\n<h2>Run in production</h2>\n<p>Work through the <a href=\"/documentation/operations/production-checklist\">production checklist</a>\nfirst. Then use the guide for each task:</p>\n<table>\n<thead>\n<tr>\n<th>Task</th>\n<th>Guide</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Deploy</td>\n<td><a href=\"/documentation/operations/deployment\">Deployment</a></td>\n</tr>\n<tr>\n<td>Secure</td>\n<td><a href=\"/documentation/operations/security\">Security</a></td>\n</tr>\n<tr>\n<td>Monitor</td>\n<td><a href=\"/documentation/operations/operations-observability\">Observability</a></td>\n</tr>\n<tr>\n<td>Size and tune</td>\n<td><a href=\"/documentation/operations/performance\">Performance and capacity</a></td>\n</tr>\n<tr>\n<td>Fix problems</td>\n<td><a href=\"/documentation/operations/troubleshooting\">Troubleshooting</a></td>\n</tr>\n<tr>\n<td>Upgrade or roll back</td>\n<td><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></td>\n</tr>\n<tr>\n<td>Recover real-time products</td>\n<td><a href=\"/documentation/real-time/operations\">Recovery and rebuilds</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Reference</h2>\n<p>For maintainers, reviewers and incident investigations:</p>\n<ul>\n<li><a href=\"/documentation/operations/versioning\">Support matrix and versioning</a></li>\n<li><a href=\"/documentation/getting-started/architecture\">Architecture overview</a> and\n<a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a></li>\n<li><a href=\"/documentation/operations/api-compatibility\">API compatibility</a></li>\n<li>Product references: <a href=\"/documentation/ef-core/ef-core-reference\">EF Core</a>,\n<a href=\"/documentation/real-time/sync-reference\">Sync</a>, <a href=\"/documentation/real-time/live-reference\">Live</a>,\n<a href=\"/documentation/real-time/control-plane-reference\">Control Plane</a>, <a href=\"/documentation/provider/types-reference\">types</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a> and\n<a href=\"/documentation/operations/v1-release-readiness\">release readiness records</a></li>\n<li><a href=\"/documentation/operations/contributing\">Contributing</a>, <a href=\"/documentation/operations/contributing-development\">development setup</a>,\n<a href=\"/documentation/operations/testing\">testing</a> and\n<a href=\"/documentation/operations/repository-layout\">repository layout</a></li>\n</ul>\n<h2>Conventions in these docs</h2>\n<ul>\n<li>Shell commands are PowerShell. Where bash differs, the page says so.</li>\n<li>Examples use parameters for every value. Never build SQL from user input.</li>\n<li><code>SSL Mode=Disable</code> appears only in examples that use a local test container.\nKeep the default, <code>VerifyFull</code>, everywhere else.</li>\n<li><strong>New in 1.1.0</strong> marks a feature that is not in <code>1.0.0</code> or <code>1.1.0-rc.1</code>.</li>\n</ul>\n<p>Found a mistake? Open an issue with the page URL, the package version, the\nPostgreSQL version and the smallest example that shows the problem.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "overview",
-    "summary": "What BlueTusk is, the product families and their status, and where to start.",
-    "keywords": [
-      "overview",
-      "products",
-      "families",
-      "status",
-      "introduction"
-    ],
-    "order": 1,
-    "listed": true,
-    "title": "What is BlueTusk?",
-    "sourcePath": "docs/getting-started/overview.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/overview.md",
-    "headings": [
-      {
-        "id": "what-is-bluetusk",
-        "text": "What is BlueTusk?",
-        "level": 1
-      },
-      {
-        "id": "the-product-families",
-        "text": "The product families",
-        "level": 2
-      },
-      {
-        "id": "how-the-families-fit-together",
-        "text": "How the families fit together",
-        "level": 2
-      },
-      {
-        "id": "choose-where-to-start",
-        "text": "Choose where to start",
-        "level": 2
-      },
-      {
-        "id": "release-status",
-        "text": "Release status",
-        "level": 2
-      },
-      {
-        "id": "what-the-status-labels-mean",
-        "text": "What the status labels mean",
-        "level": 3
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 726,
-    "readMinutes": 4,
-    "searchText": "What is BlueTusk? BlueTusk is a PostgreSQL platform for .NET 10. It gives .NET applications a native PostgreSQL driver and EF Core provider, then adds products that react to committed database changes: change streams, destination sync, live queries for browsers, and an operations dashboard. BlueTusk talks to PostgreSQL directly over the PostgreSQL wire protocol. It does not wrap or depend on Npgsql at run time. The product families BlueTusk is a set of product families. Install only the families you need. Family What it does Main package Status [Provider: ADO.NET](../ado-net/README.md) Connections, commands, transactions, COPY, notifications and replication `BlueTusk.Data` Core [Provider: EF Core](../ef-core/README.md) LINQ, change tracking, migrations and scaffolding `BlueTusk.EntityFrameworkCore` Core [Streams](../streams/README.md) Turns committed PostgreSQL changes into ordered, acknowledged transactions (change data capture) `BlueTusk.Streams` Core [Sync](../sync/README.md) Applies those transactions to PostgreSQL, Redis, NATS, OpenSearch, Kafka, S3 or a webhook `BlueTusk.Sync` Core [Live](../live/README.md) Pushes the result of an authorized query to browsers and .NET clients as it changes `BlueTusk.Live` and `@bluetusk/live` Core [Control Plane](../control-plane/README.md) A dashboard and API to inspect and operate the other products `BlueTusk.ControlPlane` Core [Graph](../graph/README.md) and [Continuous Graph](../continuous-graph/README.md) SQL/PGQ property-graph queries and incrementally maintained graph results `BlueTusk.Data`, `BlueTusk.ContinuousGraph` Preview, not part of 1.1.0 [Ecosystem](../ecosystem/release-qualification.md) Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge Several Preview, not published The provider also has optional packages for [PostgreSQL extensions](../extensions/README.md) such as PostGIS, pgvector and TimescaleDB, and for [cloud identity](../ado-net/cloud-identity.md) on AWS, Azure and Goog",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>What is BlueTusk?</h1>\n<p>BlueTusk is a PostgreSQL platform for .NET 10. It gives .NET applications a\nnative PostgreSQL driver and EF Core provider, then adds products that react to\ncommitted database changes: change streams, destination sync, live queries for\nbrowsers, and an operations dashboard.</p>\n<p>BlueTusk talks to PostgreSQL directly over the PostgreSQL wire protocol. It does\nnot wrap or depend on Npgsql at run time.</p>\n<h2>The product families</h2>\n<p>BlueTusk is a set of product families. Install only the families you need.</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>What it does</th>\n<th>Main package</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><a href=\"/documentation/getting-started/provider-overview\">Provider: ADO.NET</a></td>\n<td>Connections, commands, transactions, COPY, notifications and replication</td>\n<td><code>BlueTusk.Data</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/ef-core/overview\">Provider: EF Core</a></td>\n<td>LINQ, change tracking, migrations and scaffolding</td>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td>Turns committed PostgreSQL changes into ordered, acknowledged transactions (change data capture)</td>\n<td><code>BlueTusk.Streams</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td>Applies those transactions to PostgreSQL, Redis, NATS, OpenSearch, Kafka, S3 or a webhook</td>\n<td><code>BlueTusk.Sync</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td>Pushes the result of an authorized query to browsers and .NET clients as it changes</td>\n<td><code>BlueTusk.Live</code> and <code>@bluetusk/live</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/real-time/control-plane\">Control Plane</a></td>\n<td>A dashboard and API to inspect and operate the other products</td>\n<td><code>BlueTusk.ControlPlane</code></td>\n<td>Core</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/graph/sql-pgq\">Graph</a> and <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n<td>SQL/PGQ property-graph queries and incrementally maintained graph results</td>\n<td><code>BlueTusk.Data</code>, <code>BlueTusk.ContinuousGraph</code></td>\n<td>Preview, not part of 1.1.0</td>\n</tr>\n<tr>\n<td><a href=\"/documentation/operations/ecosystem-release-qualification\">Ecosystem</a></td>\n<td>Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge</td>\n<td>Several</td>\n<td>Preview, not published</td>\n</tr>\n</tbody>\n</table>\n<p>The provider also has optional packages for\n<a href=\"/documentation/extensions/catalog\">PostgreSQL extensions</a> such as PostGIS, pgvector and\nTimescaleDB, and for <a href=\"/documentation/provider/cloud-identity\">cloud identity</a> on AWS, Azure\nand Google Cloud.</p>\n<h2>How the families fit together</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "                ┌──────────────────────────────────────────────┐\n Your .NET app ─┤ Provider: BlueTusk.Data / EntityFrameworkCore├─► PostgreSQL\n                └──────────────────────────────────────────────┘        │\n                                                                         │ logical replication\n                                                                         ▼\n                                                                     Streams\n                                                     ┌───────────────┼────────────────┐\n                                                     ▼               ▼                ▼\n                                                   Sync            Live      Continuous Graph (preview)\n                                              (other systems)   (browsers)\n\n                                Control Plane observes and operates all of them.\n",
-        "highlighted": "                ┌──────────────────────────────────────────────┐\n Your .NET app ─┤ Provider: BlueTusk.Data / EntityFrameworkCore├─► PostgreSQL\n                └──────────────────────────────────────────────┘        │\n                                                                         │ logical replication\n                                                                         ▼\n                                                                     Streams\n                                                     ┌───────────────┼────────────────┐\n                                                     ▼               ▼                ▼\n                                                   Sync            Live      Continuous Graph (preview)\n                                              (other systems)   (browsers)\n\n                                Control Plane observes and operates all of them.\n",
-        "language": "text"
-      },
-      {
-        "kind": "html",
-        "html": "<ul>\n<li>The <strong>provider</strong> is the foundation. Everything else uses it.</li>\n<li><strong>Streams</strong> is the only component that reads PostgreSQL’s replication\nprotocol. Sync, Live and Continuous Graph consume Streams.</li>\n<li>You can use the provider on its own. You only need Streams when you want to\nreact to committed changes.</li>\n</ul>\n<h2>Choose where to start</h2>\n<table>\n<thead>\n<tr>\n<th>I want to…</th>\n<th>Start with</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Run SQL from a .NET application</td>\n<td><a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>, then the <a href=\"/documentation/provider/quickstart\">ADO.NET quick start</a></td>\n</tr>\n<tr>\n<td>Use EF Core with PostgreSQL</td>\n<td><a href=\"/documentation/ef-core/quickstart\">EF Core quick start</a></td>\n</tr>\n<tr>\n<td>Process every committed change in .NET code</td>\n<td><a href=\"/documentation/real-time/streams-quickstart\">Streams quick start</a></td>\n</tr>\n<tr>\n<td>Keep a cache, search index, broker or another database current</td>\n<td><a href=\"/documentation/real-time/sync-quickstart\">Sync quick start</a></td>\n</tr>\n<tr>\n<td>Push live query results to a web page</td>\n<td><a href=\"/documentation/real-time/live-quickstart\">Live quick start</a></td>\n</tr>\n<tr>\n<td>See the health of a real-time deployment</td>\n<td><a href=\"/documentation/real-time/control-plane-quickstart\">Control Plane quick start</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Release status</h2>\n<table>\n<thead>\n<tr>\n<th>Version</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>1.0.0</code></td>\n<td>Current stable release, published on 2026-08-23.</td>\n</tr>\n<tr>\n<td><code>1.1.0-rc.1</code></td>\n<td>Public release candidate, published on 2026-08-29.</td>\n</tr>\n<tr>\n<td><code>1.1.0</code></td>\n<td>Next release, in qualification. It has not been published yet.</td>\n</tr>\n</tbody>\n</table>\n<p>The Core families (Provider, Streams, Sync, Live and Control Plane) share one\nversion. When <code>1.1.0</code> is published, it supersedes <code>1.0.0</code> and <code>1.1.0-rc.1</code>,\nwhich will be deprecated.</p>\n<p>Graph and Continuous Graph are not part of the <code>1.1.0</code> release. They need a\nPostgreSQL server that provides SQL/PGQ, and PostgreSQL removed SQL/PGQ in\nPostgreSQL 19 Beta 4. They stay in preview until a PostgreSQL release ships it.</p>\n<p>The ecosystem families are <code>0.1.0-preview.1</code> and are not published to a\npackage feed. Each one is released when its own checks pass.</p>\n<p>See <a href=\"/documentation/getting-started/install#choose-a-version\">Install BlueTusk</a> to choose a version.</p>\n<h3>What the status labels mean</h3>\n<ul>\n<li><strong>Core</strong>: on the stable release track. Published as <code>1.0.0</code> and\n<code>1.1.0-rc.1</code>; <code>1.1.0</code> is next.</li>\n<li><strong>Preview</strong>: you can evaluate it, but it is not production-qualified and its\nAPI or behavior may change.</li>\n<li><strong>Not published</strong>: build the packages from source to evaluate them.</li>\n</ul>\n<p>A published package is not the same as a production qualification. The\n<a href=\"/documentation/operations/v1-release-readiness\">evidence and qualification records</a> show what has\nbeen measured and what is still open.</p>\n<h2>Next steps</h2>\n<ol>\n<li><a href=\"/documentation/getting-started/install\">Install BlueTusk</a>.</li>\n<li>Build the <a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>.</li>\n<li>Read the <a href=\"/documentation/getting-started/concepts\">core concepts</a> that every product uses.</li>\n</ol>\n"
-      }
-    ]
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "install",
-    "summary": "Choose packages and a version, add them to a .NET or npm project, and install the bluetusk tool and templates.",
-    "keywords": [
-      "install",
-      "nuget",
-      "npm",
-      "packages",
-      "versions",
-      "1.1.0",
-      "templates",
-      "tool"
-    ],
-    "order": 2,
-    "listed": true,
-    "title": "Install BlueTusk",
-    "sourcePath": "docs/getting-started/install.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/install.md",
-    "headings": [
-      {
-        "id": "install-bluetusk",
-        "text": "Install BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "requirements",
-        "text": "Requirements",
-        "level": 2
-      },
-      {
-        "id": "choose-a-version",
-        "text": "Choose a version",
-        "level": 2
-      },
-      {
-        "id": "product-status",
-        "text": "Product status",
-        "level": 3
-      },
-      {
-        "id": "choose-packages",
-        "text": "Choose packages",
-        "level": 2
-      },
-      {
-        "id": "add-net-packages",
-        "text": "Add .NET packages",
-        "level": 2
-      },
-      {
-        "id": "keep-every-bluetusk-package-on-one-version",
-        "text": "Keep every BlueTusk package on one version",
-        "level": 3
-      },
-      {
-        "id": "add-the-browser-clients",
-        "text": "Add the browser clients",
-        "level": 2
-      },
-      {
-        "id": "install-the-command-line-tool",
-        "text": "Install the command-line tool",
-        "level": 2
-      },
-      {
-        "id": "install-the-project-templates",
-        "text": "Install the project templates",
-        "level": 2
-      },
-      {
-        "id": "check-what-you-installed",
-        "text": "Check what you installed",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 938,
-    "readMinutes": 5,
-    "searchText": "Install BlueTusk This page helps you choose the BlueTusk packages and the version you need, and add them to a .NET or JavaScript project. Requirements Requirement Version .NET .NET 10 (`net10.0`) EF Core (only for `BlueTusk.EntityFrameworkCore`) 10.0.11 PostgreSQL 15, 16, 17 or 18. PostgreSQL 19 is preview only. Node.js (only for the browser clients) A current LTS release Streams, Sync and Live also need PostgreSQL logical replication: `wal_level = logical` on the server and a role with the `REPLICATION` attribute. The [Streams quick start](../streams/quickstart.md) shows the setup. The [support matrix](../../VERSIONING.md) is the authority on supported versions. Choose a version All Core packages share one version number. Use the same exact version for every BlueTusk package in an application. Version Status Use it when `1.1.0` Next release. In release qualification; **not published yet**. When it is published, use it for all new and existing applications. `1.1.0-rc.1` Public release candidate, published 2026-08-29. You want to evaluate 1.1 before `1.1.0` is published. `1.0.0` Stable release, published 2026-08-23. You need a stable package today. When `1.1.0` is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on NuGet and npm and will point to `1.1.0`. To move an existing application, see the [upgrade guide](../operations/upgrade-guide.md). Some features documented here are new in `1.1.0` and are not in `1.0.0` or `1.1.0-rc.1`. Those pages say **New in 1.1.0**. The [1.1.0 release notes](../releases/1.1.0.md) list them all. Product status Family Version line Status Provider (ADO.NET, EF Core, extensions, cloud identity, `bluetusk` tool) 1.1.0 Core Streams 1.1.0 Core Sync 1.1.0 Core Live (NuGet and npm) 1.1.0 Core Control Plane 1.1.0 Core Graph (SQL/PGQ) and Continuous Graph Not part of 1.1.0 Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. Events, Jobs, Workflows, Documents, Schema, Projections",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Install BlueTusk</h1>\n<p>This page helps you choose the BlueTusk packages and the version you need, and\nadd them to a .NET or JavaScript project.</p>\n<h2>Requirements</h2>\n<table>\n<thead>\n<tr>\n<th>Requirement</th>\n<th>Version</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>.NET</td>\n<td>.NET 10 (<code>net10.0</code>)</td>\n</tr>\n<tr>\n<td>EF Core (only for <code>BlueTusk.EntityFrameworkCore</code>)</td>\n<td>10.0.11</td>\n</tr>\n<tr>\n<td>PostgreSQL</td>\n<td>15, 16, 17 or 18. PostgreSQL 19 is preview only.</td>\n</tr>\n<tr>\n<td>Node.js (only for the browser clients)</td>\n<td>A current LTS release</td>\n</tr>\n</tbody>\n</table>\n<p>Streams, Sync and Live also need PostgreSQL logical replication:\n<code>wal_level = logical</code> on the server and a role with the <code>REPLICATION</code>\nattribute. The <a href=\"/documentation/real-time/streams-quickstart\">Streams quick start</a> shows the setup.</p>\n<p>The <a href=\"/documentation/operations/versioning\">support matrix</a> is the authority on supported\nversions.</p>\n<h2>Choose a version</h2>\n<p>All Core packages share one version number. Use the same exact version for\nevery BlueTusk package in an application.</p>\n<table>\n<thead>\n<tr>\n<th>Version</th>\n<th>Status</th>\n<th>Use it when</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>1.1.0</code></td>\n<td>Next release. In release qualification; <strong>not published yet</strong>.</td>\n<td>When it is published, use it for all new and existing applications.</td>\n</tr>\n<tr>\n<td><code>1.1.0-rc.1</code></td>\n<td>Public release candidate, published 2026-08-29.</td>\n<td>You want to evaluate 1.1 before <code>1.1.0</code> is published.</td>\n</tr>\n<tr>\n<td><code>1.0.0</code></td>\n<td>Stable release, published 2026-08-23.</td>\n<td>You need a stable package today.</td>\n</tr>\n</tbody>\n</table>\n<p>When <code>1.1.0</code> is published, <code>1.0.0</code> and <code>1.1.0-rc.1</code> will be deprecated on\nNuGet and npm and will point to <code>1.1.0</code>. To move an existing application, see\nthe <a href=\"/documentation/operations/upgrade-guide\">upgrade guide</a>.</p>\n<p>Some features documented here are new in <code>1.1.0</code> and are not in <code>1.0.0</code> or\n<code>1.1.0-rc.1</code>. Those pages say <strong>New in 1.1.0</strong>. The\n<a href=\"/documentation/getting-started/release-1-1-0\">1.1.0 release notes</a> list them all.</p>\n<h3>Product status</h3>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>Version line</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider (ADO.NET, EF Core, extensions, cloud identity, <code>bluetusk</code> tool)</td>\n<td>1.1.0</td>\n<td>Core</td>\n</tr>\n<tr>\n<td>Streams</td>\n<td>1.1.0</td>\n<td>Core</td>\n</tr>\n<tr>\n<td>Sync</td>\n<td>1.1.0</td>\n<td>Core</td>\n</tr>\n<tr>\n<td>Live (NuGet and npm)</td>\n<td>1.1.0</td>\n<td>Core</td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td>1.1.0</td>\n<td>Core</td>\n</tr>\n<tr>\n<td>Graph (SQL/PGQ) and Continuous Graph</td>\n<td>Not part of 1.1.0</td>\n<td>Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it.</td>\n</tr>\n<tr>\n<td>Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio, Edge</td>\n<td><code>0.1.0-preview.1</code></td>\n<td>Preview. Not published; each family is released when its own checks pass.</td>\n</tr>\n</tbody>\n</table>\n<h2>Choose packages</h2>\n<p>Install only what you use. Each row lists the package to start with and the\npackages you add for specific needs.</p>\n<table>\n<thead>\n<tr>\n<th>You want to</th>\n<th>Start with</th>\n<th>Add when needed</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Run SQL with ADO.NET</td>\n<td><code>BlueTusk.Data</code></td>\n<td><code>BlueTusk.Data.DependencyInjection</code> for <code>IServiceCollection</code> registration</td>\n</tr>\n<tr>\n<td>Use EF Core</td>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td><code>BlueTusk.EntityFrameworkCore.Design</code> and <code>Microsoft.EntityFrameworkCore.Design</code> for migrations</td>\n</tr>\n<tr>\n<td>Use a PostgreSQL extension</td>\n<td><code>BlueTusk.Extensions.PgVector</code>, <code>.PostGIS</code>, <code>.TimescaleDB</code>, <code>.Citext</code>, <code>.HStore</code>, <code>.LTree</code> or <code>.PgTrgm</code></td>\n<td>The matching <code>.EntityFrameworkCore</code> package where one exists</td>\n</tr>\n<tr>\n<td>Sign in with a cloud identity</td>\n<td><code>BlueTusk.Identity.Aws</code>, <code>.Azure</code> or <code>.GoogleCloud</code></td>\n<td></td>\n</tr>\n<tr>\n<td>React to committed changes</td>\n<td><code>BlueTusk.Streams</code> and one state store: <code>BlueTusk.Streams.Storage.PostgreSql</code>, <code>.Redis</code> or <code>.File</code></td>\n<td><code>BlueTusk.Streams.DependencyInjection</code> for hosting and health checks</td>\n</tr>\n<tr>\n<td>Copy changes to another system</td>\n<td><code>BlueTusk.Sync.DependencyInjection</code></td>\n<td>One destination: <code>BlueTusk.Sync.PostgreSql</code>, <code>.Redis</code>, <code>.Nats</code>, <code>.OpenSearch</code>, <code>.Kafka</code>, <code>.S3</code> or <code>.Webhooks</code></td>\n</tr>\n<tr>\n<td>Push live query results to clients</td>\n<td><code>BlueTusk.Live.EntityFrameworkCore</code> and <code>BlueTusk.Live.DependencyInjection</code></td>\n<td>A transport: <code>BlueTusk.Live.ServerSentEvents</code>, <code>.SignalR</code> or <code>.Grpc</code></td>\n</tr>\n<tr>\n<td>Use Live from a browser</td>\n<td><code>@bluetusk/live</code></td>\n<td><code>@bluetusk/live-angular</code>, <code>-react</code>, <code>-vue</code> or <code>-svelte</code></td>\n</tr>\n<tr>\n<td>Operate the products from a dashboard</td>\n<td><code>BlueTusk.Dashboard</code> (includes <code>BlueTusk.ControlPlane</code>)</td>\n<td><code>BlueTusk.ControlPlane.Kubernetes</code> for Kubernetes</td>\n</tr>\n<tr>\n<td>Run them under .NET Aspire</td>\n<td><code>BlueTusk.Streams.Aspire</code>, <code>BlueTusk.Sync.Aspire</code> or <code>BlueTusk.Live.Aspire</code></td>\n<td></td>\n</tr>\n<tr>\n<td>Test your code</td>\n<td><code>BlueTusk.Streams.Testing</code>, <code>BlueTusk.Sync.Testing</code> or <code>BlueTusk.Live.Testing</code></td>\n<td></td>\n</tr>\n</tbody>\n</table>\n<p>Each product page lists its packages in full.</p>\n<h2>Add .NET packages</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data\n",
-        "highlighted": "dotnet add package BlueTusk.Data\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Without <code>--version</code>, NuGet picks the latest stable version. To choose a\nversion, add it explicitly, for example to evaluate the release candidate:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data --version 1.1.0-rc.1\n",
-        "highlighted": "dotnet add package BlueTusk.Data <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.1</span>.<span class=\"hljs-number\">0</span><span class=\"hljs-literal\">-rc</span>.<span class=\"hljs-number\">1</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<h3>Keep every BlueTusk package on one version</h3>\n<p>If your solution uses\n<a href=\"https://learn.microsoft.com/nuget/consume-packages/central-package-management\" target=\"_blank\" rel=\"noreferrer\">central package management</a>,\nset the version once in <code>Directory.Packages.props</code>:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "<Project>\n  <PropertyGroup>\n    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>\n    <BlueTuskVersion>1.1.0-rc.1</BlueTuskVersion>\n  </PropertyGroup>\n  <ItemGroup>\n    <PackageVersion Include=\"BlueTusk.Data\" Version=\"$(BlueTuskVersion)\" />\n    <PackageVersion Include=\"BlueTusk.Data.DependencyInjection\" Version=\"$(BlueTuskVersion)\" />\n    <PackageVersion Include=\"BlueTusk.EntityFrameworkCore\" Version=\"$(BlueTuskVersion)\" />\n  </ItemGroup>\n</Project>\n",
-        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">Project</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PropertyGroup</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ManagePackageVersionsCentrally</span>&gt;</span>true<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ManagePackageVersionsCentrally</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">BlueTuskVersion</span>&gt;</span>1.1.0-rc.1<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">BlueTuskVersion</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">PropertyGroup</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ItemGroup</span>&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PackageVersion</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.Data&quot;</span> <span class=\"hljs-attr\">Version</span>=<span class=\"hljs-string\">&quot;$(BlueTuskVersion)&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PackageVersion</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.Data.DependencyInjection&quot;</span> <span class=\"hljs-attr\">Version</span>=<span class=\"hljs-string\">&quot;$(BlueTuskVersion)&quot;</span> /&gt;</span>\n    <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PackageVersion</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.EntityFrameworkCore&quot;</span> <span class=\"hljs-attr\">Version</span>=<span class=\"hljs-string\">&quot;$(BlueTuskVersion)&quot;</span> /&gt;</span>\n  <span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ItemGroup</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">Project</span>&gt;</span>\n",
-        "language": "xml"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Do not use floating versions such as <code>1.*</code> in a production project. Mixed\nBlueTusk versions in one application are not supported.</p>\n<h2>Add the browser clients</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "npm install @bluetusk/live\n",
-        "highlighted": "npm install @bluetusk/live\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Add the package for your framework:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "npm install @bluetusk/live-react    # or live-angular, live-vue, live-svelte\n",
-        "highlighted": "npm install @bluetusk/live<span class=\"hljs-literal\">-react</span>    <span class=\"hljs-comment\"># or live-angular, live-vue, live-svelte</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>npm’s <code>latest</code> tag points to the stable line. The release candidate is under\nthe <code>rc</code> tag (<code>npm install @bluetusk/live@rc</code>). Commit your lockfile so every\nbuild uses the same exact version.</p>\n<h2>Install the command-line tool</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet tool install --global BlueTusk.Tool\n",
-        "highlighted": "dotnet tool install <span class=\"hljs-literal\">--global</span> BlueTusk.Tool\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The <code>bluetusk</code> command scaffolds an EF Core model from a database\n(<code>bluetusk scaffold</code>) and, new in 1.1.0, checks that a server is ready for\nBlueTusk (<code>bluetusk doctor</code>). See the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/tooling/BlueTusk.Tool/README.md\" target=\"_blank\" rel=\"noreferrer\">tool README</a>.</p>\n<h2>Install the project templates</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet new install BlueTusk.Production.Templates\ndotnet new bluetusk-production --name Contoso.Orders --ClientFramework react\n",
-        "highlighted": "dotnet new install BlueTusk.Production.Templates\ndotnet new bluetusk<span class=\"hljs-literal\">-production</span> <span class=\"hljs-literal\">--name</span> Contoso.Orders <span class=\"hljs-literal\">--ClientFramework</span> react\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p><strong>New in 1.1.0.</strong> <code>bluetusk-production</code> creates a complete application: API,\nworker, EF Core migrations, tests, a browser client, containers and Helm\ncharts. See the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/templates/BlueTusk.Production/README.md\" target=\"_blank\" rel=\"noreferrer\">template README</a>.</p>\n<p><code>BlueTusk.Templates</code> provides <code>bluetusk-extension</code>, a starting point for\nwriting your own PostgreSQL extension package.</p>\n<h2>Check what you installed</h2>\n<p>List the resolved versions and confirm every BlueTusk package has the same one:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet list package --include-transitive\nnpm ls @bluetusk/live\n",
-        "highlighted": "dotnet list package <span class=\"hljs-literal\">--include-transitive</span>\nnpm <span class=\"hljs-built_in\">ls</span> @bluetusk/live\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Next steps</h2>\n<ol>\n<li>Build the <a href=\"/documentation/getting-started/quickstart\">5-minute first app</a>.</li>\n<li>Read the <a href=\"/documentation/getting-started/concepts\">core concepts</a>.</li>\n<li>Open the guide for your product from the <a href=\"/documentation/getting-started/handbook\">documentation home</a>.</li>\n</ol>\n"
-      }
-    ]
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-rc1",
-    "listed": false,
-    "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
-    "keywords": [
-      "release",
-      "rc",
-      "1.1.0-rc.1",
-      "nuget",
-      "npm",
-      "verification"
-    ],
-    "order": 3,
-    "title": "BlueTusk 1.1.0-rc.1 release record",
-    "sourcePath": "docs/releases/1.1.0-rc.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-rc.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-1-0-rc-1-release-record",
-        "text": "BlueTusk 1.1.0-rc.1 release record",
-        "level": 1
-      },
-      {
-        "id": "published-inventory",
-        "text": "Published inventory",
-        "level": 2
-      },
-      {
-        "id": "verification-record",
-        "text": "Verification record",
-        "level": 2
-      },
-      {
-        "id": "what-changed",
-        "text": "What changed",
-        "level": 2
-      },
-      {
-        "id": "provider-and-ef-core",
-        "text": "Provider and EF Core",
-        "level": 3
-      },
-      {
-        "id": "streams",
-        "text": "Streams",
-        "level": 3
-      },
-      {
-        "id": "sync",
-        "text": "Sync",
-        "level": 3
-      },
-      {
-        "id": "live",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "control-plane",
-        "text": "Control Plane",
-        "level": 3
-      },
-      {
-        "id": "continuous-graph",
-        "text": "Continuous Graph",
-        "level": 3
-      },
-      {
-        "id": "install",
-        "text": "Install",
-        "level": 2
-      },
-      {
-        "id": "stable-1-1-0-boundary",
-        "text": "Stable 1.1.0 boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 722,
-    "readMinutes": 4,
-    "searchText": "BlueTusk 1.1.0-rc.1 release record **Published:** 2026-08-29 **Release commit:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Channel:** public release candidate (`rc` on npm; explicit prerelease on NuGet) BlueTusk `1.1.0-rc.1` is the first coordinated public 1.1 package train across Provider, Streams, Sync, Live, Control Plane, Continuous Graph, and all three Live browser clients. It preserves the 1.0 public contracts while exposing the performance, allocation, batching, bounded-concurrency, and incremental graph work for production-like evaluation. Published inventory Registry Inventory Version behavior [NuGet](https://www.nuget.org/profiles/jphgardner) 62 `BlueTusk.*` packages Exact version `1.1.0-rc.1` [npm](https://www.npmjs.com/org/bluetusk) `@bluetusk/live`, `@bluetusk/live-angular`, `@bluetusk/live-react` `rc` points to `1.1.0-rc.1`; `latest` remains `1.0.0` All six release tags resolve to the same commit: `provider-v1.1.0-rc.1` `streams-v1.1.0-rc.1` `sync-v1.1.0-rc.1` `live-v1.1.0-rc.1` `control-plane-v1.1.0-rc.1` `continuous-graph-v1.1.0-rc.1` RC artifacts are immutable. A correction is published as `rc.2`; packages at `rc.1` are never replaced. Verification record The protected release workflows completed successfully at the release commit: Family Workflow run Provider [`33225555247`](https://github.com/jphgardner/BlueTusk/actions/runs/33225555247) Streams [`33227465140`](https://github.com/jphgardner/BlueTusk/actions/runs/33227465140) Sync [`33227966505`](https://github.com/jphgardner/BlueTusk/actions/runs/33227966505) Live [`33228526989`](https://github.com/jphgardner/BlueTusk/actions/runs/33228526989) Control Plane [`33229129438`](https://github.com/jphgardner/BlueTusk/actions/runs/33229129438) Continuous Graph [`33229550446`](https://github.com/jphgardner/BlueTusk/actions/runs/33229550446) Post-publication verification confirmed: all 62 NuGet packages and all three npm packages were available publicly; every internal package dependency resolved to `1.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk 1.1.0-rc.1 release record</h1>\n<p><strong>Published:</strong> 2026-08-29</p>\n<p><strong>Release commit:</strong> <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code></p>\n<p><strong>Channel:</strong> public release candidate (<code>rc</code> on npm; explicit prerelease on\nNuGet)</p>\n<p>BlueTusk <code>1.1.0-rc.1</code> is the first coordinated public 1.1 package train across\nProvider, Streams, Sync, Live, Control Plane, Continuous Graph, and all three\nLive browser clients. It preserves the 1.0 public contracts while exposing the\nperformance, allocation, batching, bounded-concurrency, and incremental graph\nwork for production-like evaluation.</p>\n<h2>Published inventory</h2>\n<table>\n<thead>\n<tr>\n<th>Registry</th>\n<th class=\"align-right\">Inventory</th>\n<th>Version behavior</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><a href=\"https://www.nuget.org/profiles/jphgardner\" target=\"_blank\" rel=\"noreferrer\">NuGet</a></td>\n<td class=\"align-right\">62 <code>BlueTusk.*</code> packages</td>\n<td>Exact version <code>1.1.0-rc.1</code></td>\n</tr>\n<tr>\n<td><a href=\"https://www.npmjs.com/org/bluetusk\" target=\"_blank\" rel=\"noreferrer\">npm</a></td>\n<td class=\"align-right\"><code>@bluetusk/live</code>, <code>@bluetusk/live-angular</code>, <code>@bluetusk/live-react</code></td>\n<td><code>rc</code> points to <code>1.1.0-rc.1</code>; <code>latest</code> remains <code>1.0.0</code></td>\n</tr>\n</tbody>\n</table>\n<p>All six release tags resolve to the same commit:</p>\n<ul>\n<li><code>provider-v1.1.0-rc.1</code></li>\n<li><code>streams-v1.1.0-rc.1</code></li>\n<li><code>sync-v1.1.0-rc.1</code></li>\n<li><code>live-v1.1.0-rc.1</code></li>\n<li><code>control-plane-v1.1.0-rc.1</code></li>\n<li><code>continuous-graph-v1.1.0-rc.1</code></li>\n</ul>\n<p>RC artifacts are immutable. A correction is published as <code>rc.2</code>; packages at\n<code>rc.1</code> are never replaced.</p>\n<h2>Verification record</h2>\n<p>The protected release workflows completed successfully at the release commit:</p>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th class=\"align-right\">Workflow run</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33225555247\" target=\"_blank\" rel=\"noreferrer\"><code>33225555247</code></a></td>\n</tr>\n<tr>\n<td>Streams</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33227465140\" target=\"_blank\" rel=\"noreferrer\"><code>33227465140</code></a></td>\n</tr>\n<tr>\n<td>Sync</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33227966505\" target=\"_blank\" rel=\"noreferrer\"><code>33227966505</code></a></td>\n</tr>\n<tr>\n<td>Live</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33228526989\" target=\"_blank\" rel=\"noreferrer\"><code>33228526989</code></a></td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33229129438\" target=\"_blank\" rel=\"noreferrer\"><code>33229129438</code></a></td>\n</tr>\n<tr>\n<td>Continuous Graph</td>\n<td class=\"align-right\"><a href=\"https://github.com/jphgardner/BlueTusk/actions/runs/33229550446\" target=\"_blank\" rel=\"noreferrer\"><code>33229550446</code></a></td>\n</tr>\n</tbody>\n</table>\n<p>Post-publication verification confirmed:</p>\n<ul>\n<li>all 62 NuGet packages and all three npm packages were available publicly;</li>\n<li>every internal package dependency resolved to <code>1.1.0-rc.1</code>;</li>\n<li>npm <code>rc</code> resolved to <code>1.1.0-rc.1</code> while <code>latest</code> remained <code>1.0.0</code>;</li>\n<li>a clean isolated .NET 10 application restored the six family root packages\nand built with zero warnings and zero errors;</li>\n<li>a clean npm application installed all three clients with zero reported\nvulnerabilities; and</li>\n<li>the active repository ruleset retained 35 required checks and protected,\nnon-bypassable publication environments.</li>\n</ul>\n<p>NuGet publication used the <code>package-prerelease</code> trusted-publishing environment\nand a <code>BlueTusk.*</code> package policy. Stable publication remains isolated in the\nseparate <code>package-production</code> environment.</p>\n<h2>What changed</h2>\n<h3>Provider and EF Core</h3>\n<ul>\n<li>Reduced allocation and synchronization on command, pool, batch, reader,\nCOPY, and EF update hot paths.</li>\n<li>Retained the 16-workload Npgsql 10.0.3 comparison matrix and explicit\nsaturated-pool coverage.</li>\n<li>Preserved ADO.NET behavior, public API baselines, cancellation, session\nreset, and PostgreSQL-native type semantics.</li>\n</ul>\n<h3>Streams</h3>\n<ul>\n<li>Reused bounded transaction assembly state and reduced tuple/payload copies.</li>\n<li>Preserved transaction ordering, stable identity, spooling, replay, and\nacknowledge-after-durability semantics.</li>\n</ul>\n<h3>Sync</h3>\n<ul>\n<li>Writes NATS envelopes into exact-sized buffers, streams OpenSearch NDJSON,\nreuses PostgreSQL binary payload memory, and retains ordered Redis batches.</li>\n<li>Preserved retry, quarantine, reconciliation, rebuild, and connector-specific\natomicity contracts.</li>\n</ul>\n<h3>Live</h3>\n<ul>\n<li>Added affected-key snapshot mutation and coalesced browser reducer updates.</li>\n<li>Shares immutable serialized fan-out payloads while retaining bounded queues,\nreplay, authorization, and slow-client policy.</li>\n</ul>\n<h3>Control Plane</h3>\n<ul>\n<li>Uses set-based inventory reads, bounded cross-instance concurrency,\nshort-lived single-flight snapshots, and source-generated JSON metadata.</li>\n<li>Preserved audit-before-mutation, fencing, authorization, and compatibility\nenvelopes.</li>\n</ul>\n<h3>Continuous Graph</h3>\n<ul>\n<li>Added immutable compiler impact plans and a three-tier maintenance engine:\ntrusted CDC deltas, authoritative key-scoped <code>GRAPH_TABLE</code> queries, and\nfail-closed full authoritative repair.</li>\n<li>Added per-tier metrics, affected-key/query counts, fallback reasons,\nprovenance indexes, and bounded ordered result maintenance.</li>\n<li>Direct CDC projection remains explicit opt-in and requires complete old/new\ncolumns, replica identity, schema fingerprint, changed-column information,\nand the original security contract.</li>\n</ul>\n<p>Read the <a href=\"/documentation/operations/operations-performance-leadership-1-1\">performance leadership report</a>\nand <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph guide</a> for the detailed\ncontracts. Performance evidence is workload-specific; this RC does not make an\nunsupported “faster everywhere” claim.</p>\n<h2>Install</h2>\n<p>Pin exact versions:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data --version 1.1.0-rc.1\nnpm install --save-exact @bluetusk/live@1.1.0-rc.1\n",
-        "highlighted": "dotnet add package BlueTusk.Data <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.1</span>.<span class=\"hljs-number\">0</span><span class=\"hljs-literal\">-rc</span>.<span class=\"hljs-number\">1</span>\nnpm install <span class=\"hljs-literal\">--save-exact</span> @bluetusk/live@<span class=\"hljs-number\">1.1</span>.<span class=\"hljs-number\">0</span><span class=\"hljs-literal\">-rc</span>.<span class=\"hljs-number\">1</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>See the <a href=\"/documentation/getting-started/install\">installation guide</a> for package\nselection, EF Core, Angular/React clients, and verification.</p>\n<h2>Stable 1.1.0 boundary</h2>\n<p>This publication does not authorize stable <code>1.1.0</code>. The stable train remains\nblocked until all exact-stable-candidate gates are bound to one immutable\ncommit, including:</p>\n<ul>\n<li>digest-pinned PostgreSQL 19 GA and the post-GA SQL/PGQ matrix;</li>\n<li>the required Streams, Sync, Live/Control Plane, and Continuous Graph\nendurance sequence;</li>\n<li>complete final-SHA Windows/Linux performance evidence and confidence gates;</li>\n<li>required security, compatibility, NativeAOT/trimming, package-consumer,\ndocumentation, supply-chain, provenance, and SBOM checks; and</li>\n<li>independent review and operational acceptance records.</li>\n</ul>\n<p>The official PostgreSQL project currently identifies 19 as Beta 3 and plans GA\nfor September 2026; see its <a href=\"https://www.postgresql.org/developer/beta/\" target=\"_blank\" rel=\"noreferrer\">beta guidance</a>\nand <a href=\"https://www.postgresql.org/developer/roadmap/\" target=\"_blank\" rel=\"noreferrer\">roadmap</a>.</p>\n<p>Applications may evaluate the RC against real workloads, but must define their\nown SLOs, capacity limits, recovery plan, and rollback criteria. Report defects\nwith the exact package version, PostgreSQL version, deployment topology,\nreproduction, and redacted diagnostics.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-0",
-    "summary": "What 1.1.0 contains, what is new since 1.1.0-rc.1, and how to upgrade.",
-    "keywords": [
-      "release notes",
-      "1.1.0",
-      "upgrade",
-      "whats new"
-    ],
-    "order": 4,
-    "listed": true,
-    "title": "BlueTusk 1.1.0 release notes",
-    "sourcePath": "docs/releases/1.1.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-1-0-release-notes",
-        "text": "BlueTusk 1.1.0 release notes",
-        "level": 1
-      },
-      {
-        "id": "not-in-this-release",
-        "text": "Not in this release",
-        "level": 2
-      },
-      {
-        "id": "what-is-new-since-1-1-0-rc-1",
-        "text": "What is new since 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "provider",
-        "text": "Provider",
-        "level": 3
-      },
-      {
-        "id": "ef-core",
-        "text": "EF Core",
-        "level": 3
-      },
-      {
-        "id": "sync",
-        "text": "Sync",
-        "level": 3
-      },
-      {
-        "id": "live",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "control-plane",
-        "text": "Control Plane",
-        "level": 3
-      },
-      {
-        "id": "fixes-since-1-1-0-rc-1",
-        "text": "Fixes since 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "provider-2",
-        "text": "Provider",
-        "level": 3
-      },
-      {
-        "id": "ef-core-2",
-        "text": "EF Core",
-        "level": 3
-      },
-      {
-        "id": "streams-and-sync",
-        "text": "Streams and Sync",
-        "level": 3
-      },
-      {
-        "id": "live-2",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "changes-since-1-0-0",
-        "text": "Changes since 1.0.0",
-        "level": 2
-      },
-      {
-        "id": "release-checks-pilots-and-rehearsals",
-        "text": "Release checks: pilots and rehearsals",
-        "level": 2
-      },
-      {
-        "id": "upgrade-from-1-0-0-or-1-1-0-rc-1",
-        "text": "Upgrade from 1.0.0 or 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "supported-platforms",
-        "text": "Supported platforms",
-        "level": 2
-      }
-    ],
-    "wordCount": 1073,
-    "readMinutes": 5,
-    "searchText": "BlueTusk 1.1.0 release notes **Not published yet.** `1.1.0` is in release qualification. Until it is published, the latest packages are `1.0.0` (stable) and `1.1.0-rc.1` (release candidate). This page describes what `1.1.0` will contain, based on the `main` branch. BlueTusk 1.1.0 re-releases every Core family on one version line: Provider (ADO.NET, EF Core, extensions, cloud identity and the `bluetusk` tool), Streams, Sync, Live and Control Plane. It keeps the 1.0 public API: code written for 1.0.0 compiles against 1.1.0. When 1.1.0 is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on NuGet and npm and will point to `1.1.0`. Not in this release **Graph (SQL/PGQ) and Continuous Graph** stay in preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. See the [Graph guide](../graph/README.md). **Ecosystem families** (Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge) are `0.1.0-preview.1` and are released separately when their own checks pass. What is new since 1.1.0-rc.1 None of these are in `1.0.0` or `1.1.0-rc.1`. Provider **Native REPACK** for PostgreSQL 19 (preview server): run `REPACK` and watch its progress from .NET with `RepackAsync` in `BlueTusk.Data.Maintenance`. See [Native REPACK](../ado-net/repack.md). `BlueTuskDataReader.GetFieldByteLength` and `GetPostgreSqlTypeOid`. **`bluetusk doctor`** checks a server before you deploy: version, TLS, logical replication settings and required extensions. See the [tool README](../../tooling/BlueTusk.Tool/README.md). **Production template.** `dotnet new bluetusk-production` from the new `BlueTusk.Production.Templates` package creates a complete application. See the [template README](../../templates/BlueTusk.Production/README.md). EF Core **`SaveChanges` batching.** Inserts, updates and deletes are now sent in batches of up to 42 statements per round trip. In 1.0.0 and 1.1.0-rc.1 each statement was its own command. To ch",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>BlueTusk 1.1.0 release notes</h1>\n<blockquote>\n<p><strong>Not published yet.</strong> <code>1.1.0</code> is in release qualification. Until it is\npublished, the latest packages are <code>1.0.0</code> (stable) and <code>1.1.0-rc.1</code>\n(release candidate). This page describes what <code>1.1.0</code> will contain, based on\nthe <code>main</code> branch.</p>\n</blockquote>\n<p>BlueTusk 1.1.0 re-releases every Core family on one version line: Provider\n(ADO.NET, EF Core, extensions, cloud identity and the <code>bluetusk</code> tool),\nStreams, Sync, Live and Control Plane. It keeps the 1.0 public API: code\nwritten for 1.0.0 compiles against 1.1.0.</p>\n<p>When 1.1.0 is published, <code>1.0.0</code> and <code>1.1.0-rc.1</code> will be deprecated on NuGet\nand npm and will point to <code>1.1.0</code>.</p>\n<h2>Not in this release</h2>\n<ul>\n<li><strong>Graph (SQL/PGQ) and Continuous Graph</strong> stay in preview. PostgreSQL removed\nSQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that\nships it. See the <a href=\"/documentation/graph/sql-pgq\">Graph guide</a>.</li>\n<li><strong>Ecosystem families</strong> (Events, Jobs, Workflows, Documents, Schema,\nProjections, Search, Sql, Studio and Edge) are <code>0.1.0-preview.1</code> and are\nreleased separately when their own checks pass.</li>\n</ul>\n<h2>What is new since 1.1.0-rc.1</h2>\n<p>None of these are in <code>1.0.0</code> or <code>1.1.0-rc.1</code>.</p>\n<h3>Provider</h3>\n<ul>\n<li><strong>Native REPACK</strong> for PostgreSQL 19 (preview server): run <code>REPACK</code> and\nwatch its progress from .NET with <code>RepackAsync</code> in\n<code>BlueTusk.Data.Maintenance</code>. See <a href=\"/documentation/provider/repack\">Native REPACK</a>.</li>\n<li><code>BlueTuskDataReader.GetFieldByteLength</code> and <code>GetPostgreSqlTypeOid</code>.</li>\n<li><strong><code>bluetusk doctor</code></strong> checks a server before you deploy: version, TLS,\nlogical replication settings and required extensions. See the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/tooling/BlueTusk.Tool/README.md\" target=\"_blank\" rel=\"noreferrer\">tool README</a>.</li>\n<li><strong>Production template.</strong> <code>dotnet new bluetusk-production</code> from the new\n<code>BlueTusk.Production.Templates</code> package creates a complete application. See\nthe <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/templates/BlueTusk.Production/README.md\" target=\"_blank\" rel=\"noreferrer\">template README</a>.</li>\n</ul>\n<h3>EF Core</h3>\n<ul>\n<li><strong><code>SaveChanges</code> batching.</strong> Inserts, updates and deletes are now sent in\nbatches of up to 42 statements per round trip. In 1.0.0 and 1.1.0-rc.1 each\nstatement was its own command. To change the batch size, use EF Core’s\nstandard <code>MaxBatchSize</code> option. See <a href=\"/documentation/ef-core/concepts\">EF Core concepts</a>.</li>\n<li><strong>Complete store values.</strong> <code>GetCompleteDatabaseValues()</code> and\n<code>GetCompleteDatabaseValuesAsync()</code> read an entity’s current database values\nincluding its complex collections, which EF Core’s <code>GetDatabaseValues()</code>\nleaves out. See\n<a href=\"/documentation/ef-core/concepts#read-the-current-database-values-including-complex-collections\">reading current database values</a>.</li>\n</ul>\n<h3>Sync</h3>\n<ul>\n<li>\n<p>New destinations:</p>\n<ul>\n<li><code>BlueTusk.Sync.Kafka</code> writes each source transaction and its checkpoint\nin one Kafka transaction.</li>\n<li><code>BlueTusk.Sync.S3</code> writes compressed Parquet files and a commit manifest\nto S3-compatible storage.</li>\n<li><code>BlueTusk.Sync.Webhooks</code> sends signed HTTP requests.</li>\n</ul>\n<p>See <a href=\"/documentation/real-time/sync-configuration\">Sync configuration</a>.</p>\n</li>\n</ul>\n<h3>Live</h3>\n<ul>\n<li>New browser packages <code>@bluetusk/live-vue</code> (Vue 3) and\n<code>@bluetusk/live-svelte</code> (Svelte 5).</li>\n<li>The browser client batches incoming events before it updates your UI\n(<code>maximumBatchEvents</code>, default 64).</li>\n<li><code>LiveSharedSubscriptions</code> and <code>LiveSharedSubscription.ResetAsync</code> for\nshared subscriptions.</li>\n</ul>\n<h3>Control Plane</h3>\n<ul>\n<li><strong>Fleet operations</strong>: deployment inventory and audited pause, resume,\nreconcile, rebuild and delete operations.</li>\n<li><strong>Kubernetes operator</strong> in the new <code>BlueTusk.ControlPlane.Kubernetes</code>\npackage.</li>\n<li>Dashboard options <code>BrandLabel</code> and <code>DataProvenanceNotice</code>.</li>\n</ul>\n<h2>Fixes since 1.1.0-rc.1</h2>\n<p>These defects were found while writing and running the documentation\nsamples. They are fixed in 1.1.0 and are present in 1.0.0 and 1.1.0-rc.1.</p>\n<h3>Provider</h3>\n<ul>\n<li><code>ExecuteScalarAsync&lt;T&gt;()</code> converts with the same rules as\n<code>GetFieldValue&lt;T&gt;()</code>. <code>ExecuteScalarAsync&lt;decimal&gt;()</code> on a <code>numeric</code> result\nno longer throws <code>InvalidCastException</code>, and nullable targets such as\n<code>decimal?</code> work.</li>\n<li><strong>Behaviour change:</strong> a full connection pool no longer waits forever. The\nconnection-string <code>Timeout</code> (default 15 seconds) now also limits the wait for\na free pooled connection. When it expires, opening throws a\n<code>TimeoutException</code> that names the endpoint, <code>Maximum Pool Size</code> and\n<code>Timeout</code>. A cancellation token still cancels the wait earlier. If your\napplication relied on unlimited waits, raise <code>Timeout</code>. See\n<a href=\"/documentation/provider/pooling\">connection pooling</a>.</li>\n<li>Unknown connection-string keywords are still ignored by default, to stay\ncompatible with 1.0.0. To reject them, as Npgsql does, turn on the\n<code>BlueTusk.Data.RejectUnknownConnectionStringKeywords</code> AppContext switch.\nRejection is planned as the default for 2.0. See\n<a href=\"/documentation/provider/configuration\">ADO.NET configuration</a>.</li>\n<li>A data source that maps a type with <code>MapEnum</code> or <code>MapComposite</code> can connect\nbefore the type exists, so an EF Core migration can create it. <code>Migrate</code>\nand <code>MigrateAsync</code> reload the type catalogue afterwards.</li>\n</ul>\n<h3>EF Core</h3>\n<ul>\n<li>Enum constants in LINQ queries use the mapped PostgreSQL label\n(<code>[BlueTuskName]</code>, then <code>[EnumMember]</code>) instead of the C# member name.</li>\n<li><code>Contains</code> over a collection parameter works with\n<code>ParameterTranslationMode.Parameter</code>. The collection is sent as one typed\nPostgreSQL array.</li>\n</ul>\n<h3>Streams and Sync</h3>\n<ul>\n<li>A change stream without a delivery observer now confirms each acknowledged\nposition to PostgreSQL, so the replication slot releases WAL. Before, a\nhosted consumer or direct Sync pipeline without an observer kept all WAL\nuntil the slot was dropped.</li>\n<li>Checkpoint and relay observers renew their lease on a timer, so an idle\nconsumer or a slow destination keeps ownership.</li>\n<li>The PostgreSQL Sync destination retries transient failures (lost\nconnections, serialization failures and deadlocks) instead of stopping the\npipeline on the first error.</li>\n</ul>\n<h3>Live</h3>\n<ul>\n<li>The <code>@bluetusk/live</code> browser client no longer fails with “Illegal\ninvocation” when you do not pass your own <code>fetch</code>.</li>\n</ul>\n<h2>Changes since 1.0.0</h2>\n<p>1.1.0 also includes everything from\n<a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1</a>, which focused on performance across all\nfamilies:</p>\n<ul>\n<li><strong>Provider</strong>: faster, lower-allocation command and reader paths.</li>\n<li><strong>Streams</strong>: less copying of transaction data and reuse of assembly state.</li>\n<li><strong>Sync</strong>: smaller NATS messages, streamed OpenSearch bulk requests and\nbinary PostgreSQL apply.</li>\n<li><strong>Live</strong>: snapshot updates limited to affected keys, and batched Angular and\nReact updates.</li>\n<li><strong>Control Plane</strong>: set-based inventory, limits on concurrent instance calls\nand a cached, source-generated API.</li>\n</ul>\n<h2>Release checks: pilots and rehearsals</h2>\n<p>Independent application pilots are not a 1.1.0 release check. On 2026-10-04\nthe repository owner delegated this decision: engineering cannot produce\nindependent pilots, and no pilot approval will be fabricated. The waiver is\nrecorded in <code>eng/v1.1-release-contract.json</code> (<code>waivedReleaseGates</code>).</p>\n<p>Backup/restore and rollback rehearsals stay required. They run for real\nagainst the exact release candidate with <code>eng/run-core-recovery-rehearsal.ps1</code>.\nThe rollback rehearsal moves the candidate packages back to the published\n1.0.0 packages against the same database. See\n<a href=\"/documentation/operations/operations-core-recovery-rehearsals\">Core recovery rehearsals</a>.</p>\n<h2>Upgrade from 1.0.0 or 1.1.0-rc.1</h2>\n<ol>\n<li>Change every BlueTusk package, and every <code>@bluetusk/*</code> npm package, to the\nsame new version. Do not mix versions. See\n<a href=\"/documentation/getting-started/install\">Install BlueTusk</a>.</li>\n<li>EF Core applications: <code>SaveChanges</code> now batches statements. If something\ndepends on one statement per round trip, set <code>MaxBatchSize(1)</code> to restore\nthe old behavior.</li>\n<li>ADO.NET applications: opening a connection from a full pool now fails\nafter the connection-string <code>Timeout</code> (default 15 seconds) instead of\nwaiting forever. Raise <code>Timeout</code> if you need longer waits.</li>\n<li>Rebuild and run your tests against each PostgreSQL version you use.</li>\n<li>Follow the <a href=\"/documentation/operations/upgrade-guide\">upgrade guide</a> for the\ndeployment order and rollback plan.</li>\n</ol>\n<h2>Supported platforms</h2>\n<table>\n<thead>\n<tr>\n<th>Component</th>\n<th>Supported</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>.NET</td>\n<td>.NET 10</td>\n</tr>\n<tr>\n<td>EF Core</td>\n<td>10.0.11</td>\n</tr>\n<tr>\n<td>PostgreSQL</td>\n<td>15, 16, 17 and 18. PostgreSQL 19 is preview.</td>\n</tr>\n</tbody>\n</table>\n<p>See the <a href=\"/documentation/operations/versioning\">support matrix</a>.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
     "slug": "quickstart",
-    "summary": "Start PostgreSQL, create a .NET console app, and run a parameterized query in five minutes.",
-    "keywords": [
-      "quickstart",
-      "install",
-      "query",
-      "connection",
-      "sample"
-    ],
-    "order": 5,
-    "listed": true,
-    "title": "5-minute first app",
-    "sourcePath": "docs/getting-started/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/quickstart.md",
+    "title": "Run your first query",
+    "summary": "Run a parameterized PostgreSQL query from a new .NET console app.",
+    "order": 0,
     "headings": [
       {
-        "id": "5-minute-first-app",
-        "text": "5-minute first app",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
+        "id": "1-prepare-a-database",
+        "text": "1. Prepare a database",
         "level": 2
       },
       {
-        "id": "1-start-postgresql",
-        "text": "1. Start PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-app",
-        "text": "2. Create the app",
+        "id": "2-create-the-application",
+        "text": "2. Create the application",
         "level": 2
       },
       {
@@ -568,113 +26,291 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
-        "id": "4-write-the-code",
-        "text": "4. Write the code",
+        "id": "4-replace-programcs",
+        "text": "4. Replace Program.cs",
         "level": 2
       },
       {
-        "id": "5-run-it",
-        "text": "5. Run it",
+        "id": "5-run-and-verify",
+        "text": "5. Run and verify",
         "level": 2
       },
       {
-        "id": "what-just-happened",
-        "text": "What just happened",
-        "level": 2
-      },
-      {
-        "id": "if-it-fails",
-        "text": "If it fails",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "build-your-next-feature",
+        "text": "Build your next feature",
         "level": 2
       }
     ],
-    "wordCount": 510,
-    "readMinutes": 3,
-    "searchText": "5-minute first app In this quick start you create a .NET console app, connect it to PostgreSQL and run a parameterized query. It takes about five minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have Docker, step 1 starts one for you. 1. Start PostgreSQL Skip this step if you already have a test database. `wal_level=logical` is not needed for this quick start. It lets you reuse the same container for the [Streams guide](../streams/README.md) later. 2. Create the app This code works with every published BlueTusk version. See [Install BlueTusk](install.md) to choose and pin a version. 3. Set the connection string Keep credentials out of source code by using an environment variable: On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING=\"...\"` instead. **Warning:** `SSL Mode=Disable` is only for a local test container. BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates the server certificate. Keep that default everywhere else. 4. Write the code Replace the contents of `Program.cs`: 5. Run it You should see: What just happened `BlueTuskDataSourceBuilder.Build()` created a **data source**. It owns the configuration, the connection pool and the PostgreSQL type catalogue. Create one per connection string and keep it for the life of the app. `dataSource.CreateCommand(...)` created a command that borrows a pooled connection when it runs and returns it afterwards. The parameter values were sent separately from the SQL text. They are never pasted into the SQL, so this pattern is safe from SQL injection. If it fails Error Fix Connection refused or timeout Check that PostgreSQL is running and that `Host` and `Port` are correct. TLS or certificate error For a local container only, keep `SSL Mode=Disable`. For a real server, configure TLS. Password authentication failed Check `Username` and `Password`. The [ADO.NET troubleshoot",
+    "sourcePath": "docs/getting-started/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/quickstart.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>5-minute first app</h1>\n<p>In this quick start you create a .NET console app, connect it to PostgreSQL and\nrun a parameterized query. It takes about five minutes.</p>\n<h2>Before you start</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have\nDocker, step 1 starts one for you.</li>\n</ul>\n<h2>1. Start PostgreSQL</h2>\n<p>Skip this step if you already have a test database.</p>\n"
+        "html": "<p>Create a .NET console application and send two bound parameters to\nPostgreSQL. The application prints <code>42</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "1-prepare-a-database",
+          "text": "1. Prepare a database",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>You’ll need the .NET 10 SDK and a PostgreSQL 15–18 database you can use for\ndevelopment. If you have Docker, create a disposable PostgreSQL 18 instance\nbound only to your machine:</p>\n"
       },
       {
         "kind": "code",
-        "code": "docker run --name bluetusk-postgres `\n  -e POSTGRES_PASSWORD=local-dev-only `\n  -p 5432:5432 `\n  -d postgres:18 `\n  -c wal_level=logical\n",
-        "highlighted": "docker run <span class=\"hljs-literal\">--name</span> bluetusk<span class=\"hljs-literal\">-postgres</span> `\n  <span class=\"hljs-literal\">-e</span> POSTGRES_PASSWORD=local<span class=\"hljs-literal\">-dev-only</span> `\n  <span class=\"hljs-literal\">-p</span> <span class=\"hljs-number\">5432</span>:<span class=\"hljs-number\">5432</span> `\n  <span class=\"hljs-literal\">-d</span> postgres:<span class=\"hljs-number\">18</span> `\n  <span class=\"hljs-literal\">-c</span> wal_level=logical\n",
+        "code": "docker run -d --name bluetusk-quickstart -p 127.0.0.1:5432:5432 -e POSTGRES_USER=quickstart -e POSTGRES_PASSWORD=local-example-only -e POSTGRES_DB=quickstart postgres:18\ndocker exec bluetusk-quickstart pg_isready -U quickstart -d quickstart",
+        "highlighted": "docker run -d --name bluetusk-quickstart -p 127.0.0.1:5432:5432 -e POSTGRES_USER=quickstart -e POSTGRES_PASSWORD=local-example-only -e POSTGRES_DB=quickstart postgres:18\ndocker <span class=\"hljs-built_in\">exec</span> bluetusk-quickstart pg_isready -U quickstart -d quickstart",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Repeat the readiness check until it reports <code>accepting connections</code>.\nUse different credentials and certificate verification when connecting to a\nshared PostgreSQL server.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "2-create-the-application",
+          "text": "2. Create the application",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "dotnet new console --framework net10.0 --name BlueTuskQuickstart\ncd BlueTuskQuickstart\ndotnet add package BlueTusk.Data --version 1.2.0",
+        "highlighted": "dotnet new console --framework net10.0 --name BlueTuskQuickstart\n<span class=\"hljs-built_in\">cd</span> BlueTuskQuickstart\ndotnet add package BlueTusk.Data --version 1.2.0",
+        "language": "sh"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "3-set-the-connection-string",
+          "text": "3. Set the connection string",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>For the disposable Docker instance, run one of these commands in the shell\nyou will use to start the application.</p>\n<p><strong>Bash or Zsh</strong></p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "export BLUETUSK_CONNECTION_STRING='Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable'",
+        "highlighted": "<span class=\"hljs-built_in\">export</span> BLUETUSK_CONNECTION_STRING=<span class=\"hljs-string\">&#x27;Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable&#x27;</span>",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p><strong>PowerShell</strong></p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_CONNECTION_STRING = 'Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable'",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&#x27;Host=127.0.0.1;Port=5432;Database=quickstart;Username=quickstart;Password=local-example-only;SSL Mode=Disable;Channel Binding=Disable&#x27;</span>",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p><code>wal_level=logical</code> is not needed for this quick start. It lets you reuse the\nsame container for the <a href=\"/documentation/real-time/streams\">Streams guide</a> later.</p>\n<h2>2. Create the app</h2>\n"
+        "html": "<p>TLS is disabled for this local example. Use the\n<a href=\"/documentation/provider/authentication\">authentication guide</a> for a shared server.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "4-replace-programcs",
+          "text": "4. Replace Program.cs",
+          "level": 2
+        }
       },
       {
         "kind": "code",
-        "code": "dotnet new console --framework net10.0 --name BlueTuskQuickstart\ncd BlueTuskQuickstart\ndotnet add package BlueTusk.Data\n",
-        "highlighted": "dotnet new console <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> BlueTuskQuickstart\n<span class=\"hljs-built_in\">cd</span> BlueTuskQuickstart\ndotnet add package BlueTusk.Data\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>This code works with every published BlueTusk version. See\n<a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose and pin a version.</p>\n<h2>3. Set the connection string</h2>\n<p>Keep credentials out of source code by using an environment variable:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable\"\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>On Linux or macOS, use <code>export BLUETUSK_CONNECTION_STRING=&quot;...&quot;</code> instead.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container.\nBlueTusk’s default is <code>SSL Mode=VerifyFull</code>, which requires TLS and validates\nthe server certificate. Keep that default everywhere else.</p>\n</blockquote>\n<h2>4. Write the code</h2>\n<p>Replace the contents of <code>Program.cs</code>:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\n\nvar connectionString =\n    Environment.GetEnvironmentVariable(\"BLUETUSK_CONNECTION_STRING\")\n    ?? throw new InvalidOperationException(\"Set BLUETUSK_CONNECTION_STRING first.\");\n\n// Create one data source for the lifetime of the application.\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\n\n// Create a command, bind two typed parameters, and run it.\nawait using var command = dataSource.CreateCommand(\"SELECT @left::int4 + @right::int4\");\ncommand.Parameters.Add(new BlueTuskParameter<int>(20) { ParameterName = \"left\" });\ncommand.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = \"right\" });\n\nvar answer = await command.ExecuteScalarAsync<int>();\nConsole.WriteLine($\"The answer is {answer}\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n\n<span class=\"hljs-keyword\">var</span> connectionString =\n    Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;BLUETUSK_CONNECTION_STRING&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set BLUETUSK_CONNECTION_STRING first.&quot;</span>);\n\n<span class=\"hljs-comment\">// Create one data source for the lifetime of the application.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-comment\">// Create a command, bind two typed parameters, and run it.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT @left::int4 + @right::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>) { ParameterName = <span class=\"hljs-string\">&quot;left&quot;</span> });\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>) { ParameterName = <span class=\"hljs-string\">&quot;right&quot;</span> });\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;The answer is <span class=\"hljs-subst\">{answer}</span>&quot;</span>);\n",
+        "code": "using BlueTusk.Data;\n\nvar connectionString = Environment.GetEnvironmentVariable(\"BLUETUSK_CONNECTION_STRING\")\n    ?? throw new InvalidOperationException(\"Set BLUETUSK_CONNECTION_STRING first.\");\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var command = dataSource.CreateCommand(\"SELECT $1::int4 + $2::int4\");\n\ncommand.Parameters.Add(new BlueTuskParameter<int>(20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(22));\n\nConsole.WriteLine(await command.ExecuteScalarAsync<int>());",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n\n<span class=\"hljs-keyword\">var</span> connectionString = Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;BLUETUSK_CONNECTION_STRING&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set BLUETUSK_CONNECTION_STRING first.&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4 + $2::int4&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>));\n\nConsole.WriteLine(<span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;());",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>5. Run it</h2>\n"
+        "html": "<p>Parameters travel separately from the command text. Use the same mechanism\nfor values that come from HTTP requests or other untrusted sources.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "5-run-and-verify",
+          "text": "5. Run and verify",
+          "level": 2
+        }
       },
       {
         "kind": "code",
-        "code": "dotnet run\n",
-        "highlighted": "dotnet run\n",
-        "language": "powershell"
+        "code": "dotnet run",
+        "highlighted": "dotnet run",
+        "language": "sh"
       },
       {
         "kind": "html",
-        "html": "<p>You should see:</p>\n"
+        "html": "<p>Expected output:</p>\n"
       },
       {
         "kind": "code",
-        "code": "The answer is 42\n",
-        "highlighted": "The answer is 42\n",
+        "code": "42",
+        "highlighted": "42",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<h2>What just happened</h2>\n<ul>\n<li><code>BlueTuskDataSourceBuilder.Build()</code> created a <strong>data source</strong>. It owns the\nconfiguration, the connection pool and the PostgreSQL type catalogue. Create\none per connection string and keep it for the life of the app.</li>\n<li><code>dataSource.CreateCommand(...)</code> created a command that borrows a pooled\nconnection when it runs and returns it afterwards.</li>\n<li>The parameter values were sent separately from the SQL text. They are never\npasted into the SQL, so this pattern is safe from SQL injection.</li>\n</ul>\n<h2>If it fails</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Connection refused or timeout</td>\n<td>Check that PostgreSQL is running and that <code>Host</code> and <code>Port</code> are correct.</td>\n</tr>\n<tr>\n<td>TLS or certificate error</td>\n<td>For a local container only, keep <code>SSL Mode=Disable</code>. For a real server, configure TLS.</td>\n</tr>\n<tr>\n<td>Password authentication failed</td>\n<td>Check <code>Username</code> and <code>Password</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/provider/troubleshooting\">ADO.NET troubleshooting guide</a> covers more\ncases.</p>\n<h2>Clean up</h2>\n"
+        "html": "<p>If the connection fails, confirm the server is listening on the configured\nport and check the database, role, password, and TLS settings. See\n<a href=\"/documentation/operations/troubleshooting\">troubleshooting</a> for common error messages.</p>\n<p>If you started the disposable database, stop and remove that container after\nthe exercise with <code>docker rm -f bluetusk-quickstart</code>.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "docker rm --force bluetusk-postgres\n",
-        "highlighted": "docker <span class=\"hljs-built_in\">rm</span> <span class=\"hljs-literal\">--force</span> bluetusk<span class=\"hljs-literal\">-postgres</span>\n",
-        "language": "powershell"
+        "kind": "heading",
+        "heading": {
+          "id": "build-your-next-feature",
+          "text": "Build your next feature",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/getting-started/concepts\">Core concepts</a>: the vocabulary every BlueTusk product uses.</li>\n<li><a href=\"/documentation/getting-started/provider-overview\">ADO.NET guide</a>: transactions, batches, COPY and more.</li>\n<li><a href=\"/documentation/ef-core/overview\">EF Core guide</a>: LINQ and migrations.</li>\n<li><a href=\"/documentation/real-time/streams\">Streams guide</a>: react to committed changes.</li>\n</ul>\n"
+        "html": "<p>Create one long-lived data source per connection configuration in a hosted\napplication. Open short-lived logical connections as work arrives. See\n<a href=\"/documentation/provider/dependency-injection\">dependency injection</a> to register the\ndata source, <a href=\"/documentation/provider/overview\">ADO.NET</a> for commands and transactions,\nor <a href=\"/documentation/ef-core/overview\">EF Core</a> to start with a DbContext.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "install",
+    "title": "Install BlueTusk",
+    "summary": "Choose packages and check what your PostgreSQL and .NET versions support.",
+    "order": 1,
+    "headings": [
+      {
+        "id": "start-with-a-supported-environment",
+        "text": "Start with a supported environment",
+        "level": 2
+      },
+      {
+        "id": "choose-packages-by-workload",
+        "text": "Choose packages by workload",
+        "level": 2
+      },
+      {
+        "id": "install-the-provider",
+        "text": "Install the provider",
+        "level": 2
+      },
+      {
+        "id": "install-the-ef-core-provider",
+        "text": "Install the EF Core provider",
+        "level": 2
+      },
+      {
+        "id": "add-a-browser-client",
+        "text": "Add a browser client",
+        "level": 2
+      },
+      {
+        "id": "configure-postgresql-access",
+        "text": "Configure PostgreSQL access",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/getting-started/install.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/install.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>Start with the package that owns the feature you need. Check the target\nframeworks and dependencies of the exact version you install. Use one\ncompatible set of package versions in each application and commit its lockfile.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "start-with-a-supported-environment",
+          "text": "Start with a supported environment",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>The <a href=\"/documentation/getting-started/quickstart\">first-query tutorial</a> uses .NET 10, PostgreSQL 15–18,\nand the <code>BlueTusk.Data</code> 1.2.0 package. Use a current PostgreSQL\nminor release for the major version you run. For EF Core, match the EF Core\nruntime, design package, and <code>dotnet-ef</code> tool. See <a href=\"/documentation/getting-started/runtime-compatibility\">runtime compatibility</a> for the .NET 5–11 mappings and integration minimums.</p>\n<p>These guides target BlueTusk 1.2. Use a feed that contains the 1.2.0 packages and check the prerequisites of the feature you are installing.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-packages-by-workload",
+          "text": "Choose packages by workload",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use the <a href=\"/packages\">package catalog</a> to find libraries, tools, templates, and browser clients with copyable 1.2.0 commands.</p>\n<table>\n<thead>\n<tr>\n<th>Workload</th>\n<th>Package to start with</th>\n<th>Add when needed</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>ADO.NET commands and pooling</td>\n<td><code>BlueTusk.Data</code></td>\n<td><code>BlueTusk.Data.DependencyInjection</code> for host registration</td>\n</tr>\n<tr>\n<td>LINQ, models, and migrations</td>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td><code>BlueTusk.EntityFrameworkCore.Design</code> and the matching EF toolchain</td>\n</tr>\n<tr>\n<td>PostgreSQL-specific extension types</td>\n<td>See the <a href=\"/documentation/extensions/catalog\">extensions guide</a></td>\n<td>EF adapters for LINQ and migrations</td>\n</tr>\n<tr>\n<td>Committed PostgreSQL transactions</td>\n<td><code>BlueTusk.Streams</code></td>\n<td>A durable checkpoint store and hosting integration</td>\n</tr>\n<tr>\n<td>Destination synchronization</td>\n<td><code>BlueTusk.Sync</code></td>\n<td>The connector for your destination</td>\n</tr>\n<tr>\n<td>Authorized live query results</td>\n<td><code>BlueTusk.Live</code></td>\n<td>ASP.NET Core, SSE, SignalR, gRPC, or the browser client</td>\n</tr>\n<tr>\n<td>Property graphs</td>\n<td><code>BlueTusk.EntityFrameworkCore</code></td>\n<td><code>BlueTusk.ContinuousGraph</code> for live graph results</td>\n</tr>\n<tr>\n<td>Instance and pipeline operations</td>\n<td><code>BlueTusk.ControlPlane</code></td>\n<td><code>BlueTusk.Dashboard</code> and the required hosting or persistence adapter</td>\n</tr>\n<tr>\n<td>Application data services</td>\n<td>See the <a href=\"/documentation/services/overview\">data services guide</a></td>\n<td>Only the database, hosting, and transport adapters you use</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "install-the-provider",
+          "text": "Install the provider",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>From an existing .NET project:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet add package BlueTusk.Data --version 1.2.0",
+        "highlighted": "dotnet add package BlueTusk.Data --version 1.2.0",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p>See <a href=\"https://www.nuget.org/packages/BlueTusk.Data\">BlueTusk.Data on NuGet</a>\nfor package information. Install the matching 1.2.0 version of each BlueTusk dependency.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "install-the-ef-core-provider",
+          "text": "Install the EF Core provider",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "dotnet add package BlueTusk.EntityFrameworkCore --version 1.2.0",
+        "highlighted": "dotnet add package BlueTusk.EntityFrameworkCore --version 1.2.0",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p>For model creation and connection registration, follow the\n<a href=\"/documentation/ef-core/overview\">EF Core setup guide</a>. Provision PostgreSQL server\nextensions separately before running migrations that use their types or\noperators.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "add-a-browser-client",
+          "text": "Add a browser client",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use <code>@bluetusk/live</code> for the Live client, <code>@bluetusk/live-react</code> for React,\nor <code>@bluetusk/live-angular</code> for Angular. Choose the client version supported\nby your host and transport. The <a href=\"/documentation/real-time/live-reference\">Live reference</a>\ndescribes authentication, replay, and reconnect behavior.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "configure-postgresql-access",
+          "text": "Configure PostgreSQL access",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use a dedicated database and a restricted login for your application.\nProvide credentials through your development secret store or deployment\nconfiguration. Verify server certificates in deployed environments. Use a\nseparate role to run migrations and provision replication slots.</p>\n<p>Next, <a href=\"/documentation/getting-started/quickstart\">run a first query</a> or use the\n<a href=\"/documentation/operations/deployment\">deployment guide</a> to configure an existing app.</p>\n"
       }
     ]
   },
@@ -682,108 +318,275 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "concepts",
-    "summary": "The shared vocabulary: data sources, parameters, the type catalogue, logical replication, acknowledgement and checkpoints.",
-    "keywords": [
-      "concepts",
-      "data source",
-      "session",
-      "checkpoint",
-      "capability"
-    ],
-    "order": 8,
-    "listed": true,
     "title": "Core concepts",
-    "sourcePath": "docs/getting-started/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/concepts.md",
+    "summary": "Understand data sources, sessions, type identity, and committed changes.",
+    "order": 2,
     "headings": [
       {
-        "id": "core-concepts",
-        "text": "Core concepts",
-        "level": 1
-      },
-      {
-        "id": "data-source-connection-and-session",
-        "text": "Data source, connection and session",
+        "id": "data-source-logical-connection-and-physical-session",
+        "text": "Data source, logical connection and physical session",
         "level": 2
       },
       {
-        "id": "parameters-keep-sql-safe",
-        "text": "Parameters keep SQL safe",
+        "id": "commands-protocol-groups-and-cancellation",
+        "text": "Commands, protocol groups and cancellation",
         "level": 2
       },
       {
-        "id": "types-come-from-the-server-catalogue",
-        "text": "Types come from the server catalogue",
+        "id": "type-identity",
+        "text": "Type identity",
         "level": 2
       },
       {
-        "id": "capabilities-not-version-numbers",
-        "text": "Capabilities, not version numbers",
+        "id": "capabilities",
+        "text": "Capabilities",
         "level": 2
       },
       {
-        "id": "two-kinds-of-transaction",
-        "text": "Two kinds of transaction",
+        "id": "transactions-and-committed-changes",
+        "text": "Transactions and committed changes",
         "level": 2
       },
       {
-        "id": "delivery-acknowledgement-and-checkpoints",
-        "text": "Delivery, acknowledgement and checkpoints",
-        "level": 2
-      },
-      {
-        "id": "source-identity",
-        "text": "Source identity",
+        "id": "source-identity-and-schema-identity",
+        "text": "Source identity and schema identity",
         "level": 2
       },
       {
         "id": "snapshot-then-stream",
-        "text": "Snapshot, then stream",
+        "text": "Snapshot then stream",
         "level": 2
       },
       {
-        "id": "relay-and-consumer-groups",
-        "text": "Relay and consumer groups",
+        "id": "relay-destination-and-live-delivery",
+        "text": "Relay, destination and live delivery",
         "level": 2
       },
       {
-        "id": "live-results-are-re-queried-not-copied-from-the-change-feed",
-        "text": "Live results are re-queried, not copied from the change feed",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "where-to-continue",
+        "text": "Where to continue",
         "level": 2
       }
     ],
-    "wordCount": 819,
-    "readMinutes": 4,
-    "searchText": "Core concepts These are the ideas every BlueTusk product builds on. Each product guide adds its own concepts page; this page covers what they share. Data source, connection and session A **data source** (`BlueTuskDataSource`) is the long-lived object that owns: the connection settings and credentials; the **connection pool** of physical PostgreSQL sessions; and the **type catalogue** loaded from the server. A **connection** (`BlueTuskConnection`) is a short-lived logical connection. Opening it borrows a physical session from the pool. Disposing it returns the session. Rules of thumb: Create **one data source per distinct configuration** and keep it for the lifetime of the app. Register it as a singleton. Open connections late and dispose them early. Never create a data source per request. Each one creates its own pool. PostgreSQL sessions carry state: temporary tables, `SET` values, prepared statements, advisory locks, `LISTEN` registrations and open transactions. Before a session is reused, BlueTusk rolls back any open transaction and runs `DISCARD ALL`, so this state does not leak between callers. See [connection pooling](../ado-net/pooling.md). Parameters keep SQL safe Commands send parameter values separately from the SQL text, using the PostgreSQL protocol. Values are never pasted into the SQL string. You can write placeholders as `@name`, `:name` or `$1`. Never build SQL by concatenating user input. Types come from the server catalogue PostgreSQL identifies every type by an object identifier (OID) in its catalogue. When a data source starts, BlueTusk reads the catalogue and builds a type map. This is why custom enums, composites, domains and extension types work: they are discovered, not hard-coded. If a value is ambiguous (for example a `null`, or a `string` that should be `jsonb`), state the PostgreSQL type explicitly with `PostgreSqlTypeName`, `PostgreSqlTypeOid` or `DbType`. See [PostgreSQL types](../types/README.md). Capabilities, not version numbers Opti",
+    "sourcePath": "docs/getting-started/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/concepts.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Core concepts</h1>\n<p>These are the ideas every BlueTusk product builds on. Each product guide adds\nits own concepts page; this page covers what they share.</p>\n<h2>Data source, connection and session</h2>\n<p>A <strong>data source</strong> (<code>BlueTuskDataSource</code>) is the long-lived object that owns:</p>\n<ul>\n<li>the connection settings and credentials;</li>\n<li>the <strong>connection pool</strong> of physical PostgreSQL sessions; and</li>\n<li>the <strong>type catalogue</strong> loaded from the server.</li>\n</ul>\n<p>A <strong>connection</strong> (<code>BlueTuskConnection</code>) is a short-lived logical connection.\nOpening it borrows a physical session from the pool. Disposing it returns the\nsession.</p>\n"
+        "html": "<p>BlueTusk exposes several PostgreSQL data paths, but they are not interchangeable.\nThis guide defines the vocabulary used throughout the provider, EF Core and\nreal-time documentation.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "Application ──► BlueTuskDataSource (one per connection string, app lifetime)\n                   └─ pool of physical sessions ──► PostgreSQL\n                         ▲\n        short-lived BlueTuskConnection / BlueTuskCommand borrow and return them\n",
-        "highlighted": "Application ──► BlueTuskDataSource (one per connection string, app lifetime)\n                   └─ pool of physical sessions ──► PostgreSQL\n                         ▲\n        short-lived BlueTuskConnection / BlueTuskCommand borrow and return them\n",
-        "language": "text"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Rules of thumb:</p>\n<ul>\n<li>Create <strong>one data source per distinct configuration</strong> and keep it for the\nlifetime of the app. Register it as a singleton.</li>\n<li>Open connections late and dispose them early.</li>\n<li>Never create a data source per request. Each one creates its own pool.</li>\n</ul>\n<p>PostgreSQL sessions carry state: temporary tables, <code>SET</code> values, prepared\nstatements, advisory locks, <code>LISTEN</code> registrations and open transactions.\nBefore a session is reused, BlueTusk rolls back any open transaction and runs\n<code>DISCARD ALL</code>, so this state does not leak between callers. See\n<a href=\"/documentation/provider/pooling\">connection pooling</a>.</p>\n<h2>Parameters keep SQL safe</h2>\n<p>Commands send parameter values separately from the SQL text, using the\nPostgreSQL protocol. Values are never pasted into the SQL string.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var command = dataSource.CreateCommand(\n    \"SELECT name FROM app.customers WHERE id = @id\");\ncommand.Parameters.Add(new BlueTuskParameter<long>(42) { ParameterName = \"id\" });\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT name FROM app.customers WHERE id = @id&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">42</span>) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "data-source-logical-connection-and-physical-session",
+          "text": "Data source, logical connection and physical session",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>You can write placeholders as <code>@name</code>, <code>:name</code> or <code>$1</code>. Never build SQL by\nconcatenating user input.</p>\n<h2>Types come from the server catalogue</h2>\n<p>PostgreSQL identifies every type by an object identifier (OID) in its catalogue.\nWhen a data source starts, BlueTusk reads the catalogue and builds a type map.\nThis is why custom enums, composites, domains and extension types work: they are\ndiscovered, not hard-coded.</p>\n<p>If a value is ambiguous (for example a <code>null</code>, or a <code>string</code> that should be\n<code>jsonb</code>), state the PostgreSQL type explicitly with <code>PostgreSqlTypeName</code>,\n<code>PostgreSqlTypeOid</code> or <code>DbType</code>. See <a href=\"/documentation/provider/types\">PostgreSQL types</a>.</p>\n<h2>Capabilities, not version numbers</h2>\n<p>Optional server features, such as an extension or SQL/PGQ graph queries, are\ndetected from the connected server’s catalogue. BlueTusk does not assume a\nfeature exists because of a version number. If a feature is missing, the API\nfails with a clear error instead of sending unsupported SQL.</p>\n<h2>Two kinds of transaction</h2>\n<ul>\n<li>An <strong>application transaction</strong> is work your code does through ADO.NET or EF\nCore. You can commit or roll it back.</li>\n<li>A <strong>committed change transaction</strong> is something PostgreSQL has already\ncommitted. Streams reads these from the write-ahead log (WAL) through\n<strong>logical replication</strong>. They cannot be rolled back; your code reacts to\nthem.</li>\n</ul>\n<p>Logical replication needs three things on the server: <code>wal_level = logical</code>, a\n<strong>publication</strong> that lists the tables to capture, and a <strong>replication slot</strong>\nthat remembers how far a consumer has read.</p>\n<h2>Delivery, acknowledgement and checkpoints</h2>\n<p>Streams, Sync and Live share one delivery contract:</p>\n<ol>\n<li>PostgreSQL commits a transaction.</li>\n<li>BlueTusk delivers the whole transaction, in commit order.</li>\n<li>Your code (or a Sync destination) makes its effect durable.</li>\n<li>Only then is the transaction <strong>acknowledged</strong>, and the <strong>checkpoint</strong>\n(the saved read position) moves forward.</li>\n</ol>\n<p>If the process stops between steps 3 and 4, the same transaction is delivered\nagain after restart. Delivery is therefore <strong>at least once</strong>. Every change has\na stable identity, so a destination can recognise and ignore a repeat. BlueTusk\nnever claims “exactly once”.</p>\n<p>Read <a href=\"/documentation/real-time/contracts\">delivery guarantees</a> for the exact\nboundary of each product.</p>\n<h2>Source identity</h2>\n<p>A checkpoint is only valid for the database it came from. BlueTusk records a\n<strong>source identity</strong>: the PostgreSQL system identifier, database, replication\nslot and a fingerprint of the publication. If any of these change, for example\nafter restoring into a new cluster, BlueTusk refuses to resume from the old\ncheckpoint instead of silently skipping or repeating data.</p>\n<h2>Snapshot, then stream</h2>\n<p>A new consumer usually needs the existing rows as well as new changes. Taking a\ntable copy and then starting replication can miss changes made in between.\nBlueTusk’s <strong>snapshot bootstrap</strong> records a WAL position, copies a consistent\nsnapshot, then streams from exactly that position, with no gap and no overlap.\nSee <a href=\"/documentation/real-time/snapshot-bootstrap\">snapshot and catch-up</a>.</p>\n<h2>Relay and consumer groups</h2>\n<p>One replication slot can feed many consumers through the <strong>durable relay</strong>: a\nset of tables in PostgreSQL that store committed transactions for a retention\nwindow. Each <strong>consumer group</strong> reads and acknowledges independently. See\n<a href=\"/documentation/real-time/durable-relay\">durable relay</a>.</p>\n<h2>Live results are re-queried, not copied from the change feed</h2>\n<p>Live uses a change only as a signal that a registered query might have changed.\nIt then re-runs that query with the subscriber’s security scope and sends the\ndifference. Raw change data never goes straight to a browser. See\n<a href=\"/documentation/real-time/live\">Live guide</a>.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/getting-started/install\">Install BlueTusk</a></li>\n<li><a href=\"/documentation/getting-started/quickstart\">5-minute first app</a></li>\n<li><a href=\"/documentation/getting-started/overview#choose-where-to-start\">Choose a product</a></li>\n</ul>\n"
+        "html": "<p>A <code>BlueTuskDataSource</code> is the long-lived owner of configuration, type metadata\nand the physical connection pool. A <code>BlueTuskConnection</code> is a logical ADO.NET\nconnection. Opening it leases or creates a physical PostgreSQL session;\ndisposing it returns a healthy session or destroys an unhealthy one.</p>\n<p>This distinction matters because PostgreSQL session state is real:</p>\n<ul>\n<li>temporary tables;</li>\n<li>prepared statements;</li>\n<li><code>SET</code> values;</li>\n<li>advisory locks;</li>\n<li>active transactions;</li>\n<li><code>LISTEN</code> registrations; and</li>\n<li>replication or COPY modes.</li>\n</ul>\n<p>Pool reset and multiplexing rules exist to prevent state from leaking between\nunrelated logical connections.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "commands-protocol-groups-and-cancellation",
+          "text": "Commands, protocol groups and cancellation",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A command becomes one or more PostgreSQL frontend messages. Extended-query\nexecution uses Parse, Bind, Describe and Execute messages terminated by an\nappropriate Sync boundary. Pipeline and bounded-multiplexing modes can share a\nphysical session only when the command has no session-affine behavior.</p>\n<p>Cancellation is out-of-band: PostgreSQL uses a separate cancellation request\nidentified by the backend process ID and secret key. Cancellation therefore\nhas different timing from closing a socket, and a canceled command must still\nleave the protocol stream in a known state before a session can be reused.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "type-identity",
+          "text": "Type identity",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL types are identified by server catalogue OIDs, not only by SQL type\nnames or CLR types. BlueTusk builds an immutable type-registry snapshot from\nthe authenticated server’s catalogue and composes optional extension\ndescriptors into it.</p>\n<p>The same CLR shape can require different PostgreSQL identities. For example,\n<code>string</code> may be <code>text</code>, <code>varchar</code>, <code>citext</code>, <code>json</code> or a domain. Specify\n<code>DbType</code>, <code>PostgreSqlTypeOid</code> or <code>PostgreSqlTypeName</code> when inference would be\nambiguous.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "capabilities",
+          "text": "Capabilities",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A major-version number is not sufficient proof that an optional feature exists.\nBlueTusk uses authenticated capability discovery for features such as\nextensions and PostgreSQL 19 SQL/PGQ. Capability-sensitive APIs either remain\nunavailable or fail explicitly when the server does not provide the required\ncatalogue or grammar.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "transactions-and-committed-changes",
+          "text": "Transactions and committed changes",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>An ADO.NET or EF transaction is application-owned database work. A Streams\ntransaction is a decoded, already committed WAL transaction. The latter cannot\nbe rolled back by its consumer.</p>\n<p>Streams delivers a transaction with an acknowledgement operation. The consumer\nmust apply its side effect before acknowledging. A durable checkpoint records\nprogress only after the relevant delivery contract permits it.</p>\n<p>An acknowledged transaction is never skipped. A crash can cause the last\nunconfirmed transaction to be delivered again with the same identity. Official\nSync connectors then turn that retry into a proven durable outcome: PostgreSQL\nand Redis commit destination state and checkpoint atomically, OpenSearch uses\nexternal versions for replay-safe materialisation, and NATS publishes a durable\nstable transaction identity with a configured broker-deduplication window.\nSee the <a href=\"/documentation/real-time/sync-reference#the-delivery-guarantee\">Sync delivery guarantee</a>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "source-identity-and-schema-identity",
+          "text": "Source identity and schema identity",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A real-time source is identified by more than a connection string. Source\nidentity includes the PostgreSQL system identity and replication configuration\nneeded to prevent a checkpoint from being applied to a different cluster or\npublication.</p>\n<p>Typed Streams and Sync mappings also carry schema and mapping fingerprints.\nThose fingerprints detect incompatible relation or CLR-binding changes before\nan old checkpoint is reused.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "snapshot-then-stream",
+          "text": "Snapshot then stream",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Starting from “now” can miss existing rows; taking a snapshot and then starting\nreplication can miss changes committed between those operations. BlueTusk’s\nsnapshot bootstrap records a WAL fence, reads a consistent snapshot, persists\nsnapshot progress and then begins streaming from the fence.</p>\n<p>The protocol is intentionally explicit about:</p>\n<ul>\n<li>the exported snapshot;</li>\n<li>the WAL position;</li>\n<li>restart behavior;</li>\n<li>checkpoint ownership; and</li>\n<li>failure before and after the handoff.</li>\n</ul>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "relay-destination-and-live-delivery",
+          "text": "Relay, destination and live delivery",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A durable relay stores acknowledged source transactions for independent\nconsumer groups. It provides bounded retention and replay; it is not a general\nmessage broker.</p>\n<p>Sync transforms a source transaction into a versioned destination write. Each\nconnector defines its atomicity, idempotency, quarantine, reconciliation and\nrebuild behavior.</p>\n<p>Live turns authoritative server-side queries into authorized client\nsubscriptions. It re-evaluates access and result state rather than treating raw\nCDC payloads as safe client messages.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "where-to-continue",
+          "text": "Where to continue",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li><a href=\"/documentation/getting-started/architecture\">Architecture overview</a></li>\n<li><a href=\"/documentation/provider/ado-net-compatibility\">ADO.NET compatibility</a></li>\n<li><a href=\"/documentation/provider/types\">Type system</a></li>\n<li><a href=\"/documentation/real-time/contracts\">Real-time contracts</a></li>\n<li><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md\">Observability</a></li>\n<li><a href=\"/documentation/operations/production-checklist\">Production checklist</a></li>\n</ul>\n"
+      }
+    ]
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "handbook",
+    "title": "BlueTusk documentation",
+    "summary": "Find the right documentation for the BlueTusk feature you use.",
+    "order": 3,
+    "headings": [
+      {
+        "id": "start-here",
+        "text": "Start here",
+        "level": 2
+      },
+      {
+        "id": "connect-and-query",
+        "text": "Connect and query",
+        "level": 2
+      },
+      {
+        "id": "react-to-changes-and-query-connected-data",
+        "text": "React to changes and query connected data",
+        "level": 2
+      },
+      {
+        "id": "add-a-data-service",
+        "text": "Add a data service",
+        "level": 2
+      },
+      {
+        "id": "operate-your-application",
+        "text": "Operate your application",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/README.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>These guides cover BlueTusk 1.2. BlueTusk connects .NET applications to PostgreSQL through ADO.NET and EF Core.\nIts other packages handle committed changes, live query results, connected\ndata, and application workloads that need durable state.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "start-here",
+          "text": "Start here",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ol>\n<li><a href=\"/documentation/getting-started/install\">Choose packages</a> and check <a href=\"/documentation/getting-started/runtime-compatibility\">runtime compatibility</a>.</li>\n<li><a href=\"/documentation/getting-started/quickstart\">Run your first query</a> against a disposable database.</li>\n<li><a href=\"/documentation/getting-started/concepts\">Learn the ownership model</a> before configuring pooling, replication, or replay.</li>\n<li><a href=\"/documentation/getting-started/examples\">Explore working examples</a> when you need a complete application flow.</li>\n</ol>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "connect-and-query",
+          "text": "Connect and query",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>If you need to</th>\n<th>Read</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Execute SQL, manage transactions, or stream large results</td>\n<td><a href=\"/documentation/provider/overview\">ADO.NET provider</a></td>\n</tr>\n<tr>\n<td>Configure dependency injection, credentials, and pooling</td>\n<td><a href=\"/documentation/provider/dependency-injection\">Dependency injection</a>, <a href=\"/documentation/provider/authentication\">authentication</a>, <a href=\"/documentation/provider/pooling\">pooling</a></td>\n</tr>\n<tr>\n<td>Model entities or scaffold an existing PostgreSQL schema</td>\n<td><a href=\"/documentation/ef-core/overview\">EF Core</a></td>\n</tr>\n<tr>\n<td>Work with PostgreSQL types and extension codecs</td>\n<td><a href=\"/documentation/provider/types\">Types</a>, <a href=\"/documentation/extensions/catalog\">extensions</a></td>\n</tr>\n<tr>\n<td>Bulk-load rows or inspect low-level replication</td>\n<td><a href=\"/documentation/provider/copy\">COPY</a>, <a href=\"/documentation/provider/replication\">replication</a></td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "react-to-changes-and-query-connected-data",
+          "text": "React to changes and query connected data",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>If you need to</th>\n<th>Read</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Consume committed transactions</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n</tr>\n<tr>\n<td>Deliver changes to another store or broker</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n</tr>\n<tr>\n<td>Push authorized query results to a browser or app</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n</tr>\n<tr>\n<td>Query a graph over existing tables</td>\n<td><a href=\"/documentation/graph/property-graphs\">Property graphs</a>, <a href=\"/documentation/graph/traversals\">bounded traversals</a></td>\n</tr>\n<tr>\n<td>Maintain graph results as data changes</td>\n<td><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n</tr>\n<tr>\n<td>Manage instances, replication slots, and registered pipelines</td>\n<td><a href=\"/documentation/real-time/control-plane\">Control Plane</a></td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "add-a-data-service",
+          "text": "Add a data service",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use the <a href=\"/documentation/services/overview\">data services guide</a> to choose among Documents,\nEvents, Projections, Jobs, Workflows, Schema, SQL, Search, Edge, and Studio.\nEach product guide describes the package, the database objects it owns, and the\napplication responsibilities that affect recovery.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "operate-your-application",
+          "text": "Operate your application",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Start with the <a href=\"/documentation/operations/production-checklist\">production checklist</a>.\nThen configure <a href=\"/documentation/operations/deployment\">deployment</a>,\n<a href=\"/documentation/operations/security\">security</a>, and <a href=\"/documentation/operations/observability\">observability</a>.\nUse <a href=\"/documentation/operations/troubleshooting\">troubleshooting</a> for failures and the\n<a href=\"/documentation/operations/upgrade-guide\">upgrade guide</a> before changing dependencies or\ndatabase schema.</p>\n"
       }
     ]
   },
@@ -791,23 +594,10 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "architecture",
-    "summary": "Understand the layers, dependency direction, ownership, and async boundaries.",
-    "keywords": [
-      "architecture",
-      "layers",
-      "ownership"
-    ],
-    "order": 10,
-    "listed": true,
     "title": "Architecture",
-    "sourcePath": "docs/architecture/overview.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/overview.md",
+    "summary": "See how the provider, EF Core, and change-delivery products fit together.",
+    "order": 5,
     "headings": [
-      {
-        "id": "architecture",
-        "text": "Architecture",
-        "level": 1
-      },
       {
         "id": "layer-rules",
         "text": "Layer rules",
@@ -829,221 +619,207 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 886,
-    "readMinutes": 5,
-    "searchText": "Architecture BlueTusk is split by responsibility so protocol correctness can be tested without ADO.NET or EF Core and so higher layers cannot leak their concepts downward. The real-time products add a second enforced boundary: [BlueTusk Streams](../realtime-platform/README.md) is the only application-level CDC abstraction. Sync, Live, and Continuous Graph may depend on Streams contracts but cannot reference Replication or PgOutput directly. Layer rules **Transport** moves bytes. It owns endpoint resolution, ordered address attempts, socket/TLS I/O, connect deadlines, cancellation, and stable connection-failure classification, but does not know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET. See the [transport contract](transport.md). **Protocol** owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types. **Security** owns authentication primitives, secret handling, certificate policy, and diagnostic redaction. **Diagnostics** owns dependency-free `ActivitySource`, `Meter`, and redacted event contracts. Client, Data, and Replication may publish through it; it has no references back into provider layers. **TypeSystem** owns catalogue type identities and codecs. Unknown types are values, not fatal errors. **Client** coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions. **Data** exposes `System.Data.Common` APIs, pooling, connection strings, and data sources. **Identity packages** adapt vendor credential SDKs to Data's access-token callback. Vendor dependencies do not enter Data, Client, Security, or lower layers. **Replication** consumes `COPY BOTH` without introducing ADO.NET concepts into the protocol engine. **Replication.PgOutput** statefully decodes standard logical-replication messages while preserving their WAL envelopes. **EntityFrameworkCore** is the only layer allowed to depend on EF Core. **",
+    "sourcePath": "docs/architecture/overview.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/overview.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Architecture</h1>\n<p>BlueTusk is split by responsibility so protocol correctness can be tested without ADO.NET or EF Core and so higher layers cannot leak their concepts downward.</p>\n<p>The real-time products add a second enforced boundary: <a href=\"/documentation/real-time/platform\">BlueTusk Streams</a> is the only application-level CDC abstraction. Sync, Live, and Continuous Graph may depend on Streams contracts but cannot reference Replication or PgOutput directly.</p>\n"
+        "html": "<p>BlueTusk is split by responsibility so protocol correctness can be tested without ADO.NET or EF Core and so higher layers cannot leak their concepts downward.</p>\n<p>The real-time products add a second enforced boundary: <a href=\"/documentation/real-time/platform\">BlueTusk Streams</a> is the only application-level CDC abstraction. Sync, Live, and Continuous Graph may depend on Streams contracts but cannot reference Replication or PgOutput directly.</p>\n"
       },
       {
         "kind": "code",
-        "code": "Application\n    ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐\n    ├──→ BlueTusk.Identity.* ──────────→ BlueTusk.Data ─┤\n    ├──→ BlueTusk.Data ─────────────────────────────────┤\n    └──→ BlueTusk.Replication.PgOutput                  │\n                 ↓                                     │\n          BlueTusk.Replication ────────────────────────┤\n                                                      ↓\n                                              BlueTusk.Client\n    ├──────────────→ BlueTusk.TypeSystem\n    ↓\nBlueTusk.Protocol ─→ BlueTusk.Security\n    ↓\nBlueTusk.Transport\n    ↓\nPostgreSQL\n",
-        "highlighted": "Application\n    ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐\n    ├──→ BlueTusk.Identity.* ──────────→ BlueTusk.Data ─┤\n    ├──→ BlueTusk.Data ─────────────────────────────────┤\n    └──→ BlueTusk.Replication.PgOutput                  │\n                 ↓                                     │\n          BlueTusk.Replication ────────────────────────┤\n                                                      ↓\n                                              BlueTusk.Client\n    ├──────────────→ BlueTusk.TypeSystem\n    ↓\nBlueTusk.Protocol ─→ BlueTusk.Security\n    ↓\nBlueTusk.Transport\n    ↓\nPostgreSQL\n",
+        "code": "Application\n    ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐\n    ├──→ BlueTusk.Identity.* ──────────→ BlueTusk.Data ─┤\n    ├──→ BlueTusk.Data ─────────────────────────────────┤\n    └──→ BlueTusk.Replication.PgOutput                  │\n                 ↓                                     │\n          BlueTusk.Replication ────────────────────────┤\n                                                      ↓\n                                              BlueTusk.Client\n    ├──────────────→ BlueTusk.TypeSystem\n    ↓\nBlueTusk.Protocol ─→ BlueTusk.Security\n    ↓\nBlueTusk.Transport\n    ↓\nPostgreSQL",
+        "highlighted": "Application\n    ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐\n    ├──→ BlueTusk.Identity.* ──────────→ BlueTusk.Data ─┤\n    ├──→ BlueTusk.Data ─────────────────────────────────┤\n    └──→ BlueTusk.Replication.PgOutput                  │\n                 ↓                                     │\n          BlueTusk.Replication ────────────────────────┤\n                                                      ↓\n                                              BlueTusk.Client\n    ├──────────────→ BlueTusk.TypeSystem\n    ↓\nBlueTusk.Protocol ─→ BlueTusk.Security\n    ↓\nBlueTusk.Transport\n    ↓\nPostgreSQL",
         "language": "text"
       },
       {
+        "kind": "heading",
+        "heading": {
+          "id": "layer-rules",
+          "text": "Layer rules",
+          "level": 2
+        }
+      },
+      {
         "kind": "html",
-        "html": "<h2>Layer rules</h2>\n<ul>\n<li><strong>Transport</strong> moves bytes. It owns endpoint resolution, ordered address attempts, socket/TLS\nI/O, connect deadlines, cancellation, and stable connection-failure classification, but does\nnot know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET. See the\n<a href=\"/documentation/architecture/architecture-transport\">transport contract</a>.</li>\n<li><strong>Protocol</strong> owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types.</li>\n<li><strong>Security</strong> owns authentication primitives, secret handling, certificate policy, and diagnostic redaction.</li>\n<li><strong>Diagnostics</strong> owns dependency-free <code>ActivitySource</code>, <code>Meter</code>, and redacted\nevent contracts. Client, Data, and Replication may publish through it; it has\nno references back into provider layers.</li>\n<li><strong>TypeSystem</strong> owns catalogue type identities and codecs. Unknown types are values, not fatal errors.</li>\n<li><strong>Client</strong> coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions.</li>\n<li><strong>Data</strong> exposes <code>System.Data.Common</code> APIs, pooling, connection strings, and data sources.</li>\n<li><strong>Identity packages</strong> adapt vendor credential SDKs to Data’s access-token callback.\nVendor dependencies do not enter Data, Client, Security, or lower layers.</li>\n<li><strong>Replication</strong> consumes <code>COPY BOTH</code> without introducing ADO.NET concepts into the protocol engine.</li>\n<li><strong>Replication.PgOutput</strong> statefully decodes standard logical-replication messages while preserving their WAL envelopes.</li>\n<li><strong>EntityFrameworkCore</strong> is the only layer allowed to depend on EF Core.</li>\n<li><strong>Extensions.Abstractions</strong> is the public preview plug-in seam. Built data sources carry immutable type and feature snapshots; extension packages must not access protocol internals.</li>\n<li><strong>Extensions.Testing</strong> is an ADO.NET-level test utility that validates feature and runtime-codec contracts; production packages never depend on it.</li>\n</ul>\n<p>Dependencies should form a directed acyclic graph. A feature that would create a reverse reference needs a new abstraction in the lower-level package or an orchestration implementation in a higher-level package.</p>\n<p>An executable architecture conformance test reads each built assembly’s direct references and rejects reverse BlueTusk dependencies, EF references outside the EF packages, and <code>System.Data.Common</code> leakage below Data.</p>\n<p>Protocol’s operation state machine validates legal wire-state transitions with\natomic compare-and-swap updates and owns message framing. Client owns the\noperation-specific loops for queries, COPY,\nnotifications, and replication because those loops coordinate type decoding and\nsession behavior. Keeping that orchestration above Protocol avoids importing\nhigher-level operation semantics into the framing layer.</p>\n<h2>EF provider boundary</h2>\n<p>Entity Framework Core consumes a deliberately narrow Data-layer contract:</p>\n<ul>\n<li>provider connection and data-source creation with explicit ownership;</li>\n<li>parameter store-type identity by stable built-in OID or schema-qualified runtime type name;</li>\n<li>immutable runtime catalogue/type snapshots and configured codecs owned by the data source;</li>\n<li>connection-scoped server-capability probing;</li>\n<li>dedicated unpooled administration connections, pool clearing and catalogue reload; and</li>\n<li>provider diagnostics without exposing unredacted lifecycle configuration publicly.</li>\n</ul>\n<p>These operations are defined by the assembly-internal Data SPI described in\n<a href=\"/documentation/architecture/architecture-decisions-0017-internal-ef-data-provider-spi\">ADR 0017</a>. Concrete connection\nand data-source types are limited to EF’s public configuration overloads. An\nexecutable source architecture test rejects concrete casts and construction in\nthe EF implementation.</p>\n<p>EF must not reference Client, Protocol, Transport, or wire codecs directly. New EF features that need wire behavior extend the internal Data contract or a lower neutral abstraction first.</p>\n<h2>Ownership and buffers</h2>\n<p>Protocol parsers return views over caller-owned buffers. The view is valid only until the caller advances or releases that buffer. Public ADO.NET values must either own their memory or have an explicitly documented reader lifetime.</p>\n<p>Wire lengths are validated before allocation. A configured upper bound is mandatory for any server-controlled length that can cause memory growth.</p>\n<p>Authentication messages use a sensitive protocol-write path that overwrites reusable framing\nstorage after the transport flushes it. Security-layer password derivations clear temporary\nwritable byte buffers; immutable caller-supplied .NET strings remain owned by the caller and\ncannot be zeroed by the provider.</p>\n<p>Credential callbacks and TLS client identity are immutable data-source configuration, not\nconnection-string state. Data sources propagate that configuration to pools, unpooled paths,\nnotification listeners, EF admin-database connections, and dedicated replication-option\nsnapshots. Credential resolution is lazy and belongs to Client authentication; password-file\nparsing, SCRAM/MD5 derivation, RFC 7628 OAUTHBEARER response construction, and the\noperating-system-backed GSSAPI/SSPI security context remain in Security, while Transport only\nreceives the final TLS certificate policy. Client owns the PostgreSQL code 7/8/9 negotiation\nsequence and clears each opaque GSS token after the sensitive write path flushes it.\nCloud identity packages configure those public callbacks and a TLS-before-token policy;\nthey do not add provider-specific branches to the authentication state machine.</p>\n<h2>Sync and async</h2>\n<p>Asynchronous APIs use actual asynchronous socket operations. Synchronous APIs will use dedicated synchronous paths; they will not call asynchronous methods and block on the result.</p>\n<p>PostgreSQL pipeline mode is a protocol scheduling feature with multiple extended-query operations between explicit synchronization boundaries. <code>System.IO.Pipelines</code> is a .NET buffering API. They are independent architecture decisions: BlueTusk implements PostgreSQL pipeline mode on its existing transport. Representative sync/async, fragmented-frame, large-field, COPY, cancellation, and TLS benchmarks did not justify a production transport rewrite, so the benchmark-only prototype remains isolated from this dependency graph. See <a href=\"/documentation/architecture/architecture-decisions-0005-postgresql-pipeline-mode-and-transport-pipelines\">ADR 0005</a>.</p>\n"
+        "html": "<ul>\n<li><strong>Transport</strong> moves bytes. It owns endpoint resolution, ordered address attempts, socket/TLS\nI/O, connect deadlines, cancellation, and stable connection-failure classification, but does\nnot know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET. See the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/transport.md\">transport contract</a>.</li>\n<li><strong>Protocol</strong> owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types.</li>\n<li><strong>Security</strong> owns authentication primitives, secret handling, certificate policy, and diagnostic redaction.</li>\n<li><strong>Diagnostics</strong> owns dependency-free <code>ActivitySource</code>, <code>Meter</code>, and redacted\nevent contracts. Client, Data, and Replication may publish through it; it has\nno references back into provider layers.</li>\n<li><strong>TypeSystem</strong> owns catalogue type identities and codecs. Unknown types are values, not fatal errors.</li>\n<li><strong>Client</strong> coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions.</li>\n<li><strong>Data</strong> exposes <code>System.Data.Common</code> APIs, pooling, connection strings, and data sources.</li>\n<li><strong>Identity packages</strong> adapt vendor credential SDKs to Data’s access-token callback.\nVendor dependencies do not enter Data, Client, Security, or lower layers.</li>\n<li><strong>Replication</strong> consumes <code>COPY BOTH</code> without introducing ADO.NET concepts into the protocol engine.</li>\n<li><strong>Replication.PgOutput</strong> statefully decodes standard logical-replication messages while preserving their WAL envelopes.</li>\n<li><strong>EntityFrameworkCore</strong> is the only layer allowed to depend on EF Core.</li>\n<li><strong>Extensions.Abstractions</strong> is the public preview plug-in seam. Built data sources carry immutable type and feature snapshots; extension packages must not access protocol internals.</li>\n<li><strong>Extensions.Testing</strong> is an ADO.NET-level test utility that validates feature and runtime-codec contracts; production packages never depend on it.</li>\n</ul>\n<p>Dependencies should form a directed acyclic graph. A feature that would create a reverse reference needs a new abstraction in the lower-level package or an orchestration implementation in a higher-level package.</p>\n<p>An executable architecture conformance test reads each built assembly’s direct references and rejects reverse BlueTusk dependencies, EF references outside the EF packages, and <code>System.Data.Common</code> leakage below Data.</p>\n<p>Protocol’s operation state machine validates legal wire-state transitions with\natomic compare-and-swap updates and owns message framing. Client owns the\noperation-specific loops for queries, COPY,\nnotifications, and replication because those loops coordinate type decoding and\nsession behavior. Keeping that orchestration above Protocol avoids importing\nhigher-level operation semantics into the framing layer.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "ef-provider-boundary",
+          "text": "EF provider boundary",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Entity Framework Core consumes a deliberately narrow Data-layer contract:</p>\n<ul>\n<li>provider connection and data-source creation with explicit ownership;</li>\n<li>parameter store-type identity by stable built-in OID or schema-qualified runtime type name;</li>\n<li>immutable runtime catalogue/type snapshots and configured codecs owned by the data source;</li>\n<li>connection-scoped server-capability probing;</li>\n<li>dedicated unpooled administration connections, pool clearing and catalogue reload; and</li>\n<li>provider diagnostics without exposing unredacted lifecycle configuration publicly.</li>\n</ul>\n<p>These operations are defined by the assembly-internal Data SPI described in\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0017-internal-ef-data-provider-spi.md\">ADR 0017</a>. Concrete connection\nand data-source types are limited to EF’s public configuration overloads. An\nexecutable source architecture test rejects concrete casts and construction in\nthe EF implementation.</p>\n<p>EF must not reference Client, Protocol, Transport, or wire codecs directly. New EF features that need wire behavior extend the internal Data contract or a lower neutral abstraction first.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "ownership-and-buffers",
+          "text": "Ownership and buffers",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Protocol parsers return views over caller-owned buffers. The view is valid only until the caller advances or releases that buffer. Public ADO.NET values must either own their memory or have an explicitly documented reader lifetime.</p>\n<p>Wire lengths are validated before allocation. A configured upper bound is mandatory for any server-controlled length that can cause memory growth.</p>\n<p>Authentication messages use a sensitive protocol-write path that overwrites reusable framing\nstorage after the transport flushes it. Security-layer password derivations clear temporary\nwritable byte buffers; immutable caller-supplied .NET strings remain owned by the caller and\ncannot be zeroed by the provider.</p>\n<p>Credential callbacks and TLS client identity are immutable data-source configuration, not\nconnection-string state. Data sources propagate that configuration to pools, unpooled paths,\nnotification listeners, EF admin-database connections, and dedicated replication-option\nsnapshots. Credential resolution is lazy and belongs to Client authentication; password-file\nparsing, SCRAM/MD5 derivation, RFC 7628 OAUTHBEARER response construction, and the\noperating-system-backed GSSAPI/SSPI security context remain in Security, while Transport only\nreceives the final TLS certificate policy. Client owns the PostgreSQL code 7/8/9 negotiation\nsequence and clears each opaque GSS token after the sensitive write path flushes it.\nCloud identity packages configure those public callbacks and a TLS-before-token policy;\nthey do not add provider-specific branches to the authentication state machine.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "sync-and-async",
+          "text": "Sync and async",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Asynchronous APIs use actual asynchronous socket operations. Synchronous APIs will use dedicated synchronous paths; they will not call asynchronous methods and block on the result.</p>\n<p>PostgreSQL pipeline mode is a protocol scheduling feature with multiple extended-query operations between explicit synchronization boundaries. <code>System.IO.Pipelines</code> is a .NET buffering API. They are independent architecture decisions: BlueTusk implements PostgreSQL pipeline mode on its existing transport. Representative sync/async, fragmented-frame, large-field, COPY, cancellation, and TLS benchmarks did not justify a production transport rewrite, so the benchmark-only prototype remains isolated from this dependency graph. See <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md\">ADR 0005</a>.</p>\n"
       }
     ]
   },
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
-    "slug": "provider-overview",
-    "summary": "Use BlueTusk.Data for direct PostgreSQL commands, transactions, batches, COPY and notifications from .NET.",
-    "keywords": [
-      "ado.net",
-      "quickstart",
-      "connection"
-    ],
-    "order": 20,
-    "listed": true,
-    "title": "ADO.NET provider",
-    "sourcePath": "docs/ado-net/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/README.md",
+    "slug": "examples",
+    "title": "Explore complete examples",
+    "summary": "Follow runnable samples and complete application workflows.",
+    "order": 6,
     "headings": [
       {
-        "id": "ado-net-provider",
-        "text": "ADO.NET provider",
-        "level": 1
-      },
-      {
-        "id": "when-to-use-it",
-        "text": "When to use it",
+        "id": "start-with-a-single-feature",
+        "text": "Start with a single feature",
         "level": 2
       },
       {
-        "id": "packages",
-        "text": "Packages",
+        "id": "study-an-application-end-to-end",
+        "text": "Study an application end to end",
         "level": 2
       },
       {
-        "id": "status",
-        "text": "Status",
-        "level": 2
-      },
-      {
-        "id": "a-first-taste",
-        "text": "A first taste",
-        "level": 2
-      },
-      {
-        "id": "guides",
-        "text": "Guides",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "adapt-a-reference-app",
+        "text": "Adapt a reference app",
         "level": 2
       }
     ],
-    "wordCount": 652,
-    "readMinutes": 3,
-    "searchText": "ADO.NET provider Use `BlueTusk.Data` to run SQL against PostgreSQL from .NET with the standard ADO.NET types: connections, commands, parameters, data readers and transactions. It also gives you PostgreSQL features that generic ADO.NET does not have, such as COPY, `LISTEN`/`NOTIFY`, large objects and multi-host routing. BlueTusk speaks the PostgreSQL wire protocol directly. It does not wrap or depend on Npgsql. When to use it Use `BlueTusk.Data` when you want: hand-written SQL, Dapper, or provider-neutral `DbDataSource` code; control over transactions, batches and round trips; bulk import and export with COPY; PostgreSQL notifications, large objects or streaming of large values. Choose something else when: your app is mostly LINQ queries and change tracking: use the [EF Core provider](../ef-core/README.md), which is built on this one; you want to react to committed changes: use [Streams](../streams/README.md). Packages Package Install it when `BlueTusk.Data` Always. The ADO.NET provider. `BlueTusk.Data.DependencyInjection` You use `Microsoft.Extensions.DependencyInjection`. Adds `AddDataSource` and a health check. `BlueTusk.SourceGeneration` You map composite types and want reflection-free code, for example for [NativeAOT](nativeaot.md). `BlueTusk.Identity.Aws`, `.Azure`, `.GoogleCloud` You sign in with a cloud identity instead of a password. See [Cloud identity](cloud-identity.md). `BlueTusk.Extensions.*` You use PostGIS, pgvector, TimescaleDB and other [extensions](../extensions/README.md). See [Install BlueTusk](../getting-started/install.md) for release channels and version pinning. Status The provider is part of the Core release line. `1.0.0` is the current stable release and `1.1.0-rc.1` is the current release candidate; `1.1.0` is not released yet. It supports .NET 10 and PostgreSQL 15, 16, 17 and 18. PostgreSQL 19 is preview only. See [Compatibility](compatibility.md) for the ADO.NET features that are deliberately not supported. A first taste The data source ",
+    "sourcePath": "docs/getting-started/examples.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/examples.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>ADO.NET provider</h1>\n<p>Use <code>BlueTusk.Data</code> to run SQL against PostgreSQL from .NET with the standard\nADO.NET types: connections, commands, parameters, data readers and\ntransactions. It also gives you PostgreSQL features that generic ADO.NET does\nnot have, such as COPY, <code>LISTEN</code>/<code>NOTIFY</code>, large objects and multi-host\nrouting.</p>\n<p>BlueTusk speaks the PostgreSQL wire protocol directly. It does not wrap or\ndepend on Npgsql.</p>\n<h2>When to use it</h2>\n<p>Use <code>BlueTusk.Data</code> when you want:</p>\n<ul>\n<li>hand-written SQL, Dapper, or provider-neutral <code>DbDataSource</code> code;</li>\n<li>control over transactions, batches and round trips;</li>\n<li>bulk import and export with COPY;</li>\n<li>PostgreSQL notifications, large objects or streaming of large values.</li>\n</ul>\n<p>Choose something else when:</p>\n<ul>\n<li>your app is mostly LINQ queries and change tracking: use the\n<a href=\"/documentation/ef-core/overview\">EF Core provider</a>, which is built on this one;</li>\n<li>you want to react to committed changes: use <a href=\"/documentation/real-time/streams\">Streams</a>.</li>\n</ul>\n<h2>Packages</h2>\n<table>\n<thead>\n<tr>\n<th>Package</th>\n<th>Install it when</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTusk.Data</code></td>\n<td>Always. The ADO.NET provider.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Data.DependencyInjection</code></td>\n<td>You use <code>Microsoft.Extensions.DependencyInjection</code>. Adds <code>AddDataSource</code> and a health check.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.SourceGeneration</code></td>\n<td>You map composite types and want reflection-free code, for example for <a href=\"/documentation/provider/ado-net-nativeaot\">NativeAOT</a>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Identity.Aws</code>, <code>.Azure</code>, <code>.GoogleCloud</code></td>\n<td>You sign in with a cloud identity instead of a password. See <a href=\"/documentation/provider/cloud-identity\">Cloud identity</a>.</td>\n</tr>\n<tr>\n<td><code>BlueTusk.Extensions.*</code></td>\n<td>You use PostGIS, pgvector, TimescaleDB and other <a href=\"/documentation/extensions/catalog\">extensions</a>.</td>\n</tr>\n</tbody>\n</table>\n"
+        "html": "<p>Use the examples to see how package ownership, database migrations, worker\nlifetimes, and authorization fit into an application. Run them against\ndisposable databases and keep the example’s package versions aligned.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data\n",
-        "highlighted": "dotnet add package BlueTusk.Data\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> for release channels and\nversion pinning.</p>\n<h2>Status</h2>\n<p>The provider is part of the Core release line. <code>1.0.0</code> is the current stable\nrelease and <code>1.1.0-rc.1</code> is the current release candidate; <code>1.1.0</code> is not\nreleased yet. It supports .NET 10 and PostgreSQL 15, 16, 17 and 18.\nPostgreSQL 19 is preview only. See <a href=\"/documentation/provider/ado-net-compatibility\">Compatibility</a> for the\nADO.NET features that are deliberately not supported.</p>\n<h2>A first taste</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\n\n// One data source per connection string, kept for the life of the app.\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\n\nawait using var command = dataSource.CreateCommand(\n    \"SELECT title FROM todo_items WHERE id = @id\");\ncommand.Parameters.Add(new BlueTuskParameter<long>(1) { ParameterName = \"id\" });\n\nvar title = await command.ExecuteScalarAsync<string>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n\n<span class=\"hljs-comment\">// One data source per connection string, kept for the life of the app.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT title FROM todo_items WHERE id = @id&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">1</span>) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">var</span> title = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">string</span>&gt;();\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "start-with-a-single-feature",
+          "text": "Start with a single feature",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>The data source owns the connection pool and the type catalogue. Parameter\nvalues are sent separately from the SQL, never pasted into it. The\n<a href=\"/documentation/getting-started/quickstart\">5-minute first app</a> walks through this\nend to end.</p>\n<h2>Guides</h2>\n<table>\n<thead>\n<tr>\n<th>I want to</th>\n<th>Read</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Register the data source in an ASP.NET Core or worker app</td>\n<td><a href=\"/documentation/provider/dependency-injection\">Dependency injection and health checks</a></td>\n</tr>\n<tr>\n<td>Sign in with passwords, password files, Kerberos or client certificates</td>\n<td><a href=\"/documentation/provider/authentication\">Authentication</a></td>\n</tr>\n<tr>\n<td>Sign in with AWS, Azure or Google Cloud identity</td>\n<td><a href=\"/documentation/provider/cloud-identity\">Cloud identity</a></td>\n</tr>\n<tr>\n<td>Send several statements in one round trip</td>\n<td><a href=\"/documentation/provider/batches\">Batches</a></td>\n</tr>\n<tr>\n<td>Import or export many rows fast</td>\n<td><a href=\"/documentation/provider/copy\">COPY</a></td>\n</tr>\n<tr>\n<td>Read a large value without loading the whole row</td>\n<td><a href=\"/documentation/provider/sequential-readers\">Sequential readers</a></td>\n</tr>\n<tr>\n<td>Size and monitor the connection pool</td>\n<td><a href=\"/documentation/provider/pooling\">Connection pooling</a></td>\n</tr>\n<tr>\n<td>Share connections across many small commands</td>\n<td><a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">Multiplexing compatibility</a></td>\n</tr>\n<tr>\n<td>Connect to a primary and standbys</td>\n<td><a href=\"/documentation/provider/multi-host\">Multi-host connections</a></td>\n</tr>\n<tr>\n<td>Receive PostgreSQL notifications</td>\n<td><a href=\"/documentation/provider/notifications\">Notifications</a></td>\n</tr>\n<tr>\n<td>Store files as PostgreSQL large objects</td>\n<td><a href=\"/documentation/provider/large-objects\">Large objects</a></td>\n</tr>\n<tr>\n<td>Read database metadata at run time</td>\n<td><a href=\"/documentation/provider/schema-discovery\">Schema discovery</a></td>\n</tr>\n<tr>\n<td>Publish a trimmed or NativeAOT app</td>\n<td><a href=\"/documentation/provider/ado-net-nativeaot\">NativeAOT and trimming</a></td>\n</tr>\n<tr>\n<td>Reclaim table space on PostgreSQL 19</td>\n<td><a href=\"/documentation/provider/repack\">Native REPACK</a> (new in 1.1.0, preview)</td>\n</tr>\n<tr>\n<td>Check which ADO.NET features are supported, or move from Npgsql</td>\n<td><a href=\"/documentation/provider/ado-net-compatibility\">Compatibility</a></td>\n</tr>\n<tr>\n<td>Map PostgreSQL types to .NET types</td>\n<td><a href=\"/documentation/provider/types\">PostgreSQL types</a></td>\n</tr>\n<tr>\n<td>Trace and measure database calls</td>\n<td><a href=\"/documentation/operations/observability\">Diagnostics and observability</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Next steps</h2>\n<ol>\n<li><a href=\"/documentation/provider/quickstart\">Quick start</a>: build a small web API with a table, a\ntransaction and dependency injection.</li>\n<li><a href=\"/documentation/provider/concepts\">Concepts</a>: data sources, connections, commands, preparation,\ntransactions and pooling.</li>\n<li><a href=\"#guides\">Guides</a>: task pages for specific features.</li>\n<li><a href=\"/documentation/provider/configuration\">Configuration</a>: every connection-string keyword and\nbuilder option.</li>\n<li><a href=\"/documentation/provider/troubleshooting\">Troubleshooting</a>: common errors and their fixes.</li>\n</ol>\n"
+        "html": "<table>\n<thead>\n<tr>\n<th>Goal</th>\n<th>Example</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Open a connection and run a bounded query</td>\n<td><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/samples/BlueTusk.Samples.AdoNet/\">ADO.NET sample</a></td>\n</tr>\n<tr>\n<td>Consume a snapshot followed by committed transactions</td>\n<td><a href=\"/documentation/real-time/streams-sample\">Streams sample</a></td>\n</tr>\n<tr>\n<td>Query a graph with EF Core</td>\n<td><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/samples/BlueTusk.Samples.Graph/\">Property Graph sample</a></td>\n</tr>\n<tr>\n<td>Maintain a bounded graph result</td>\n<td><a href=\"/documentation/real-time/continuous-graph#run-a-working-example\">Fraud and network samples</a></td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "study-an-application-end-to-end",
+          "text": "Study an application end to end",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Application</th>\n<th>Follow the flow</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Order Fulfilment Operations</td>\n<td>Write an order in PostgreSQL, project committed changes, and update the operator’s browser.</td>\n</tr>\n<tr>\n<td>Service Topology Centre</td>\n<td>Register services and dependencies, query impact, and refresh authorized graph results after updates.</td>\n</tr>\n<tr>\n<td>Fraud Graph Investigator</td>\n<td>Query transfers and accounts, rank bounded results, and preserve case decisions and audit history.</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"https://github.com/jphgardner/BlueTusk/tree/main/applications/src/\">application source</a> separates domain, application,\ninfrastructure, API, and worker code. Start with each infrastructure project\nto see table definitions and query registrations. The worker owns change\nconsumption and checkpoints. The API and browser use authenticated transport\nendpoints. Restore the exact package versions declared by the example from a\nfeed that contains them.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "adapt-a-reference-app",
+          "text": "Adapt a reference app",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Provision a separate database and restricted roles. Configure the web host\nwith your own identity provider and secrets, apply the example’s migrations\nthrough a deployment role, and test as an ordinary tenant. Check a committed\nwrite, an authorized result, and a worker restart before adopting the pattern.\nSee the <a href=\"/documentation/operations/production-checklist\">production checklist</a>.</p>\n"
       }
     ]
   },
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
-    "listed": false,
-    "slug": "project-overview",
-    "summary": "PostgreSQL, fully exposed to .NET.",
-    "keywords": [
-      "README"
-    ],
-    "order": 1001,
-    "title": "BlueTusk",
-    "sourcePath": "README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/README.md",
+    "slug": "runtime-compatibility",
+    "title": ".NET, EF Core, and PostgreSQL compatibility",
+    "summary": "Match .NET 5–11, EF Core dependencies, and PostgreSQL features to your deployment.",
+    "order": 7,
     "headings": [
       {
-        "id": "bluetusk",
-        "text": "BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "choose-what-you-need",
-        "text": "Choose what you need",
+        "id": "use-the-matching-ef-core-runtime-and-tools",
+        "text": "Use the matching EF Core runtime and tools",
         "level": 2
       },
       {
-        "id": "install-and-run-a-query",
-        "text": "Install and run a query",
+        "id": "check-integration-prerequisites",
+        "text": "Check integration prerequisites",
         "level": 2
       },
       {
-        "id": "build-the-repository",
-        "text": "Build the repository",
-        "level": 2
-      },
-      {
-        "id": "architecture",
-        "text": "Architecture",
-        "level": 2
-      },
-      {
-        "id": "release-status-and-evidence",
-        "text": "Release status and evidence",
-        "level": 2
-      },
-      {
-        "id": "contributing-and-security",
-        "text": "Contributing and security",
+        "id": "match-the-postgresql-capabilities-you-use",
+        "text": "Match the PostgreSQL capabilities you use",
         "level": 2
       }
     ],
-    "wordCount": 547,
-    "readMinutes": 3,
-    "searchText": "BlueTusk **PostgreSQL, fully exposed to .NET.** [Website](https://bluetusk.io/) · [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) · [Documentation](https://bluetusk.io/documentation) · [GitHub](https://github.com/jphgardner/BlueTusk) BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET provider, EF Core integration, replication, real-time delivery, extension packages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency. Choose what you need Need Start with Add when required Connect a .NET application [`BlueTusk.Data`](docs/ado-net/README.md) Pooling, authentication, COPY, notifications, or replication Use EF Core [`BlueTusk.EntityFrameworkCore`](docs/ef-core/README.md) PostgreSQL-native mappings, migrations, and scaffolding Consume committed changes [Streams](docs/streams/README.md) Snapshot bootstrap, replay, and durable relay Update other systems [Sync](docs/sync/README.md) Redis, NATS, OpenSearch, Kafka, webhooks, or object storage Push authorized live data [Live](docs/live/README.md) ASP.NET transports and browser clients Work with specialized PostgreSQL features [Extensions](docs/extensions/README.md) PostGIS, pgvector, TimescaleDB, and other focused packages Query connected data [Graph](docs/graph/README.md) SQL/PGQ and Continuous Graph The [documentation index](docs/README.md) organizes the complete guide set by task and audience. Install and run a query BlueTusk `1.0.0` is the current stable line. `1.1.0-rc.1` is available for prerelease evaluation. Use one exact BlueTusk version throughout an application; see the [support matrix](VERSIONING.md) before choosing a line. Create one long-lived data source for each distinct configuration. It owns the connection pool, PostgreSQL type catalogue, and runtime codecs. Replication uses dedicated unpooled sessions derived from the same configuration. For a runnable local setup, follow the [quickstart](docs/getting-started/quickstart.md). For package sele",
+    "sourcePath": "docs/getting-started/runtime-compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/runtime-compatibility.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk</h1>\n<p><strong>PostgreSQL, fully exposed to .NET.</strong></p>\n<p><a href=\"https://bluetusk.io/\" target=\"_blank\" rel=\"noreferrer\">Website</a> ·\n<a href=\"https://bluetusk.io/documentation/getting-started/quickstart\" target=\"_blank\" rel=\"noreferrer\">Quickstart</a> ·\n<a href=\"https://bluetusk.io/documentation\" target=\"_blank\" rel=\"noreferrer\">Documentation</a> ·\n<a href=\"https://github.com/jphgardner/BlueTusk\" target=\"_blank\" rel=\"noreferrer\">GitHub</a></p>\n<p>BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET\nprovider, EF Core integration, replication, real-time delivery, extension\npackages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency.</p>\n<h2>Choose what you need</h2>\n<table>\n<thead>\n<tr>\n<th>Need</th>\n<th>Start with</th>\n<th>Add when required</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Connect a .NET application</td>\n<td><a href=\"/documentation/getting-started/provider-overview\"><code>BlueTusk.Data</code></a></td>\n<td>Pooling, authentication, COPY, notifications, or replication</td>\n</tr>\n<tr>\n<td>Use EF Core</td>\n<td><a href=\"/documentation/ef-core/overview\"><code>BlueTusk.EntityFrameworkCore</code></a></td>\n<td>PostgreSQL-native mappings, migrations, and scaffolding</td>\n</tr>\n<tr>\n<td>Consume committed changes</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td>Snapshot bootstrap, replay, and durable relay</td>\n</tr>\n<tr>\n<td>Update other systems</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td>Redis, NATS, OpenSearch, Kafka, webhooks, or object storage</td>\n</tr>\n<tr>\n<td>Push authorized live data</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td>ASP.NET transports and browser clients</td>\n</tr>\n<tr>\n<td>Work with specialized PostgreSQL features</td>\n<td><a href=\"/documentation/extensions/catalog\">Extensions</a></td>\n<td>PostGIS, pgvector, TimescaleDB, and other focused packages</td>\n</tr>\n<tr>\n<td>Query connected data</td>\n<td><a href=\"/documentation/graph/sql-pgq\">Graph</a></td>\n<td>SQL/PGQ and Continuous Graph</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/getting-started/handbook\">documentation index</a> organizes the complete guide set by\ntask and audience.</p>\n<h2>Install and run a query</h2>\n<p>BlueTusk <code>1.0.0</code> is the current stable line. <code>1.1.0-rc.1</code> is available for\nprerelease evaluation. Use one exact BlueTusk version throughout an\napplication; see the <a href=\"/documentation/operations/versioning\">support matrix</a> before choosing a line.</p>\n"
+        "html": "<p>BlueTusk 1.2 runtime libraries target .NET 5 through .NET 11. Choose the\npackage assets that match your application’s target framework. Use the\n<a href=\"/packages\">package catalog</a> to install a matching release.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data --version 1.1.0-rc.1\n",
-        "highlighted": "dotnet add package BlueTusk.Data <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.1</span>.<span class=\"hljs-number\">0</span><span class=\"hljs-literal\">-rc</span>.<span class=\"hljs-number\">1</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "code",
-        "code": "await using var dataSource =\n    new BlueTuskDataSourceBuilder(connectionString).Build();\n\nawait using var command = dataSource.CreateCommand(\n    \"SELECT $1::int4 + $2::int4\");\n\ncommand.Parameters.Add(new BlueTuskParameter<int>(20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(22));\n\nvar answer = await command.ExecuteScalarAsync<int>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource =\n    <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT $1::int4 + $2::int4&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "use-the-matching-ef-core-runtime-and-tools",
+          "text": "Use the matching EF Core runtime and tools",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>Create one long-lived data source for each distinct configuration. It owns the\nconnection pool, PostgreSQL type catalogue, and runtime codecs. Replication\nuses dedicated unpooled sessions derived from the same configuration.</p>\n<p>For a runnable local setup, follow the\n<a href=\"/documentation/getting-started/quickstart\">quickstart</a>. For package selection and\nstable-versus-RC guidance, use the\n<a href=\"/documentation/getting-started/install\">installation guide</a>.</p>\n<h2>Build the repository</h2>\n<p>Prerequisites:</p>\n<ul>\n<li>.NET SDK 10.0.111 or a compatible later feature band</li>\n<li>Docker for PostgreSQL integration tests</li>\n</ul>\n"
+        "html": "<table>\n<thead>\n<tr>\n<th>Application target</th>\n<th>EF Core version used by the provider</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>.NET 5</td>\n<td>5.0.17</td>\n</tr>\n<tr>\n<td>.NET 6 and .NET 7</td>\n<td>7.0.20</td>\n</tr>\n<tr>\n<td>.NET 8</td>\n<td>8.0.34</td>\n</tr>\n<tr>\n<td>.NET 9</td>\n<td>9.0.23</td>\n</tr>\n<tr>\n<td>.NET 10</td>\n<td>10.0.11</td>\n</tr>\n<tr>\n<td>.NET 11</td>\n<td>11.0.0</td>\n</tr>\n</tbody>\n</table>\n<p>Use the same EF Core major for design-time packages and the <code>dotnet-ef</code> tool.\nAPIs introduced in later EF Core versions, such as <code>ComplexProperty</code> in\nEF Core 8, require that EF Core version or later. See the\n<a href=\"/documentation/ef-core/overview\">EF Core setup guide</a> for provider registration.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "dotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx --no-restore\ndotnet test BlueTusk.slnx --no-build\n",
-        "highlighted": "dotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx <span class=\"hljs-literal\">--no-restore</span>\ndotnet test BlueTusk.slnx <span class=\"hljs-literal\">--no-build</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Integration tests are opt-in:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml up -d postgres18\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests\"\ndotnet test tests/BlueTusk.IntegrationTests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml up <span class=\"hljs-literal\">-d</span> postgres18\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests&quot;</span>\ndotnet test tests/BlueTusk.IntegrationTests\n",
-        "language": "powershell"
+        "kind": "heading",
+        "heading": {
+          "id": "check-integration-prerequisites",
+          "text": "Check integration prerequisites",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>Extension-specific databases and test commands are documented in\n<a href=\"/documentation/operations/testing\">Testing</a>. The\n<a href=\"/documentation/operations/repository-layout\">repository layout</a> explains solution\ngroups, project-registration rules, and generated output.</p>\n<h2>Architecture</h2>\n<p>Dependencies flow toward the protocol and transport layers:</p>\n"
+        "html": "<ul>\n<li>Streams, Sync, and Live Aspire integrations require .NET 8 or later.</li>\n<li>On .NET 5 and 6, use <code>BlueTuskDataSource</code> where the framework does not provide\n<code>DbDataSource</code>. BlueTusk supplies compatible batch base types on .NET 5.</li>\n<li>Use a runtime within <a href=\"https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core\">Microsoft’s support policy</a>\nfor deployments that require runtime security updates.</li>\n<li>The production starter uses .NET 10. Use the SDK appropriate to your own\napplication target and deployment environment.</li>\n</ul>\n"
       },
       {
-        "kind": "code",
-        "code": "EntityFrameworkCore → Data → Client → Protocol → Transport\n                              ↓          ↓\n                          TypeSystem   Security\n\nReplication.PgOutput → Replication → Client\n",
-        "highlighted": "EntityFrameworkCore → Data → Client → Protocol → Transport\n                              ↓          ↓\n                          TypeSystem   Security\n\nReplication.PgOutput → Replication → Client\n",
-        "language": "text"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The real-time products build on committed PostgreSQL changes:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
-        "highlighted": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
-        "language": "text"
+        "kind": "heading",
+        "heading": {
+          "id": "match-the-postgresql-capabilities-you-use",
+          "text": "Match the PostgreSQL capabilities you use",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>Read the <a href=\"/documentation/getting-started/architecture\">architecture overview</a> for ownership\nand dependency rules, or the\n<a href=\"/documentation/real-time/contracts\">real-time contracts</a> for delivery,\ncheckpoint, and recovery semantics.</p>\n<h2>Release status and evidence</h2>\n<p>The published <code>1.1.0-rc.1</code> train contains 62 NuGet packages and three npm\npackages from one immutable commit. Stable <code>1.1.0</code> remains gated on the exact\ncandidate’s long-running, security, performance, PostgreSQL 19, and external\nacceptance evidence.</p>\n<ul>\n<li><a href=\"/documentation/operations/versioning\">Compatibility and versioning</a></li>\n<li><a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1 release record</a></li>\n<li><a href=\"https://bluetusk.io/evidence\" target=\"_blank\" rel=\"noreferrer\">Engineering evidence</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n</ul>\n<p>Package availability, a successful local build, and stable production approval\nare separate claims. BlueTusk records them separately.</p>\n<h2>Contributing and security</h2>\n<p>Read <a href=\"/documentation/operations/contributing\">CONTRIBUTING.md</a> before opening a change. Report\nsecurity issues using the private process in <a href=\"/documentation/operations/report-security\">SECURITY.md</a>; do not\nopen a public issue for a suspected vulnerability.</p>\n<p>BlueTusk is licensed under the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/LICENSE\" target=\"_blank\" rel=\"noreferrer\">MIT License</a>.</p>\n"
+        "html": "<p>For PostgreSQL 15–18, typed <code>Match</code> queries run over mapped relational tables.\nThe optional <a href=\"/documentation/graph/engine\">BlueTusk server engine</a> executes supported\nbounded traversals when the installed extension and registration match.\nUse <a href=\"/documentation/graph/graph-reference\">the Graph reference</a> for the separate SQL/PGQ\ncompatibility option.</p>\n<p>Logical replication requires the appropriate PostgreSQL configuration, a\npublication, and a slot. Additional database features depend on the specific\n<a href=\"/documentation/extensions/reference\">server extension and version</a> you install.</p>\n<p>See <a href=\"/documentation/getting-started/install\">install packages</a> and <a href=\"/documentation/getting-started/quickstart\">set up database access</a>\nto start an application.</p>\n"
       }
     ]
   }

@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
-using BlueTusk.Data.Internal;
+using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -9,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Graphs;
 
-internal static class BlueTuskGraphSqlTranslator
+internal static partial class BlueTuskGraphSqlTranslator
 {
     public static GraphTranslation Translate(
         DbContext context,
@@ -18,14 +20,11 @@ internal static class BlueTuskGraphSqlTranslator
         IReadOnlyList<BlueTuskGraphProjection> projections,
         Type resultType)
     {
-        var providerConnection = context
-            .GetService<IProviderServices>()
-            .GetConnection(context.Database.GetDbConnection());
-        if (providerConnection.Capabilities?.SupportsSqlPgq is false)
+        var backend = BlueTuskOptionsExtension.GetGraphBackend(context.GetService<IDbContextOptions>());
+        if (graph.Backend != backend)
         {
             throw new BlueTuskGraphTranslationException(
-                "Typed property-graph queries require PostgreSQL 19 or later; " +
-                "the current open connection does not support SQL/PGQ.");
+                "The EF model's graph backend does not match its configured graph compatibility.");
         }
 
         if (projections.Count == 0)
@@ -35,11 +34,39 @@ internal static class BlueTuskGraphSqlTranslator
         }
 
         var helper = context.GetService<ISqlGenerationHelper>();
-        var resolved = pattern.Select(step => ResolveStep(context.Model, graph, step)).ToArray();
+        var model = context.Model;
+        if (backend == BlueTuskPropertyGraphBackend.Relational &&
+            helper is BlueTuskSqlGenerationHelper &&
+            TryBindTranslationKey(graph, pattern, projections, resultType, out var key, out var value))
+        {
+            var cache = PortableTranslations.GetValue(model, static _ => new());
+            if (cache.TryGet(key, out var template))
+            {
+                return new GraphTranslation(template.Sql, [value], template.ImpactPlan);
+            }
+
+            var translated = Translate(model, graph, pattern, projections, resultType, helper);
+            cache.Add(key, translated);
+            return translated;
+        }
+
+        return Translate(model, graph, pattern, projections, resultType, helper);
+    }
+
+    private static GraphTranslation Translate(
+        IModel model,
+        BlueTuskPropertyGraphDefinition graph,
+        IReadOnlyList<object> pattern,
+        IReadOnlyList<BlueTuskGraphProjection> projections,
+        Type resultType,
+        ISqlGenerationHelper helper)
+    {
+        var backend = graph.Backend;
+        var resolved = pattern.Select(step => ResolveStep(model, graph, step)).ToArray();
         ValidatePath(resolved, projections);
         var expandedPatterns = ExpandPatterns(resolved);
         var variables = resolved.ToDictionary(step => step.Variable, StringComparer.Ordinal);
-        var resultEntityType = context.Model.FindEntityType(resultType);
+        var resultEntityType = model.FindEntityType(resultType);
         ValidateEntityProjection(resultEntityType, projections);
         var columns = new List<GraphColumn>();
         var impactProjections = new BlueTuskGraphQueryImpactProjection[projections.Count];
@@ -63,6 +90,7 @@ internal static class BlueTuskGraphSqlTranslator
             columns.Add(new GraphColumn(
                 variable.Variable,
                 property.Name,
+                property.IsColumn ? property.Expression : null,
                 ResolveOutputName(resultEntityType, projection.ResultProperty),
                 IsHidden: false));
             impactProjections[projectionIndex++] = new BlueTuskGraphQueryImpactProjection(
@@ -75,6 +103,9 @@ internal static class BlueTuskGraphSqlTranslator
 
         var parameters = new List<object>();
         var predicates = new List<string>();
+        var portableAliases = backend == BlueTuskPropertyGraphBackend.Relational
+            ? CreatePortableAliases(resolved)
+            : null;
         foreach (var variable in resolved.OfType<ResolvedVertex>().Where(vertex => vertex.Predicate is not null))
         {
             predicates.Add(TranslatePredicate(
@@ -82,19 +113,36 @@ internal static class BlueTuskGraphSqlTranslator
                 variable.Predicate!.Body,
                 helper,
                 columns,
-                parameters));
+                parameters,
+                portableAliases?[variable.Variable]));
         }
 
         var sql = new StringBuilder();
+        var defaultSchema = model.GetDefaultSchema() ?? "public";
+        // With a single terminal key projection, equal sort keys produce
+        // identical result rows. Keeping the first N rows of each branch
+        // therefore preserves the first N rows and their multiplicities.
+        var orderableBranches = portableAliases is not null &&
+            expandedPatterns.Count > 1 && resultEntityType is null &&
+            columns is [var output] && output.Variable == resolved[^1].Variable &&
+            resolved[^1].Element.KeyColumns is [var terminalKey] && output.ColumnName == terminalKey
+            ? new string[expandedPatterns.Count]
+            : null;
+        void AppendBranch(IReadOnlyList<ResolvedStep> steps)
+        {
+            if (portableAliases is not null)
+            {
+                AppendRelationalQuery(sql, steps, columns, predicates, portableAliases, defaultSchema, helper);
+            }
+            else
+            {
+                AppendGraphTableQuery(sql, graph, steps, columns, predicates, helper);
+            }
+        }
+
         if (expandedPatterns.Count == 1)
         {
-            AppendGraphTableQuery(
-                sql,
-                graph,
-                expandedPatterns[0],
-                columns,
-                predicates,
-                helper);
+            AppendBranch(expandedPatterns[0]);
         }
         else
         {
@@ -102,7 +150,7 @@ internal static class BlueTuskGraphSqlTranslator
             AppendDelimited(
                 sql,
                 columns.Where(column => !column.IsHidden)
-                    .Select(column => helper.DelimitIdentifier(column.OutputName)));
+                    .Select(column => DelimitSqlIdentifier(helper, column.OutputName)));
             sql.Append(" FROM (");
             for (var index = 0; index < expandedPatterns.Count; index++)
             {
@@ -111,17 +159,16 @@ internal static class BlueTuskGraphSqlTranslator
                     sql.Append(" UNION ALL ");
                 }
 
-                AppendGraphTableQuery(
-                    sql,
-                    graph,
-                    expandedPatterns[index],
-                    columns,
-                    predicates,
-                    helper);
+                var start = sql.Length;
+                AppendBranch(expandedPatterns[index]);
+                if (orderableBranches is not null)
+                {
+                    orderableBranches[index] = sql.ToString(start, sql.Length - start);
+                }
             }
 
             sql.Append(") AS ")
-                .Append(helper.DelimitIdentifier("__bluetusk_bounded_paths"));
+                .Append(DelimitSqlIdentifier(helper, "__bluetusk_bounded_paths"));
         }
 
         var impactElements = new BlueTuskGraphQueryImpactElement[resolved.Length];
@@ -153,7 +200,7 @@ internal static class BlueTuskGraphSqlTranslator
                 step.Element.Alias,
                 step.Element.Kind,
                 step.Element.Table,
-                step.Element.Schema,
+                step.Element.Schema ?? defaultSchema,
                 step.Element.KeyColumns,
                 step.Element.Source,
                 step.Element.Destination,
@@ -168,9 +215,11 @@ internal static class BlueTuskGraphSqlTranslator
         var impactPlan = new BlueTuskGraphQueryImpactPlan(
             graph.Name,
             graph.Schema,
+            backend,
             Array.AsReadOnly(impactElements),
             Array.AsReadOnly(impactProjections));
-        return new GraphTranslation(sql.ToString(), parameters.ToArray(), impactPlan);
+        return new GraphTranslation(sql.ToString(), parameters.ToArray(), impactPlan,
+            orderableBranches is null ? null : new BlueTuskGraphOrderedBranches(columns[0].OutputName, orderableBranches));
     }
 
     private static ResolvedStep ResolveStep(
@@ -307,9 +356,6 @@ internal static class BlueTuskGraphSqlTranslator
         }
     }
 
-    private static string ResolveGraphProperty(ResolvedStep variable, string efPropertyName)
-        => ResolveGraphPropertyDefinition(variable, efPropertyName).Name;
-
     private static BlueTuskGraphPropertyDefinition ResolveGraphPropertyDefinition(
         ResolvedStep variable,
         string efPropertyName)
@@ -422,13 +468,14 @@ internal static class BlueTuskGraphSqlTranslator
         Expression expression,
         ISqlGenerationHelper helper,
         List<GraphColumn> columns,
-        List<object> parameters)
+        List<object> parameters,
+        string? portableAlias)
     {
         if (expression is BinaryExpression { NodeType: ExpressionType.AndAlso or ExpressionType.OrElse } logical)
         {
             var logicalOperator = logical.NodeType == ExpressionType.AndAlso ? "AND" : "OR";
-            return $"({TranslatePredicate(variable, logical.Left, helper, columns, parameters)} " +
-                $"{logicalOperator} {TranslatePredicate(variable, logical.Right, helper, columns, parameters)})";
+            return $"({TranslatePredicate(variable, logical.Left, helper, columns, parameters, portableAlias)} " +
+                $"{logicalOperator} {TranslatePredicate(variable, logical.Right, helper, columns, parameters, portableAlias)})";
         }
 
         if (expression is not BinaryExpression comparison ||
@@ -452,30 +499,14 @@ internal static class BlueTuskGraphSqlTranslator
 
         var valueExpression = memberOnLeft ? comparison.Right : comparison.Left;
         propertyName = memberOnLeft ? propertyName : rightPropertyName;
-        var graphProperty = ResolveGraphProperty(variable, propertyName!);
-        var hidden = columns.FirstOrDefault(column =>
-            column.IsHidden && column.Variable == variable.Variable && column.Property == graphProperty);
-        if (hidden is null)
-        {
-            var hiddenIndex = columns.Count(column => column.IsHidden);
-            string hiddenName;
-            do
-            {
-                hiddenName = $"__bluetusk_filter_{hiddenIndex++}";
-            }
-            while (columns.Any(column =>
-                string.Equals(column.OutputName, hiddenName, StringComparison.Ordinal)));
-
-            hidden = new GraphColumn(
-                variable.Variable,
-                graphProperty,
-                hiddenName,
-                IsHidden: true);
-            columns.Add(hidden);
-        }
+        var graphProperty = ResolveGraphPropertyDefinition(variable, propertyName!);
+        var columnSql = portableAlias is null
+            ? DelimitSqlIdentifier(helper, GetNativePredicateColumn(variable.Variable, graphProperty, columns))
+            : $"{portableAlias}.{DelimitSqlIdentifier(helper, graphProperty.IsColumn ? graphProperty.Expression :
+                throw new BlueTuskGraphTranslationException(
+                    $"Portable graph property '{graphProperty.Name}' must map to a table column."))}";
 
         var value = Evaluate(valueExpression);
-        var columnSql = helper.DelimitIdentifier(hidden.OutputName);
         if (value is null)
         {
             return comparison.NodeType switch
@@ -491,6 +522,28 @@ internal static class BlueTuskGraphSqlTranslator
         parameters.Add(value);
         var sqlOperator = GetSqlOperator(comparison.NodeType, reverse: !memberOnLeft);
         return $"{columnSql} {sqlOperator} {{{parameterIndex}}}";
+    }
+
+    private static string GetNativePredicateColumn(
+        string variable, BlueTuskGraphPropertyDefinition property, List<GraphColumn> columns)
+    {
+        var hidden = columns.FirstOrDefault(column =>
+            column.IsHidden && column.Variable == variable && column.Property == property.Name);
+        if (hidden is not null)
+        {
+            return hidden.OutputName;
+        }
+
+        var hiddenIndex = columns.Count(column => column.IsHidden);
+        string hiddenName;
+        do
+        {
+            hiddenName = $"__bluetusk_filter_{hiddenIndex++}";
+        }
+        while (columns.Any(column => string.Equals(column.OutputName, hiddenName, StringComparison.Ordinal)));
+
+        columns.Add(new GraphColumn(variable, property.Name, null, hiddenName, IsHidden: true));
+        return hiddenName;
     }
 
     private static bool TryGetParameterMember(Expression expression, out string? propertyName)
@@ -514,8 +567,18 @@ internal static class BlueTuskGraphSqlTranslator
     {
         try
         {
+            if (expression is ConstantExpression constant)
+            {
+                return constant.Value;
+            }
+
+            if (expression is MemberExpression { Member: FieldInfo field, Expression: ConstantExpression closure })
+            {
+                return field.GetValue(closure.Value);
+            }
+
             return Expression.Lambda<Func<object?>>(
-                Expression.Convert(expression, typeof(object))).Compile().Invoke();
+                Expression.Convert(expression, typeof(object))).Compile(preferInterpretation: true).Invoke();
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -545,14 +608,29 @@ internal static class BlueTuskGraphSqlTranslator
             return [steps];
         }
 
-        var variantCount = steps.OfType<ResolvedEdge>()
-            .Aggregate(
-                1,
-                (count, edge) => checked(count * (edge.MaximumHops - edge.MinimumHops + 1)));
-        if (variantCount > 64)
+        var variantCount = 1;
+        foreach (var edge in steps.OfType<ResolvedEdge>())
         {
-            throw new BlueTuskGraphTranslationException(
-                "Bounded path expansion would generate more than 64 GRAPH_TABLE branches.");
+            variantCount *= edge.MaximumHops - edge.MinimumHops + 1;
+            if (variantCount > 64)
+            {
+                throw new BlueTuskGraphTranslationException(
+                    "Bounded path expansion would generate more than 64 query branches.");
+            }
+        }
+
+        var usedVariables = steps.Select(step => step.Variable).ToHashSet(StringComparer.Ordinal);
+        var nextVariable = 0;
+        string AllocateVariable()
+        {
+            string candidate;
+            do
+            {
+                candidate = $"__bluetusk_walk_{nextVariable++}";
+            }
+            while (!usedVariables.Add(candidate));
+
+            return candidate;
         }
 
         List<IReadOnlyList<ResolvedStep>> variants = [[steps[0]]];
@@ -570,12 +648,12 @@ internal static class BlueTuskGraphSqlTranslator
                     {
                         expanded.Add(hops == 1
                             ? edge
-                            : edge with { Variable = $"__bluetusk_{edge.Variable}_edge_{hop}" });
+                            : edge with { Variable = AllocateVariable() });
                         expanded.Add(hop == hops
                             ? destination
                             : destination with
                             {
-                                Variable = $"__bluetusk_{edge.Variable}_vertex_{hop}",
+                                Variable = AllocateVariable(),
                                 Predicate = null,
                             });
                     }
@@ -602,17 +680,17 @@ internal static class BlueTuskGraphSqlTranslator
         AppendDelimited(
             sql,
             columns.Where(column => !column.IsHidden)
-                .Select(column => helper.DelimitIdentifier(column.OutputName)));
+                .Select(column => DelimitSqlIdentifier(helper, column.OutputName)));
         sql.Append(" FROM GRAPH_TABLE (")
-            .Append(helper.DelimitIdentifier(graph.Name, graph.Schema))
+            .Append(DelimitSqlIdentifier(helper, graph.Name, graph.Schema))
             .Append(" MATCH ");
         AppendPattern(sql, pattern, helper);
         sql.Append(" COLUMNS (");
         AppendDelimited(
             sql,
             columns.Select(column =>
-                $"{helper.DelimitIdentifier(column.Variable)}.{helper.DelimitIdentifier(column.Property)} " +
-                $"AS {helper.DelimitIdentifier(column.OutputName)}"));
+                $"{DelimitSqlIdentifier(helper, column.Variable)}.{DelimitSqlIdentifier(helper, column.Property)} " +
+                $"AS {DelimitSqlIdentifier(helper, column.OutputName)}"));
         sql.Append("))");
         if (predicates.Count > 0)
         {
@@ -631,28 +709,28 @@ internal static class BlueTuskGraphSqlTranslator
             {
                 case ResolvedVertex vertex:
                     sql.Append('(')
-                        .Append(helper.DelimitIdentifier(vertex.Variable))
+                        .Append(DelimitSqlIdentifier(helper, vertex.Variable))
                         .Append(" IS ");
                     AppendLabelExpression(sql, vertex.Labels, helper);
                     sql.Append(')');
                     break;
                 case ResolvedEdge { Direction: BlueTuskGraphEdgeDirection.Outgoing } edge:
                     sql.Append("-[")
-                        .Append(helper.DelimitIdentifier(edge.Variable))
+                        .Append(DelimitSqlIdentifier(helper, edge.Variable))
                         .Append(" IS ");
                     AppendLabelExpression(sql, edge.Labels, helper);
                     sql.Append("]->");
                     break;
                 case ResolvedEdge { Direction: BlueTuskGraphEdgeDirection.Incoming } edge:
                     sql.Append("<-[")
-                        .Append(helper.DelimitIdentifier(edge.Variable))
+                        .Append(DelimitSqlIdentifier(helper, edge.Variable))
                         .Append(" IS ");
                     AppendLabelExpression(sql, edge.Labels, helper);
                     sql.Append("]-");
                     break;
                 case ResolvedEdge edge:
                     sql.Append("-[")
-                        .Append(helper.DelimitIdentifier(edge.Variable))
+                        .Append(DelimitSqlIdentifier(helper, edge.Variable))
                         .Append(" IS ");
                     AppendLabelExpression(sql, edge.Labels, helper);
                     sql.Append("]-");
@@ -673,7 +751,7 @@ internal static class BlueTuskGraphSqlTranslator
                 sql.Append('|');
             }
 
-            sql.Append(helper.DelimitIdentifier(labels[index]));
+            sql.Append(DelimitSqlIdentifier(helper, labels[index]));
         }
     }
 
@@ -695,7 +773,8 @@ internal static class BlueTuskGraphSqlTranslator
     internal sealed record GraphTranslation(
         string Sql,
         object[] Parameters,
-        BlueTuskGraphQueryImpactPlan ImpactPlan);
+        BlueTuskGraphQueryImpactPlan ImpactPlan,
+        BlueTuskGraphOrderedBranches? OrderedBranches = null);
 
     private abstract record ResolvedStep(
         string Variable,
@@ -724,6 +803,7 @@ internal static class BlueTuskGraphSqlTranslator
     private sealed record GraphColumn(
         string Variable,
         string Property,
+        string? ColumnName,
         string OutputName,
         bool IsHidden);
 }
@@ -731,6 +811,7 @@ internal static class BlueTuskGraphSqlTranslator
 internal sealed record BlueTuskGraphQueryImpactPlan(
     string GraphName,
     string? GraphSchema,
+    BlueTuskPropertyGraphBackend Backend,
     IReadOnlyList<BlueTuskGraphQueryImpactElement> Elements,
     IReadOnlyList<BlueTuskGraphQueryImpactProjection> Projections);
 

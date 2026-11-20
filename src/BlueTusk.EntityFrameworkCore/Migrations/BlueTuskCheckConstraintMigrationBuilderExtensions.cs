@@ -19,10 +19,10 @@ public static class BlueTuskCheckConstraintMigrationBuilderExtensions
         bool noInherit = false,
         bool notEnforced = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
         var operation = new AddCheckConstraintOperation
         {
             Name = name,
@@ -56,9 +56,9 @@ public static class BlueTuskCheckConstraintMigrationBuilderExtensions
         string table,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         var operation = new ValidateCheckConstraintOperation
         {
             Name = name,

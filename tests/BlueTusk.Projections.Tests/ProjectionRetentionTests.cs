@@ -4,7 +4,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionRetentionTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task RetiredUnpublishedVersionIsPermanentlyFencedAndPrunedInBoundedBatchesWithoutDeletingIdentity()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -40,7 +40,7 @@ public sealed class ProjectionRetentionTests
         Assert.Equal(1L, Convert.ToInt64(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task PublicationRevisionMigrationFromSchemaOneIsIdempotent()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -57,7 +57,7 @@ public sealed class ProjectionRetentionTests
         Assert.Equal(new ProjectionPublication(1, 1), await db.Store.ReadPublicationAsync("orders"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task ThrowingMetricsCallbacksCannotChangeCommittedProjectionOrRevision()
     {
         using var listener = new System.Diagnostics.Metrics.MeterListener

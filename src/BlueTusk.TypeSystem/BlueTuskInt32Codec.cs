@@ -17,7 +17,7 @@ public sealed class BlueTuskInt32Codec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format switch
         {
             BlueTuskDataFormat.Binary when reader.Remaining == sizeof(int) => reader.ReadInt32BigEndian(),
@@ -37,7 +37,7 @@ public sealed class BlueTuskInt32Codec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         switch (format)
         {
             case BlueTuskDataFormat.Binary:

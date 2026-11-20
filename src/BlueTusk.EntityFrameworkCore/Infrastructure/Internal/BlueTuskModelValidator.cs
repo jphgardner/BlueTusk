@@ -1,7 +1,16 @@
+#if BLUETUSK_EF10_OR_GREATER
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+#if BLUETUSK_EF11_OR_GREATER
+using ComplexPropertyMetadata = Microsoft.EntityFrameworkCore.Metadata.IComplexProperty;
+using StructuralTypeMetadata = Microsoft.EntityFrameworkCore.Metadata.ITypeBase;
+#else
+using ComplexPropertyMetadata = Microsoft.EntityFrameworkCore.Metadata.IConventionComplexProperty;
+using StructuralTypeMetadata = Microsoft.EntityFrameworkCore.Metadata.IConventionTypeBase;
+#endif
+#endif
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 
@@ -10,12 +19,13 @@ internal sealed class BlueTuskModelValidator(
     RelationalModelValidatorDependencies relationalDependencies)
     : RelationalModelValidator(dependencies, relationalDependencies)
 {
+#if BLUETUSK_EF10_OR_GREATER
     // EF Core 10 rejects non-discriminator shadow properties on reference complex types (dotnet/efcore#35613) as the
     // last check of ModelValidator.ValidatePropertyMapping. BlueTusk supports them end to end, so only that exact
     // rejection is accepted here; every earlier core check has already passed when it is thrown. The relational
     // checks that RelationalModelValidator runs after the core method are then reproduced from EF Core 10.0.11.
     protected override void ValidatePropertyMapping(
-        IConventionComplexProperty complexProperty,
+        ComplexPropertyMetadata complexProperty,
         IDiagnosticsLogger<DbLoggerCategory.Model.Validation> logger)
     {
         try
@@ -44,7 +54,7 @@ internal sealed class BlueTuskModelValidator(
     }
 
     private static bool IsValueTypeComplexCollection(
-        IConventionComplexProperty complexProperty,
+        ComplexPropertyMetadata complexProperty,
         InvalidOperationException exception)
         => complexProperty.IsCollection
             && complexProperty.ComplexType.ClrType.IsValueType
@@ -52,7 +62,7 @@ internal sealed class BlueTuskModelValidator(
                 complexProperty.DeclaringType.DisplayName(), complexProperty.Name);
 
     private static bool IsSupportedComplexTypeShadowProperty(
-        IConventionComplexProperty complexProperty,
+        ComplexPropertyMetadata complexProperty,
         InvalidOperationException exception)
     {
         var complexType = complexProperty.ComplexType;
@@ -67,7 +77,7 @@ internal sealed class BlueTuskModelValidator(
             && exception.Message == CoreStrings.ComplexTypeShadowProperty(complexType.DisplayName(), shadowProperty.Name);
     }
 
-    private static void ValidateRelationalComplexPropertyMapping(IConventionComplexProperty complexProperty)
+    private static void ValidateRelationalComplexPropertyMapping(ComplexPropertyMetadata complexProperty)
     {
         if (complexProperty.IsCollection && !complexProperty.ComplexType.IsMappedToJson())
         {
@@ -119,7 +129,7 @@ internal sealed class BlueTuskModelValidator(
         }
     }
 
-    private static void ValidateJsonProperties(IConventionTypeBase typeBase)
+    private static void ValidateJsonProperties(StructuralTypeMetadata typeBase)
     {
         var jsonPropertyNames = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var property in typeBase.GetProperties())
@@ -180,4 +190,5 @@ internal sealed class BlueTuskModelValidator(
 
         jsonPropertyNames[jsonPropertyName] = propertyName;
     }
+#endif
 }

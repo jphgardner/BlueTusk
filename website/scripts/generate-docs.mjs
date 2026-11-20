@@ -1,485 +1,402 @@
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import process from 'node:process';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
+import { readPackageCatalog } from './generate-packages.mjs';
 
-const websiteRoot = path.resolve(import.meta.dirname, '..');
-const repositoryRoot = path.resolve(websiteRoot, '..');
-const manifestPath = path.join(import.meta.dirname, 'docs-manifest.json');
-const outputPath = path.join(websiteRoot, 'src', 'generated', 'guides.generated.ts');
-const loaderOutputPath = path.join(websiteRoot, 'src', 'generated', 'guide-loader.generated.ts');
-const contentOutputDirectory = path.join(websiteRoot, 'src', 'generated', 'guide-content');
-const searchOutputPath = path.join(websiteRoot, 'src', 'generated', 'guide-search.generated.ts');
-const prerenderRoutesPath = path.join(websiteRoot, 'prerender-routes.txt');
-const sitemapPath = path.join(websiteRoot, 'public', 'sitemap.xml');
-const llmsIndexPath = path.join(websiteRoot, 'public', 'llms.txt');
-const llmsFullPath = path.join(websiteRoot, 'public', 'llms-full.txt');
-const repositoryUrl = 'https://github.com/jphgardner/BlueTusk';
-const siteOrigin = 'https://bluetusk.io';
-const checkOnly = process.argv.includes('--check');
-
-const slugify = (value) =>
-  value
-    .toLowerCase()
-    .replace(/<[^>]+>/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'section';
-
-async function listMarkdownFiles(directory, prefix) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const absolute = path.join(directory, entry.name);
-    const relative = `${prefix}/${entry.name}`.replaceAll('\\', '/');
-    if (entry.isDirectory()) files.push(...(await listMarkdownFiles(absolute, relative)));
-    else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) files.push(relative);
-  }
-  return files;
-}
-
-const categoryLabels = {
+const website = path.resolve(import.meta.dirname, '..');
+const repository = path.resolve(website, '..');
+const github = 'https://github.com/jphgardner/BlueTusk';
+const packageCatalog = await readPackageCatalog(repository);
+const origin = 'https://bluetusk.io';
+const check = process.argv.includes('--check');
+const contentDirectory = 'src/generated/guide-content';
+const labels = {
   'getting-started': 'Getting started',
-  provider: 'Provider',
+  provider: 'ADO.NET',
   'ef-core': 'EF Core',
-  'real-time': 'Real time',
+  'real-time': 'Real-time data',
+  graph: 'Graphs',
   extensions: 'Extensions',
-  graph: 'Graph',
-  architecture: 'Architecture',
+  services: 'Data services',
   operations: 'Operations',
 };
-
-function inferCategory(source) {
-  if (
-    source === 'README.md' ||
-    source === 'docs/README.md' ||
-    source.startsWith('docs/getting-started/')
-  )
-    return 'getting-started';
-  if (
-    /^docs\/(?:ado-net|protocol|replication|types)\//.test(source) ||
-    source === 'docs/pipeline-mode.md'
-  )
-    return 'provider';
-  if (source.startsWith('docs/ef-core/')) return 'ef-core';
-  if (/^docs\/(?:streams|sync|live|realtime-platform|control-plane)\//.test(source))
-    return 'real-time';
-  if (source.startsWith('docs/extensions/')) return 'extensions';
-  if (/^docs\/(?:graph|continuous-graph)\//.test(source)) return 'graph';
-  if (source.startsWith('docs/architecture/')) return 'architecture';
-  return 'operations';
-}
-
-function inferSlug(source) {
-  if (source === 'README.md') return 'project-overview';
-  if (source === 'docs/README.md') return 'handbook';
-  const withoutExtension = source.replace(/\.md$/i, '').replace(/^docs\//, '');
-  const segments = withoutExtension.split('/');
-  if (segments.at(-1)?.toLowerCase() === 'readme') segments.pop();
-  return slugify(segments.join('-') || 'handbook');
-}
-
-function inferSummary(markdown, fallback) {
-  const lines = markdown.split(/\r?\n/);
-  let paragraph = [];
-  let inFence = false;
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (line.startsWith('```')) {
-      inFence = !inFence;
-      continue;
-    }
-    if (
-      inFence ||
-      !line ||
-      line.startsWith('#') ||
-      line.startsWith('|') ||
-      line.startsWith('> [!') ||
-      line.startsWith('![')
-    ) {
-      if (paragraph.length > 0) break;
-      continue;
-    }
-    paragraph.push(line);
-    if (paragraph.join(' ').length >= 180) break;
-  }
-  const text = paragraph
-    .join(' ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[`*_>#]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!text) return fallback;
-  return text.length > 220 ? `${text.slice(0, 217).trimEnd()}…` : text;
-}
-
-const manifestOverrides = JSON.parse(await readFile(manifestPath, 'utf8'));
-const discoveredDocs = await listMarkdownFiles(path.join(repositoryRoot, 'docs'), 'docs');
-const rootDocs = ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSIONING.md'];
-const allSources = [...new Set([...discoveredDocs, ...rootDocs])].sort();
-const overrideBySource = new Map(
-  manifestOverrides.map((entry) => [entry.source.replaceAll('\\', '/'), entry]),
-);
-const manifest = [];
-for (const [index, source] of allSources.entries()) {
-  const existing = overrideBySource.get(source);
-  if (existing) {
-    manifest.push({ ...existing, listed: existing.listed ?? true });
-    continue;
-  }
-  const markdown = await readFile(path.join(repositoryRoot, ...source.split('/')), 'utf8');
-  const category = inferCategory(source);
-  const name = path.basename(source, '.md').replaceAll('-', ' ');
-  manifest.push({
-    category,
-    categoryLabel: categoryLabels[category],
-    listed: false,
-    slug: inferSlug(source),
-    source,
-    summary: inferSummary(markdown, `Reference guide for ${name}.`),
-    keywords: source
-      .replace(/\.md$/i, '')
-      .split(/[\/_.-]+/)
-      .filter(Boolean),
-    order: 1000 + index,
-  });
-}
-const routeBySource = new Map(
-  manifest.map((entry) => [
-    entry.source.replaceAll('\\', '/'),
-    `/documentation/${entry.category}/${entry.slug}`,
-  ]),
-);
-
-const escapeHtml = (value) =>
-  value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-
-function resolveLink(href, sourcePath) {
-  if (!href || href.startsWith('#') || /^[a-z][a-z\d+.-]*:/i.test(href)) return href;
-  const [linkPath, anchor = ''] = href.split('#');
-  const sourceDirectory = path.posix.dirname(sourcePath);
-  const normalized = (
-    linkPath.startsWith('/')
-      ? linkPath.slice(1)
-      : path.posix.normalize(path.posix.join(sourceDirectory, linkPath))
-  ).replace(/^\.\//, '');
-  const internal = routeBySource.get(normalized);
-  if (internal) return `${internal}${anchor ? `#${anchor}` : ''}`;
-  if (normalized.endsWith('/')) {
-    return `${repositoryUrl}/tree/main/${normalized}${anchor ? `#${anchor}` : ''}`;
-  }
-  return `${repositoryUrl}/blob/main/${normalized}${anchor ? `#${anchor}` : ''}`;
-}
-
-function createMarkdown(codeBlocks) {
-  const md = new MarkdownIt({
-    html: false,
-    linkify: false,
-    typographer: true,
-  });
-  const renderCode = (code, language = '') => {
-    const safeLanguage = language && hljs.getLanguage(language) ? language : '';
-    const highlighted = safeLanguage
-      ? hljs.highlight(code, { language: safeLanguage }).value
-      : escapeHtml(code);
-    const index = codeBlocks.push({ kind: 'code', code, highlighted, language: safeLanguage }) - 1;
-    return `<!--BT_CODE_${index}-->`;
-  };
-  md.renderer.rules.fence = (tokens, index) =>
-    renderCode(tokens[index].content, tokens[index].info.trim().split(/\s+/)[0]);
-  md.renderer.rules.code_block = (tokens, index) => renderCode(tokens[index].content);
-  const defaultLinkOpen =
-    md.renderer.rules.link_open ??
-    ((tokens, index, options, _env, self) => self.renderToken(tokens, index, options));
-  md.renderer.rules.link_open = (tokens, index, options, env, self) => {
-    const hrefIndex = tokens[index].attrIndex('href');
-    if (hrefIndex >= 0) {
-      tokens[index].attrs[hrefIndex][1] = resolveLink(
-        tokens[index].attrs[hrefIndex][1],
-        env.sourcePath,
-      );
-      const href = tokens[index].attrs[hrefIndex][1];
-      if (/^https?:/.test(href)) {
-        tokens[index].attrSet('target', '_blank');
-        tokens[index].attrSet('rel', 'noreferrer');
-      }
-    }
-    return defaultLinkOpen(tokens, index, options, env, self);
-  };
-  for (const rule of ['th_open', 'td_open']) {
-    const defaultCellOpen =
-      md.renderer.rules[rule] ??
-      ((tokens, index, options, _env, self) => self.renderToken(tokens, index, options));
-    md.renderer.rules[rule] = (tokens, index, options, env, self) => {
-      const token = tokens[index];
-      const styleIndex = token.attrIndex('style');
-      const alignment =
-        styleIndex >= 0
-          ? /^text-align:(left|center|right)$/.exec(token.attrs[styleIndex][1])?.[1]
-          : undefined;
-      if (styleIndex >= 0) token.attrs.splice(styleIndex, 1);
-      if (alignment) token.attrJoin('class', `align-${alignment}`);
-      return defaultCellOpen(tokens, index, options, env, self);
-    };
-  }
-  return md;
-}
-
-const guides = [];
-for (const item of manifest) {
-  const absoluteSource = path.join(repositoryRoot, ...item.source.split('/'));
-  const markdown = await readFile(absoluteSource, 'utf8');
-  const codeBlocks = [];
-  const md = createMarkdown(codeBlocks);
-  const tokens = md.parse(markdown, { sourcePath: item.source });
-  const headings = [];
-  const usedIds = new Map();
-  for (let index = 0; index < tokens.length; index++) {
-    if (tokens[index].type !== 'heading_open') continue;
-    const text = tokens[index + 1]?.content ?? 'Section';
-    const base = slugify(text);
-    const count = usedIds.get(base) ?? 0;
-    usedIds.set(base, count + 1);
-    const id = count === 0 ? base : `${base}-${count + 1}`;
-    headings.push({ id, text, level: Number(tokens[index].tag.slice(1)) });
-  }
-  const title = headings[0]?.text ?? item.slug;
-  const searchableText = tokens
-    .filter((token) => token.type === 'inline' || token.type === 'code_inline')
-    .map((token) => token.content)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const wordCount = markdown.split(/\s+/).filter(Boolean).length;
-  const { source: _source, ...metadata } = item;
-  const rendered = md.renderer.render(tokens, md.options, { sourcePath: item.source });
-  const parts = rendered.split(/<!--BT_CODE_(\d+)-->/);
-  const blocks = parts.flatMap((part, index) => {
-    if (index % 2 === 1) return [codeBlocks[Number(part)]];
-    return part ? [{ kind: 'html', html: part }] : [];
-  });
-  guides.push({
-    ...metadata,
-    title,
-    sourcePath: item.source,
-    sourceUrl: `${repositoryUrl}/blob/main/${item.source}`,
-    headings,
-    wordCount,
-    readMinutes: Math.max(1, Math.ceil(wordCount / 220)),
-    searchText: searchableText.slice(0, 2000),
-    blocks,
-  });
-}
-
-const categoryOrder = [
-  'getting-started',
-  'provider',
-  'ef-core',
-  'real-time',
-  'extensions',
-  'graph',
-  'architecture',
-  'operations',
-];
-guides.sort(
-  (left, right) =>
-    categoryOrder.indexOf(left.category) - categoryOrder.indexOf(right.category) ||
-    left.order - right.order,
-);
-const generated =
-  `// Generated by scripts/generate-docs.mjs. Do not edit manually.\n` +
-  `import type { GuideIndexEntry } from '../app/content/models';\n\n` +
-  `export const GUIDES: readonly GuideIndexEntry[] = ${JSON.stringify(
-    guides.map(({ blocks: _blocks, ...guide }) => guide),
-    null,
-    2,
-  )};\n`;
-const guidesByContentCategory = new Map(
-  categoryOrder.map((category) => [
-    category,
-    guides.filter((guide) => guide.category === category),
-  ]),
-);
-const generatedContent = new Map(
-  [...guidesByContentCategory].map(([category, categoryGuides]) => [
-    category,
-    `// Generated by scripts/generate-docs.mjs. Do not edit manually.\n` +
-      `import type { GuideManifestEntry } from '../../app/content/models';\n\n` +
-      `export const GUIDES: readonly GuideManifestEntry[] = ${JSON.stringify(categoryGuides, null, 2)};\n`,
-  ]),
-);
-const generatedLoader =
-  `// Generated by scripts/generate-docs.mjs. Do not edit manually.\n` +
-  `import type { GuideManifestEntry } from '../app/content/models';\n\n` +
-  `export async function loadGuide(category: string, slug: string): Promise<GuideManifestEntry | undefined> {\n` +
-  `  switch (category) {\n` +
-  categoryOrder
-    .map(
-      (category) =>
-        `    case '${category}': {\n` +
-        `      const { GUIDES } = await import('./guide-content/${category}.generated');\n` +
-        `      return GUIDES.find((guide) => guide.slug === slug);\n` +
-        `    }`,
-    )
-    .join('\n') +
-  `\n    default:\n      return undefined;\n  }\n}\n`;
-const listedGuides = guides.filter((guide) => guide.listed);
-const searchRecords = listedGuides.map((guide) => ({
-  title: guide.title,
-  description: guide.summary,
-  route: `/documentation/${guide.category}/${guide.slug}`,
-  group: guide.categoryLabel,
-  keywords: `${guide.keywords.join(' ')} ${guide.headings.map((heading) => heading.text).join(' ')} ${guide.searchText.slice(0, 1200)}`,
-}));
-const generatedSearch =
-  `// Generated by scripts/generate-docs.mjs. Do not edit manually.\n` +
-  `import type { SearchRecord } from '../app/content/models';\n\n` +
-  `export const GUIDE_SEARCH: readonly SearchRecord[] = ${JSON.stringify(searchRecords, null, 2)};\n`;
-const siteRoutes = [
+const productRoutes = [
   '/',
   '/platform',
   '/provider',
   '/ef-core',
   '/real-time',
-  '/extensions',
   '/graph',
-  '/evidence',
+  '/extensions',
+  '/data-services',
   '/documentation',
   '/community',
-  ...guides.map((guide) => `/documentation/${guide.category}/${guide.slug}`),
+  '/packages',
+  '/architecture',
+  '/use-cases',
+  '/use-cases/order-fulfilment',
+  '/use-cases/service-topology',
+  '/use-cases/fraud-investigation',
+  '/use-cases/offline-apps',
+  '/learn',
+  '/compatibility',
+  '/production',
+  '/whats-new',
+  '/real-time/streams',
+  '/real-time/sync',
+  '/real-time/live',
 ];
-const prerenderRoutes = `${siteRoutes.join('\n')}\n`;
-const sitemap =
-  '<?xml version="1.0" encoding="UTF-8"?>\n' +
-  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-  siteRoutes.map((route) => `  <url><loc>${siteOrigin}${route}</loc></url>`).join('\n') +
-  '\n</urlset>\n';
-const guidesByCategory = new Map(
-  categoryOrder.map((category) => [
-    category,
-    listedGuides.filter((guide) => guide.category === category),
-  ]),
-);
-const llmsIndex =
-  '# BlueTusk\n\n' +
-  '> BlueTusk is a PostgreSQL-native platform for .NET covering ADO.NET, EF Core, replication, real-time delivery, extensions, and graph workloads.\n\n' +
-  'Use this index to find the canonical HTML documentation. The complete curated guide set is available at [llms-full.txt](https://bluetusk.io/llms-full.txt).\n\n' +
-  '## Start here\n\n' +
-  '- [BlueTusk overview](https://bluetusk.io/)\n' +
-  '- [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart)\n' +
-  '- [Installation](https://bluetusk.io/documentation/getting-started/install)\n' +
-  '- [Documentation hub](https://bluetusk.io/documentation)\n' +
-  '- [Release evidence](https://bluetusk.io/evidence)\n\n' +
-  categoryOrder
-    .map((category) => {
-      const entries = guidesByCategory.get(category) ?? [];
-      if (entries.length === 0) return '';
-      const label = categoryLabels[category] ?? category;
-      return (
-        `## ${label}\n\n` +
-        entries
-          .map(
-            (guide) =>
-              `- [${guide.title}](${siteOrigin}/documentation/${guide.category}/${guide.slug}): ${guide.summary}`,
-          )
-          .join('\n') +
-        '\n'
-      );
-    })
-    .filter(Boolean)
-    .join('\n');
-const llmsFullSections = [];
-for (const guide of listedGuides) {
-  const markdown = await readFile(
-    path.join(repositoryRoot, ...guide.sourcePath.split('/')),
-    'utf8',
-  );
-  llmsFullSections.push(
-    `# ${guide.title}\n\n` +
-      `Canonical URL: ${siteOrigin}/documentation/${guide.category}/${guide.slug}\n\n` +
-      `Source: ${guide.sourceUrl}\n\n` +
-      markdown.trim(),
-  );
-}
-const llmsFull =
-  '# BlueTusk curated documentation\n\n' +
-  '> Task-oriented, source-synchronised documentation for the BlueTusk PostgreSQL platform for .NET.\n\n' +
-  'Canonical site: https://bluetusk.io/\n\n' +
-  llmsFullSections.join('\n\n---\n\n') +
-  '\n';
 
-if (checkOnly) {
-  let current = '';
-  let currentSearch = '';
-  let currentLoader = '';
-  let currentPrerenderRoutes = '';
-  let currentSitemap = '';
-  let currentLlmsIndex = '';
-  let currentLlmsFull = '';
-  try {
-    current = await readFile(outputPath, 'utf8');
-  } catch {}
-  try {
-    currentSearch = await readFile(searchOutputPath, 'utf8');
-  } catch {}
-  try {
-    currentLoader = await readFile(loaderOutputPath, 'utf8');
-  } catch {}
-  try {
-    currentPrerenderRoutes = await readFile(prerenderRoutesPath, 'utf8');
-  } catch {}
-  try {
-    currentSitemap = await readFile(sitemapPath, 'utf8');
-  } catch {}
-  try {
-    currentLlmsIndex = await readFile(llmsIndexPath, 'utf8');
-  } catch {}
-  try {
-    currentLlmsFull = await readFile(llmsFullPath, 'utf8');
-  } catch {}
+const manifest = JSON.parse(
+  await readFile(path.join(import.meta.dirname, 'docs-manifest.json'), 'utf8'),
+);
+const sources = new Map();
+const aliases = new Map();
+const routes = new Set(productRoutes);
+const priorBlueTuskVersion =
+  /\b0\.1\.0-preview(?:\.\d+)?\b|\b1\.[01]\.0-rc\.\d+\b|\b(?:BlueTusk(?:\.[\w.]+)?|Provider|--version)\s*\x60?1\.[01]\.0\b/i;
+const internalContent =
+  /\brelease gates?\b|\b(?:ship|stable|publication|product) gates?\b|\/evidence\b|(?:release-(?:readiness|tracks|endurance|review-handoff|qualification|process)|(?:approval|package)-evidence|performance-leadership-1\.1|v1-release-readiness|completion-audit)\.md\b/i;
+
+for (const { category, slug, source, summary, order, aliases: legacy = [] } of manifest) {
+  const route = '/documentation/' + category + '/' + slug;
+  const validSource = /^(?:docs\/(?:[\w-]+\/)*[\w.-]+\.md|SECURITY\.md)$/.test(source);
   if (
-    current !== generated ||
-    currentSearch !== generatedSearch ||
-    currentLoader !== generatedLoader ||
-    (
-      await Promise.all(
-        [...generatedContent].map(async ([category, content]) => {
-          try {
-            return (
-              (await readFile(
-                path.join(contentOutputDirectory, `${category}.generated.ts`),
-                'utf8',
-              )) === content
-            );
-          } catch {
-            return false;
-          }
-        }),
-      )
-    ).some((matches) => !matches) ||
-    currentPrerenderRoutes !== prerenderRoutes ||
-    currentSitemap !== sitemap ||
-    currentLlmsIndex !== llmsIndex ||
-    currentLlmsFull !== llmsFull
+    !Object.hasOwn(labels, category) ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+    !validSource ||
+    !summary?.trim() ||
+    !Number.isInteger(order) ||
+    sources.has(source) ||
+    routes.has(route) ||
+    internalContent.test(source + ' ' + summary)
   ) {
-    console.error('Generated documentation is stale. Run npm run docs:generate.');
-    process.exitCode = 1;
+    throw new Error(
+      'Invalid or duplicate public documentation entry: ' +
+        JSON.stringify({ category, slug, source }),
+    );
   }
-} else {
-  await mkdir(contentOutputDirectory, { recursive: true });
-  await writeFile(outputPath, generated, 'utf8');
-  await writeFile(searchOutputPath, generatedSearch, 'utf8');
-  await writeFile(loaderOutputPath, generatedLoader, 'utf8');
-  await Promise.all(
-    [...generatedContent].map(([category, content]) =>
-      writeFile(path.join(contentOutputDirectory, `${category}.generated.ts`), content, 'utf8'),
+  sources.set(source, route);
+  routes.add(route);
+  for (const alias of legacy) {
+    if (
+      !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(alias) ||
+      aliases.has(alias) ||
+      internalContent.test(alias)
+    ) {
+      throw new Error('Invalid legacy guide route: ' + alias);
+    }
+    aliases.set(alias, category + '/' + slug);
+  }
+}
+for (const alias of aliases.keys()) {
+  if (routes.has('/documentation/' + alias))
+    throw new Error('Alias shadows a public guide: ' + alias);
+}
+
+function resolveLink(href, source) {
+  if (href === origin) return '/';
+  if (href?.startsWith(origin + '/')) return href.slice(origin.length);
+  if (!href || href.startsWith('#') || /^[a-z][a-z\d+.-]*:/i.test(href)) return href;
+  const [relative, anchor] = href.split('#');
+  const target = relative.startsWith('/')
+    ? relative.slice(1)
+    : path.posix.normalize(path.posix.join(path.posix.dirname(source), relative));
+  const route = sources.get(target);
+  const hash = anchor ? '#' + anchor : '';
+  if (route) return route + hash;
+  if (routes.has(href.split('#')[0])) return href;
+  if (target === '..' || target.startsWith('../'))
+    throw new Error(source + ': link leaves the repository: ' + href);
+  return github + (path.posix.extname(target) ? '/blob/main/' : '/tree/main/') + target + hash;
+}
+
+const md = new MarkdownIt({ html: false, typographer: true });
+const renderToken = (tokens, index, options, _env, self) =>
+  self.renderToken(tokens, index, options);
+const defaultLink = md.renderer.rules.link_open ?? renderToken;
+md.renderer.rules.link_open = (tokens, index, options, env, self) => {
+  const token = tokens[index];
+  token.attrSet('href', resolveLink(token.attrGet('href'), env.source));
+  return defaultLink(tokens, index, options, env, self);
+};
+const defaultImage = md.renderer.rules.image;
+md.renderer.rules.image = (tokens, index, options, env, self) => {
+  const token = tokens[index];
+  const url = resolveLink(token.attrGet('src'), env.source);
+  token.attrSet(
+    'src',
+    url.replace(
+      github + '/blob/main/',
+      'https://raw.githubusercontent.com/jphgardner/BlueTusk/main/',
     ),
   );
-  await writeFile(prerenderRoutesPath, prerenderRoutes, 'utf8');
-  await writeFile(sitemapPath, sitemap, 'utf8');
-  await writeFile(llmsIndexPath, llmsIndex, 'utf8');
-  await writeFile(llmsFullPath, llmsFull, 'utf8');
-  console.log(
-    `Generated ${guides.length} documentation guides and ${siteRoutes.length} crawlable routes.`,
+  return defaultImage(tokens, index, options, env, self);
+};
+
+const renderHeading = (tokens, index, options, env, self) => {
+  const token = tokens[index];
+  return token.level === 0
+    ? env.headingMarkers.get(index)
+    : renderToken(tokens, index, options, env, self);
+};
+md.renderer.rules.heading_open = renderHeading;
+md.renderer.rules.heading_close = (tokens, index, options, env, self) =>
+  tokens[index].level === 0 ? '' : renderToken(tokens, index, options, env, self);
+function codeBlock(fallback) {
+  return (tokens, index, options, env, self) => {
+    const token = tokens[index];
+    if (token.level !== 0) return fallback(tokens, index, options, env, self);
+    const language = token.info.trim().split(/\s+/)[0];
+    const code = token.content.trimEnd();
+    const highlighted = hljs.getLanguage(language)
+      ? hljs.highlight(code, { language }).value
+      : md.utils.escapeHtml(code);
+    return env.mark({ kind: 'code', code, highlighted, language });
+  };
+}
+md.renderer.rules.fence = codeBlock(md.renderer.rules.fence);
+md.renderer.rules.code_block = codeBlock(md.renderer.rules.code_block);
+
+const slugify = (value) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'section';
+
+const guides = [];
+const markdownBySource = new Map();
+const errors = [];
+for (const { category, slug, source, summary, order, keywords = [] } of manifest) {
+  const markdown = (await readFile(path.join(repository, source), 'utf8')).replace(/\r\n/g, '\n');
+  const privateMatch = (source + '\n' + markdown).match(internalContent);
+  if (privateMatch) errors.push(source + ': ' + privateMatch[0]);
+  const priorVersion = markdown.match(priorBlueTuskVersion);
+  if (priorVersion)
+    errors.push(
+      source +
+        ': package reference must target BlueTusk ' +
+        packageCatalog.release +
+        ' (' +
+        priorVersion[0] +
+        ')',
+    );
+  markdownBySource.set(source, markdown);
+  const fragments = [];
+  const headingMarkers = new Map();
+  const env = {
+    source,
+    headingMarkers,
+    mark(block) {
+      return '<!--BT_BLOCK_' + (fragments.push(block) - 1) + '-->';
+    },
+  };
+  const tokens = md.parse(markdown, env);
+  const headings = [];
+  const ids = new Set();
+  let title;
+  for (const [index, token] of tokens.entries()) {
+    if (token.type !== 'heading_open' || token.level !== 0) continue;
+    const inline = tokens[index + 1];
+    const text = inline.children
+      .map((child) => (child.type === 'softbreak' ? ' ' : child.content))
+      .join('')
+      .trim();
+    inline.children = [];
+    const level = Number(token.tag.slice(1));
+    if (level === 1) {
+      if (title) throw new Error(source + ': use exactly one top-level title.');
+      title = text;
+      headingMarkers.set(index, '');
+      continue;
+    }
+    const base = slugify(text);
+    let id = base;
+    for (let suffix = 2; ids.has(id); suffix++) id = base + '-' + suffix;
+    ids.add(id);
+    const heading = { id, text, level };
+    headings.push(heading);
+    headingMarkers.set(index, env.mark({ kind: 'heading', heading }));
+  }
+  if (!title) throw new Error(source + ': missing title.');
+  const body = md.renderer.render(tokens, md.options, env);
+  const blocks = body
+    .split(/<!--BT_BLOCK_(\d+)-->/)
+    .flatMap((part, index) =>
+      index % 2 ? [fragments[Number(part)]] : part.trim() ? [{ kind: 'html', html: part }] : [],
+    );
+  const searchText = tokens
+    .filter((token) => token.type === 'inline')
+    .map((token) => token.children.map((child) => child.content).join(''))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 1800);
+  guides.push({
+    metadata: {
+      category,
+      categoryLabel: labels[category],
+      slug,
+      title,
+      summary,
+      order,
+      headings,
+      sourcePath: source,
+      sourceUrl: github + '/blob/main/' + source,
+      keywords,
+    },
+    searchText,
+    blocks,
+  });
+}
+if (errors.length) throw new Error('Invalid public documentation:\n' + errors.join('\n'));
+
+const prefix = '// Generated by scripts/generate-docs.mjs. Do not edit manually.\n';
+const json = (value) => JSON.stringify(value, null, 2);
+const files = new Map([
+  [
+    'src/generated/packages.generated.ts',
+    prefix +
+      "import type { PackageRecord } from '../app/content/packages';\n\n" +
+      'export const RELEASE_VERSION = ' +
+      json(packageCatalog.release) +
+      ';\n' +
+      'export const PACKAGES: readonly PackageRecord[] = ' +
+      json(packageCatalog.packages) +
+      ';\n',
+  ],
+  [
+    'src/generated/guides.generated.ts',
+    prefix +
+      "import type { GuideIndexEntry } from '../app/content/models';\n\n" +
+      'export const GUIDES: readonly GuideIndexEntry[] = ' +
+      json(guides.map(({ metadata }) => metadata)) +
+      ';\n',
+  ],
+  [
+    'src/generated/guide-search.generated.ts',
+    prefix +
+      "import type { SearchRecord } from '../app/content/models';\n\n" +
+      'export const GUIDE_SEARCH: readonly SearchRecord[] = ' +
+      json(
+        guides.map(({ metadata: g, searchText }) => ({
+          title: g.title,
+          description: g.summary,
+          group: g.categoryLabel,
+          route: sources.get(g.sourcePath),
+          keywords: [...g.keywords, ...g.headings.map(({ text }) => text), searchText].join(' '),
+        })),
+      ) +
+      ';\n',
+  ],
+]);
+
+const loadCases = [];
+for (const category of Object.keys(labels)) {
+  const items = guides.filter(({ metadata }) => metadata.category === category);
+  if (!items.length) throw new Error('No public guides in ' + category);
+  files.set(
+    contentDirectory + '/' + category + '.generated.ts',
+    prefix +
+      "import type { GuideManifestEntry } from '../../app/content/models';\n\n" +
+      'export const GUIDES: readonly GuideManifestEntry[] = ' +
+      json(items.map(({ metadata, blocks }) => ({ ...metadata, blocks }))) +
+      ';\n',
+  );
+  loadCases.push(
+    "    case '" +
+      category +
+      "': return (await import('./guide-content/" +
+      category +
+      ".generated')).GUIDES.find((guide) => guide.slug === slug);",
   );
 }
+files.set(
+  'src/generated/guide-loader.generated.ts',
+  prefix +
+    "import type { GuideManifestEntry } from '../app/content/models';\n\n" +
+    'const aliases = new Map<string, string>(' +
+    json([...aliases]) +
+    ');\n\n' +
+    'export async function loadGuide(category: string, slug: string): Promise<GuideManifestEntry | undefined> {\n' +
+    "  const canonical = aliases.get(category + '/' + slug);\n" +
+    "  if (canonical) [category, slug] = canonical.split('/');\n" +
+    '  switch (category) {\n' +
+    loadCases.join('\n') +
+    '\n    default: return undefined;\n  }\n}\n',
+);
+files.set('prerender-routes.txt', [...routes].join('\n') + '\n');
+files.set(
+  'public/sitemap.xml',
+  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    [...routes].map((route) => '  <url><loc>' + origin + route + '</loc></url>').join('\n') +
+    '\n</urlset>\n',
+);
+const intro =
+  '# BlueTusk documentation\n\n> PostgreSQL for .NET, with ADO.NET, EF Core, real-time data, graphs, and data services.\n\n';
+files.set(
+  'public/llms.txt',
+  intro +
+    '[Full documentation text](' +
+    origin +
+    '/llms-full.txt)\n' +
+    Object.entries(labels)
+      .map(
+        ([category, label]) =>
+          '\n## ' +
+          label +
+          '\n\n' +
+          guides
+            .filter(({ metadata }) => metadata.category === category)
+            .map(
+              ({ metadata: g }) =>
+                '- [' + g.title + '](' + origin + sources.get(g.sourcePath) + '): ' + g.summary,
+            )
+            .join('\n') +
+          '\n',
+      )
+      .join(''),
+);
+files.set(
+  'public/llms-full.txt',
+  intro +
+    guides
+      .map(
+        ({ metadata: g }) =>
+          'Guide: ' +
+          origin +
+          sources.get(g.sourcePath) +
+          '\n\n' +
+          markdownBySource.get(g.sourcePath).trim(),
+      )
+      .join('\n\n---\n\n') +
+    '\n',
+);
+
+const stale = [];
+await mkdir(path.join(website, contentDirectory), { recursive: true });
+for (const name of await readdir(path.join(website, contentDirectory))) {
+  const relative = contentDirectory + '/' + name;
+  if (name.endsWith('.generated.ts') && !files.has(relative)) {
+    if (check) stale.push(relative);
+    else await rm(path.join(website, relative));
+  }
+}
+for (const [relative, content] of files) {
+  const target = path.join(website, relative);
+  if (check) {
+    const existing = await readFile(target, 'utf8').catch(() => null);
+    if (existing?.replace(/\r\n/g, '\n') !== content) stale.push(relative);
+  } else {
+    await writeFile(target, content, 'utf8');
+  }
+}
+if (stale.length) throw new Error('Run npm run docs:generate. Stale files:\n' + stale.join('\n'));
+console.log(
+  (check ? 'Verified ' : 'Generated ') +
+    guides.length +
+    ' public guides and ' +
+    routes.size +
+    ' routes.',
+);

@@ -316,7 +316,9 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private static async ValueTask<BlueTuskConnection> CompleteOpenConnectionAsync(
         BlueTuskConnection connection,
         Task opening)

@@ -27,13 +27,13 @@ public sealed class PostgreSqlLiveStoreOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(ControlDataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ControlSchema);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependenciesPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependenciesPerQuery);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(ReplayRetentionWindow, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumReplayEventBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ReplayPruneBatchSize);
+        BlueTuskGuard.NotNull(ControlDataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(ControlSchema);
+        BlueTuskGuard.NotNegativeOrZero(MaximumDependenciesPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaximumDependenciesPerQuery);
+        BlueTuskGuard.NotLessThanOrEqual(ReplayRetentionWindow, TimeSpan.Zero);
+        BlueTuskGuard.NotNegativeOrZero(MaximumReplayEventBytes);
+        BlueTuskGuard.NotNegativeOrZero(ReplayPruneBatchSize);
         if (ControlSchema.Contains('\0') || Encoding.UTF8.GetByteCount(ControlSchema) > 63)
         {
             throw new ArgumentException(
@@ -68,7 +68,7 @@ public sealed class PostgreSqlLiveInvalidationStore :
 
     public PostgreSqlLiveInvalidationStore(PostgreSqlLiveStoreOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _dataSource = options.ControlDataSource;
@@ -111,8 +111,8 @@ public sealed class PostgreSqlLiveInvalidationStore :
         ChangeTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(transaction);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         var dependencies = await LiveChangeDependencyExtractor.ExtractAsync(
             transaction,
@@ -157,7 +157,7 @@ public sealed class PostgreSqlLiveInvalidationStore :
         string databaseIdentity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
@@ -175,8 +175,8 @@ public sealed class PostgreSqlLiveInvalidationStore :
         LiveInvalidationCursor throughInclusive,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(dependencies);
         if (dependencies.Count == 0)
         {
             throw new ArgumentException("At least one Live table dependency is required.", nameof(dependencies));
@@ -231,7 +231,7 @@ public sealed class PostgreSqlLiveInvalidationStore :
         LiveReplayAppendRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         foreach (var replayEvent in request.Events)
         {
             if (replayEvent.Payload.Length > _options.MaximumReplayEventBytes)
@@ -333,9 +333,9 @@ public sealed class PostgreSqlLiveInvalidationStore :
         int maximumEvents,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNegative(afterSequence);
+        BlueTuskGuard.NotNegativeOrZero(maximumEvents);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         var state = await ReadReplayStateAsync(

@@ -45,7 +45,7 @@ internal ref struct BlueTuskBackendPayloadReader
 
     public ReadOnlySpan<byte> ReadBytes(int count)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        BlueTuskGuard.NotNegative(count);
         EnsureRemaining(count);
         var value = _payload.Slice(_offset, count);
         _offset += count;

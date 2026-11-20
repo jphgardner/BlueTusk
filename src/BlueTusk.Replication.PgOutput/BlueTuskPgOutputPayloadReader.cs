@@ -52,7 +52,7 @@ internal ref struct BlueTuskPgOutputPayloadReader
 
     public ReadOnlyMemory<byte> ReadBytes(int count)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        BlueTuskGuard.NotNegative(count);
         EnsureRemaining(count);
         var value = _payload.Slice(_offset, count);
         _offset += count;

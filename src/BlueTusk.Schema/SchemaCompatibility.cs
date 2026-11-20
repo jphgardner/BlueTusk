@@ -58,8 +58,8 @@ public sealed class SchemaConsumerContract
 {
     public SchemaConsumerContract(string name, SchemaRelationIdentity relation, IEnumerable<string> columns, bool consumesWholeRow = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(columns);
         var budget = new SchemaModelBudget(SchemaSnapshotLimits.Default);
         budget.Text(name, required: true);
         budget.Text(relation.Schema, required: true, identifier: true);
@@ -67,7 +67,7 @@ public sealed class SchemaConsumerContract
         Name = name;
         Relation = relation;
         Columns = Array.AsReadOnly(SchemaModelBudget.Materialize(columns, 32_767,
-            column => budget.Text(column, required: true, identifier: true)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray());
+            column => budget.Text(column, required: true, identifier: true)).Distinct(StringComparer.Ordinal).OrderBy(static value => value, StringComparer.Ordinal).ToArray());
 
         ConsumesWholeRow = consumesWholeRow;
     }
@@ -84,8 +84,8 @@ public static class SchemaCompatibility
 {
     public static SchemaComparison Compare(SchemaSnapshot before, SchemaSnapshot after)
     {
-        ArgumentNullException.ThrowIfNull(before);
-        ArgumentNullException.ThrowIfNull(after);
+        BlueTuskGuard.NotNull(before);
+        BlueTuskGuard.NotNull(after);
         var changes = new List<SchemaChange>();
         if (before.Fingerprint == after.Fingerprint) { return new SchemaComparison(changes); }
         var previousIndex = 0;
@@ -126,8 +126,8 @@ public static class SchemaCompatibility
         SchemaComparison comparison,
         IEnumerable<SchemaConsumerContract> contracts)
     {
-        ArgumentNullException.ThrowIfNull(comparison);
-        ArgumentNullException.ThrowIfNull(contracts);
+        BlueTuskGuard.NotNull(comparison);
+        BlueTuskGuard.NotNull(contracts);
         var changesByRelation = comparison.Changes.ToLookup(change => change.Relation);
         var impacts = new List<SchemaConsumerImpact>();
         var admittedContracts = 0;

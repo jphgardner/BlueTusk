@@ -4,12 +4,6 @@ BlueTusk Sync materialises transaction-preserving Streams deliveries into
 external destinations. It consumes `BlueTusk.Streams` only; it never reaches
 logical-replication wire messages.
 
-Release compatibility is specified in the
-[public API compatibility](api-compatibility.md) and
-[durable format compatibility](format-compatibility.md) contracts. The
-[release-endurance guide](release-endurance.md) defines the mandatory 24-hour
-four-connector gate.
-
 The core pipeline owns the provisioning, snapshotting, catching-up, running,
 paused, rebuilding, reconciling, faulted, and stopped states. A source
 transaction is transformed and offered to a destination as one immutable batch.
@@ -111,7 +105,7 @@ snapshot row IDs are preserved. A routing program rejects collection-wide
 deletes and, by default, requires ordinary deletes to retain the partition key
 established by the source mapper.
 
-This is the V1 sandbox contract. It deliberately does not claim that an
+This is the sandbox contract. It deliberately does not claim that an
 in-process C# delegate or a child process without an operating-system policy is
 sandboxed. Native, managed-assembly, and general-purpose script plug-ins remain
 outside the trusted boundary.
@@ -178,14 +172,7 @@ read models now expose pipeline state, sampled throughput, checkpoint lag,
 failures, quarantine, retries, and rebuild/reconciliation state without leaking
 worker exception messages. Separately authorized retry, reconcile, and rebuild
 controls now pass exact confirmations through the audit-before-mutation control
-plane executor. The coordinated `1.1.0-rc.1` package train is public. Stable
-`1.1.0` remains non-publishable until the exact 24-hour endurance and final
-stable-release gates pass.
-
-The executable [Sync release endurance](release-endurance.md) gate repeatedly
-runs the core/hosting contracts and all seven destination suites for 24 hours,
-then emits a versioned evidence report. A local one-cycle smoke proves the
-orchestration only; it does not satisfy the release gate.
+plane executor.
 
 ## Retry, rate limits, and backpressure
 

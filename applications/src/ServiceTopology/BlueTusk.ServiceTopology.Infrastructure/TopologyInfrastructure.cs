@@ -29,6 +29,8 @@ public sealed class TopologyDbContext(DbContextOptions<TopologyDbContext> option
         {
             entity.ToTable("dependencies");
             entity.HasKey(dependency => dependency.Id);
+            entity.HasIndex(dependency => dependency.SourceId);
+            entity.HasIndex(dependency => dependency.DestinationId);
             entity.Property(dependency => dependency.TenantId).HasMaxLength(80);
             entity.HasIndex(dependency => new
             {

@@ -14,7 +14,7 @@ public sealed class EventWrite
         }
 
         EventValidation.Key(eventType, nameof(eventType));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
+        BlueTuskGuard.NotNegativeOrZero(version);
         if (payload.IsEmpty)
         {
             throw new ArgumentException("Event payloads must be nonempty.", nameof(payload));
@@ -86,20 +86,20 @@ public sealed class PostgreSqlEventsOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(Schema);
-        if (Schema.Length > 63 || Schema.Any(static character => !char.IsAsciiLetterOrDigit(character) && character != '_') ||
-            !char.IsAsciiLetter(Schema[0]) && Schema[0] != '_')
+        BlueTuskGuard.NotNullOrWhiteSpace(Schema);
+        if (Schema.Length > 63 || Schema.Any(static character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_') ||
+            !BlueTuskRuntime.IsAsciiLetter(Schema[0]) && Schema[0] != '_')
         {
             throw new ArgumentException("Schema must be a PostgreSQL identifier of 1 to 63 ASCII letters, digits, or underscores.", nameof(Schema));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumAppendEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumAppendEvents, 65_536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumEventBytes, 16_777_216);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumAppendBytes, MaximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumAppendBytes, 67_108_864);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegativeOrZero(MaximumAppendEvents);
+        BlueTuskGuard.NotGreaterThan(MaximumAppendEvents, 65_536);
+        BlueTuskGuard.NotNegativeOrZero(MaximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(MaximumEventBytes, 16_777_216);
+        BlueTuskGuard.NotLessThan(MaximumAppendBytes, MaximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(MaximumAppendBytes, 67_108_864);
+        BlueTuskGuard.NotNegativeOrZero(CommandTimeoutSeconds);
     }
 }
 
@@ -107,7 +107,7 @@ internal static class EventValidation
 {
     internal static void Key(string value, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Length > 200 || value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Event keys must contain 1 to 200 characters and no NUL characters.", parameterName);
@@ -116,8 +116,8 @@ internal static class EventValidation
 
     internal static void Transaction(DbConnection connection, DbTransaction transaction)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNull(transaction);
         if (connection.State != ConnectionState.Open || !ReferenceEquals(transaction.Connection, connection))
         {
             throw new ArgumentException("An open connection and its active transaction are required.", nameof(transaction));

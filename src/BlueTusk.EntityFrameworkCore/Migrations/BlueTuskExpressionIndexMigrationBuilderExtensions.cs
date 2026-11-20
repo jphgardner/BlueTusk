@@ -15,8 +15,8 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
         BlueTuskExpressionIndexDefinition definition,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         BlueTuskExpressionIndexMetadata.Validate(definition);
         var operation = new CreateExpressionIndexOperation
         {
@@ -46,8 +46,8 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
         string? schema = null,
         bool concurrently = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropExpressionIndexOperation
         {
             Name = name,
@@ -65,9 +65,9 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
         string newName,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameExpressionIndexOperation
         {
             Name = name,

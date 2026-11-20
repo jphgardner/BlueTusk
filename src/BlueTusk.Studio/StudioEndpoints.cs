@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#if !NET7_0_OR_GREATER
+using Results = BlueTusk.Studio.LegacyStudioResults;
+#endif
 
 namespace BlueTusk.Studio;
 
@@ -20,8 +23,8 @@ public static class StudioEndpoints
         where TScopeResolver : class, IStudioScopeResolver
         where TAuditSink : class, IStudioAuditSink
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         services.AddAntiforgery();
         services.AddSingleton(options);
@@ -33,10 +36,15 @@ public static class StudioEndpoints
         return services;
     }
 
+#if NET7_0_OR_GREATER
     public static RouteGroupBuilder MapBlueTuskStudio(this IEndpointRouteBuilder endpoints)
+#else
+    public static IEndpointConventionBuilder MapBlueTuskStudio(this IEndpointRouteBuilder endpoints)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        BlueTuskGuard.NotNull(endpoints);
         var options = endpoints.ServiceProvider.GetRequiredService<StudioOptions>();
+#if NET7_0_OR_GREATER
         var group = endpoints.MapGroup(options.Path).RequireAuthorization(options.ReadPolicy);
         group.AddEndpointFilter(async (context, next) =>
         {
@@ -45,19 +53,29 @@ public static class StudioEndpoints
             context.HttpContext.Response.Headers.ContentSecurityPolicy = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
             return await next(context).ConfigureAwait(false);
         });
+#else
+        var group = new LegacyStudioRoutes(endpoints, options.Path, options.ReadPolicy, contentSecurityPolicy: true);
+#endif
         group.MapGet("/", (HttpContext context) => context.Request.Path.Value?.EndsWith('/') == true
             ? Results.Content(Asset("studio.html"), "text/html", Encoding.UTF8)
             : Results.Redirect(options.Path + "/"));
         group.MapGet("/assets/studio.js", () => Results.Content(Asset("studio.js"), "text/javascript", Encoding.UTF8));
         group.MapGet("/assets/studio.css", () => Results.Content(Asset("studio.css"), "text/css", Encoding.UTF8));
-        group.MapGet("/session", (HttpContext context, IAntiforgery antiforgery) =>
+        group.MapGet("/session", async (HttpContext context) =>
         {
+            var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
             var tokens = antiforgery.GetAndStoreTokens(context);
-            return Results.Json(new StudioSession(tokens.HeaderName ?? throw new InvalidOperationException("Studio needs an antiforgery request header."),
-                tokens.RequestToken ?? throw new InvalidOperationException("Studio could not create an antiforgery token.")), StudioJsonContext.Default.StudioSession);
+            var session = new StudioSession(
+                tokens.HeaderName ?? throw new InvalidOperationException("Studio needs an antiforgery request header."),
+                tokens.RequestToken ?? throw new InvalidOperationException("Studio could not create an antiforgery token."));
+            context.Response.ContentType = "application/json; charset=utf-8";
+            await JsonSerializer.SerializeAsync(context.Response.Body, session, StudioJsonContext.Default.StudioSession,
+                context.RequestAborted).ConfigureAwait(false);
         });
-        group.MapGet("/schema", async (HttpContext context, IStudioScopeResolver resolver, StudioQueryService service) =>
+        group.MapGet("/schema", async (HttpContext context) =>
         {
+            var resolver = context.RequestServices.GetRequiredService<IStudioScopeResolver>();
+            var service = context.RequestServices.GetRequiredService<StudioQueryService>();
             try
             {
                 using var admission = service.TryAcquire(context.RequestAborted);
@@ -84,7 +102,11 @@ public static class StudioEndpoints
                 return Results.StatusCode(StatusCodes.Status422UnprocessableEntity);
             }
         });
-        group.MapPost("/query", ExecuteQueryAsync).RequireAuthorization(options.QueryPolicy);
+        group.MapPost("/query", (HttpContext context) => ExecuteQueryAsync(context, options,
+            context.RequestServices.GetRequiredService<IAntiforgery>(),
+            context.RequestServices.GetRequiredService<IStudioScopeResolver>(),
+            context.RequestServices.GetRequiredService<IStudioAuditSink>(),
+            context.RequestServices.GetRequiredService<StudioQueryService>())).RequireAuthorization(options.QueryPolicy);
         return group;
     }
 
@@ -119,7 +141,7 @@ public static class StudioEndpoints
             context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
             return;
         }
-        if (request.OperationId.Version != 7) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
+        if (!StudioOperationId.IsVersion7(request.OperationId)) { context.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
         var operation = request.OperationId;
         context.Response.Headers["X-BlueTusk-Studio-Operation-Id"] = operation.ToString("D");
         var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
@@ -127,7 +149,7 @@ public static class StudioEndpoints
         // Bind retries to the full execution shape, not just the SQL text.
         var fingerprintInput = (request.Sql ?? string.Empty) + "\0" + (request.Explain ? "1" : "0") + "\0" +
             (request.MaximumRows ?? options.MaximumRows).ToString(CultureInfo.InvariantCulture);
-        var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintInput)));
+        var fingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintInput)));
         StudioDatabaseScope scope;
         try { scope = await resolver.ResolveAsync(context.User, deadline.Token).ConfigureAwait(false); }
         catch (OperationCanceledException) { context.Response.StatusCode = StatusCodes.Status408RequestTimeout; return; }

@@ -4,17 +4,19 @@ using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.Sync.PostgreSql;
+using BlueTusk.Tests.Shared;
 using BlueTusk.TypeSystem;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Tests;
 
 public sealed class PostgreSqlSyncDestinationTests
 {
+    private const string ConnectionStringVariable = "BLUETUSK_TEST_CONNECTION_STRING";
+
     private static readonly ChangeSourceIdentity Source =
         new("sync-pg-system", "sync-db", "sync-slot", "public:orders");
 
-    [Fact]
+    [RequiredEnvironmentFact(ConnectionStringVariable)]
     public async Task PostgreSql_destination_migrates_version_one_quarantine_storage()
     {
         var connectionString = GetConnectionString();
@@ -94,7 +96,7 @@ public sealed class PostgreSqlSyncDestinationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact(ConnectionStringVariable)]
     public async Task PostgreSql_destination_atomically_applies_deduplicates_and_quarantines()
     {
         var connectionString = GetConnectionString();
@@ -246,7 +248,7 @@ public sealed class PostgreSqlSyncDestinationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact(ConnectionStringVariable)]
     public async Task PostgreSql_destination_rolls_back_mutations_when_checkpoint_cannot_commit()
     {
         var connectionString = GetConnectionString();
@@ -290,7 +292,7 @@ public sealed class PostgreSqlSyncDestinationTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact(ConnectionStringVariable)]
     public async Task PostgreSql_destination_guards_snapshot_epoch_and_completion()
     {
         var connectionString = GetConnectionString();
@@ -380,7 +382,7 @@ public sealed class PostgreSqlSyncDestinationTests
         Assert.False(IsTransient(new InvalidOperationException("Bug.")));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact(ConnectionStringVariable)]
     public async Task Pipeline_retries_a_PostgreSql_serialization_failure_without_a_configured_classifier()
     {
         var connectionString = GetConnectionString();
@@ -426,7 +428,7 @@ public sealed class PostgreSqlSyncDestinationTests
         }
     }
 
-    private static PostgreSqlSyncOptions Options(DbDataSource dataSource, string schema) =>
+    private static PostgreSqlSyncOptions Options(BlueTuskDataSource dataSource, string schema) =>
         new()
         {
             DestinationDataSource = dataSource,
@@ -451,7 +453,7 @@ public sealed class PostgreSqlSyncDestinationTests
             json is null ? ReadOnlyMemory<byte>.Empty : Encoding.UTF8.GetBytes(json),
             json is null ? null : "application/json");
 
-    private static async ValueTask<string?> ReadDocumentAsync(DbDataSource dataSource, string schema)
+    private static async ValueTask<string?> ReadDocumentAsync(BlueTuskDataSource dataSource, string schema)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = connection.CreateCommand();
@@ -460,7 +462,7 @@ public sealed class PostgreSqlSyncDestinationTests
         return value is byte[] bytes ? Encoding.UTF8.GetString(bytes) : null;
     }
 
-    private static async ValueTask<decimal?> ReadCheckpointAsync(DbDataSource dataSource, string schema)
+    private static async ValueTask<decimal?> ReadCheckpointAsync(BlueTuskDataSource dataSource, string schema)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = connection.CreateCommand();
@@ -470,7 +472,7 @@ public sealed class PostgreSqlSyncDestinationTests
     }
 
     private static async ValueTask<long> ReadCountAsync(
-        DbDataSource dataSource,
+        BlueTuskDataSource dataSource,
         string schema,
         string table)
     {
@@ -482,7 +484,7 @@ public sealed class PostgreSqlSyncDestinationTests
             System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    private static async ValueTask DropSchemaAsync(DbDataSource dataSource, string schema)
+    private static async ValueTask DropSchemaAsync(BlueTuskDataSource dataSource, string schema)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = connection.CreateCommand();
@@ -490,13 +492,8 @@ public sealed class PostgreSqlSyncDestinationTests
         _ = await command.ExecuteNonQueryAsync();
     }
 
-    private static string GetConnectionString()
-    {
-        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
-        return string.IsNullOrWhiteSpace(connectionString)
-            ? throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.")
-            : connectionString;
-    }
+    private static string GetConnectionString() =>
+        Environment.GetEnvironmentVariable(ConnectionStringVariable)!;
 
     private static BlueTuskLogSequenceNumber Lsn(ulong value) => new(value);
 

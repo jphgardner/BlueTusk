@@ -100,7 +100,7 @@ internal static class JobValidation
 {
     internal static void Name(string value, string parameter, int maximum = 200)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameter);
         if (value.Length > maximum || value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Job identity exceeds the allowed length or contains a null character.", parameter);
@@ -120,7 +120,7 @@ internal static class JobValidation
         Name(value, nameof(value), 64);
         foreach (char character in value)
         {
-            if (!char.IsAsciiLetterOrDigit(character) && character is not '_' and not '-' and not '.')
+            if (!BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not '_' and not '-' and not '.')
             {
                 throw new ArgumentException("Failure codes must contain only ASCII letters, digits, underscore, dash, or period.", nameof(value));
             }

@@ -12,7 +12,7 @@ public sealed record SyncQuarantineIdentity(
 {
     public static SyncQuarantineIdentity FromRecord(SyncQuarantineRecord record)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         return new SyncQuarantineIdentity(
             record.PipelineId,
             record.Source,
@@ -125,10 +125,10 @@ public sealed class SyncQuarantineReplayCoordinator
         ISyncQuarantineReplayDestination destination,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(transform);
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(transform);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(destination);
         _transform = transform;
         _store = store;
         _source = source;
@@ -222,11 +222,11 @@ public sealed class SyncQuarantineReplayCoordinator
 
     private static void Validate(SyncQuarantineReplayRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Identity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Identity.PipelineId);
-        ArgumentNullException.ThrowIfNull(request.Identity.Source);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.ExpectedTransformFingerprint);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(request.Identity);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Identity.PipelineId);
+        BlueTuskGuard.NotNull(request.Identity.Source);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.ExpectedTransformFingerprint);
         if (request.ExpectedTransformFingerprint.Length != 64 ||
             !request.ExpectedTransformFingerprint.All(Uri.IsHexDigit))
         {
@@ -235,7 +235,7 @@ public sealed class SyncQuarantineReplayCoordinator
                 nameof(request));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.OperationId);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.OperationId);
         if (request.OperationId.Length > MaximumOperationIdLength)
         {
             throw new ArgumentException(

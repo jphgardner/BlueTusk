@@ -3,6 +3,10 @@ name: ContinuousGraph 24-hour release endurance
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: One-job Kubernetes runner label created by eng/runners/invoke-kubernetes-endurance.ps1
+        required: true
+        type: string
       confirmation:
         description: Type RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE to start the release gate
         required: true
@@ -12,14 +16,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: continuous-graph-24-hour-release-endurance
+  group: portable-graph-qualification
   cancel-in-progress: false
 
 jobs:
   graph-endurance:
-    name: PostgreSQL 19 GA ContinuousGraph endurance
-    if: inputs.confirmation == 'RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE'
-    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    name: Portable PostgreSQL ContinuousGraph endurance
+    if: inputs.confirmation == 'RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE' && startsWith(inputs.runner_label, 'bluetusk-kube-')
+    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
     timeout-minutes: 1530
 
     steps:
@@ -28,14 +32,17 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Require the recorded PostgreSQL 19 GA milestone
+      - name: Verify the pinned portable PostgreSQL fixture
         shell: pwsh
         run: |
-          ./eng/verify-postgresql19-programme.ps1 -RequireGeneralAvailability
-          $programme = Get-Content eng/postgresql19-programme.json -Raw |
-            ConvertFrom-Json
-          "BLUETUSK_POSTGRESQL19_GA_IMAGE=$($programme.generalAvailability.image)" |
-            Add-Content -LiteralPath $env:GITHUB_ENV
+          ./eng/verify-release-track.ps1
+          $tracks = Get-Content eng/release-tracks.json -Raw | ConvertFrom-Json
+          $image = $tracks.graph.portablePostgreSqlImage
+          $compose = docker compose -f eng/compose/postgres.yml config --format json | ConvertFrom-Json
+          if ($compose.services.postgres18.image -cne $image) {
+            throw 'The portable Graph fixture does not match the release track digest.'
+          }
+          "BLUETUSK_PORTABLE_GRAPH_IMAGE=$image" | Add-Content -LiteralPath $env:GITHUB_ENV
 
       - name: Build exact ContinuousGraph candidate, SBOM, and provenance
         shell: pwsh
@@ -51,22 +58,39 @@ jobs:
             -Commit '${{ github.sha }}' `
             -NoRestore
 
-      - name: Start PostgreSQL 19 GA
-        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Start PostgreSQL 18
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
 
       - name: Run 24-hour ContinuousGraph recovery endurance
         shell: pwsh
-        env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-        run: >-
-          ./eng/run-continuous-graph-endurance.ps1
-          -Duration '1.00:00:00'
-          -MinimumEvaluations 100000
-          -IntervalMilliseconds 250
-          -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json'
-          -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json'
-          -PostgreSqlImage $env:BLUETUSK_POSTGRESQL19_GA_IMAGE
-          -Configuration Release
+        run: |
+          $portBinding = docker compose -f eng/compose/postgres.yml port postgres18 5432
+          if ($LASTEXITCODE -ne 0 -or $portBinding -isnot [string] -or $portBinding -notmatch ':(?<port>[0-9]+)$') {
+            throw 'Could not resolve the published portable PostgreSQL port.'
+          }
+          $port = [int]$Matches.port
+          $settings = @(docker compose -f eng/compose/postgres.yml exec -T postgres18 printenv POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB)
+          if ($LASTEXITCODE -ne 0 -or $settings.Count -ne 3 -or $settings -contains '') {
+            throw 'Could not read the disposable PostgreSQL connection settings.'
+          }
+          $connection = [System.Data.Common.DbConnectionStringBuilder]::new()
+          $connection['Host'] = 'localhost'
+          $connection['Port'] = $port
+          $connection['Username'] = [string]$settings[0]
+          $connection['Password'] = [string]$settings[1]
+          $connection['Database'] = [string]$settings[2]
+          $connection['SSL Mode'] = 'Disable'
+          $connection['Channel Binding'] = 'Disable'
+          $env:BLUETUSK_TEST_CONNECTION_STRING = $connection.ConnectionString
+
+          ./eng/run-continuous-graph-endurance.ps1 `
+            -Duration '1.00:00:00' `
+            -MinimumEvaluations 100000 `
+            -IntervalMilliseconds 250 `
+            -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json' `
+            -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json' `
+            -PostgreSqlImage $env:BLUETUSK_PORTABLE_GRAPH_IMAGE `
+            -Configuration Release
 
       - name: Verify ContinuousGraph endurance evidence
         shell: pwsh
@@ -77,7 +101,7 @@ jobs:
           -MinimumEvaluations 100000
           -ExpectedCommit '${{ github.sha }}'
           -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json'
-          -ExpectedPostgreSqlImage $env:BLUETUSK_POSTGRESQL19_GA_IMAGE
+          -ExpectedPostgreSqlImage $env:BLUETUSK_PORTABLE_GRAPH_IMAGE
 
       - name: Upload ContinuousGraph endurance evidence
         if: always()
@@ -90,8 +114,8 @@ jobs:
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
-        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+        run: docker compose -f eng/compose/postgres.yml logs postgres18
 
-      - name: Stop PostgreSQL 19
+      - name: Stop PostgreSQL 18
         if: always()
-        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+        run: docker compose -f eng/compose/postgres.yml stop postgres18

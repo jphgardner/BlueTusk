@@ -33,19 +33,19 @@ public sealed class SqlQuery<TArguments, TResult>
         int maximumRows = 1000, int commandTimeoutSeconds = 30,
         int maximumFieldBytes = 1024 * 1024, long maximumResultBytes = 64 * 1024 * 1024)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
-        ArgumentNullException.ThrowIfNull(columns);
-        ArgumentNullException.ThrowIfNull(bind);
-        ArgumentNullException.ThrowIfNull(read);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumRows, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumRows, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(commandTimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(commandTimeoutSeconds, 300);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumFieldBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumFieldBytes, 64 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumResultBytes, maximumFieldBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumResultBytes, 1024L * 1024 * 1024);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(sql);
+        BlueTuskGuard.NotNull(columns);
+        BlueTuskGuard.NotNull(bind);
+        BlueTuskGuard.NotNull(read);
+        BlueTuskGuard.NotLessThan(maximumRows, 1);
+        BlueTuskGuard.NotGreaterThan(maximumRows, 1_000_000);
+        BlueTuskGuard.NotLessThan(commandTimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(commandTimeoutSeconds, 300);
+        BlueTuskGuard.NotLessThan(maximumFieldBytes, 1);
+        BlueTuskGuard.NotGreaterThan(maximumFieldBytes, 64 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(maximumResultBytes, maximumFieldBytes);
+        BlueTuskGuard.NotGreaterThan(maximumResultBytes, 1024L * 1024 * 1024);
         if (Encoding.UTF8.GetByteCount(sql) > 1024 * 1024)
         {
             throw new ArgumentException("SQL contracts are bounded to one MiB.", nameof(sql));
@@ -93,7 +93,7 @@ public sealed class SqlQuery<TArguments, TResult>
     public async IAsyncEnumerable<TResult> ReadAsync(DbConnection connection, TArguments arguments,
         DbTransaction? transaction = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(connection);
+        BlueTuskGuard.NotNull(connection);
         await using var command = CreateCommand(connection, transaction, arguments);
         // The provider may buffer a parameterless query before returning its reader.
         // Bound the server result as well as the rows delivered to the caller.
@@ -146,7 +146,7 @@ public sealed class SqlQuery<TArguments, TResult>
     /// <summary>Asks PostgreSQL to describe a query through a zero-row read-only wrapper; it does not prove application authorization.</summary>
     public async ValueTask ValidateAsync(DbDataSource dataSource, TArguments sampleArguments, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken).ConfigureAwait(false);
         await using (var setup = connection.CreateCommand())
@@ -244,7 +244,7 @@ public sealed class SqlQuery<TArguments, TResult>
             Add(hash, column.IsNullable ? "nullable" : "required");
         }
 
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Add(IncrementalHash hash, string text)

@@ -90,7 +90,7 @@ it. See [sequential readers](../ado-net/sequential-readers.md).
 
 ### SchemaOnly or KeyInfo throws
 
-This is intentional V1 behavior. Both modes are excluded rather than silently
+Both modes are unsupported and never silently
 ignored. Use ordinary result-schema discovery or EF reverse engineering.
 
 ## Type mapping

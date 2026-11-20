@@ -21,7 +21,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         TimeProvider? timeProvider = null,
         Func<BlueTuskConnectionStringBuilder, BlueTuskConnectionPool>? poolFactory = null)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
         _target = settings.TargetSessionAttributes;
         _loadBalanceHosts = settings.LoadBalanceHosts;
@@ -259,7 +259,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
 
     internal override void Return(BlueTuskPooledSession session)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        BlueTuskGuard.NotNull(session);
         session.Owner.Return(session);
     }
 
@@ -582,7 +582,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         var entries = _loadBalanceHosts == BlueTuskLoadBalanceHosts.Random ? _entries.ToArray() : _entries;
         if (_loadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
-            Random.Shared.Shuffle(entries);
+            BlueTuskRuntime.Shuffle(entries);
         }
 
         firstEndpoint = entries[0].Endpoint;
@@ -682,7 +682,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     }
 
     private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
 
     private sealed record PoolEntry(
         BlueTuskHostEndpoint Endpoint,

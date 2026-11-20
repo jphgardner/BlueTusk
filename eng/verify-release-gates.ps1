@@ -409,6 +409,29 @@ if ($Family -in @('Events', 'Jobs', 'Documents', 'Schema', 'Projections',
     & (Join-Path $PSScriptRoot 'verify-expansion-readiness-evidence.ps1') @readinessArguments | Out-Null
 }
 
+if ($version -ceq '1.2.0' -and $Family -cin @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane'))
+{
+    if ($null -ne $fixtureRuns)
+    { throw 'Core 1.2 publication requires live exact-commit package readiness evidence.' }
+    $readyWorkflow = 'core-1.2-package-readiness.yml'
+    $runs = @($verifiedRuns | Where-Object { $_.workflowFile -ceq $readyWorkflow })
+    if ($runs.Count -ne 1) { throw 'Core 1.2 publication requires one validated package readiness run.' }
+
+    Import-Module (Join-Path $PSScriptRoot 'core-package-release-github.psm1')
+    Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
+    Initialize-CorePackageEvidence -Repository $Repository -Token $Token -Commit $headCommit
+    $readyRun = Get-CorePackageEvidenceRun -WorkflowFile $readyWorkflow -RunId $runs[0].runId
+    $artifactName = "verified-core-1.2-package-readiness-$headCommit-$($readyRun.Record.runId)-$($readyRun.Record.runAttempt)"
+    $readyDirectory = Join-Path $repositoryRoot "artifacts/core-release-readiness-$([Guid]::NewGuid().ToString('N'))"
+    $null = Receive-CorePackageEvidenceArtifact -EvidenceRun $readyRun -Name $artifactName -Destination $readyDirectory
+    $receipt = Read-CoreEvidenceJson (Resolve-CoreEvidenceFile $readyDirectory 'verified-core-package-readiness.json')
+    if ($receipt.schemaVersion -ne 1 -or $receipt.releaseVersion -cne $version -or $receipt.scope -cne 'CorePackages' -or
+        $receipt.sourceCommit -cne $headCommit -or $Family -cnotin @($receipt.families) -or
+        $receipt.packageManifestSha256 -cnotmatch '^[0-9a-f]{64}$' -or $receipt.packageProvenanceSha256 -cnotmatch '^[0-9a-f]{64}$' -or
+        $receipt.verifiedRuntimePairs -le 0)
+    { throw 'The retained Core package readiness receipt does not match this release.' }
+}
+
 Write-Output (
     "Verified $Family $channel release '$version' at exact commit $Commit " +
     "using $verifiedDependencyPackages published dependency package(s) and " +

@@ -356,8 +356,10 @@ internal static class SqlContractModel
 
     internal static string DocumentFingerprint(string text)
     {
-#if NET8_0_OR_GREATER
+#if NET9_0_OR_GREATER
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+#elif NET5_0_OR_GREATER
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
 #else
         using var hash = SHA256.Create();
         return BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "").ToLowerInvariant();

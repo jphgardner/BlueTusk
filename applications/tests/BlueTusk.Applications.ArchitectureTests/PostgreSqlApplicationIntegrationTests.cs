@@ -1,9 +1,13 @@
+#if !BLUETUSK_CORE_PACKAGES_ONLY
 using BlueTusk.FraudInvestigation.Application;
+using BlueTusk.FraudInvestigation.Domain;
 using BlueTusk.FraudInvestigation.Infrastructure;
+using BlueTusk.ServiceTopology.Application;
+using BlueTusk.ServiceTopology.Domain;
+using BlueTusk.ServiceTopology.Infrastructure;
+#endif
 using BlueTusk.OrderOperations.Application;
 using BlueTusk.OrderOperations.Infrastructure;
-using BlueTusk.ServiceTopology.Application;
-using BlueTusk.ServiceTopology.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -19,19 +23,22 @@ public sealed class PostgreSqlApplicationIntegrationTests
         await VerifyOrdersAsync(GetDedicatedConnectionString());
     }
 
+#if !BLUETUSK_CORE_PACKAGES_ONLY
     [Fact]
-    [Trait("ReleaseTrack", "ContinuousGraphPreview")]
+    [Trait("ReleaseTrack", "ContinuousGraphPortable")]
     public async Task Topology_migrations_tenant_isolation_and_graph_paths_work()
     {
         await VerifyTopologyAsync(GetDedicatedConnectionString());
     }
 
     [Fact]
-    [Trait("ReleaseTrack", "ContinuousGraphPreview")]
+    [Trait("ReleaseTrack", "ContinuousGraphPortable")]
     public async Task Fraud_migrations_tenant_isolation_and_graph_investigations_work()
     {
         await VerifyFraudAsync(GetDedicatedConnectionString());
     }
+
+#endif
 
     private static string GetDedicatedConnectionString()
     {
@@ -72,6 +79,7 @@ public sealed class PostgreSqlApplicationIntegrationTests
                 TestContext.Current.CancellationToken));
     }
 
+#if !BLUETUSK_CORE_PACKAGES_ONLY
     private static async Task VerifyTopologyAsync(string connectionString)
     {
         var services = new ServiceCollection();
@@ -97,6 +105,13 @@ public sealed class PostgreSqlApplicationIntegrationTests
             [billing.Id, identity.Id],
             await service.FindPathAsync(
                 "tenant-a", billing.Id, identity.Id, TestContext.Current.CancellationToken));
+        var neighbors = await database.PropertyGraph("service_topology_graph")
+            .Match(pattern => pattern.Vertex<ServiceNode>("source", node => node.Id == billing.Id)
+                .Outgoing<ServiceDependency>("edge").Vertex<ServiceNode>("target"))
+            .Select<GraphEndpoint>(projection => projection
+                .Property<ServiceNode, Guid>("target", node => node.Id, row => row.Id))
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(identity.Id, Assert.Single(neighbors).Id);
         Assert.Equal(
             [billing.Id],
             await service.BlastRadiusAsync(
@@ -142,6 +157,13 @@ public sealed class PostgreSqlApplicationIntegrationTests
         var paths = await service.FindSuspiciousPathsAsync(
             "tenant-a", source.Id, 4, 10_000m, TestContext.Current.CancellationToken);
         Assert.Contains(paths, path => path.AccountIds.SequenceEqual([source.Id, destination.Id, mule.Id]));
+        var endpoints = await database.PropertyGraph("fraud_graph")
+            .Match(pattern => pattern.Vertex<Account>("source", account => account.Id == source.Id)
+                .OutgoingPath<Transfer>("path", 2, 2).Vertex<Account>("target"))
+            .Select<GraphEndpoint>(projection => projection
+                .Property<Account, Guid>("target", account => account.Id, row => row.Id))
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(mule.Id, Assert.Single(endpoints).Id);
         var investigationCase = await service.OpenCaseAsync(
             "tenant-b", "velocity", "integration-test", TestContext.Current.CancellationToken);
         investigationCase = await service.AssignCaseAsync(
@@ -167,4 +189,9 @@ public sealed class PostgreSqlApplicationIntegrationTests
         Assert.Single(await repository.ListAlertRulesAsync(
             "tenant-a", TestContext.Current.CancellationToken));
     }
+    private sealed class GraphEndpoint
+    {
+        public Guid Id { get; set; }
+    }
+#endif
 }

@@ -2,7 +2,6 @@ using System.Data.Common;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Documents.Tests;
 
@@ -53,7 +52,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(0, shortSession.PendingCount);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Staged_large_and_short_documents_retain_owned_json_after_serialization_stream_disposal() => WithStoreAsync(async (store, unusedSource) =>
     {
         var first = new TestDocument(new string('界', 32 * 1024), 12, new Customer("Ada🙂"));
@@ -84,7 +83,7 @@ public sealed class DocumentStoreTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new DocumentIndexDefinition("lookup", (DocumentIndexKind)99));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Inserts_and_replaces_roundtrip_source_generated_json_and_revisions() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var session = store.OpenSession("tenant-a");
@@ -102,7 +101,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(99, (await store.LoadAsync("tenant-a", Collection, "1"))!.Value.Count);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Competing_updates_have_one_winner_and_a_meaningful_conflict() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var setup = store.OpenSession("tenant");
@@ -122,7 +121,7 @@ public sealed class DocumentStoreTests
         Assert.True(current.Value.Name is "one" or "two");
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Concurrent_inserts_have_one_winner_without_unique_constraint_errors() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var first = store.OpenSession("tenant");
@@ -136,7 +135,7 @@ public sealed class DocumentStoreTests
         Assert.True(conflict.ActualRevision > 0);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Conflict_rolls_back_writes_across_batches_and_retains_pending_operations() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var setup = store.OpenSession("tenant");
@@ -156,7 +155,7 @@ public sealed class DocumentStoreTests
         Assert.Equal("existing", (await store.LoadAsync("tenant", Collection, "z-existing"))!.Value.Name);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Missing_replace_or_delete_conflicts_and_does_not_create_documents() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var session = store.OpenSession("tenant");
@@ -169,7 +168,7 @@ public sealed class DocumentStoreTests
         Assert.Null(conflict.ActualRevision);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Tenant_and_collection_keys_are_isolated_with_keyset_pages_and_filters() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var a = store.OpenSession("a");
@@ -201,7 +200,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(100, (await store.LoadAsync("a", otherCollection, "000"))!.Value.Count);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Patches_apply_in_order_and_deletion_recreation_cannot_reuse_revisions() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var session = store.OpenSession("tenant");
@@ -231,7 +230,7 @@ public sealed class DocumentStoreTests
         Assert.Equal("recreated", (await store.LoadAsync("tenant", Collection, "1"))!.Value.Name);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Declarative_indexes_are_installed_idempotently_and_reject_definition_changes() => WithStoreAsync(async (store, source) =>
     {
         var gin = new DocumentIndexDefinition("body_gin", DocumentIndexKind.JsonContainment);
@@ -250,7 +249,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(2L, await command.ExecuteScalarAsync());
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Document_schema_migrations_are_bounded_idempotent_and_reject_downgrades() => WithStoreAsync(async (store, unusedSource) =>
     {
         var oldCollection = new DocumentCollectionDefinition<TestDocument>(Collection.Name, TestJsonContext.Default.TestDocument, 1);
@@ -285,7 +284,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(10, (await store.LoadAsync("tenant", Collection, "000"))!.Value.Count);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Pages_stop_at_byte_budget_and_resume_without_skipping_documents() => WithStoreAsync(async (store, unusedSource) =>
     {
         using var session = store.OpenSession("tenant");
@@ -307,7 +306,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(["000", "001", "002", "003"], found);
     }, new DocumentStoreOptions { MaxDocumentBytes = 200, MaxPageBytes = 225 });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Index_catalog_drift_is_detected_instead_of_reporting_missing_index_ready() => WithStoreAsync(async (store, source) =>
     {
         var definition = new DocumentIndexDefinition("body_gin", DocumentIndexKind.JsonContainment);
@@ -319,7 +318,7 @@ public sealed class DocumentStoreTests
         _ = await Assert.ThrowsAsync<InvalidOperationException>(() => store.EnsureIndexAsync(definition).AsTask());
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Canceled_save_does_not_write_and_borrowed_source_remains_usable() => WithStoreAsync(async (store, source) =>
     {
         using var session = store.OpenSession("tenant");
@@ -334,7 +333,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Concurrent_bounded_workload_preserves_committed_rows_and_hot_key_increments() => WithStoreAsync(async (store, source) =>
     {
         const int writers = 8;
@@ -386,7 +385,7 @@ public sealed class DocumentStoreTests
         Assert.Equal(writers * increments, (await store.LoadAsync("hot-key", Collection, "counter"))!.Value.Count);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Storage_initialization_is_concurrent_idempotent_and_checks_configuration() => WithStoreAsync(async (store, source) =>
     {
         await using var second = new DocumentStore(source, store.Options);
@@ -413,7 +412,7 @@ public sealed class DocumentStoreTests
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
 
         await using var source = BlueTuskDataSource.Create(connectionString);

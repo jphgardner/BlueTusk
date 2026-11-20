@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Core', 'ContinuousGraphPreview')]
+    [ValidateSet('Core', 'ContinuousGraphPortable')]
     [string] $ReleaseTrack = 'Core',
     [string] $OutputRoot,
     [switch] $ValidateOnly
@@ -61,13 +61,17 @@ try
     }
     $containerCreated = $true
     $ready = $false
-    foreach ($attempt in 1..30)
+    foreach ($attempt in 1..90)
     {
         & docker exec $containerName pg_isready -h 127.0.0.1 -U postgres -d bluetusk_app_test *> $null
         if ($LASTEXITCODE -eq 0) { $ready = $true; break }
         Start-Sleep -Seconds 1
     }
-    if (-not $ready) { throw 'Pinned PostgreSQL application test container did not become ready.' }
+    if (-not $ready)
+    {
+        & docker logs $containerName *> (Join-Path $outputPath 'postgresql-startup.log')
+        throw 'Pinned PostgreSQL application test container did not become ready. See postgresql-startup.log.'
+    }
     $portText = (& docker port $containerName 5432/tcp).Trim()
     if ($LASTEXITCODE -ne 0 -or $portText -notmatch '^127\.0\.0\.1:(\d+)$')
     { throw "Could not resolve the loopback test container port '$portText'." }

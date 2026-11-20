@@ -74,8 +74,8 @@ public static class SyncDestinationConformanceSuite
         ISyncDestinationConformanceHarness harness,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(harness);
-        ArgumentException.ThrowIfNullOrWhiteSpace(harness.PipelineId);
+        BlueTuskGuard.NotNull(harness);
+        BlueTuskGuard.NotNullOrWhiteSpace(harness.PipelineId);
         var transform = SyncTransformVersion.Create("conformance", "v1");
         var destination = await harness.CreateDestinationAsync(cancellationToken)
             .ConfigureAwait(false) ??

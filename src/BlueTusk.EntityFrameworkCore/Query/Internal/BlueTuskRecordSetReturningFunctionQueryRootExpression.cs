@@ -9,7 +9,11 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
     IReadOnlyList<Expression> arguments,
     IReadOnlyList<string?> argumentStoreTypes,
     IReadOnlyList<BlueTuskSetReturningFunctionColumn> columns)
+#if BLUETUSK_EF7_OR_GREATER
     : QueryRootExpression(elementType)
+#else
+    : BlueTuskLegacyQueryRootExpression(elementType)
+#endif
 {
     public string Name { get; } = name;
 

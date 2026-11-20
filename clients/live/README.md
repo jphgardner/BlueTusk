@@ -1,6 +1,6 @@
 # @bluetusk/live
 
-Framework-neutral BlueTusk Live client for the fetch-streaming SSE endpoint. It applies keyed result events, persists the latest signed resume token through an application callback, reconnects with bounded exponential backoff, and discards a stale token only after the server explicitly reports an expired replay window.
+Framework-neutral BlueTusk Live client for the fetch-streaming SSE endpoint. It applies keyed result events, persists the latest signed resume token through an application callback, reconnects with bounded exponential backoff, and drops the token when the server signals that a fresh result is required.
 
 ```ts
 const query = new BlueTuskLiveClient({
@@ -17,6 +17,13 @@ query.start();
 Call `stop()` when the owning view is destroyed. The default `createQuery`
 path never sends SQL or expression trees; `query` is the name of a trusted
 server registration.
+
+Reconnect backoff also covers successful HTTP responses whose streams close
+prematurely. A stream must remain open for `healthyStreamDurationMs` (30 seconds
+by default) before a later failure resets the retry count. Replay expiry gets
+one immediate fresh-snapshot attempt; repeated expiry/reset responses then use
+the same exponential, jittered delay, capped at `maximumRetryDelayMs`.
+Stopping a query aborts both streaming reads and pending delays.
 
 ## Bounded updates
 

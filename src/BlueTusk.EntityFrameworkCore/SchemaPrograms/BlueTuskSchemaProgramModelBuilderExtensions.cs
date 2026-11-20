@@ -14,7 +14,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         Action<BlueTuskOperatorBuilder> configure,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskOperatorBuilder(name, schema);
         configure(builder);
         return HasOperator(modelBuilder, builder.Build());
@@ -58,7 +58,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         Action<BlueTuskOperatorClassBuilder> configure,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskOperatorClassBuilder(name, schema, dataType, indexMethod);
         configure(builder);
         return HasOperatorClass(modelBuilder, builder.Build());
@@ -100,7 +100,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         Action<BlueTuskAggregateBuilder> configure,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskAggregateBuilder(name, schema, identityArgumentsSql);
         configure(builder);
         return HasAggregate(modelBuilder, builder.Build());
@@ -117,7 +117,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
 
     public static BlueTuskSchemaProgramDefinitionSet GetSchemaPrograms(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskSchemaProgramMetadata.Get(model);
     }
 
@@ -126,7 +126,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskSchemaProgramMetadata.Deserialize(serializedDefinitions));
     }
 
@@ -138,7 +138,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         Func<T, TKey> key)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var current = BlueTuskSchemaProgramMetadata.Get(modelBuilder.Model);
         var itemKey = key(definition);
         var values = get(current).Where(item => !EqualityComparer<TKey>.Default.Equals(key(item), itemKey))

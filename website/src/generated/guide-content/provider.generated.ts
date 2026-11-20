@@ -4,617 +4,312 @@ import type { GuideManifestEntry } from '../../app/content/models';
 export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "quickstart",
-    "summary": "Create a table, write rows in a transaction, read them back, and register the data source with dependency injection.",
-    "keywords": [
-      "quickstart",
-      "transaction",
-      "reader",
-      "dependency injection"
-    ],
-    "order": 1,
-    "listed": true,
-    "title": "ADO.NET quick start: a small web API",
-    "sourcePath": "docs/ado-net/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/quickstart.md",
+    "categoryLabel": "ADO.NET",
+    "slug": "overview",
+    "title": "ADO.NET",
+    "summary": "Learn the ADO.NET API for connections, commands, readers, and transactions.",
+    "order": -1,
     "headings": [
       {
-        "id": "ado-net-quick-start-a-small-web-api",
-        "text": "ADO.NET quick start: a small web API",
-        "level": 1
-      },
-      {
-        "id": "1-check-the-prerequisites",
-        "text": "1. Check the prerequisites",
+        "id": "run-one-query",
+        "text": "Run one query",
         "level": 2
       },
       {
-        "id": "2-start-postgresql",
-        "text": "2. Start PostgreSQL",
+        "id": "choose-the-api-by-task",
+        "text": "Choose the API by task",
         "level": 2
       },
       {
-        "id": "3-create-the-project",
-        "text": "3. Create the project",
-        "level": 2
-      },
-      {
-        "id": "4-write-the-code",
-        "text": "4. Write the code",
-        "level": 2
-      },
-      {
-        "id": "5-run-it",
-        "text": "5. Run it",
-        "level": 2
-      },
-      {
-        "id": "6-call-the-api",
-        "text": "6. Call the API",
-        "level": 2
-      },
-      {
-        "id": "what-just-happened",
-        "text": "What just happened",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "how-the-provider-works",
+        "text": "How the provider works",
         "level": 2
       }
     ],
-    "wordCount": 869,
-    "readMinutes": 4,
-    "searchText": "ADO.NET quick start: a small web API This quick start helps you build a minimal ASP.NET Core API that creates a table, inserts rows inside a transaction and reads them back with a data reader. The data source is registered with dependency injection, the way you would in a real app. It takes about 10 minutes. If you have never run BlueTusk before, do the [5-minute first app](../getting-started/quickstart.md) first. This page builds on it. 1. Check the prerequisites You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. 2. Start PostgreSQL If the `bluetusk-postgres` container from the 5-minute app is still running, skip this step. Otherwise start one with Docker: In bash, use `\\` instead of the backtick to continue lines. 3. Create the project `BlueTusk.Data.DependencyInjection` brings in `BlueTusk.Data`, so one package is enough. See [Install BlueTusk](../getting-started/install.md) to choose a release channel or pin a version. 4. Write the code Replace the contents of `Program.cs`: 5. Run it Set the connection string and start the app: In bash, use `export ConnectionStrings__Todo=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, for every other server. 6. Call the API Open a second terminal and add two items in one transaction: You should see the new IDs, then the rows: Now send a batch where the second title breaks the `CHECK` constraint: The request fails with `400 Bad Request` and this message: Run `Invoke-RestMethod http://localhost:5050/todos` again. \"Walk the dog\" is not there, because the transaction was rolled back. Finally, check the health endpoint: With bash, use `curl`: `curl http://localhost:5050/todos` prints JSON: `[{\"id\":1,\"title\":\"Buy milk\",\"done\":false},{\"id\":2,\"title\":\"Write docs\",\"done\":false}]`. What just happened `AddDataSource` registered one `BlueTuskDataSource` as a singleton. The same inst",
+    "sourcePath": "docs/ado-net/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/README.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>ADO.NET quick start: a small web API</h1>\n<p>This quick start helps you build a minimal ASP.NET Core API that creates a\ntable, inserts rows inside a transaction and reads them back with a data\nreader. The data source is registered with dependency injection, the way you\nwould in a real app. It takes about 10 minutes.</p>\n<p>If you have never run BlueTusk before, do the\n<a href=\"/documentation/getting-started/quickstart\">5-minute first app</a> first. This page builds\non it.</p>\n<h2>1. Check the prerequisites</h2>\n<p>You need:</p>\n<ul>\n<li>the <a href=\"https://dotnet.microsoft.com/download/dotnet/10.0\" target=\"_blank\" rel=\"noreferrer\">.NET 10 SDK</a>;</li>\n<li>a PostgreSQL 15, 16, 17 or 18 server you can use for testing.</li>\n</ul>\n<h2>2. Start PostgreSQL</h2>\n<p>If the <code>bluetusk-postgres</code> container from the 5-minute app is still running,\nskip this step. Otherwise start one with Docker:</p>\n"
+        "html": "<p>Use <code>BlueTusk.Data</code> when you want direct PostgreSQL commands, transactions,\nbatches, COPY, notifications, or replication from .NET. If your application is\nprimarily LINQ and change tracking, start with the <a href=\"/documentation/ef-core/overview\">EF Core guide</a>.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "docker run --name bluetusk-postgres `\n  -e POSTGRES_PASSWORD=local-dev-only `\n  -p 5432:5432 `\n  -d postgres:18\n",
-        "highlighted": "docker run <span class=\"hljs-literal\">--name</span> bluetusk<span class=\"hljs-literal\">-postgres</span> `\n  <span class=\"hljs-literal\">-e</span> POSTGRES_PASSWORD=local<span class=\"hljs-literal\">-dev-only</span> `\n  <span class=\"hljs-literal\">-p</span> <span class=\"hljs-number\">5432</span>:<span class=\"hljs-number\">5432</span> `\n  <span class=\"hljs-literal\">-d</span> postgres:<span class=\"hljs-number\">18</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>In bash, use <code>\\</code> instead of the backtick to continue lines.</p>\n<h2>3. Create the project</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet new web --framework net10.0 --name BlueTuskTodo\ncd BlueTuskTodo\ndotnet add package BlueTusk.Data.DependencyInjection\n",
-        "highlighted": "dotnet new web <span class=\"hljs-literal\">--framework</span> net10.<span class=\"hljs-number\">0</span> <span class=\"hljs-literal\">--name</span> BlueTuskTodo\n<span class=\"hljs-built_in\">cd</span> BlueTuskTodo\ndotnet add package BlueTusk.Data.DependencyInjection\n",
-        "language": "powershell"
+        "kind": "heading",
+        "heading": {
+          "id": "run-one-query",
+          "text": "Run one query",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p><code>BlueTusk.Data.DependencyInjection</code> brings in <code>BlueTusk.Data</code>, so one package\nis enough. See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> to choose a\nrelease channel or pin a version.</p>\n<h2>4. Write the code</h2>\n<p>Replace the contents of <code>Program.cs</code>:</p>\n"
+        "html": "<p>Create one long-lived data source and short-lived commands:</p>\n"
       },
       {
         "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.DependencyInjection;\n\nvar builder = WebApplication.CreateBuilder(args);\n\nvar connectionString = builder.Configuration.GetConnectionString(\"Todo\")\n    ?? throw new InvalidOperationException(\"Set ConnectionStrings__Todo first.\");\n\n// Register one BlueTuskDataSource for the whole app, plus a health check.\nbuilder.Services.AddDataSource(connectionString);\n\nvar app = builder.Build();\n\n// Create the table when the app starts.\nvar dataSource = app.Services.GetRequiredService<BlueTuskDataSource>();\nawait using (var create = dataSource.CreateCommand(\n    \"\"\"\n    CREATE TABLE IF NOT EXISTS todo_items (\n        id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n        title text NOT NULL CHECK (title <> ''),\n        done boolean NOT NULL DEFAULT false\n    )\n    \"\"\"))\n{\n    await create.ExecuteNonQueryAsync();\n}\n\n// Insert every title in one transaction: all rows are saved, or none are.\napp.MapPost(\"/todos\", async (string[] titles, BlueTuskDataSource db, CancellationToken ct) =>\n{\n    await using var connection = await db.OpenConnectionAsync(ct);\n    await using var transaction = await connection.BeginTransactionAsync(ct);\n\n    try\n    {\n        var ids = new List<long>();\n        foreach (var title in titles)\n        {\n            await using var insert = new BlueTuskCommand(\n                \"INSERT INTO todo_items (title) VALUES (@title) RETURNING id\",\n                connection)\n            {\n                Transaction = transaction,\n            };\n            insert.Parameters.Add(new BlueTuskParameter<string>(title) { ParameterName = \"title\" });\n            ids.Add(await insert.ExecuteScalarAsync<long>(ct));\n        }\n\n        await transaction.CommitAsync(ct);\n        return Results.Ok(ids);\n    }\n    catch (BlueTuskException ex) when (ex.SqlState == \"23514\") // check_violation\n    {\n        // Leaving without CommitAsync rolls the transaction back.\n        return Results.BadRequest(ex.Message);\n    }\n});\n\n// Read the rows back with a data reader.\napp.MapGet(\"/todos\", async (BlueTuskDataSource db, CancellationToken ct) =>\n{\n    await using var command = db.CreateCommand(\n        \"SELECT id, title, done FROM todo_items ORDER BY id\");\n    await using var reader = await command.ExecuteReaderAsync(ct);\n\n    var items = new List<TodoItem>();\n    while (await reader.ReadAsync(ct))\n    {\n        items.Add(new TodoItem(reader.GetInt64(0), reader.GetString(1), reader.GetBoolean(2)));\n    }\n\n    return items;\n});\n\n// Report whether the app can reach PostgreSQL.\napp.MapHealthChecks(\"/health\");\n\napp.Run();\n\nrecord TodoItem(long Id, string Title, bool Done);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.DependencyInjection;\n\n<span class=\"hljs-keyword\">var</span> builder = WebApplication.CreateBuilder(<span class=\"hljs-keyword\">args</span>);\n\n<span class=\"hljs-keyword\">var</span> connectionString = builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;Todo&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;Set ConnectionStrings__Todo first.&quot;</span>);\n\n<span class=\"hljs-comment\">// Register one BlueTuskDataSource for the whole app, plus a health check.</span>\nbuilder.Services.AddDataSource(connectionString);\n\n<span class=\"hljs-keyword\">var</span> app = builder.Build();\n\n<span class=\"hljs-comment\">// Create the table when the app starts.</span>\n<span class=\"hljs-keyword\">var</span> dataSource = app.Services.GetRequiredService&lt;BlueTuskDataSource&gt;();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> create = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    CREATE TABLE IF NOT EXISTS todo_items (\n        id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n        title text NOT NULL CHECK (title &lt;&gt; &#x27;&#x27;),\n        done boolean NOT NULL DEFAULT false\n    )\n    &quot;&quot;&quot;</span>))\n{\n    <span class=\"hljs-keyword\">await</span> create.ExecuteNonQueryAsync();\n}\n\n<span class=\"hljs-comment\">// Insert every title in one transaction: all rows are saved, or none are.</span>\napp.MapPost(<span class=\"hljs-string\">&quot;/todos&quot;</span>, <span class=\"hljs-keyword\">async</span> (<span class=\"hljs-built_in\">string</span>[] titles, BlueTuskDataSource db, CancellationToken ct) =&gt;\n{\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> db.OpenConnectionAsync(ct);\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> transaction = <span class=\"hljs-keyword\">await</span> connection.BeginTransactionAsync(ct);\n\n    <span class=\"hljs-keyword\">try</span>\n    {\n        <span class=\"hljs-keyword\">var</span> ids = <span class=\"hljs-keyword\">new</span> List&lt;<span class=\"hljs-built_in\">long</span>&gt;();\n        <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> title <span class=\"hljs-keyword\">in</span> titles)\n        {\n            <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> insert = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n                <span class=\"hljs-string\">&quot;INSERT INTO todo_items (title) VALUES (@title) RETURNING id&quot;</span>,\n                connection)\n            {\n                Transaction = transaction,\n            };\n            insert.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(title) { ParameterName = <span class=\"hljs-string\">&quot;title&quot;</span> });\n            ids.Add(<span class=\"hljs-keyword\">await</span> insert.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">long</span>&gt;(ct));\n        }\n\n        <span class=\"hljs-keyword\">await</span> transaction.CommitAsync(ct);\n        <span class=\"hljs-keyword\">return</span> Results.Ok(ids);\n    }\n    <span class=\"hljs-keyword\">catch</span> (BlueTuskException ex) <span class=\"hljs-keyword\">when</span> (ex.SqlState == <span class=\"hljs-string\">&quot;23514&quot;</span>) <span class=\"hljs-comment\">// check_violation</span>\n    {\n        <span class=\"hljs-comment\">// Leaving without CommitAsync rolls the transaction back.</span>\n        <span class=\"hljs-keyword\">return</span> Results.BadRequest(ex.Message);\n    }\n});\n\n<span class=\"hljs-comment\">// Read the rows back with a data reader.</span>\napp.MapGet(<span class=\"hljs-string\">&quot;/todos&quot;</span>, <span class=\"hljs-keyword\">async</span> (BlueTuskDataSource db, CancellationToken ct) =&gt;\n{\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = db.CreateCommand(\n        <span class=\"hljs-string\">&quot;SELECT id, title, done FROM todo_items ORDER BY id&quot;</span>);\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(ct);\n\n    <span class=\"hljs-keyword\">var</span> items = <span class=\"hljs-keyword\">new</span> List&lt;TodoItem&gt;();\n    <span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> reader.ReadAsync(ct))\n    {\n        items.Add(<span class=\"hljs-keyword\">new</span> TodoItem(reader.GetInt64(<span class=\"hljs-number\">0</span>), reader.GetString(<span class=\"hljs-number\">1</span>), reader.GetBoolean(<span class=\"hljs-number\">2</span>)));\n    }\n\n    <span class=\"hljs-keyword\">return</span> items;\n});\n\n<span class=\"hljs-comment\">// Report whether the app can reach PostgreSQL.</span>\napp.MapHealthChecks(<span class=\"hljs-string\">&quot;/health&quot;</span>);\n\napp.Run();\n\n<span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">TodoItem</span>(<span class=\"hljs-title\">long</span> <span class=\"hljs-title\">Id</span>, <span class=\"hljs-title\">string</span> <span class=\"hljs-title\">Title</span>, <span class=\"hljs-title\">bool</span> <span class=\"hljs-title\">Done</span>);\n",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var command = dataSource.CreateCommand(\n    \"SELECT @left::int4 + @right::int4\");\n\ncommand.Parameters.Add(new BlueTuskParameter<int>(20) { ParameterName = \"left\" });\ncommand.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = \"right\" });\n\nvar answer = await command.ExecuteScalarAsync<int>(); // 42",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT @left::int4 + @right::int4&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>) { ParameterName = <span class=\"hljs-string\">&quot;left&quot;</span> });\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>) { ParameterName = <span class=\"hljs-string\">&quot;right&quot;</span> });\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;(); <span class=\"hljs-comment\">// 42</span>",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>5. Run it</h2>\n<p>Set the connection string and start the app:</p>\n"
+        "html": "<p>Values are bound separately from SQL. Keep the data source for the application\nlifetime so commands and logical connections share its bounded physical pool.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "$env:ConnectionStrings__Todo = \"Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --urls http://localhost:5050\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:ConnectionStrings__Todo</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=local-dev-only;Database=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--urls</span> http://localhost:<span class=\"hljs-number\">5050</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>In bash, use <code>export ConnectionStrings__Todo=&quot;...&quot;</code>.</p>\n<blockquote>\n<p><strong>Warning:</strong> <code>SSL Mode=Disable</code> is only for a local test container. Keep the\ndefault, <code>SSL Mode=VerifyFull</code>, for every other server.</p>\n</blockquote>\n<h2>6. Call the API</h2>\n<p>Open a second terminal and add two items in one transaction:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "Invoke-RestMethod -Method Post -Uri http://localhost:5050/todos `\n  -ContentType application/json -Body '[\"Buy milk\",\"Write docs\"]'\nInvoke-RestMethod http://localhost:5050/todos\n",
-        "highlighted": "<span class=\"hljs-built_in\">Invoke-RestMethod</span> <span class=\"hljs-literal\">-Method</span> Post <span class=\"hljs-literal\">-Uri</span> http://localhost:<span class=\"hljs-number\">5050</span>/todos `\n  <span class=\"hljs-literal\">-ContentType</span> application/json <span class=\"hljs-literal\">-Body</span> <span class=\"hljs-string\">&#x27;[&quot;Buy milk&quot;,&quot;Write docs&quot;]&#x27;</span>\n<span class=\"hljs-built_in\">Invoke-RestMethod</span> http://localhost:<span class=\"hljs-number\">5050</span>/todos\n",
-        "language": "powershell"
+        "kind": "heading",
+        "heading": {
+          "id": "choose-the-api-by-task",
+          "text": "Choose the API by task",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>You should see the new IDs, then the rows:</p>\n"
+        "html": "<table>\n<thead>\n<tr>\n<th>Task</th>\n<th>API or guide</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>One command without connection-affine state</td>\n<td><code>dataSource.CreateCommand(...)</code></td>\n</tr>\n<tr>\n<td>Several commands in one transaction</td>\n<td>Open a connection, then begin a transaction.</td>\n</tr>\n<tr>\n<td>Several independent statements in one round trip</td>\n<td><a href=\"/documentation/provider/batches\">Batches</a></td>\n</tr>\n<tr>\n<td>Bulk import or export</td>\n<td><a href=\"/documentation/provider/copy\">COPY</a></td>\n</tr>\n<tr>\n<td>Large field without buffering the complete row</td>\n<td><a href=\"/documentation/provider/sequential-readers\">Sequential readers</a></td>\n</tr>\n<tr>\n<td>Primary/standby routing</td>\n<td><a href=\"/documentation/provider/multi-host\">Multi-host</a></td>\n</tr>\n<tr>\n<td>High-concurrency session-neutral commands</td>\n<td><a href=\"/documentation/provider/pooling\">Pooling and multiplexing</a></td>\n</tr>\n<tr>\n<td>Reclaim table space with PostgreSQL 19</td>\n<td><a href=\"/documentation/provider/repack\">Native REPACK</a></td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/provider/ado-net-compatibility\">compatibility matrix</a> records supported and explicitly\nexcluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "how-the-provider-works",
+          "text": "How the provider works",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Build one long-lived <code>BlueTuskDataSource</code> per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with <code>new BlueTuskConnection(...)</code> are unpooled convenience/compatibility paths.</p>\n<p>Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers\nSCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI\nrequests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are\nsupported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected\nfor new deployments. A server request for cleartext password authentication is accepted over\nan established TLS connection. It is rejected on an unencrypted connection unless the caller\ndeliberately sets <code>Allow Unencrypted Password=true</code>, which is intended only for trusted\ncompatibility environments:</p>\n"
       },
       {
         "kind": "code",
-        "code": "1\n2\n\nid title       done\n-- -----       ----\n 1 Buy milk   False\n 2 Write docs False\n",
-        "highlighted": "1\n2\n\nid title       done\n-- -----       ----\n 1 Buy milk   False\n 2 Write docs False\n",
+        "code": "SSL Mode=VerifyFull;Channel Binding=Prefer",
+        "highlighted": "SSL Mode=VerifyFull;Channel Binding=Prefer",
+        "language": "text"
+      },
+      {
+        "kind": "code",
+        "code": "SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true",
+        "highlighted": "SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>Now send a batch where the second title breaks the <code>CHECK</code> constraint:</p>\n"
+        "html": "<p>Password and SCRAM frames use protocol storage that is overwritten immediately after the\ntransport flushes it, and temporary MD5/password byte arrays are cleared. A .NET connection\nstring and its immutable password <code>string</code> cannot be zeroed by the provider, so applications\nshould keep their lifetime narrow and avoid logging them. See PostgreSQL’s current\n<a href=\"https://www.postgresql.org/docs/current/auth-password.html\">password authentication</a> and\n<a href=\"https://www.postgresql.org/docs/current/encryption-options.html\">encryption options</a> for the\nserver-side configuration and MD5 migration guidance.</p>\n<p>The <a href=\"/documentation/provider/authentication\">authentication guide</a> documents password-file lookup,\npassword and access-token callbacks, refresh timing, credential precedence,\nGSSAPI/Kerberos service principals and credentials, TLS client certificates,\nand callback-based certificate selection. Optional <a href=\"/documentation/provider/cloud-identity\">cloud identity\nadapters</a> integrate AWS RDS/Aurora, Azure Database for\nPostgreSQL, and Google Cloud SQL while keeping their SDKs out of the core\nprovider.</p>\n<p>Commands without parameters use PostgreSQL’s simple-query protocol and receive text fields. Commands with positional <code>$1</code>, <code>$2</code>, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named <code>@name</code> and <code>:name</code> placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The <a href=\"/documentation/provider/types\">type mapping reference</a> lists the formats, CLR types, and edge-case behavior implemented by the current provider.</p>\n<p>See <a href=\"/documentation/provider/nativeaot\">NativeAOT and trimming</a> for source-generated mappings and\nthe runtime features available in a trimmed application.\nSet <code>ExecutionMode</code> to <code>Auto</code> (the default), <code>Simple</code>, or <code>Extended</code> to control protocol selection. Extended mode can be selected for parameterless commands; simple mode rejects parameters and prepared commands rather than interpolating values.</p>\n<p>Automatic preparation is opt-in per physical connection. <code>Max Auto Prepare</code> bounds the server statements and <code>Auto Prepare Min Usages</code> controls promotion (defaults: disabled and five uses). The cache keys statements by rewritten SQL and PostgreSQL parameter OIDs, evicts the least-recently-used statement, and invalidates itself after <code>DISCARD ALL</code> or <code>DEALLOCATE ALL</code>.</p>\n"
       },
       {
         "kind": "code",
-        "code": "Invoke-RestMethod -Method Post -Uri http://localhost:5050/todos `\n  -ContentType application/json -Body '[\"Walk the dog\",\"\"]'\n",
-        "highlighted": "<span class=\"hljs-built_in\">Invoke-RestMethod</span> <span class=\"hljs-literal\">-Method</span> Post <span class=\"hljs-literal\">-Uri</span> http://localhost:<span class=\"hljs-number\">5050</span>/todos `\n  <span class=\"hljs-literal\">-ContentType</span> application/json <span class=\"hljs-literal\">-Body</span> <span class=\"hljs-string\">&#x27;[&quot;Walk the dog&quot;,&quot;&quot;]&#x27;</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The request fails with <code>400 Bad Request</code> and this message:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "new row for relation \"todo_items\" violates check constraint \"todo_items_title_check\"\n",
-        "highlighted": "new row for relation &quot;todo_items&quot; violates check constraint &quot;todo_items_title_check&quot;\n",
+        "code": "Max Auto Prepare=100;Auto Prepare Min Usages=5",
+        "highlighted": "Max Auto Prepare=100;Auto Prepare Min Usages=5",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>Run <code>Invoke-RestMethod http://localhost:5050/todos</code> again. “Walk the dog” is\nnot there, because the transaction was rolled back. Finally, check the health\nendpoint:</p>\n"
+        "html": "<p>BlueTusk infers built-in PostgreSQL type OIDs from <code>DbType</code> or the CLR value. A null parameter must set <code>DbType</code>, <code>PostgreSqlTypeOid</code>, or <code>PostgreSqlTypeName</code>; this avoids relying on ambiguous server inference. <code>PostgreSqlTypeName</code> resolves schema-qualified catalogue types through the connection’s runtime registry and supports scalar and array names, including quoted identifiers:</p>\n"
       },
       {
         "kind": "code",
-        "code": "Invoke-RestMethod http://localhost:5050/health\n",
-        "highlighted": "<span class=\"hljs-built_in\">Invoke-RestMethod</span> http://localhost:<span class=\"hljs-number\">5050</span>/health\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "code",
-        "code": "Healthy\n",
-        "highlighted": "Healthy\n",
-        "language": "text"
+        "code": "command.Parameters.Add(new BlueTuskParameter(null)\n{\n    PostgreSqlTypeName = \"app.order_status\",\n});\ncommand.Parameters.Add(new BlueTuskParameter(null)\n{\n    PostgreSqlTypeName = \"app.order_status[]\",\n});",
+        "highlighted": "command.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter(<span class=\"hljs-literal\">null</span>)\n{\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;app.order_status&quot;</span>,\n});\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter(<span class=\"hljs-literal\">null</span>)\n{\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;app.order_status[]&quot;</span>,\n});",
+        "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>With bash, use <code>curl</code>:</p>\n"
+        "html": "<p>The current immutable catalogue snapshot is available from either\n<code>dataSource.TypeRegistry</code> or an open <code>connection.TypeRegistry</code>. After creating,\naltering, or dropping a user-defined type at runtime, call\n<code>ReloadTypes()</code>/<code>ReloadTypesAsync()</code> on the long-lived data source. The same\nmethods are available on an open directly constructed connection for its local,\nunpooled catalogue.</p>\n<p>Explicit preparation is available synchronously and asynchronously on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.</p>\n"
       },
       {
         "kind": "code",
-        "code": "curl -X POST http://localhost:5050/todos -H \"Content-Type: application/json\" -d '[\"Buy milk\",\"Write docs\"]'\ncurl http://localhost:5050/todos\ncurl http://localhost:5050/health\n",
-        "highlighted": "curl -X POST http://localhost:5050/todos -H <span class=\"hljs-string\">&quot;Content-Type: application/json&quot;</span> -d <span class=\"hljs-string\">&#x27;[&quot;Buy milk&quot;,&quot;Write docs&quot;]&#x27;</span>\ncurl http://localhost:5050/todos\ncurl http://localhost:5050/health\n",
-        "language": "bash"
+        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var command = new BlueTuskCommand(\"SELECT $1::int4 + $2::int4\", connection);\ncommand.Parameters.Add(new BlueTuskParameter<int>(20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(22));\n\nawait command.PrepareAsync();\nvar answer = await command.ExecuteScalarAsync<int>();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4 + $2::int4&quot;</span>, connection);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">await</span> command.PrepareAsync();\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();",
+        "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>curl http://localhost:5050/todos</code> prints JSON:\n<code>[{&quot;id&quot;:1,&quot;title&quot;:&quot;Buy milk&quot;,&quot;done&quot;:false},{&quot;id&quot;:2,&quot;title&quot;:&quot;Write docs&quot;,&quot;done&quot;:false}]</code>.</p>\n<h2>What just happened</h2>\n<ul>\n<li><code>AddDataSource</code> registered one <code>BlueTuskDataSource</code> as a singleton. The same\ninstance is also available as <code>DbDataSource</code>. It owns the connection pool.\nIt also added a health check named <code>bluetusk</code>, which runs <code>SELECT 1</code>.</li>\n<li><code>POST /todos</code> opened a connection, started a transaction and enlisted each\ncommand in it with <code>Transaction = transaction</code>. A command on a connection\nwith an open transaction must be enlisted, or BlueTusk throws.</li>\n<li>The <code>CHECK</code> failure arrived as a <code>BlueTuskException</code> with\n<code>SqlState == &quot;23514&quot;</code>. The handler returned without calling <code>CommitAsync</code>,\nso disposing the transaction rolled it back.</li>\n<li><code>GET /todos</code> used <code>dataSource.CreateCommand(...)</code>, which borrows a pooled\nconnection only while the command runs.</li>\n</ul>\n<h2>Clean up</h2>\n<p>Stop the app with Ctrl+C, then drop the table or remove the container:</p>\n"
+        "html": "<p>The equivalent synchronous path includes data-source ownership, pool warm-up and checkout, type discovery, preparation, transactions, readers, batches, timeouts, and PostgreSQL cancellation:</p>\n"
       },
       {
         "kind": "code",
-        "code": "docker exec bluetusk-postgres psql -U postgres -c \"DROP TABLE todo_items\"\ndocker rm --force bluetusk-postgres\n",
-        "highlighted": "docker exec bluetusk<span class=\"hljs-literal\">-postgres</span> psql <span class=\"hljs-literal\">-U</span> postgres <span class=\"hljs-literal\">-c</span> <span class=\"hljs-string\">&quot;DROP TABLE todo_items&quot;</span>\ndocker <span class=\"hljs-built_in\">rm</span> <span class=\"hljs-literal\">--force</span> bluetusk<span class=\"hljs-literal\">-postgres</span>\n",
-        "language": "powershell"
+        "code": "using var dataSource = BlueTuskDataSource.Create(connectionString);\ndataSource.WarmUp();\nusing var connection = dataSource.OpenConnection();\nusing var command = new BlueTuskCommand(\"SELECT @value::int4 + 1\", connection);\ncommand.Parameters.Add(new BlueTuskParameter<int>(41) { ParameterName = \"value\" });\n\ncommand.Prepare();\nvar answer = (int)command.ExecuteScalar()!;",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = BlueTuskDataSource.Create(connectionString);\ndataSource.WarmUp();\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = dataSource.OpenConnection();\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(<span class=\"hljs-string\">&quot;SELECT @value::int4 + 1&quot;</span>, connection);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">41</span>) { ParameterName = <span class=\"hljs-string\">&quot;value&quot;</span> });\n\ncommand.Prepare();\n<span class=\"hljs-keyword\">var</span> answer = (<span class=\"hljs-built_in\">int</span>)command.ExecuteScalar()!;",
+        "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/provider/concepts\">Concepts</a>: connections, commands, transactions and pooling.</li>\n<li><a href=\"/documentation/provider/dependency-injection\">Dependency injection and health checks</a>: probes\nand registration options.</li>\n<li><a href=\"/documentation/provider/configuration\">Configuration</a>: every connection-string keyword.</li>\n<li><a href=\"/documentation/provider/batches\">Batches</a>: send several statements in one round trip.</li>\n<li><a href=\"/documentation/provider/troubleshooting\">Troubleshooting</a>: common errors and their fixes.</li>\n</ul>\n"
+        "html": "<p>Transactions use PostgreSQL transaction blocks and require explicit command enlistment:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable);\nawait using var command = new BlueTuskCommand(\"UPDATE app.accounts SET balance = balance - $1 WHERE id = $2\", connection)\n{\n    Transaction = transaction,\n};\ncommand.Parameters.Add(new BlueTuskParameter<decimal>(10m));\ncommand.Parameters.Add(new BlueTuskParameter<int>(42));\n\nawait command.ExecuteNonQueryAsync();\nawait transaction.CommitAsync();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> transaction = <span class=\"hljs-keyword\">await</span> connection.BeginTransactionAsync(IsolationLevel.Serializable);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(<span class=\"hljs-string\">&quot;UPDATE app.accounts SET balance = balance - $1 WHERE id = $2&quot;</span>, connection)\n{\n    Transaction = transaction,\n};\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">decimal</span>&gt;(<span class=\"hljs-number\">10m</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">42</span>));\n\n<span class=\"hljs-keyword\">await</span> command.ExecuteNonQueryAsync();\n<span class=\"hljs-keyword\">await</span> transaction.CommitAsync();",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Cancellation tokens and <code>CommandTimeout</code> send PostgreSQL <code>CancelRequest</code> on a separate connection. BlueTusk waits for PostgreSQL to close that one-shot cancellation channel, then drains the original connection through <code>ReadyForQuery</code> before returning, so a late cancellation cannot escape into the next command and a cancelled connection remains reusable. <code>Cancel()</code> and <code>CancelAsync()</code> provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL’s transaction in the failed state and requires rollback.</p>\n<p>Low-level clients can use <a href=\"/documentation/provider/pipeline-mode\">PostgreSQL pipeline mode</a> to send multiple extended-query synchronization groups in one flush. This is a Client-layer API rather than an ADO.NET batching alias; <code>BlueTuskBatch</code> remains the provider-neutral <code>DbBatch</code> surface.</p>\n<p><code>BlueTuskDataSource</code> owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues <code>DISCARD ALL</code> before handing the session to another caller. See <a href=\"/documentation/provider/pooling\">Connection pooling</a> for sizing, lifetime, warm-up, statistics, and drain controls.</p>\n<p>Opt-in bounded statement multiplexing shares session-neutral commands across a\nfixed number of worker lanes. The <a href=\"/documentation/provider/multiplexing-compatibility\">multiplexing compatibility\nmatrix</a> defines strict fallback, session-state,\nfailure, PgBouncer, metrics, and performance-evidence behavior.</p>\n<p><a href=\"/documentation/provider/multi-host\">Multi-host connections</a> support ordered or randomized attempts, shared or per-host ports, and primary/standby/read-write/read-only target selection.</p>\n<p>Connection-owned <a href=\"/documentation/provider/copy\">COPY APIs</a> stream raw text, CSV, or binary payloads to and from PostgreSQL while preserving exclusive use of the physical session.</p>\n<p>Connection-owned <a href=\"/documentation/provider/notifications\"><code>LISTEN</code>/<code>NOTIFY</code> APIs</a> deliver PostgreSQL notifications through a bounded asynchronous stream while leaving the primary connection session available for commands.</p>\n<p>Transactional <a href=\"/documentation/provider/large-objects\">large-object streams</a> support asynchronous creation, deletion, reads, writes, 64-bit seeks, and truncation.</p>\n<p><a href=\"/documentation/provider/batches\"><code>BlueTuskBatch</code></a> implements <code>DbBatch</code>/<code>DbBatchCommand</code> with parameters, ordered multiple results, preparation, transactions, timeouts, cancellation, and data-source-owned execution.</p>\n<p><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md\">Diagnostics and observability</a> documents redaction-safe\nconnection/command activities, OpenTelemetry metrics, query tags, and opt-in\nslow-command events.</p>\n<p><a href=\"/documentation/provider/sequential-readers\">Sequential readers</a> use incremental portals and backend-frame reads. Unlimited reads use the unnamed portal; positive fetch sizes use bounded named portals. Their <code>GetStream</code> and <code>GetTextReader</code> paths consume binary <code>bytea</code>, text, JSON, and JSONB directly from the active network payload. Buffered readers retain the existing random-access behavior. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams have separate native synchronous and asynchronous paths.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "concepts",
-    "summary": "How data sources, connections, commands, protocols, preparation, transactions and pooling work.",
-    "keywords": [
-      "concepts",
-      "data source",
-      "protocol",
-      "prepare",
-      "pool"
-    ],
-    "order": 2,
-    "listed": true,
-    "title": "ADO.NET concepts",
-    "sourcePath": "docs/ado-net/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/concepts.md",
+    "categoryLabel": "ADO.NET",
+    "slug": "dependency-injection",
+    "title": "Dependency injection and health checks",
+    "summary": "Register a shared data source and configure an application health check.",
+    "order": 0,
     "headings": [
       {
-        "id": "ado-net-concepts",
-        "text": "ADO.NET concepts",
-        "level": 1
-      },
-      {
-        "id": "who-owns-what",
-        "text": "Who owns what",
+        "id": "registration",
+        "text": "Registration",
         "level": 2
       },
       {
-        "id": "how-a-command-is-sent",
-        "text": "How a command is sent",
+        "id": "consuming-the-data-source",
+        "text": "Consuming the data source",
         "level": 2
       },
       {
-        "id": "preparation",
-        "text": "Preparation",
+        "id": "readiness-health-check",
+        "text": "Readiness health check",
         "level": 2
       },
       {
-        "id": "transactions",
-        "text": "Transactions",
+        "id": "liveness-versus-readiness",
+        "text": "Liveness versus readiness",
         "level": 2
       },
       {
-        "id": "timeouts-and-cancellation",
-        "text": "Timeouts and cancellation",
+        "id": "ownership-and-disposal",
+        "text": "Ownership and disposal",
         "level": 2
       },
       {
-        "id": "pooling-and-reset",
-        "text": "Pooling and reset",
+        "id": "testing-registrations",
+        "text": "Testing registrations",
         "level": 2
       },
       {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      },
-      {
-        "id": "how-types-are-resolved",
-        "text": "How types are resolved",
-        "level": 2
-      },
-      {
-        "id": "errors",
-        "text": "Errors",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "migration-from-npgsql-di",
+        "text": "Migration from Npgsql DI",
         "level": 2
       }
     ],
-    "wordCount": 1329,
-    "readMinutes": 7,
-    "searchText": "ADO.NET concepts This page explains the model behind `BlueTusk.Data`: which object owns what, how commands reach PostgreSQL, and what happens to a session between uses. Read [Core concepts](../getting-started/concepts.md) first for the shared terms (data source, pooling, parameters, type catalogue). Who owns what **Data source.** Create one per connection string and keep it. Register it as a singleton. Disposing it closes the pool. **Connection.** A short-lived lease on one physical session. Open it late, dispose it early. Use one when several commands must run on the same session: a transaction, a temporary table, `SET`, explicit preparation, COPY or `LISTEN`. **Command.** Pick the form that matches the work: You need Use One independent statement `dataSource.CreateCommand(sql)` Several statements on one session, or a transaction `new BlueTuskCommand(sql, connection)` Several independent statements in one round trip `connection.CreateBatch()` or `dataSource.CreateBatch()` ([Batches](batches.md)) `connection.CreateCommand()` is the standard ADO.NET method and is typed as `DbCommand`, so BlueTusk-only members such as `ExecuteScalarAsync<T>()` are not visible on it. Use one of the forms in the table instead. `new BlueTuskConnection(connectionString)` creates a connection outside any data source. It is not pooled and loads its own type catalogue. Prefer `dataSource.OpenConnectionAsync()`. How a command is sent PostgreSQL has two query protocols. BlueTusk chooses for you. Command Protocol Result format No parameters Simple query Text Parameters, a prepared command, or `CommandBehavior.SequentialAccess` Extended query (Parse, Bind, Execute) Binary where possible Parameter values always travel separately from the SQL text. You can write placeholders as `@name`, `:name` or `$1`, `$2`. Do not mix named and positional placeholders in one command. BlueTusk rewrites named placeholders to positional ones and skips quoted strings, dollar-quoted bodies and comments. `BlueTuskComm",
+    "sourcePath": "docs/ado-net/dependency-injection.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/dependency-injection.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>ADO.NET concepts</h1>\n<p>This page explains the model behind <code>BlueTusk.Data</code>: which object owns what,\nhow commands reach PostgreSQL, and what happens to a session between uses. Read\n<a href=\"/documentation/getting-started/concepts\">Core concepts</a> first for the shared terms\n(data source, pooling, parameters, type catalogue).</p>\n<h2>Who owns what</h2>\n"
+        "html": "<p><code>BlueTusk.Data.DependencyInjection</code> provides host registration\nfor applications that use <code>Microsoft.Extensions.DependencyInjection</code> and\n<code>Microsoft.Extensions.Diagnostics.HealthChecks</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "registration",
+          "text": "Registration",
+          "level": 2
+        }
       },
       {
         "kind": "code",
-        "code": "BlueTuskDataSource        one per configuration, lives as long as the app\n ├─ connection pool       physical PostgreSQL sessions (one pool per host)\n ├─ type catalogue        loaded from the server on first use\n │\n ├─ CreateCommand(sql)    borrows a session only while the command runs\n └─ OpenConnectionAsync() BlueTuskConnection: holds one session until disposed\n        ├─ BlueTuskTransaction\n        ├─ new BlueTuskCommand(sql, connection)\n        └─ CreateBatch(), COPY, LISTEN, large objects\n",
-        "highlighted": "BlueTuskDataSource        one per configuration, lives as long as the app\n ├─ connection pool       physical PostgreSQL sessions (one pool per host)\n ├─ type catalogue        loaded from the server on first use\n │\n ├─ CreateCommand(sql)    borrows a session only while the command runs\n └─ OpenConnectionAsync() BlueTuskConnection: holds one session until disposed\n        ├─ BlueTuskTransaction\n        ├─ new BlueTuskCommand(sql, connection)\n        └─ CreateBatch(), COPY, LISTEN, large objects\n",
-        "language": "text"
-      },
-      {
-        "kind": "html",
-        "html": "<ul>\n<li><strong>Data source.</strong> Create one per connection string and keep it. Register it\nas a singleton. Disposing it closes the pool.</li>\n<li><strong>Connection.</strong> A short-lived lease on one physical session. Open it late,\ndispose it early. Use one when several commands must run on the same session:\na transaction, a temporary table, <code>SET</code>, explicit preparation, COPY or\n<code>LISTEN</code>.</li>\n<li><strong>Command.</strong> Pick the form that matches the work:</li>\n</ul>\n<table>\n<thead>\n<tr>\n<th>You need</th>\n<th>Use</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>One independent statement</td>\n<td><code>dataSource.CreateCommand(sql)</code></td>\n</tr>\n<tr>\n<td>Several statements on one session, or a transaction</td>\n<td><code>new BlueTuskCommand(sql, connection)</code></td>\n</tr>\n<tr>\n<td>Several independent statements in one round trip</td>\n<td><code>connection.CreateBatch()</code> or <code>dataSource.CreateBatch()</code> (<a href=\"/documentation/provider/batches\">Batches</a>)</td>\n</tr>\n</tbody>\n</table>\n<p><code>connection.CreateCommand()</code> is the standard ADO.NET method and is typed as\n<code>DbCommand</code>, so BlueTusk-only members such as <code>ExecuteScalarAsync&lt;T&gt;()</code> are not\nvisible on it. Use one of the forms in the table instead.</p>\n<p><code>new BlueTuskConnection(connectionString)</code> creates a connection outside any\ndata source. It is not pooled and loads its own type catalogue. Prefer\n<code>dataSource.OpenConnectionAsync()</code>.</p>\n<h2>How a command is sent</h2>\n<p>PostgreSQL has two query protocols. BlueTusk chooses for you.</p>\n<table>\n<thead>\n<tr>\n<th>Command</th>\n<th>Protocol</th>\n<th>Result format</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>No parameters</td>\n<td>Simple query</td>\n<td>Text</td>\n</tr>\n<tr>\n<td>Parameters, a prepared command, or <code>CommandBehavior.SequentialAccess</code></td>\n<td>Extended query (Parse, Bind, Execute)</td>\n<td>Binary where possible</td>\n</tr>\n</tbody>\n</table>\n<p>Parameter values always travel separately from the SQL text. You can write\nplaceholders as <code>@name</code>, <code>:name</code> or <code>$1</code>, <code>$2</code>. Do not mix named and\npositional placeholders in one command. BlueTusk rewrites named placeholders to\npositional ones and skips quoted strings, dollar-quoted bodies and comments.</p>\n<p><code>BlueTuskCommand.ExecutionMode</code> overrides the choice: <code>Auto</code> (default),\n<code>Simple</code> or <code>Extended</code>. <code>Simple</code> cannot be used with parameters or a prepared\ncommand; BlueTusk throws instead of pasting values into SQL.</p>\n<h2>Preparation</h2>\n<p>A prepared statement is parsed and planned once on one PostgreSQL session, then\nreused. There are two ways to get one.</p>\n<p><strong>Explicit.</strong> Call <code>Prepare()</code> or <code>PrepareAsync()</code> on a command that belongs to\nan open connection:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var command = new BlueTuskCommand(\n    \"SELECT name FROM app.customers WHERE id = $1\", connection);\nvar idParameter = new BlueTuskParameter<long>(0);\ncommand.Parameters.Add(idParameter);\n\nawait command.PrepareAsync();\nforeach (var id in customerIds)\n{\n    idParameter.TypedValue = id;\n    Console.WriteLine(await command.ExecuteScalarAsync<string>());\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT name FROM app.customers WHERE id = $1&quot;</span>, connection);\n<span class=\"hljs-keyword\">var</span> idParameter = <span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">0</span>);\ncommand.Parameters.Add(idParameter);\n\n<span class=\"hljs-keyword\">await</span> command.PrepareAsync();\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> id <span class=\"hljs-keyword\">in</span> customerIds)\n{\n    idParameter.TypedValue = id;\n    Console.WriteLine(<span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">string</span>&gt;());\n}\n",
+        "code": "services.AddDataSource(\n    configuration.GetConnectionString(\"PostgreSQL\")!,\n    builder =>\n    {\n        builder.ConfigureDiagnostics(diagnostics);\n        builder.ConfigureTypes(types);\n    },\n    healthCheckName: \"postgresql\");",
+        "highlighted": "services.AddDataSource(\n    configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!,\n    builder =&gt;\n    {\n        builder.ConfigureDiagnostics(diagnostics);\n        builder.ConfigureTypes(types);\n    },\n    healthCheckName: <span class=\"hljs-string\">&quot;postgresql&quot;</span>);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Commands from <code>dataSource.CreateCommand(...)</code> cannot be prepared, because they\ndo not hold a session.</p>\n<p><strong>Automatic.</strong> Set <code>Max Auto Prepare</code> to a positive number. After a statement\nhas run <code>Auto Prepare Min Usages</code> times (default 5) on one physical session,\nBlueTusk prepares it there. Automatic preparation is off by default.</p>\n<p>When a session goes back to the pool, BlueTusk runs <code>DISCARD ALL</code>, which drops\nevery prepared statement on it. Prepared statements therefore last for one\nlease. They help code that repeats a statement many times on one open\nconnection. They do not help code that runs one command per request.</p>\n<h2>Transactions</h2>\n"
+        "html": "<p>The registration creates one long-lived <code>BlueTuskDataSource</code>. The same\ninstance is resolvable as:</p>\n<ul>\n<li><code>BlueTuskDataSource</code> for provider-specific APIs; and</li>\n<li><code>DbDataSource</code> for provider-neutral application and library code.</li>\n</ul>\n<p>Do not register a data source as transient or create one per request. The data\nsource owns the physical pool and immutable provider configuration.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "consuming-the-data-source",
+          "text": "Consuming the data source",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Provider-neutral service:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable);\nawait using var command = new BlueTuskCommand(\n    \"UPDATE app.accounts SET balance = balance - @amount WHERE id = @id\", connection)\n{\n    Transaction = transaction,\n};\ncommand.Parameters.Add(new BlueTuskParameter<decimal>(10m) { ParameterName = \"amount\" });\ncommand.Parameters.Add(new BlueTuskParameter<long>(42) { ParameterName = \"id\" });\n\nawait command.ExecuteNonQueryAsync();\nawait transaction.CommitAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> transaction = <span class=\"hljs-keyword\">await</span> connection.BeginTransactionAsync(IsolationLevel.Serializable);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;UPDATE app.accounts SET balance = balance - @amount WHERE id = @id&quot;</span>, connection)\n{\n    Transaction = transaction,\n};\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">decimal</span>&gt;(<span class=\"hljs-number\">10m</span>) { ParameterName = <span class=\"hljs-string\">&quot;amount&quot;</span> });\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">42</span>) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> command.ExecuteNonQueryAsync();\n<span class=\"hljs-keyword\">await</span> transaction.CommitAsync();\n",
+        "code": "public sealed class AccountReader(DbDataSource dataSource)\n{\n    public async Task<Account?> FindAsync(\n        long id,\n        CancellationToken cancellationToken)\n    {\n        await using var command = dataSource.CreateCommand(\n            \"SELECT id, name FROM accounts WHERE id = @id\");\n        var parameter = command.CreateParameter();\n        parameter.ParameterName = \"id\";\n        parameter.DbType = DbType.Int64;\n        parameter.Value = id;\n        command.Parameters.Add(parameter);\n\n        await using var reader = await command.ExecuteReaderAsync(\n            CommandBehavior.SingleRow,\n            cancellationToken);\n        return await reader.ReadAsync(cancellationToken)\n            ? new Account(reader.GetInt64(0), reader.GetString(1))\n            : null;\n    }\n}",
+        "highlighted": "<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">AccountReader</span>(<span class=\"hljs-params\">DbDataSource dataSource</span>)</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> Task&lt;Account?&gt; FindAsync(\n        <span class=\"hljs-built_in\">long</span> id,\n        CancellationToken cancellationToken)\n    {\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n            <span class=\"hljs-string\">&quot;SELECT id, name FROM accounts WHERE id = @id&quot;</span>);\n        <span class=\"hljs-keyword\">var</span> parameter = command.CreateParameter();\n        parameter.ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span>;\n        parameter.DbType = DbType.Int64;\n        parameter.Value = id;\n        command.Parameters.Add(parameter);\n\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(\n            CommandBehavior.SingleRow,\n            cancellationToken);\n        <span class=\"hljs-keyword\">return</span> <span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken)\n            ? <span class=\"hljs-keyword\">new</span> Account(reader.GetInt64(<span class=\"hljs-number\">0</span>), reader.GetString(<span class=\"hljs-number\">1</span>))\n            : <span class=\"hljs-literal\">null</span>;\n    }\n}",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Rules:</p>\n<ul>\n<li>Set <code>Transaction</code> on every command that runs while the transaction is open.\nAn unenlisted command throws <code>InvalidOperationException</code>.</li>\n<li><code>await using</code> a transaction that was not committed rolls it back. A\nsynchronous <code>Dispose()</code> of an uncommitted transaction closes the connection\ninstead, and PostgreSQL rolls back.</li>\n<li>After any error inside a transaction, PostgreSQL rejects further commands\nwith SQLSTATE <code>25P02</code> until you roll back.</li>\n<li>For savepoints, run <code>SAVEPOINT name</code>, <code>ROLLBACK TO SAVEPOINT name</code> and\n<code>RELEASE SAVEPOINT name</code> as enlisted commands. <code>DbTransaction.Save()</code> and the\nnamed <code>Rollback(...)</code> overloads throw <code>NotSupportedException</code>.</li>\n<li>Ambient <code>TransactionScope</code> and distributed transactions are not supported.\nSee <a href=\"/documentation/provider/ado-net-compatibility\">Compatibility</a>.</li>\n</ul>\n<h2>Timeouts and cancellation</h2>\n<table>\n<thead>\n<tr>\n<th>Limit</th>\n<th>Default</th>\n<th>What it limits</th>\n<th>On expiry</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Timeout</code> keyword</td>\n<td>15 s</td>\n<td>Resolving and connecting the socket to one host</td>\n<td>Connection error</td>\n</tr>\n<tr>\n<td><code>Timeout</code> keyword</td>\n<td>15 s</td>\n<td>Waiting for a free pooled connection when the pool is full</td>\n<td><code>TimeoutException</code></td>\n</tr>\n<tr>\n<td><code>CommandTimeout</code></td>\n<td>30 s (<code>0</code> = none)</td>\n<td>One command’s execution</td>\n<td><code>TimeoutException</code></td>\n</tr>\n<tr>\n<td>Your <code>CancellationToken</code></td>\n<td>none</td>\n<td>Whatever you pass it to</td>\n<td><code>OperationCanceledException</code></td>\n</tr>\n</tbody>\n</table>\n<p>When a command times out or is cancelled, BlueTusk sends a PostgreSQL cancel\nrequest on a separate connection, then reads the original connection until it\nis idle again. The connection stays usable. Inside a transaction, the\ntransaction is now aborted and must be rolled back.</p>\n<p>When the pool is full, an open waits until a connection is returned, its\ntoken is cancelled, or <code>Timeout</code> expires. <strong>Behaviour change in 1.1.0:</strong> in\n1.0.0 and 1.1.0-rc.1 this wait had no time limit. See\n<a href=\"/documentation/provider/pooling#what-happens-when-the-pool-is-full\">What happens when the pool is full?</a>.</p>\n<h2>Pooling and reset</h2>\n<p>Each data source has its own pool (one pool per host for\n<a href=\"/documentation/provider/multi-host\">multi-host</a> sources). <code>Maximum Pool Size</code> defaults to 100.</p>\n<p>Before a used session is handed to another caller, BlueTusk:</p>\n<ol>\n<li>rolls back any open or failed transaction;</li>\n<li>runs <code>DISCARD ALL</code>, which clears temporary tables, <code>SET</code> values, prepared\nstatements, <code>LISTEN</code> registrations and advisory locks;</li>\n<li>checks that the session is still open and idle.</li>\n</ol>\n<p>So session state never leaks between callers, and you cannot rely on it\nsurviving between leases either. Set per-session values inside the connection\nthat needs them. See <a href=\"/documentation/provider/pooling\">Connection pooling</a>.</p>\n<h2>Multiplexing</h2>\n<p>Multiplexing is an opt-in way to run many independent commands over a few\nsessions. It applies only to commands created with\n<code>dataSource.CreateCommand(...)</code> whose SQL does not depend on session state.\nEverything else (connection-owned commands, transactions, <code>SET</code>, COPY,\n<code>LISTEN</code>, cursors) uses a normal session. Turn it on with <code>Multiplexing=true</code> or\n<code>EnableMultiplexing(...)</code>, and control one command with\n<code>BlueTuskCommand.MultiplexingMode</code> (<code>Auto</code>, <code>Require</code>, <code>Disable</code>). See\n<a href=\"/documentation/provider/pooling#statement-multiplexing\">Pooling and multiplexing</a> and the\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">routing table</a>.</p>\n<h2>How types are resolved</h2>\n<p>The data source loads the server’s type catalogue the first time it opens a\nconnection. For each parameter, BlueTusk picks the PostgreSQL type in this\norder:</p>\n<ol>\n<li><code>PostgreSqlTypeOid</code>;</li>\n<li><code>PostgreSqlTypeName</code> (schema-qualified, for example <code>pg_catalog.jsonb</code> or\n<code>app.order_status[]</code>);</li>\n<li><code>DbType</code>, when you set it;</li>\n<li>the CLR type of the value (<code>int</code> is <code>int4</code>, <code>string</code> is <code>text</code>, <code>Guid</code> is\n<code>uuid</code>, and so on).</li>\n</ol>\n<p>A <code>null</code> value has no CLR type to go on, so it needs one of the first three,\neven in a typed <code>BlueTuskParameter&lt;string?&gt;</code>. Some CLR types are ambiguous. For example, <code>string[]</code> needs\n<code>PostgreSqlTypeName = &quot;pg_catalog.text[]&quot;</code>, and a <code>string</code> that must be <code>jsonb</code>\nneeds <code>PostgreSqlTypeName = &quot;pg_catalog.jsonb&quot;</code>. <code>TimeSpan</code> maps to <code>time</code>, not\n<code>interval</code>.</p>\n<p>Map your own enums and composites once on the builder with <code>MapEnum</code> and\n<code>MapComposite</code>. The type does not have to exist yet when the data source\nfirst connects; only a value that uses it fails until it does. If you create\nor change a type while the app runs, call\n<code>dataSource.ReloadTypesAsync()</code>. Until then, values of the new type are read as\nan opaque <code>BlueTuskUnknownValue</code>, and <code>PostgreSqlTypeName</code> cannot find it. See\n<a href=\"/documentation/provider/types\">PostgreSQL types</a>.</p>\n<h2>Errors</h2>\n<p>Errors reported by PostgreSQL arrive as <code>BlueTuskException</code>, which derives\nfrom <code>DbException</code>. Check <code>SqlState</code> (for example <code>23505</code> for a unique\nviolation) and <code>Severity</code>. Most connection failures are also\n<code>BlueTuskException</code>, with the cause in <code>InnerException</code>. See <a href=\"/documentation/provider/troubleshooting\">Troubleshooting</a>.</p>\n<h2>Next steps</h2>\n<ul>\n<li><a href=\"/documentation/provider/quickstart\">Quick start</a></li>\n<li><a href=\"/documentation/provider/configuration\">Configuration</a></li>\n<li><a href=\"/documentation/provider/pooling\">Connection pooling</a></li>\n<li><a href=\"/documentation/provider/batches\">Batches</a></li>\n</ul>\n"
+        "html": "<p>Provider-specific code can resolve <code>BlueTuskDataSource</code> when it needs a\ndedicated replication session, PostgreSQL type configuration or another\nBlueTusk-only surface.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "readiness-health-check",
+          "text": "Readiness health check",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>When <code>healthCheckName</code> is supplied, registration adds a check tagged:</p>\n<ul>\n<li><code>bluetusk</code></li>\n<li><code>ready</code></li>\n</ul>\n<p>The check opens a logical connection and executes <code>SELECT 1</code>. It verifies the\npath an application needs for ordinary database work: configuration, DNS,\nnetwork reachability, authentication, pool acquisition and a server\nround-trip.</p>\n<p>It does not prove:</p>\n<ul>\n<li>that every migration has been applied;</li>\n<li>that a replication slot is healthy;</li>\n<li>that a standby has caught up;</li>\n<li>that a Sync destination is reachable; or</li>\n<li>that the application has domain-level read/write permission.</li>\n</ul>\n<p>Add separate checks for those responsibilities.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "liveness-versus-readiness",
+          "text": "Liveness versus readiness",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Database connectivity normally belongs in readiness, not liveness. Restarting\na healthy process because PostgreSQL is briefly unavailable can amplify an\nincident.</p>\n<p>Recommended policy:</p>\n<table>\n<thead>\n<tr>\n<th>Probe</th>\n<th>Includes BlueTusk check?</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Liveness</td>\n<td>No</td>\n<td>Process is running and not deadlocked</td>\n</tr>\n<tr>\n<td>Readiness</td>\n<td>Yes</td>\n<td>Instance can accept work that requires PostgreSQL</td>\n</tr>\n<tr>\n<td>Startup</td>\n<td>Optional</td>\n<td>Slow initialization or migration coordination</td>\n</tr>\n</tbody>\n</table>\n<p>Configure the host’s health-check timeout below its request deadline and above\nnormal pool-acquisition plus network latency. Avoid sub-second probe intervals\nthat create load during a database incident.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "ownership-and-disposal",
+          "text": "Ownership and disposal",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>The dependency-injection container disposes the registered data source when the\nhost stops. Application services should dispose only the logical connections,\ncommands, readers and transactions they create.</p>\n<p>If an application owns multiple PostgreSQL configurations, register named\nwrapper services or explicit application abstractions. Avoid service-locator\nselection by raw connection string.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "testing-registrations",
+          "text": "Testing registrations",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A unit test can resolve both service types and assert reference equality. A\nlive integration test should execute the readiness check against the selected\nPostgreSQL test container.</p>\n<p>The repository coverage is in\n<code>tests/BlueTusk.Data.DependencyInjection.Tests</code>. Live cases read\n<code>BLUETUSK_TEST_CONNECTION_STRING</code> and skip when it is absent; the dedicated CI\nmatrix supplies it.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "migration-from-npgsql-di",
+          "text": "Migration from Npgsql DI",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Provider-neutral services that consume <code>DbDataSource</code>, <code>DbConnection</code>,\n<code>DbCommand</code>, Dapper and explicit <code>DbTransaction</code> can usually retain those\nabstractions. Replace the registration and review provider-specific:</p>\n<ul>\n<li>type names and OIDs;</li>\n<li>connection-string options;</li>\n<li>notification and replication APIs;</li>\n<li>routine invocation conventions; and</li>\n<li>ambient transaction assumptions.</li>\n</ul>\n<p>See the <a href=\"/documentation/provider/ado-net-compatibility\">ADO.NET compatibility matrix</a> for explicit\nexclusions.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "configuration",
-    "summary": "Every connection-string keyword and data source option, with types and defaults.",
-    "keywords": [
-      "configuration",
-      "connection string",
-      "keywords",
-      "options"
-    ],
-    "order": 3,
-    "listed": true,
-    "title": "ADO.NET configuration",
-    "sourcePath": "docs/ado-net/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/configuration.md",
-    "headings": [
-      {
-        "id": "ado-net-configuration",
-        "text": "ADO.NET configuration",
-        "level": 1
-      },
-      {
-        "id": "where-settings-go",
-        "text": "Where settings go",
-        "level": 2
-      },
-      {
-        "id": "how-the-connection-string-is-parsed",
-        "text": "How the connection string is parsed",
-        "level": 2
-      },
-      {
-        "id": "reject-unknown-keywords",
-        "text": "Reject unknown keywords",
-        "level": 3
-      },
-      {
-        "id": "connection",
-        "text": "Connection",
-        "level": 2
-      },
-      {
-        "id": "security-and-tls",
-        "text": "Security and TLS",
-        "level": 2
-      },
-      {
-        "id": "authentication",
-        "text": "Authentication",
-        "level": 2
-      },
-      {
-        "id": "pooling",
-        "text": "Pooling",
-        "level": 2
-      },
-      {
-        "id": "commands-and-preparation",
-        "text": "Commands and preparation",
-        "level": 2
-      },
-      {
-        "id": "multi-host-routing",
-        "text": "Multi-host routing",
-        "level": 2
-      },
-      {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      },
-      {
-        "id": "diagnostics",
-        "text": "Diagnostics",
-        "level": 2
-      },
-      {
-        "id": "data-source-builder-options",
-        "text": "Data source builder options",
-        "level": 2
-      },
-      {
-        "id": "multiplexing-options",
-        "text": "Multiplexing options",
-        "level": 3
-      },
-      {
-        "id": "per-command-settings",
-        "text": "Per-command settings",
-        "level": 2
-      },
-      {
-        "id": "dependency-injection-registration",
-        "text": "Dependency-injection registration",
-        "level": 2
-      },
-      {
-        "id": "full-reference",
-        "text": "Full reference",
-        "level": 2
-      }
-    ],
-    "wordCount": 2021,
-    "readMinutes": 10,
-    "searchText": "ADO.NET configuration This page lists every setting you can give `BlueTusk.Data`: connection-string keywords, `BlueTuskDataSourceBuilder` options, per-command properties and the dependency-injection registration. Names and defaults come from the 1.1.0 source. Where settings go Setting kind Where you set it Server, credentials, TLS, pooling, routing Connection string (this page's keyword tables) Callbacks, certificates, type mappings, diagnostics, multiplexing tuning `BlueTuskDataSourceBuilder` Command timeout, protocol, streaming Properties on each `BlueTuskCommand` or `BlueTuskBatch` Host registration `services.AddDataSource(...)` A typical app keeps the connection string in configuration and the rest in code: `AddDataSource` is in `BlueTusk.Data.DependencyInjection`, and `BlueTuskDiagnosticsOptions` is in `BlueTusk.Diagnostics`. How the connection string is parsed Keywords are case-insensitive. Write them as shown, with spaces (`SSL Mode`, not `SslMode`). There are **no aliases**. `Server`, `User ID`, `UID`, `Pwd` and `SslMode` are not recognized. **Unknown keywords are ignored by default.** A misspelled keyword silently falls back to the default. For example, `SslMode=Disable` leaves `SSL Mode` at `VerifyFull`. Check spelling against the tables below, or [turn on rejection](#reject-unknown-keywords). Enum values are case-insensitive, and `-`, `_` and spaces are ignored, so `read-write`, `ReadWrite` and `read_write` are the same. An invalid value throws `ArgumentException` (for example `'verify-ca' is not a valid value for SSL Mode.`) when the data source is created. Durations are whole seconds. `BlueTuskConnectionStringBuilder` exposes every keyword as a typed property (shown in the **Property** column). Reject unknown keywords For compatibility with 1.0.0, BlueTusk accepts and ignores keywords it does not recognize, such as Npgsql's `Command Timeout` or a misspelled `Usernme`. To make them an error, as Npgsql does, turn on the `BlueTusk.Data.RejectUnknownConnect",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>ADO.NET configuration</h1>\n<p>This page lists every setting you can give <code>BlueTusk.Data</code>: connection-string\nkeywords, <code>BlueTuskDataSourceBuilder</code> options, per-command properties and the\ndependency-injection registration. Names and defaults come from the 1.1.0\nsource.</p>\n<h2>Where settings go</h2>\n<table>\n<thead>\n<tr>\n<th>Setting kind</th>\n<th>Where you set it</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Server, credentials, TLS, pooling, routing</td>\n<td>Connection string (this page’s keyword tables)</td>\n</tr>\n<tr>\n<td>Callbacks, certificates, type mappings, diagnostics, multiplexing tuning</td>\n<td><code>BlueTuskDataSourceBuilder</code></td>\n</tr>\n<tr>\n<td>Command timeout, protocol, streaming</td>\n<td>Properties on each <code>BlueTuskCommand</code> or <code>BlueTuskBatch</code></td>\n</tr>\n<tr>\n<td>Host registration</td>\n<td><code>services.AddDataSource(...)</code></td>\n</tr>\n</tbody>\n</table>\n<p>A typical app keeps the connection string in configuration and the rest in\ncode:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "{\n  \"ConnectionStrings\": {\n    \"Orders\": \"Host=db.example.com;Database=orders;Username=orders_app;Maximum Pool Size=50;Application Name=orders-api\"\n  }\n}\n",
-        "highlighted": "<span class=\"hljs-punctuation\">{</span>\n  <span class=\"hljs-attr\">&quot;ConnectionStrings&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-punctuation\">{</span>\n    <span class=\"hljs-attr\">&quot;Orders&quot;</span><span class=\"hljs-punctuation\">:</span> <span class=\"hljs-string\">&quot;Host=db.example.com;Database=orders;Username=orders_app;Maximum Pool Size=50;Application Name=orders-api&quot;</span>\n  <span class=\"hljs-punctuation\">}</span>\n<span class=\"hljs-punctuation\">}</span>\n",
-        "language": "json"
-      },
-      {
-        "kind": "code",
-        "code": "builder.Services.AddDataSource(\n    builder.Configuration.GetConnectionString(\"Orders\")!,\n    dataSourceBuilder => dataSourceBuilder\n        .UsePasswordProvider(async (request, cancellationToken) =>\n            await secrets.GetPasswordAsync(request.Username, cancellationToken))\n        .ConfigureDiagnostics(new BlueTuskDiagnosticsOptions\n        {\n            SlowCommandThreshold = TimeSpan.FromMilliseconds(500),\n        }));\n",
-        "highlighted": "builder.Services.AddDataSource(\n    builder.Configuration.GetConnectionString(<span class=\"hljs-string\">&quot;Orders&quot;</span>)!,\n    dataSourceBuilder =&gt; dataSourceBuilder\n        .UsePasswordProvider(<span class=\"hljs-keyword\">async</span> (request, cancellationToken) =&gt;\n            <span class=\"hljs-keyword\">await</span> secrets.GetPasswordAsync(request.Username, cancellationToken))\n        .ConfigureDiagnostics(<span class=\"hljs-keyword\">new</span> BlueTuskDiagnosticsOptions\n        {\n            SlowCommandThreshold = TimeSpan.FromMilliseconds(<span class=\"hljs-number\">500</span>),\n        }));\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>AddDataSource</code> is in <code>BlueTusk.Data.DependencyInjection</code>, and\n<code>BlueTuskDiagnosticsOptions</code> is in <code>BlueTusk.Diagnostics</code>.</p>\n<h2>How the connection string is parsed</h2>\n<ul>\n<li>Keywords are case-insensitive. Write them as shown, with spaces\n(<code>SSL Mode</code>, not <code>SslMode</code>).</li>\n<li>There are <strong>no aliases</strong>. <code>Server</code>, <code>User ID</code>, <code>UID</code>, <code>Pwd</code> and <code>SslMode</code>\nare not recognized.</li>\n<li><strong>Unknown keywords are ignored by default.</strong> A misspelled keyword\nsilently falls back to the default. For example, <code>SslMode=Disable</code> leaves\n<code>SSL Mode</code> at <code>VerifyFull</code>. Check spelling against the tables below, or\n<a href=\"#reject-unknown-keywords\">turn on rejection</a>.</li>\n<li>Enum values are case-insensitive, and <code>-</code>, <code>_</code> and spaces are ignored, so\n<code>read-write</code>, <code>ReadWrite</code> and <code>read_write</code> are the same. An invalid value\nthrows <code>ArgumentException</code> (for example\n<code>'verify-ca' is not a valid value for SSL Mode.</code>) when the data source is\ncreated.</li>\n<li>Durations are whole seconds.</li>\n<li><code>BlueTuskConnectionStringBuilder</code> exposes every keyword as a typed property\n(shown in the <strong>Property</strong> column).</li>\n</ul>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var settings = new BlueTuskConnectionStringBuilder\n{\n    Host = \"db.example.com\",\n    Database = \"orders\",\n    Username = \"orders_app\",\n    MaximumPoolSize = 50,\n    ApplicationName = \"orders-api\",\n};\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)\n    .UsePasswordProvider(request => Environment.GetEnvironmentVariable(\"ORDERS_DB_PASSWORD\")!)\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> settings = <span class=\"hljs-keyword\">new</span> BlueTuskConnectionStringBuilder\n{\n    Host = <span class=\"hljs-string\">&quot;db.example.com&quot;</span>,\n    Database = <span class=\"hljs-string\">&quot;orders&quot;</span>,\n    Username = <span class=\"hljs-string\">&quot;orders_app&quot;</span>,\n    MaximumPoolSize = <span class=\"hljs-number\">50</span>,\n    ApplicationName = <span class=\"hljs-string\">&quot;orders-api&quot;</span>,\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(settings.ConnectionString)\n    .UsePasswordProvider(request =&gt; Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;ORDERS_DB_PASSWORD&quot;</span>)!)\n    .Build();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<h3>Reject unknown keywords</h3>\n<p>For compatibility with 1.0.0, BlueTusk accepts and ignores keywords it does\nnot recognize, such as Npgsql’s <code>Command Timeout</code> or a misspelled <code>Usernme</code>.\nTo make them an error, as Npgsql does, turn on the\n<code>BlueTusk.Data.RejectUnknownConnectionStringKeywords</code> AppContext switch in\nyour application’s project file:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "<ItemGroup>\n  <RuntimeHostConfigurationOption Include=\"BlueTusk.Data.RejectUnknownConnectionStringKeywords\" Value=\"true\" />\n</ItemGroup>\n",
-        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">ItemGroup</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">RuntimeHostConfigurationOption</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.Data.RejectUnknownConnectionStringKeywords&quot;</span> <span class=\"hljs-attr\">Value</span>=<span class=\"hljs-string\">&quot;true&quot;</span> /&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">ItemGroup</span>&gt;</span>\n",
-        "language": "xml"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Or set it in code before you create any data source or connection:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "AppContext.SetSwitch(\"BlueTusk.Data.RejectUnknownConnectionStringKeywords\", true);\n",
-        "highlighted": "AppContext.SetSwitch(<span class=\"hljs-string\">&quot;BlueTusk.Data.RejectUnknownConnectionStringKeywords&quot;</span>, <span class=\"hljs-literal\">true</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Creating a data source or a <code>BlueTuskConnection</code> then throws an\n<code>ArgumentException</code> that names the keyword (in lower case) but not its value:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "The connection-string keyword 'usernme' is not supported by BlueTusk. (Parameter 'ConnectionString')\n",
-        "highlighted": "The connection-string keyword &#x27;usernme&#x27; is not supported by BlueTusk. (Parameter &#x27;ConnectionString&#x27;)\n",
-        "language": "text"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Connection</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Host</code></td>\n<td><code>Host</code></td>\n<td>string</td>\n<td><code>localhost</code></td>\n<td>Server host name or IP address. A comma-separated list enables <a href=\"/documentation/provider/multi-host\">multi-host</a> routing.</td>\n</tr>\n<tr>\n<td><code>Port</code></td>\n<td><code>Port</code>, <code>Ports</code></td>\n<td>int or list</td>\n<td><code>5432</code></td>\n<td>Server port. Give one port for all hosts, or one per host in the same order.</td>\n</tr>\n<tr>\n<td><code>Database</code></td>\n<td><code>Database</code></td>\n<td>string</td>\n<td>none (required)</td>\n<td>Database to connect to. Opening fails if it is empty.</td>\n</tr>\n<tr>\n<td><code>Username</code></td>\n<td><code>Username</code></td>\n<td>string</td>\n<td>none (required)</td>\n<td>PostgreSQL role. Opening fails if it is empty.</td>\n</tr>\n<tr>\n<td><code>Application Name</code></td>\n<td><code>ApplicationName</code></td>\n<td>string</td>\n<td><code>BlueTusk</code></td>\n<td>Sent as <code>application_name</code>; visible in <code>pg_stat_activity</code> and server logs.</td>\n</tr>\n<tr>\n<td><code>Timeout</code></td>\n<td><code>Timeout</code></td>\n<td>seconds (&gt; 0)</td>\n<td><code>15</code></td>\n<td>Time allowed to resolve and connect the network socket to one host. It also limits how long an open waits for a free connection when the pool is full (see <a href=\"#pooling\">Pooling</a>). It does not limit TLS or authentication.</td>\n</tr>\n</tbody>\n</table>\n<h2>Security and TLS</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>SSL Mode</code></td>\n<td><code>SslMode</code></td>\n<td><code>Disable</code>, <code>Prefer</code>, <code>Require</code>, <code>VerifyFull</code></td>\n<td><code>VerifyFull</code></td>\n<td><code>VerifyFull</code> and <code>Require</code> both require TLS and validate the server certificate and host name with the operating system’s trust store. <code>Prefer</code> uses TLS when the server offers it (and still validates the certificate), otherwise connects without TLS. <code>Disable</code> never uses TLS.</td>\n</tr>\n<tr>\n<td><code>Channel Binding</code></td>\n<td><code>ChannelBinding</code></td>\n<td><code>Disable</code>, <code>Prefer</code>, <code>Require</code></td>\n<td><code>Prefer</code></td>\n<td>SCRAM-SHA-256-PLUS channel binding to the TLS session. <code>Require</code> fails if the server does not offer it, and cannot be combined with <code>SSL Mode=Disable</code>.</td>\n</tr>\n<tr>\n<td><code>Allow Unencrypted Password</code></td>\n<td><code>AllowUnencryptedPassword</code></td>\n<td>bool</td>\n<td><code>false</code></td>\n<td>Allows the server’s cleartext password method without TLS. Use only in a trusted compatibility environment.</td>\n</tr>\n<tr>\n<td><code>Persist Security Info</code></td>\n<td><code>PersistSecurityInfo</code></td>\n<td>bool</td>\n<td><code>false</code></td>\n<td>When <code>false</code>, <code>Password</code> and <code>Passfile</code> are removed from the public <code>ConnectionString</code> of a data source, and of a connection after it opens.</td>\n</tr>\n</tbody>\n</table>\n<p>There is no setting that encrypts without validating the certificate. For a\nprivate certificate authority, install the CA in the trust store or use\n<code>UseRemoteCertificateValidationCallback</code> (see\n<a href=\"#data-source-builder-options\">builder options</a>).</p>\n<h2>Authentication</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Password</code></td>\n<td><code>Password</code></td>\n<td>string</td>\n<td>not set</td>\n<td>Password for password, MD5 or SCRAM authentication. Prefer a password callback or password file.</td>\n</tr>\n<tr>\n<td><code>Passfile</code></td>\n<td><code>Passfile</code></td>\n<td>path</td>\n<td>not set</td>\n<td>PostgreSQL password file. When not set, BlueTusk checks <code>PGPASSFILE</code>, then <code>%APPDATA%\\postgresql\\pgpass.conf</code> (Windows) or <code>~/.pgpass</code> (Linux, macOS). An empty value turns password-file lookup off.</td>\n</tr>\n<tr>\n<td><code>Kerberos Service Name</code></td>\n<td><code>KerberosServiceName</code></td>\n<td>string</td>\n<td><code>postgres</code></td>\n<td>Service name for GSSAPI/Kerberos. Must match the server’s <code>krb_srvname</code>. Cannot contain <code>/</code> or <code>@</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>When the server asks for a password, BlueTusk uses the first source that\nexists: access-token callback, password callback, <code>Password</code>, then the\npassword file. See <a href=\"/documentation/provider/authentication\">Authentication</a>.</p>\n<h2>Pooling</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Pooling</code></td>\n<td><code>Pooling</code></td>\n<td>bool</td>\n<td><code>true</code></td>\n<td>Gives the data source a pool of physical connections.</td>\n</tr>\n<tr>\n<td><code>Minimum Pool Size</code></td>\n<td><code>MinimumPoolSize</code></td>\n<td>int (&gt;= 0)</td>\n<td><code>0</code></td>\n<td>Connections opened by <code>WarmUpAsync()</code> and kept open. Per host.</td>\n</tr>\n<tr>\n<td><code>Maximum Pool Size</code></td>\n<td><code>MaximumPoolSize</code></td>\n<td>int (&gt; 0)</td>\n<td><code>100</code></td>\n<td>Hard limit on physical connections. Per host. Must be at least <code>Minimum Pool Size</code>.</td>\n</tr>\n<tr>\n<td><code>Connection Idle Lifetime</code></td>\n<td><code>ConnectionIdleLifetime</code></td>\n<td>seconds (&gt;= 0)</td>\n<td><code>300</code></td>\n<td>An idle connection older than this is closed instead of reused. <code>0</code> turns idle expiry off.</td>\n</tr>\n<tr>\n<td><code>Connection Lifetime</code></td>\n<td><code>ConnectionLifetime</code></td>\n<td>seconds (&gt;= 0)</td>\n<td><code>3600</code></td>\n<td>A connection older than this is closed when it is next checked out or returned. <code>0</code> turns it off.</td>\n</tr>\n</tbody>\n</table>\n<p>When every connection is in use, an open waits for one to be returned, for at\nmost <code>Timeout</code> seconds. It then throws <code>TimeoutException</code>. See\n<a href=\"/documentation/provider/pooling#what-happens-when-the-pool-is-full\">Connection pooling</a>.</p>\n<h2>Commands and preparation</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Max Auto Prepare</code></td>\n<td><code>MaxAutoPrepare</code></td>\n<td>int (&gt;= 0)</td>\n<td><code>0</code> (off)</td>\n<td>Maximum automatically prepared statements per physical connection. The least recently used is dropped first.</td>\n</tr>\n<tr>\n<td><code>Auto Prepare Min Usages</code></td>\n<td><code>AutoPrepareMinUsages</code></td>\n<td>int (&gt; 0)</td>\n<td><code>5</code></td>\n<td>Executions on one connection before a statement is prepared automatically.</td>\n</tr>\n</tbody>\n</table>\n<p>There is no <code>Command Timeout</code> keyword. Set <code>CommandTimeout</code> on the command\n(see <a href=\"#per-command-settings\">per-command settings</a>). Automatic preparation is\nexplained in <a href=\"/documentation/provider/concepts#preparation\">Concepts</a>.</p>\n<h2>Multi-host routing</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Target Session Attributes</code></td>\n<td><code>TargetSessionAttributes</code></td>\n<td><code>any</code>, <code>primary</code>, <code>standby</code>, <code>prefer-primary</code>, <code>prefer-standby</code>, <code>read-write</code>, <code>read-only</code></td>\n<td><code>any</code></td>\n<td>Which server role is acceptable.</td>\n</tr>\n<tr>\n<td><code>Load Balance Hosts</code></td>\n<td><code>LoadBalanceHosts</code></td>\n<td><code>disable</code>, <code>random</code></td>\n<td><code>disable</code></td>\n<td><code>random</code> shuffles the host order for each new physical connection.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/provider/multi-host\">Multi-host connections</a>.</p>\n<h2>Multiplexing</h2>\n<table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Property</th>\n<th>Type</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Multiplexing</code></td>\n<td><code>Multiplexing</code></td>\n<td>bool</td>\n<td><code>false</code></td>\n<td>Runs session-neutral data-source commands over shared connections. Requires <code>Pooling=true</code>. Tune it with <code>EnableMultiplexing(...)</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Diagnostics</h2>\n<p>No connection-string keyword controls diagnostics. Set <code>Application Name</code> so\nyou can find your sessions on the server, and use <code>ConfigureDiagnostics</code> for\nslow-command events. Traces and metrics are published under the name\n<code>BlueTusk.Diagnostics</code>. See <a href=\"/documentation/operations/observability\">Diagnostics and observability</a>.</p>\n<h2>Data source builder options</h2>\n<p><code>BlueTuskDataSourceBuilder</code> collects settings that cannot live in a\nconnection string. Call the methods, then <code>Build()</code> once.</p>\n<table>\n<thead>\n<tr>\n<th>Member</th>\n<th>What it does</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MapEnum&lt;TEnum&gt;(typeName, labels)</code></td>\n<td>Maps a CLR enum to a PostgreSQL enum. Without <code>labels</code>, the member names must match the PostgreSQL labels exactly.</td>\n</tr>\n<tr>\n<td><code>MapComposite&lt;T&gt;(typeName)</code></td>\n<td>Maps a CLR type to a composite type. Members match fields by snake_case name.</td>\n</tr>\n<tr>\n<td><code>Types</code></td>\n<td>The type registry, for source-generated codecs (<code>Address.RegisterCodec(builder.Types)</code>) and custom codecs.</td>\n</tr>\n<tr>\n<td><code>UsePlugin(plugin)</code>, <code>Features</code></td>\n<td>Registers an extension package, such as PostGIS or pgvector. See <a href=\"/documentation/extensions/catalog\">Extensions</a>.</td>\n</tr>\n<tr>\n<td><code>UsePasswordProvider(...)</code></td>\n<td>Sync or async callback that returns a password for each new physical connection.</td>\n</tr>\n<tr>\n<td><code>UseAccessTokenProvider(...)</code></td>\n<td>Sync or async callback that returns an access token. Cannot be combined with a password callback.</td>\n</tr>\n<tr>\n<td><code>RequireTlsForAccessTokens()</code></td>\n<td>Calls the token callback only after TLS is established. The <a href=\"/documentation/provider/cloud-identity\">cloud identity</a> packages turn this on.</td>\n</tr>\n<tr>\n<td><code>UseGssCredential(credential)</code></td>\n<td>Explicit Kerberos/SSPI credential instead of the process identity.</td>\n</tr>\n<tr>\n<td><code>UseClientCertificate(certificate)</code></td>\n<td>Adds a TLS client certificate. You own the certificate and must keep it valid.</td>\n</tr>\n<tr>\n<td><code>UseClientCertificateSelectionCallback(callback)</code></td>\n<td>Chooses which client certificate to present.</td>\n</tr>\n<tr>\n<td><code>UseRemoteCertificateValidationCallback(callback)</code></td>\n<td>Replaces server certificate validation. Your callback becomes the security check.</td>\n</tr>\n<tr>\n<td><code>ConfigureDiagnostics(options)</code></td>\n<td>Sets <code>BlueTuskDiagnosticsOptions.SlowCommandThreshold</code> (default <code>null</code>, off).</td>\n</tr>\n<tr>\n<td><code>EnableMultiplexing(configure)</code></td>\n<td>Turns on multiplexing and sets the options below.</td>\n</tr>\n</tbody>\n</table>\n<h3>Multiplexing options</h3>\n<p>Set these inside <code>EnableMultiplexing(options =&gt; ...)</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>WorkerCount</code></td>\n<td><code>0</code> (automatic)</td>\n<td>Concurrent multiplexing workers, each holding one pooled connection. Automatic is half of <code>Maximum Pool Size</code>, between 1 and 4. Cannot exceed <code>Maximum Pool Size</code>.</td>\n</tr>\n<tr>\n<td><code>QueueCapacity</code></td>\n<td><code>1024</code></td>\n<td>Commands that can wait for a worker.</td>\n</tr>\n<tr>\n<td><code>MaxPipelineCommands</code></td>\n<td><code>64</code></td>\n<td>Commands written to PostgreSQL in one network flush. Cannot exceed <code>MaxCommandsPerLease</code>.</td>\n</tr>\n<tr>\n<td><code>MaxCommandsPerLease</code></td>\n<td><code>65536</code></td>\n<td>Commands a worker runs before it returns its connection to the pool.</td>\n</tr>\n<tr>\n<td><code>ShutdownTimeout</code></td>\n<td>30 seconds</td>\n<td>How long disposal waits for queued commands to finish.</td>\n</tr>\n</tbody>\n</table>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =>\n    {\n        options.WorkerCount = 4;\n        options.QueueCapacity = 2_048;\n    })\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =&gt;\n    {\n        options.WorkerCount = <span class=\"hljs-number\">4</span>;\n        options.QueueCapacity = <span class=\"hljs-number\">2_048</span>;\n    })\n    .Build();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Per-command settings</h2>\n<table>\n<thead>\n<tr>\n<th>Member</th>\n<th>Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskCommand.CommandTimeout</code></td>\n<td><code>30</code> seconds</td>\n<td><code>0</code> means no limit. On expiry BlueTusk cancels the statement on the server and throws <code>TimeoutException</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTuskBatch.Timeout</code></td>\n<td><code>30</code> seconds</td>\n<td>The same for a whole batch.</td>\n</tr>\n<tr>\n<td><code>BlueTuskCommand.ExecutionMode</code></td>\n<td><code>Auto</code></td>\n<td><code>Simple</code> or <code>Extended</code> forces a protocol. See <a href=\"/documentation/provider/concepts#how-a-command-is-sent\">Concepts</a>.</td>\n</tr>\n<tr>\n<td><code>BlueTuskCommand.MultiplexingMode</code></td>\n<td><code>Auto</code></td>\n<td><code>Require</code> fails if the command cannot be multiplexed; <code>Disable</code> always uses a dedicated connection.</td>\n</tr>\n<tr>\n<td><code>BlueTuskCommand.SequentialFetchSize</code></td>\n<td><code>0</code></td>\n<td>Rows per fetch for <code>CommandBehavior.SequentialAccess</code>. <code>0</code> streams the whole result. See <a href=\"/documentation/provider/sequential-readers\">Sequential readers</a>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Dependency-injection registration</h2>\n<p><code>BlueTusk.Data.DependencyInjection</code> adds one method:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "IServiceCollection AddDataSource(\n    this IServiceCollection services,\n    string connectionString,\n    Action<BlueTuskDataSourceBuilder>? configure = null,\n    string healthCheckName = \"bluetusk\")\n",
-        "highlighted": "<span class=\"hljs-function\">IServiceCollection <span class=\"hljs-title\">AddDataSource</span>(<span class=\"hljs-params\">\n    <span class=\"hljs-keyword\">this</span> IServiceCollection services,\n    <span class=\"hljs-built_in\">string</span> connectionString,\n    Action&lt;BlueTuskDataSourceBuilder&gt;? configure = <span class=\"hljs-literal\">null</span>,\n    <span class=\"hljs-built_in\">string</span> healthCheckName = <span class=\"hljs-string\">&quot;bluetusk&quot;</span></span>)\n</span>",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<table>\n<thead>\n<tr>\n<th>Parameter</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>connectionString</code></td>\n<td>Required. Must not be empty.</td>\n</tr>\n<tr>\n<td><code>configure</code></td>\n<td>Optional. Receives the builder before <code>Build()</code> runs, the first time the data source is resolved.</td>\n</tr>\n<tr>\n<td><code>healthCheckName</code></td>\n<td>Name of the readiness health check. It is tagged <code>bluetusk</code> and <code>ready</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>It registers:</p>\n<ul>\n<li><code>BlueTuskDataSource</code> as a singleton;</li>\n<li><code>DbDataSource</code>, resolving to the same instance;</li>\n<li><code>BlueTuskDataSourceHealthCheck</code>, which opens a connection and runs <code>SELECT 1</code>.</li>\n</ul>\n<p>Registration uses <code>TryAdd</code>, so only the first <code>AddDataSource</code> call in a\ncontainer creates a data source. For a second database, build a second\n<code>BlueTuskDataSource</code> yourself and wrap it in your own service type. See\n<a href=\"/documentation/provider/dependency-injection\">Dependency injection</a>.</p>\n<h2>Full reference</h2>\n<ul>\n<li><a href=\"/documentation/provider/types\">PostgreSQL types</a> and the\n<a href=\"/documentation/provider/types-reference\">complete type reference</a></li>\n<li><a href=\"/documentation/operations/observability\">Diagnostics and observability</a></li>\n<li><a href=\"/documentation/operations/security\">Security</a></li>\n</ul>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "troubleshooting",
-    "summary": "Fix connection, TLS, authentication, pool, timeout, cancellation and type-mapping problems.",
-    "keywords": [
-      "troubleshooting",
-      "errors",
-      "tls",
-      "timeout",
-      "pool"
-    ],
-    "order": 4,
-    "listed": true,
-    "title": "ADO.NET troubleshooting",
-    "sourcePath": "docs/ado-net/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/troubleshooting.md",
-    "headings": [
-      {
-        "id": "ado-net-troubleshooting",
-        "text": "ADO.NET troubleshooting",
-        "level": 1
-      },
-      {
-        "id": "read-the-whole-exception-chain",
-        "text": "Read the whole exception chain",
-        "level": 2
-      },
-      {
-        "id": "connection-failures",
-        "text": "Connection failures",
-        "level": 2
-      },
-      {
-        "id": "tls-failures",
-        "text": "TLS failures",
-        "level": 2
-      },
-      {
-        "id": "authentication-failures",
-        "text": "Authentication failures",
-        "level": 2
-      },
-      {
-        "id": "pool-exhaustion-and-timeouts",
-        "text": "Pool exhaustion and timeouts",
-        "level": 2
-      },
-      {
-        "id": "commands-and-transactions",
-        "text": "Commands and transactions",
-        "level": 2
-      },
-      {
-        "id": "type-mapping",
-        "text": "Type mapping",
-        "level": 2
-      },
-      {
-        "id": "pgbouncer-and-prepared-statements",
-        "text": "PgBouncer and prepared statements",
-        "level": 2
-      },
-      {
-        "id": "multi-host-routing",
-        "text": "Multi-host routing",
-        "level": 2
-      },
-      {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      }
-    ],
-    "wordCount": 1552,
-    "readMinutes": 8,
-    "searchText": "ADO.NET troubleshooting This page helps you match an error from `BlueTusk.Data` to its cause and fix. For problems outside the provider, see the [platform troubleshooting guide](../operations/troubleshooting.md). Read the whole exception chain Connection failures arrive as a `BlueTuskException` that wraps the real cause. Log `exception.ToString()` (never the connection string) and read the innermost exception. To find a SQLSTATE anywhere in the chain: `BlueTuskServerException` is in the `BlueTusk.Client` namespace. Connection failures Outer message: `Could not open a PostgreSQL connection matching Any across 1 configured host(s).` Innermost exception Cause Fix `BlueTuskTransportException`: `... (ConnectionRefused)` Nothing is listening on that host and port. Start PostgreSQL, or fix `Host` and `Port`. Check firewalls. `BlueTuskTransportException`: `... (NameResolution)` The host name does not resolve. Fix `Host` or DNS. `BlueTuskTransportException`: `... (Timeout)` No connection within `Timeout` (default 15 s). Check the network path. `BlueTuskServerException`: `database \"orders\" does not exist` Wrong database name. Create the database or fix `Database`. `ArgumentException`: `... (Parameter 'Database')` or `(Parameter 'Username')` The keyword is missing. Aliases such as `User ID` are not recognized. Use `Database=` and `Username=`. See [parsing rules](configuration.md#how-the-connection-string-is-parsed). `ObjectDisposedException`: `... 'BlueTusk.Data.BlueTuskConnectionPool'` The data source was disposed. Keep one for the app's lifetime. `ArgumentException`: `The connection-string keyword 'usernme' is not supported by BlueTusk.` You turned on [rejection of unknown keywords](configuration.md#reject-unknown-keywords); by default they are ignored. Fix or remove the keyword. TLS failures Error Cause Fix `BlueTuskAuthenticationException`: `PostgreSQL refused the required TLS connection.` The default `SSL Mode=VerifyFull` needs TLS and the server has none. A misspelled `S",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>ADO.NET troubleshooting</h1>\n<p>This page helps you match an error from <code>BlueTusk.Data</code> to its cause and fix.\nFor problems outside the provider, see the\n<a href=\"/documentation/operations/troubleshooting\">platform troubleshooting guide</a>.</p>\n<h2>Read the whole exception chain</h2>\n<p>Connection failures arrive as a <code>BlueTuskException</code> that wraps the real\ncause. Log <code>exception.ToString()</code> (never the connection string) and read the\ninnermost exception. To find a SQLSTATE anywhere in the chain:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "static string? FindSqlState(Exception exception)\n{\n    for (Exception? current = exception; current is not null; current = current.InnerException)\n    {\n        if (current is BlueTuskException { SqlState: { Length: > 0 } state })\n        {\n            return state;\n        }\n\n        if (current is BlueTuskServerException { SqlState: { Length: > 0 } serverState })\n        {\n            return serverState;\n        }\n    }\n\n    return null;\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">static</span> <span class=\"hljs-built_in\">string</span>? FindSqlState(Exception exception)\n{\n    <span class=\"hljs-keyword\">for</span> (Exception? current = exception; current <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">null</span>; current = current.InnerException)\n    {\n        <span class=\"hljs-keyword\">if</span> (current <span class=\"hljs-keyword\">is</span> BlueTuskException { SqlState: { Length: &gt; <span class=\"hljs-number\">0</span> } state })\n        {\n            <span class=\"hljs-keyword\">return</span> state;\n        }\n\n        <span class=\"hljs-keyword\">if</span> (current <span class=\"hljs-keyword\">is</span> BlueTuskServerException { SqlState: { Length: &gt; <span class=\"hljs-number\">0</span> } serverState })\n        {\n            <span class=\"hljs-keyword\">return</span> serverState;\n        }\n    }\n\n    <span class=\"hljs-keyword\">return</span> <span class=\"hljs-literal\">null</span>;\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>BlueTuskServerException</code> is in the <code>BlueTusk.Client</code> namespace.</p>\n<h2>Connection failures</h2>\n<p>Outer message: <code>Could not open a PostgreSQL connection matching Any across 1 configured host(s).</code></p>\n<table>\n<thead>\n<tr>\n<th>Innermost exception</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskTransportException</code>: <code>... (ConnectionRefused)</code></td>\n<td>Nothing is listening on that host and port.</td>\n<td>Start PostgreSQL, or fix <code>Host</code> and <code>Port</code>. Check firewalls.</td>\n</tr>\n<tr>\n<td><code>BlueTuskTransportException</code>: <code>... (NameResolution)</code></td>\n<td>The host name does not resolve.</td>\n<td>Fix <code>Host</code> or DNS.</td>\n</tr>\n<tr>\n<td><code>BlueTuskTransportException</code>: <code>... (Timeout)</code></td>\n<td>No connection within <code>Timeout</code> (default 15 s).</td>\n<td>Check the network path.</td>\n</tr>\n<tr>\n<td><code>BlueTuskServerException</code>: <code>database &quot;orders&quot; does not exist</code></td>\n<td>Wrong database name.</td>\n<td>Create the database or fix <code>Database</code>.</td>\n</tr>\n<tr>\n<td><code>ArgumentException</code>: <code>... (Parameter 'Database')</code> or <code>(Parameter 'Username')</code></td>\n<td>The keyword is missing. Aliases such as <code>User ID</code> are not recognized.</td>\n<td>Use <code>Database=</code> and <code>Username=</code>. See <a href=\"/documentation/provider/configuration#how-the-connection-string-is-parsed\">parsing rules</a>.</td>\n</tr>\n<tr>\n<td><code>ObjectDisposedException</code>: <code>... 'BlueTusk.Data.BlueTuskConnectionPool'</code></td>\n<td>The data source was disposed.</td>\n<td>Keep one for the app’s lifetime.</td>\n</tr>\n<tr>\n<td><code>ArgumentException</code>: <code>The connection-string keyword 'usernme' is not supported by BlueTusk.</code></td>\n<td>You turned on <a href=\"/documentation/provider/configuration#reject-unknown-keywords\">rejection of unknown keywords</a>; by default they are ignored.</td>\n<td>Fix or remove the keyword.</td>\n</tr>\n</tbody>\n</table>\n<h2>TLS failures</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskAuthenticationException</code>: <code>PostgreSQL refused the required TLS connection.</code></td>\n<td>The default <code>SSL Mode=VerifyFull</code> needs TLS and the server has none. A misspelled <code>SslMode=Disable</code> is ignored.</td>\n<td>Turn on TLS on the server. For a local test container only, use <code>SSL Mode=Disable;Channel Binding=Disable</code>.</td>\n</tr>\n<tr>\n<td>A TLS handshake error from .NET’s <code>SslStream</code>, such as <code>AuthenticationException</code></td>\n<td>The certificate is not trusted, or its name does not match <code>Host</code>. <code>Require</code> validates too.</td>\n<td>Use the name on the certificate and trust its CA. For a private CA, see <code>UseRemoteCertificateValidationCallback</code>.</td>\n</tr>\n<tr>\n<td><code>ArgumentException</code>: <code>Required channel binding cannot be used when TLS is disabled.</code></td>\n<td><code>Channel Binding=Require</code> with <code>SSL Mode=Disable</code>.</td>\n<td>Turn on TLS, or use <code>Channel Binding=Prefer</code>.</td>\n</tr>\n<tr>\n<td><code>BlueTuskAuthenticationException</code>: <code>Channel binding is required, but PostgreSQL did not offer SCRAM-SHA-256-PLUS.</code></td>\n<td>The server, or a TLS-terminating proxy, cannot bind SCRAM to TLS.</td>\n<td>Use <code>Channel Binding=Prefer</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Authentication failures</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>BlueTuskServerException</code>: <code>password authentication failed for user &quot;app&quot;</code> (SQLSTATE <code>28P01</code>)</td>\n<td>Wrong user or password.</td>\n<td>Check the credentials.</td>\n</tr>\n<tr>\n<td><code>BlueTuskAuthenticationException</code>: <code>PostgreSQL requested password authentication, but no configured credential source produced a value.</code></td>\n<td>No <code>Password</code>, password file entry or callback.</td>\n<td>Add one. See <a href=\"/documentation/provider/authentication\">Authentication</a>.</td>\n</tr>\n<tr>\n<td><code>BlueTuskAuthenticationException</code>: <code>PostgreSQL requested cleartext password authentication over an unencrypted connection. ...</code></td>\n<td>Cleartext password without TLS.</td>\n<td>Use TLS. <code>Allow Unencrypted Password=true</code> is for trusted test setups only.</td>\n</tr>\n<tr>\n<td><code>Synchronous connection opening requires a synchronous password provider.</code></td>\n<td><code>Open()</code> with only an async callback.</td>\n<td>Register a sync callback too, or use <code>OpenAsync</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Pool exhaustion and timeouts</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom or error</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>TimeoutException</code>: <code>The connection pool for db:5432 is exhausted: no connection became available within the 15-second Timeout. ...</code></td>\n<td>Every pooled connection stayed busy for <code>Timeout</code> (default 15 s). <strong>Behaviour change in 1.1.0:</strong> earlier versions waited forever. See <a href=\"/documentation/provider/pooling#what-happens-when-the-pool-is-full\">Pooling</a>.</td>\n<td>Dispose connections, readers and transactions promptly. Watch the <code>bluetusk.pool.waiters</code> metric. Raise <code>Maximum Pool Size</code> or <code>Timeout</code> if the load is expected.</td>\n</tr>\n<tr>\n<td><code>TimeoutException</code>: <code>The command exceeded its 30-second timeout.</code> (inner: <code>canceling statement due to user request</code>)</td>\n<td>The statement ran longer than <code>CommandTimeout</code>.</td>\n<td>Tune the query or raise <code>CommandTimeout</code> (<code>0</code> = no limit).</td>\n</tr>\n<tr>\n<td><code>OperationCanceledException</code>: <code>The PostgreSQL operation was cancelled.</code></td>\n<td>Your token was cancelled; the server statement was cancelled too.</td>\n<td>Expected. In a transaction, roll back next.</td>\n</tr>\n<tr>\n<td><code>sorry, too many clients already</code> (SQLSTATE <code>53300</code>)</td>\n<td><code>Maximum Pool Size</code> times app instances exceeds the server’s <code>max_connections</code>.</td>\n<td>Lower <code>Maximum Pool Size</code>, or use PgBouncer.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/provider/pooling\">Connection pooling</a> and <a href=\"/documentation/provider/concepts#timeouts-and-cancellation\">timeouts</a>.</p>\n<h2>Commands and transactions</h2>\n<table>\n<thead>\n<tr>\n<th>Error</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>A command executed while the connection has an active transaction must enlist in that transaction.</code></td>\n<td><code>Transaction</code> not set on the command.</td>\n<td>Set <code>command.Transaction = transaction</code>.</td>\n</tr>\n<tr>\n<td><code>current transaction is aborted, commands ignored until end of transaction block</code> (SQLSTATE <code>25P02</code>)</td>\n<td>An earlier command in the transaction failed.</td>\n<td>Roll back, or use SQL savepoints around statements that may fail.</td>\n</tr>\n<tr>\n<td><code>NotSupportedException</code>: <code>Specified method is not supported.</code> from <code>transaction.Save(...)</code></td>\n<td><code>DbTransaction</code> savepoint methods are not implemented.</td>\n<td>Run <code>SAVEPOINT name</code> and <code>ROLLBACK TO SAVEPOINT name</code> as enlisted commands.</td>\n</tr>\n<tr>\n<td><code>A command cannot mix positional and named parameters.</code></td>\n<td><code>@name</code> and <code>$1</code> in one command.</td>\n<td>Use one style.</td>\n</tr>\n<tr>\n<td><code>Command text references named parameter 'id', but the parameter collection does not contain it.</code></td>\n<td>Missing or misspelled parameter.</td>\n<td>Add it.</td>\n</tr>\n<tr>\n<td><code>Explicit preparation requires a command associated with an open connection.</code></td>\n<td><code>Prepare</code> on a data-source command.</td>\n<td>Prepare a connection-owned command.</td>\n</tr>\n<tr>\n<td><code>NotSupportedException</code>: <code>BlueTusk currently supports text commands only.</code></td>\n<td><code>CommandType.StoredProcedure</code>.</td>\n<td>Use <code>CALL proc(...)</code> or <code>SELECT func(...)</code>.</td>\n</tr>\n<tr>\n<td><code>The active field stream must be consumed or disposed before accessing another field.</code></td>\n<td>Sequential reader: a field opened while another stream is open.</td>\n<td>Finish each field first. See <a href=\"/documentation/provider/sequential-readers\">Sequential readers</a>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Type mapping</h2>\n<table>\n<thead>\n<tr>\n<th>Error or symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>A null parameter requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName so PostgreSQL can determine its type.</code></td>\n<td>A <code>null</code> or <code>DBNull.Value</code> parameter has no type, even in <code>BlueTuskParameter&lt;string?&gt;</code>.</td>\n<td>Set <code>DbType</code> or <code>PostgreSqlTypeName</code>.</td>\n</tr>\n<tr>\n<td><code>PostgreSQL type app.order_status is not present in the loaded type catalogue.</code>, <code>CLR type ... does not have a BlueTusk parameter encoder yet. ...</code> for a mapped enum, or values read back as <code>BlueTuskUnknownValue</code></td>\n<td>The type was created after the data source loaded its catalogue (a data source can start before a mapped type exists), or the name is wrong.</td>\n<td>Call <code>await dataSource.ReloadTypesAsync()</code> after <code>CREATE TYPE</code> or <code>ALTER TYPE</code>, or restart. EF Core <code>Migrate</code> and <code>MigrateAsync</code> reload it for you.</td>\n</tr>\n<tr>\n<td><code>FormatException</code>: <code>PostgreSQL type name 'jsonb' must be qualified as schema.name.</code></td>\n<td><code>PostgreSqlTypeName</code> needs a schema.</td>\n<td>Use <code>pg_catalog.jsonb</code>, <code>pg_catalog.text[]</code>, <code>app.order_status</code>.</td>\n</tr>\n<tr>\n<td><code>CLR type System.String[] does not have a BlueTusk parameter encoder yet. ...</code></td>\n<td><code>string[]</code> is ambiguous.</td>\n<td>Set <code>PostgreSqlTypeName = &quot;pg_catalog.text[]&quot;</code>.</td>\n</tr>\n<tr>\n<td><code>column &quot;payload&quot; is of type jsonb but expression is of type text</code> (SQLSTATE <code>42804</code>)</td>\n<td>A <code>string</code> is sent as <code>text</code>.</td>\n<td>Set <code>PostgreSqlTypeName = &quot;pg_catalog.jsonb&quot;</code>.</td>\n</tr>\n<tr>\n<td><code>'Paid' is not a catalogue label for PostgreSQL enum app.order_status.</code></td>\n<td><code>MapEnum</code> without labels uses member names unchanged.</td>\n<td>Pass a labels dictionary.</td>\n</tr>\n<tr>\n<td><code>PostgreSQL time must be between 00:00:00 and 24:00:00.</code></td>\n<td><code>TimeSpan</code> maps to <code>time</code>.</td>\n<td>For <code>interval</code>, use <code>BlueTuskInterval</code>.</td>\n</tr>\n<tr>\n<td><code>ExecuteScalarAsync&lt;int&gt;()</code> returns <code>0</code> for SQL <code>NULL</code></td>\n<td>A non-nullable <code>T</code> gets its default.</td>\n<td>Use <code>ExecuteScalarAsync&lt;int?&gt;()</code>.</td>\n</tr>\n</tbody>\n</table>\n<p>See <a href=\"/documentation/provider/types\">PostgreSQL types</a>.</p>\n<h2>PgBouncer and prepared statements</h2>\n<p>PgBouncer in <strong>transaction</strong> mode can give each transaction a different\nserver session.</p>\n<ul>\n<li>Session state (<code>SET</code>, temporary tables, <code>LISTEN</code>) does not survive between\ntransactions. Keep it in one transaction, or use session mode.</li>\n<li>Preparation needs PgBouncer’s prepared-statement support\n(<code>max_prepared_statements</code> above zero). Without it you can see\n<code>prepared statement &quot;bluetusk_1&quot; does not exist</code> (SQLSTATE <code>26000</code>). Turn it\non, or do not prepare (<code>Max Auto Prepare=0</code>, no <code>Prepare</code> calls).</li>\n<li>Multiplexing works through PgBouncer in session and transaction mode. See\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility#pgbouncer\">Multiplexing compatibility</a>.</li>\n</ul>\n<h2>Multi-host routing</h2>\n<p>See <a href=\"/documentation/provider/multi-host\">Multi-host connections</a> for how hosts are chosen.</p>\n<table>\n<thead>\n<tr>\n<th>Error or symptom</th>\n<th>Cause</th>\n<th>Fix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Could not open a PostgreSQL connection matching Standby across 1 configured host(s).</code> (inner: <code>Host db-a:5432 does not match Standby (primary=True, read-only=False).</code>)</td>\n<td>No host has the role in <code>Target Session Attributes</code>.</td>\n<td>Add the right hosts, or use <code>prefer-standby</code> to fall back.</td>\n</tr>\n<tr>\n<td><code>Could not rent a PostgreSQL connection matching Any from 2 configured host pool(s).</code></td>\n<td>Every host failed.</td>\n<td>The inner exceptions name each host and its error.</td>\n</tr>\n<tr>\n<td>Login fails and other hosts are not tried</td>\n<td>Authentication failures stop routing on purpose.</td>\n<td>Fix the credentials.</td>\n</tr>\n<tr>\n<td>A recovered host is not used straight away</td>\n<td>After a network failure a host is skipped for 10 seconds.</td>\n<td>Wait, or call <code>ClearPoolAsync()</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Multiplexing</h2>\n<ul>\n<li><code>Multiplexing requires connection pooling.</code>: remove <code>Pooling=false</code>.</li>\n<li><code>Multiplexing workers cannot exceed Maximum Pool Size.</code>: lower <code>WorkerCount</code>.</li>\n<li><code>The command cannot be multiplexed because ...</code>: the command uses\n<code>MultiplexingMode.Require</code> but needs its own session. Use <code>Auto</code>.</li>\n</ul>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "authentication",
-    "summary": "Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.",
-    "keywords": [
-      "auth",
-      "tls",
-      "scram",
-      "gssapi"
-    ],
-    "order": 10,
-    "listed": true,
     "title": "Authentication",
-    "sourcePath": "docs/ado-net/authentication.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/authentication.md",
+    "summary": "Configure TLS, SCRAM, Kerberos, and client authentication.",
+    "order": 1,
     "headings": [
-      {
-        "id": "authentication",
-        "text": "Authentication",
-        "level": 1
-      },
       {
         "id": "credential-sources",
         "text": "Credential sources",
@@ -646,38 +341,70 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1050,
-    "readMinutes": 5,
-    "searchText": "Authentication This page helps you choose how your app proves its identity to PostgreSQL: passwords and password files, callbacks, access tokens, Kerberos and TLS client certificates. BlueTusk supports SCRAM-SHA-256, SCRAM-SHA-256-PLUS (channel binding), PostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5, and cleartext passwords. By default it requires TLS (`SSL Mode=VerifyFull`) and validates the server certificate with the operating system's trust store. The connection-string keywords are listed in [Configuration](configuration.md#security-and-tls). See PostgreSQL's [password authentication](https://www.postgresql.org/docs/current/auth-password.html) and [encryption options](https://www.postgresql.org/docs/current/encryption-options.html) for server configuration guidance. Credential sources Credentials are resolved lazily only when PostgreSQL asks for a password. A certificate-authenticated or trusted connection therefore does not read a password file or invoke a callback. The precedence for a password challenge is: access-token callback; password callback; explicit `Password` connection setting; then the first matching PostgreSQL password-file entry. Password and access-token callbacks are mutually exclusive. A synchronous open requires a synchronous callback; asynchronous opens prefer the asynchronous callback and fall back to the synchronous callback when necessary. Configure both callback forms when the same data source is used by synchronous and asynchronous callers: Connection-string secrecy `Persist Security Info` defaults to `false`. A `BlueTuskConnection` exposes the original connection string until its first successful open, then permanently omits `Password` and `Passfile` from the public `ConnectionString` property. `BlueTuskDataSource.ConnectionString` omits them immediately because a data source is ready to open physical sessions as soon as it is built. Authentication continues to use the private immutable configuration, including on a ",
+    "sourcePath": "docs/ado-net/authentication.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/authentication.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Authentication</h1>\n<p>This page helps you choose how your app proves its identity to PostgreSQL:\npasswords and password files, callbacks, access tokens, Kerberos and TLS client\ncertificates.</p>\n<p>BlueTusk supports SCRAM-SHA-256, SCRAM-SHA-256-PLUS (channel binding),\nPostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5, and\ncleartext passwords. By default it requires TLS (<code>SSL Mode=VerifyFull</code>) and\nvalidates the server certificate with the operating system’s trust store. The\nconnection-string keywords are listed in <a href=\"/documentation/provider/configuration#security-and-tls\">Configuration</a>.\nSee PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/auth-password.html\" target=\"_blank\" rel=\"noreferrer\">password authentication</a>\nand <a href=\"https://www.postgresql.org/docs/current/encryption-options.html\" target=\"_blank\" rel=\"noreferrer\">encryption options</a>\nfor server configuration guidance.</p>\n<h2>Credential sources</h2>\n<p>Credentials are resolved lazily only when PostgreSQL asks for a password. A\ncertificate-authenticated or trusted connection therefore does not read a\npassword file or invoke a callback. The precedence for a password challenge is:</p>\n<ol>\n<li>access-token callback;</li>\n<li>password callback;</li>\n<li>explicit <code>Password</code> connection setting; then</li>\n<li>the first matching PostgreSQL password-file entry.</li>\n</ol>\n<p>Password and access-token callbacks are mutually exclusive. A synchronous open\nrequires a synchronous callback; asynchronous opens prefer the asynchronous\ncallback and fall back to the synchronous callback when necessary. Configure\nboth callback forms when the same data source is used by synchronous and\nasynchronous callers:</p>\n"
+        "html": "<p>This page helps you choose how your app proves its identity to PostgreSQL:\npasswords and password files, callbacks, access tokens, Kerberos and TLS client\ncertificates.</p>\n<p>BlueTusk supports SCRAM-SHA-256, SCRAM-SHA-256-PLUS (channel binding),\nPostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5, and\ncleartext passwords. By default it requires TLS (<code>SSL Mode=VerifyFull</code>) and\nvalidates the server certificate with the operating system’s trust store. The\nconnection-string keywords are listed in <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/configuration.md#security-and-tls\">Configuration</a>.\nSee PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/auth-password.html\">password authentication</a>\nand <a href=\"https://www.postgresql.org/docs/current/encryption-options.html\">encryption options</a>\nfor server configuration guidance.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "credential-sources",
+          "text": "Credential sources",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Credentials are resolved lazily only when PostgreSQL asks for a password. A\ncertificate-authenticated or trusted connection therefore does not read a\npassword file or invoke a callback. The precedence for a password challenge is:</p>\n<ol>\n<li>access-token callback;</li>\n<li>password callback;</li>\n<li>explicit <code>Password</code> connection setting; then</li>\n<li>the first matching PostgreSQL password-file entry.</li>\n</ol>\n<p>Password and access-token callbacks are mutually exclusive. A synchronous open\nrequires a synchronous callback; asynchronous opens prefer the asynchronous\ncallback and fall back to the synchronous callback when necessary. Configure\nboth callback forms when the same data source is used by synchronous and\nasynchronous callers:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var builder = new BlueTuskDataSourceBuilder(connectionString)\n    .UsePasswordProvider(request => vault.GetPassword(request.Host, request.Username))\n    .UsePasswordProvider(async (request, cancellationToken) =>\n        await vault.GetPasswordAsync(request.Host, request.Username, cancellationToken));\n\nawait using var dataSource = builder.Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> builder = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UsePasswordProvider(request =&gt; vault.GetPassword(request.Host, request.Username))\n    .UsePasswordProvider(<span class=\"hljs-keyword\">async</span> (request, cancellationToken) =&gt;\n        <span class=\"hljs-keyword\">await</span> vault.GetPasswordAsync(request.Host, request.Username, cancellationToken));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = builder.Build();\n",
+        "code": "var builder = new BlueTuskDataSourceBuilder(connectionString)\n    .UsePasswordProvider(request => vault.GetPassword(request.Host, request.Username))\n    .UsePasswordProvider(async (request, cancellationToken) =>\n        await vault.GetPasswordAsync(request.Host, request.Username, cancellationToken));\n\nawait using var dataSource = builder.Build();",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> builder = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UsePasswordProvider(request =&gt; vault.GetPassword(request.Host, request.Username))\n    .UsePasswordProvider(<span class=\"hljs-keyword\">async</span> (request, cancellationToken) =&gt;\n        <span class=\"hljs-keyword\">await</span> vault.GetPasswordAsync(request.Host, request.Username, cancellationToken));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = builder.Build();",
+        "language": "csharp"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "connection-string-secrecy",
+          "text": "Connection-string secrecy",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>Persist Security Info</code> defaults to <code>false</code>. A <code>BlueTuskConnection</code> exposes the\noriginal connection string until its first successful open, then permanently\nomits <code>Password</code> and <code>Passfile</code> from the public <code>ConnectionString</code> property.\n<code>BlueTuskDataSource.ConnectionString</code> omits them immediately because a data\nsource is ready to open physical sessions as soon as it is built. Authentication\ncontinues to use the private immutable configuration, including on a later\nreopen or when a pool creates another physical session.</p>\n<p>Set <code>Persist Security Info=true</code> only when an application deliberately needs to\nread those values back. This weakens accidental-disclosure protection and must\nnot be used as a substitute for a credential vault or token callback. The\nconnection-string builder necessarily exposes values while an application is\nconstructing configuration; never log the builder or its <code>ConnectionString</code>.</p>\n<p>An access-token callback supplies a ready bearer/IAM token. When PostgreSQL 18+\nadvertises <code>OAUTHBEARER</code>, BlueTusk sends the token with the\n<a href=\"https://www.rfc-editor.org/rfc/rfc7628\">RFC 7628</a> SASL mechanism. On servers requesting password, MD5, or SCRAM authentication, the\nsame callback supplies the token as the password, as required by database\nservices that use short-lived IAM tokens without PostgreSQL-native OAuth.</p>\n<p>The callback is invoked once for each new physical connection, after TLS\nnegotiation and only when the server requests a credential. Pool checkout does\nnot refresh a token because an already-authenticated physical session does not\nauthenticate again. Clearing or expiring a pooled session causes the next\nphysical connection to request a new token.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAccessTokenProvider(async (request, cancellationToken) =>\n        await tokenService.GetDatabaseTokenAsync(request, cancellationToken))\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAccessTokenProvider(<span class=\"hljs-keyword\">async</span> (request, cancellationToken) =&gt;\n        <span class=\"hljs-keyword\">await</span> tokenService.GetDatabaseTokenAsync(request, cancellationToken))\n    .Build();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>Connection-string secrecy</h2>\n<p><code>Persist Security Info</code> defaults to <code>false</code>. A <code>BlueTuskConnection</code> exposes the\noriginal connection string until its first successful open, then permanently\nomits <code>Password</code> and <code>Passfile</code> from the public <code>ConnectionString</code> property.\n<code>BlueTuskDataSource.ConnectionString</code> omits them immediately because a data\nsource is ready to open physical sessions as soon as it is built. Authentication\ncontinues to use the private immutable configuration, including on a later\nreopen or when a pool creates another physical session.</p>\n<p>Set <code>Persist Security Info=true</code> only when an application deliberately needs to\nread those values back. This weakens accidental-disclosure protection and must\nnot be used as a substitute for a credential vault or token callback. The\nconnection-string builder necessarily exposes values while an application is\nconstructing configuration; never log the builder or its <code>ConnectionString</code>.</p>\n<p>An access-token callback supplies a ready bearer/IAM token. When PostgreSQL 18+\nadvertises <code>OAUTHBEARER</code>, BlueTusk sends the token with the\n<a href=\"https://www.rfc-editor.org/rfc/rfc7628\" target=\"_blank\" rel=\"noreferrer\">RFC 7628</a> SASL mechanism. On servers requesting password, MD5, or SCRAM authentication, the\nsame callback supplies the token as the password, as required by database\nservices that use short-lived IAM tokens without PostgreSQL-native OAuth.</p>\n<p>The callback is invoked once for each new physical connection, after TLS\nnegotiation and only when the server requests a credential. Pool checkout does\nnot refresh a token because an already-authenticated physical session does not\nauthenticate again. Clearing or expiring a pooled session causes the next\nphysical connection to request a new token.</p>\n"
+        "html": "<p>Native OAUTHBEARER always requires TLS and is incompatible with required channel\nbinding because the standardized mechanism has no channel-binding variant.\nBlueTusk accepts an already-issued token; OAuth discovery, browser/device flows,\nand refresh-token storage remain application concerns. Optional, separately\npackaged <a href=\"/documentation/provider/cloud-identity\">cloud identity adapters</a> integrate AWS RDS/Aurora,\nAzure Database for PostgreSQL, and Google Cloud SQL SDK credentials without\nadding vendor dependencies to the core provider. PostgreSQL still requires a\ncorrectly configured server-side OAuth validator; see PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/auth-oauth.html\">OAuth authentication guide</a>.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAccessTokenProvider(async (request, cancellationToken) =>\n        await tokenService.GetDatabaseTokenAsync(request, cancellationToken))\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAccessTokenProvider(<span class=\"hljs-keyword\">async</span> (request, cancellationToken) =&gt;\n        <span class=\"hljs-keyword\">await</span> tokenService.GetDatabaseTokenAsync(request, cancellationToken))\n    .Build();\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "gssapi-kerberos-and-sspi",
+          "text": "GSSAPI, Kerberos, and SSPI",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>Native OAUTHBEARER always requires TLS and is incompatible with required channel\nbinding because the standardized mechanism has no channel-binding variant.\nBlueTusk accepts an already-issued token; OAuth discovery, browser/device flows,\nand refresh-token storage remain application concerns. Optional, separately\npackaged <a href=\"/documentation/provider/cloud-identity\">cloud identity adapters</a> integrate AWS RDS/Aurora,\nAzure Database for PostgreSQL, and Google Cloud SQL SDK credentials without\nadding vendor dependencies to the core provider. PostgreSQL still requires a\ncorrectly configured server-side OAuth validator; see PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/auth-oauth.html\" target=\"_blank\" rel=\"noreferrer\">OAuth authentication guide</a>.</p>\n<h2>GSSAPI, Kerberos, and SSPI</h2>\n<p>When PostgreSQL requests GSSAPI, BlueTusk creates a platform\n<code>NegotiateAuthentication</code> context with the Kerberos package. A PostgreSQL SSPI\nrequest uses the platform Negotiate package and the same opaque-token wire\nexchange. Both genuine synchronous and asynchronous opens support multistep\nnegotiation and require the server to be mutually authenticated before\n<code>AuthenticationOk</code> is accepted.</p>\n<p>The default service principal target is <code>postgres/&lt;Host&gt;</code>. Set\n<code>Kerberos Service Name</code> when PostgreSQL was configured with a different\n<code>krb_srvname</code> value:</p>\n"
+        "html": "<p>When PostgreSQL requests GSSAPI, BlueTusk creates a platform\n<code>NegotiateAuthentication</code> context with the Kerberos package. A PostgreSQL SSPI\nrequest uses the platform Negotiate package and the same opaque-token wire\nexchange. Both genuine synchronous and asynchronous opens support multistep\nnegotiation and require the server to be mutually authenticated before\n<code>AuthenticationOk</code> is accepted.</p>\n<p>The default service principal target is <code>postgres/&lt;Host&gt;</code>. Set\n<code>Kerberos Service Name</code> when PostgreSQL was configured with a different\n<code>krb_srvname</code> value:</p>\n"
       },
       {
         "kind": "code",
-        "code": "Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgres\n",
-        "highlighted": "Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgres\n",
+        "code": "Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgres",
+        "highlighted": "Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgres",
         "language": "text"
       },
       {
@@ -686,251 +413,73 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseGssCredential(await credentialVault.GetNetworkCredentialAsync())\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseGssCredential(<span class=\"hljs-keyword\">await</span> credentialVault.GetNetworkCredentialAsync())\n    .Build();\n",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseGssCredential(await credentialVault.GetNetworkCredentialAsync())\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseGssCredential(<span class=\"hljs-keyword\">await</span> credentialVault.GetNetworkCredentialAsync())\n    .Build();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>GSSAPI does not invoke BlueTusk password or access-token callbacks. Returned\nplatform tokens and protocol write buffers are cleared after each transport\nflush, and provider failures are reported without their original exception or\ntoken content. Kerberos authenticates the peers but this PostgreSQL exchange\ndoes not enable GSS-encrypted transport; configure TLS when database traffic\nmust be encrypted. Server principals, keytabs, role mapping, realms, and ticket\nlifetime remain deployment responsibilities. See PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/gssapi-auth.html\" target=\"_blank\" rel=\"noreferrer\">GSSAPI authentication guide</a>.</p>\n<h2>PostgreSQL password files</h2>\n<p>Set <code>Passfile=/path/to/file</code> to select a password file. When neither a callback\nnor an explicit password is configured, BlueTusk checks <code>PGPASSFILE</code>, then the\nplatform default: <code>%APPDATA%\\postgresql\\pgpass.conf</code> on Windows or\n<code>$HOME/.pgpass</code> on Unix. The file follows PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/libpq-pgpass.html\" target=\"_blank\" rel=\"noreferrer\"><code>hostname:port:database:username:password</code></a>\nformat, first-match ordering, <code>*</code> wildcards, and backslash escaping for colons\nand backslashes.</p>\n<p>Physical replication sessions match the special <code>replication</code> database field;\nlogical database replication continues to match its configured database name.</p>\n<p>On Unix, group or world permissions cause the file to be ignored; use mode\n<code>0600</code>. Windows relies on the security of the application-data directory, which\nmatches PostgreSQL behavior. An empty <code>BlueTuskClientOptions.Passfile</code> disables\ndefault password-file lookup for low-level clients.</p>\n<h2>TLS client certificates</h2>\n<p>Low-level clients can supply <code>BlueTuskClientOptions.ClientCertificates</code> and an\noptional <code>LocalCertificateSelectionCallback</code>. A data source provides fluent\nequivalents and preserves them for pooled, unpooled, notification, and dedicated\nreplication sessions:</p>\n"
+        "html": "<p>GSSAPI does not invoke BlueTusk password or access-token callbacks. Returned\nplatform tokens and protocol write buffers are cleared after each transport\nflush, and provider failures are reported without their original exception or\ntoken content. Kerberos authenticates the peers but this PostgreSQL exchange\ndoes not enable GSS-encrypted transport; configure TLS when database traffic\nmust be encrypted. Server principals, keytabs, role mapping, realms, and ticket\nlifetime remain deployment responsibilities. See PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/gssapi-auth.html\">GSSAPI authentication guide</a>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "postgresql-password-files",
+          "text": "PostgreSQL password files",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Set <code>Passfile=/path/to/file</code> to select a password file. When neither a callback\nnor an explicit password is configured, BlueTusk checks <code>PGPASSFILE</code>, then the\nplatform default: <code>%APPDATA%\\postgresql\\pgpass.conf</code> on Windows or\n<code>$HOME/.pgpass</code> on Unix. The file follows PostgreSQL’s\n<a href=\"https://www.postgresql.org/docs/current/libpq-pgpass.html\"><code>hostname:port:database:username:password</code></a>\nformat, first-match ordering, <code>*</code> wildcards, and backslash escaping for colons\nand backslashes.</p>\n<p>Physical replication sessions match the special <code>replication</code> database field;\nlogical database replication continues to match its configured database name.</p>\n<p>On Unix, group or world permissions cause the file to be ignored; use mode\n<code>0600</code>. Windows relies on the security of the application-data directory, which\nmatches PostgreSQL behavior. An empty <code>BlueTuskClientOptions.Passfile</code> disables\ndefault password-file lookup for low-level clients.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "tls-client-certificates",
+          "text": "TLS client certificates",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Low-level clients can supply <code>BlueTuskClientOptions.ClientCertificates</code> and an\noptional <code>LocalCertificateSelectionCallback</code>. A data source provides fluent\nequivalents and preserves them for pooled, unpooled, notification, and dedicated\nreplication sessions:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseClientCertificate(clientCertificate)\n    .UseClientCertificateSelectionCallback(\n        (_, _, certificates, _, acceptableIssuers) => certificates[0])\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseClientCertificate(clientCertificate)\n    .UseClientCertificateSelectionCallback(\n        (_, _, certificates, _, acceptableIssuers) =&gt; certificates[<span class=\"hljs-number\">0</span>])\n    .Build();\n",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseClientCertificate(clientCertificate)\n    .UseClientCertificateSelectionCallback(\n        (_, _, certificates, _, acceptableIssuers) => certificates[0])\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseClientCertificate(clientCertificate)\n    .UseClientCertificateSelectionCallback(\n        (_, _, certificates, _, acceptableIssuers) =&gt; certificates[<span class=\"hljs-number\">0</span>])\n    .Build();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Certificates remain caller-owned and must stay valid for the data source’s\nlifetime. The same runtime client identity and credential callbacks are retained\nfor EF physical-database maintenance connections. Platform server-certificate\nand hostname validation remains enabled.\n<code>UseRemoteCertificateValidationCallback</code> is available for private trust models,\nbut the callback becomes the security boundary and must validate the presented\ncertificate rather than accepting every certificate.</p>\n<h2>Cleartext and legacy MD5 compatibility</h2>\n<p>PostgreSQL MD5 challenges are supported for legacy servers, but MD5 is\ndeprecated by PostgreSQL and SCRAM should be preferred. A cleartext password\nchallenge is accepted over TLS. Without TLS, BlueTusk stops with an error\nunless <code>Allow Unencrypted Password=true</code> is set for a trusted compatibility\nenvironment.</p>\n<p>Authentication protocol buffers are overwritten after transport flushes and\ntemporary writable password/MD5/OAUTHBEARER/GSSAPI buffers are cleared. Immutable .NET strings\ncannot be zeroed; keep connection strings and callback results short-lived and\nnever log them. Callback failures are reported without retaining the original\nexception, preventing a callback exception message from leaking a credential.</p>\n"
+        "html": "<p>Certificates remain caller-owned and must stay valid for the data source’s\nlifetime. The same runtime client identity and credential callbacks are retained\nfor EF physical-database maintenance connections. Platform server-certificate\nand hostname validation remains enabled.\n<code>UseRemoteCertificateValidationCallback</code> is available for private trust models,\nbut the callback becomes the security boundary and must validate the presented\ncertificate rather than accepting every certificate.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "cleartext-and-legacy-md5-compatibility",
+          "text": "Cleartext and legacy MD5 compatibility",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL MD5 challenges are supported for legacy servers, but MD5 is\ndeprecated by PostgreSQL and SCRAM should be preferred. A cleartext password\nchallenge is accepted over TLS. Without TLS, BlueTusk stops with an error\nunless <code>Allow Unencrypted Password=true</code> is set for a trusted compatibility\nenvironment.</p>\n<p>Authentication protocol buffers are overwritten after transport flushes and\ntemporary writable password/MD5/OAUTHBEARER/GSSAPI buffers are cleared. Immutable .NET strings\ncannot be zeroed; keep connection strings and callback results short-lived and\nnever log them. Callback failures are reported without retaining the original\nexception, preventing a callback exception message from leaking a credential.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "cloud-identity",
-    "summary": "AWS, Azure, and Google Cloud identity integration and live-test boundaries.",
-    "keywords": [
-      "aws",
-      "azure",
-      "gcp",
-      "oauth"
-    ],
-    "order": 20,
-    "listed": true,
-    "title": "Cloud identity",
-    "sourcePath": "docs/ado-net/cloud-identity.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/cloud-identity.md",
-    "headings": [
-      {
-        "id": "cloud-identity",
-        "text": "Cloud identity",
-        "level": 1
-      },
-      {
-        "id": "aws-rds-and-aurora-postgresql",
-        "text": "AWS RDS and Aurora PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "azure-database-for-postgresql",
-        "text": "Azure Database for PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "google-cloud-sql-for-postgresql",
-        "text": "Google Cloud SQL for PostgreSQL",
-        "level": 2
-      }
-    ],
-    "wordCount": 551,
-    "readMinutes": 3,
-    "searchText": "Cloud identity This page helps you connect to AWS RDS and Aurora, Azure Database for PostgreSQL, or Google Cloud SQL with a cloud identity instead of a stored password. The cloud SDKs are kept out of the core provider. Install only the adapter for the service you use: Each adapter installs an access-token callback on the data-source builder and requires TLS before the callback is invoked. A token is acquired for every new physical connection. Checking an existing physical connection out of the pool does not acquire another token because PostgreSQL does not authenticate that session again. An authenticated session can outlive its token; `Connection Lifetime` and `ClearPoolAsync()` limit how long it stays in use. Provider exceptions and token values are not attached to BlueTusk's authentication errors. Tokens are never placed in the connection string or logged by the adapters. The returned .NET `string` is immutable and cannot be overwritten, so applications should not retain or log it. AWS RDS and Aurora PostgreSQL `BlueTusk.Identity.Aws` uses AWS SDK for .NET v4 to generate a SigV4 RDS IAM authentication token from the host, port, and PostgreSQL username of the physical connection being opened: The parameterless overload uses the AWS SDK's standard region and credential resolution chains. Other overloads accept an explicit `AWSCredentials`, `RegionEndpoint`, or both. Synchronous and asynchronous BlueTusk opens use the corresponding AWS SDK token-generation path. Enable IAM database authentication, grant the PostgreSQL role `rds_iam`, and allow the AWS identity to perform `rds-db:connect`. Use the actual RDS or Aurora endpoint rather than a custom DNS alias because the host is part of the signature. AWS tokens are valid for 15 minutes; BlueTusk requests a fresh token for each new physical connection rather than caching it. See AWS's [IAM database authentication guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html) and [.NET token-",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Cloud identity</h1>\n<p>This page helps you connect to AWS RDS and Aurora, Azure Database for\nPostgreSQL, or Google Cloud SQL with a cloud identity instead of a stored\npassword.</p>\n<p>The cloud SDKs are kept out of the core provider. Install only the adapter for\nthe service you use:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Identity.Aws\ndotnet add package BlueTusk.Identity.Azure\ndotnet add package BlueTusk.Identity.GoogleCloud\n",
-        "highlighted": "dotnet add package BlueTusk.Identity.Aws\ndotnet add package BlueTusk.Identity.Azure\ndotnet add package BlueTusk.Identity.GoogleCloud\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Each adapter installs an access-token callback on the data-source builder and\nrequires TLS before the callback is invoked. A token is acquired for every new\nphysical connection. Checking an existing physical connection out of the pool\ndoes not acquire another token because PostgreSQL does not authenticate that\nsession again. An authenticated session can outlive its token; <code>Connection Lifetime</code> and <code>ClearPoolAsync()</code> limit how long it stays in use.</p>\n<p>Provider exceptions and token values are not attached to BlueTusk’s\nauthentication errors. Tokens are never placed in the connection string or\nlogged by the adapters. The returned .NET <code>string</code> is immutable and cannot be\noverwritten, so applications should not retain or log it.</p>\n<h2>AWS RDS and Aurora PostgreSQL</h2>\n<p><code>BlueTusk.Identity.Aws</code> uses AWS SDK for .NET v4 to generate a SigV4 RDS IAM\nauthentication token from the host, port, and PostgreSQL username of the\nphysical connection being opened:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using Amazon;\nusing BlueTusk.Data;\nusing BlueTusk.Identity.Aws;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAwsRdsIamAuthentication(RegionEndpoint.EUWest2)\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> Amazon;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.Aws;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAwsRdsIamAuthentication(RegionEndpoint.EUWest2)\n    .Build();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The parameterless overload uses the AWS SDK’s standard region and credential\nresolution chains. Other overloads accept an explicit <code>AWSCredentials</code>,\n<code>RegionEndpoint</code>, or both. Synchronous and asynchronous BlueTusk opens use the\ncorresponding AWS SDK token-generation path.</p>\n<p>Enable IAM database authentication, grant the PostgreSQL role <code>rds_iam</code>, and\nallow the AWS identity to perform <code>rds-db:connect</code>. Use the actual RDS or Aurora\nendpoint rather than a custom DNS alias because the host is part of the\nsignature. AWS tokens are valid for 15 minutes; BlueTusk requests a fresh token\nfor each new physical connection rather than caching it. See AWS’s\n<a href=\"https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html\" target=\"_blank\" rel=\"noreferrer\">IAM database authentication guide</a>\nand <a href=\"https://docs.aws.amazon.com/sdkfornet/v4/apidocs/items/RDS/TRDSAuthTokenGenerator.html\" target=\"_blank\" rel=\"noreferrer\">.NET token-generator API</a>.</p>\n<h2>Azure Database for PostgreSQL</h2>\n<p><code>BlueTusk.Identity.Azure</code> accepts any <code>Azure.Core.TokenCredential</code>, including\nmanaged identity, workload identity, a service principal, or a local developer\ncredential:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using Azure.Identity;\nusing BlueTusk.Data;\nusing BlueTusk.Identity.Azure;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAzurePostgreSqlEntraAuthentication(new DefaultAzureCredential())\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> Azure.Identity;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.Azure;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAzurePostgreSqlEntraAuthentication(<span class=\"hljs-keyword\">new</span> DefaultAzureCredential())\n    .Build();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The adapter requests the public-cloud PostgreSQL scope\n<code>https://ossrdbms-aad.database.windows.net/.default</code>. Pass the documented scope\nexplicitly for a sovereign cloud. Configure the connection username for the\nMicrosoft Entra principal created in PostgreSQL. Synchronous and asynchronous\nBlueTusk opens call the matching <code>TokenCredential</code> API. The adapter package\ndepends on <code>Azure.Core</code>; the application chooses and owns its <code>Azure.Identity</code>\ncredential implementation. See Microsoft’s\n<a href=\"https://learn.microsoft.com/azure/postgresql/security/security-connect-with-managed-identity\" target=\"_blank\" rel=\"noreferrer\">managed identity connection guide</a>.</p>\n<h2>Google Cloud SQL for PostgreSQL</h2>\n<p><code>BlueTusk.Identity.GoogleCloud</code> scopes a <code>GoogleCredential</code> for Cloud SQL login\nand supplies its access token as the PostgreSQL password:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.Identity.GoogleCloud;\nusing Google.Apis.Auth.OAuth2;\n\nvar credential = await GoogleCredential.GetApplicationDefaultAsync();\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseGoogleCloudSqlIamAuthentication(credential)\n    .Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.GoogleCloud;\n<span class=\"hljs-keyword\">using</span> Google.Apis.Auth.OAuth2;\n\n<span class=\"hljs-keyword\">var</span> credential = <span class=\"hljs-keyword\">await</span> GoogleCredential.GetApplicationDefaultAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseGoogleCloudSqlIamAuthentication(credential)\n    .Build();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Google’s official .NET token surface is asynchronous. Use\n<code>OpenConnectionAsync</code>; a synchronous physical open fails with the standard\nmissing-synchronous-provider error instead of blocking asynchronous credential\nI/O. The advanced <code>ITokenAccess</code> overload accepts an already scoped token\nsource. Configure Cloud SQL IAM database authentication and grant\n<code>cloudsql.instances.login</code>. A service-account PostgreSQL username omits the\n<code>.gserviceaccount.com</code> suffix.</p>\n<p>This adapter handles identity only. Use an authorized public or private route,\nor the Cloud SQL Auth Proxy, for network connectivity. See Google’s\n<a href=\"https://docs.cloud.google.com/sql/docs/postgres/iam-logins\" target=\"_blank\" rel=\"noreferrer\">IAM database login guide</a>.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "dependency-injection",
-    "summary": "Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.",
-    "keywords": [
-      "dependency injection",
-      "health checks",
-      "DbDataSource",
-      "hosting"
-    ],
-    "order": 25,
-    "listed": true,
-    "title": "Dependency injection and health checks",
-    "sourcePath": "docs/ado-net/dependency-injection.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/dependency-injection.md",
-    "headings": [
-      {
-        "id": "dependency-injection-and-health-checks",
-        "text": "Dependency injection and health checks",
-        "level": 1
-      },
-      {
-        "id": "register-the-data-source",
-        "text": "Register the data source",
-        "level": 2
-      },
-      {
-        "id": "use-the-data-source-in-a-service",
-        "text": "Use the data source in a service",
-        "level": 2
-      },
-      {
-        "id": "readiness-health-check",
-        "text": "Readiness health check",
-        "level": 2
-      },
-      {
-        "id": "liveness-versus-readiness",
-        "text": "Liveness versus readiness",
-        "level": 2
-      },
-      {
-        "id": "ownership-and-disposal",
-        "text": "Ownership and disposal",
-        "level": 2
-      },
-      {
-        "id": "test-your-registration",
-        "text": "Test your registration",
-        "level": 2
-      },
-      {
-        "id": "migration-from-npgsql-di",
-        "text": "Migration from Npgsql DI",
-        "level": 2
-      }
-    ],
-    "wordCount": 597,
-    "readMinutes": 3,
-    "searchText": "Dependency injection and health checks This page helps you register a BlueTusk data source in an ASP.NET Core, worker or other generic-host app, and expose a database readiness check. It uses `BlueTusk.Data.DependencyInjection`, which works with `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Diagnostics.HealthChecks`. The [quick start](quickstart.md) shows a complete minimal API. Register the data source The registration creates one long-lived `BlueTuskDataSource`. The same instance is resolvable as: `BlueTuskDataSource` for provider-specific APIs; and `DbDataSource` for provider-neutral application and library code. Do not register a data source as transient or create one per request. The data source owns the physical pool and immutable provider configuration. All parameters are described in [Configuration](configuration.md#dependency-injection-registration). Use the data source in a service Provider-neutral service: Provider-specific code can resolve `BlueTuskDataSource` when it needs a dedicated replication session, PostgreSQL type configuration or another BlueTusk-only surface. Readiness health check Registration always adds a health check. Its name is `healthCheckName` (default `bluetusk`) and it is tagged: `bluetusk` `ready` The check opens a logical connection and executes `SELECT 1`. It verifies the path an application needs for ordinary database work: configuration, DNS, network reachability, authentication, pool acquisition and a server round-trip. It does not prove: that every migration has been applied; that a replication slot is healthy; that a standby has caught up; that a Sync destination is reachable; or that the application has domain-level read/write permission. Add separate checks for those responsibilities. To serve only readiness checks on one endpoint, filter by tag: Liveness versus readiness Database connectivity normally belongs in readiness, not liveness. Restarting a healthy process because PostgreSQL is briefly unavai",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Dependency injection and health checks</h1>\n<p>This page helps you register a BlueTusk data source in an ASP.NET Core, worker\nor other generic-host app, and expose a database readiness check. It uses\n<code>BlueTusk.Data.DependencyInjection</code>, which works with\n<code>Microsoft.Extensions.DependencyInjection</code> and\n<code>Microsoft.Extensions.Diagnostics.HealthChecks</code>.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data.DependencyInjection\n",
-        "highlighted": "dotnet add package BlueTusk.Data.DependencyInjection\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The <a href=\"/documentation/provider/quickstart\">quick start</a> shows a complete minimal API.</p>\n<h2>Register the data source</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "services.AddDataSource(\n    configuration.GetConnectionString(\"PostgreSQL\")!,\n    builder =>\n    {\n        builder.ConfigureDiagnostics(diagnostics);\n        builder.MapComposite<Address>(\"app.address\");\n    },\n    healthCheckName: \"postgresql\");\n",
-        "highlighted": "services.AddDataSource(\n    configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!,\n    builder =&gt;\n    {\n        builder.ConfigureDiagnostics(diagnostics);\n        builder.MapComposite&lt;Address&gt;(<span class=\"hljs-string\">&quot;app.address&quot;</span>);\n    },\n    healthCheckName: <span class=\"hljs-string\">&quot;postgresql&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The registration creates one long-lived <code>BlueTuskDataSource</code>. The same\ninstance is resolvable as:</p>\n<ul>\n<li><code>BlueTuskDataSource</code> for provider-specific APIs; and</li>\n<li><code>DbDataSource</code> for provider-neutral application and library code.</li>\n</ul>\n<p>Do not register a data source as transient or create one per request. The data\nsource owns the physical pool and immutable provider configuration. All\nparameters are described in <a href=\"/documentation/provider/configuration#dependency-injection-registration\">Configuration</a>.</p>\n<h2>Use the data source in a service</h2>\n<p>Provider-neutral service:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "public sealed class AccountReader(DbDataSource dataSource)\n{\n    public async Task<Account?> FindAsync(\n        long id,\n        CancellationToken cancellationToken)\n    {\n        await using var command = dataSource.CreateCommand(\n            \"SELECT id, name FROM accounts WHERE id = @id\");\n        var parameter = command.CreateParameter();\n        parameter.ParameterName = \"id\";\n        parameter.DbType = DbType.Int64;\n        parameter.Value = id;\n        command.Parameters.Add(parameter);\n\n        await using var reader = await command.ExecuteReaderAsync(\n            CommandBehavior.SingleRow,\n            cancellationToken);\n        return await reader.ReadAsync(cancellationToken)\n            ? new Account(reader.GetInt64(0), reader.GetString(1))\n            : null;\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">class</span> <span class=\"hljs-title\">AccountReader</span>(<span class=\"hljs-params\">DbDataSource dataSource</span>)</span>\n{\n    <span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">async</span> Task&lt;Account?&gt; FindAsync(\n        <span class=\"hljs-built_in\">long</span> id,\n        CancellationToken cancellationToken)\n    {\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n            <span class=\"hljs-string\">&quot;SELECT id, name FROM accounts WHERE id = @id&quot;</span>);\n        <span class=\"hljs-keyword\">var</span> parameter = command.CreateParameter();\n        parameter.ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span>;\n        parameter.DbType = DbType.Int64;\n        parameter.Value = id;\n        command.Parameters.Add(parameter);\n\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(\n            CommandBehavior.SingleRow,\n            cancellationToken);\n        <span class=\"hljs-keyword\">return</span> <span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken)\n            ? <span class=\"hljs-keyword\">new</span> Account(reader.GetInt64(<span class=\"hljs-number\">0</span>), reader.GetString(<span class=\"hljs-number\">1</span>))\n            : <span class=\"hljs-literal\">null</span>;\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Provider-specific code can resolve <code>BlueTuskDataSource</code> when it needs a\ndedicated replication session, PostgreSQL type configuration or another\nBlueTusk-only surface.</p>\n<h2>Readiness health check</h2>\n<p>Registration always adds a health check. Its name is <code>healthCheckName</code>\n(default <code>bluetusk</code>) and it is tagged:</p>\n<ul>\n<li><code>bluetusk</code></li>\n<li><code>ready</code></li>\n</ul>\n<p>The check opens a logical connection and executes <code>SELECT 1</code>. It verifies the\npath an application needs for ordinary database work: configuration, DNS,\nnetwork reachability, authentication, pool acquisition and a server\nround-trip.</p>\n<p>It does not prove:</p>\n<ul>\n<li>that every migration has been applied;</li>\n<li>that a replication slot is healthy;</li>\n<li>that a standby has caught up;</li>\n<li>that a Sync destination is reachable; or</li>\n<li>that the application has domain-level read/write permission.</li>\n</ul>\n<p>Add separate checks for those responsibilities.</p>\n<p>To serve only readiness checks on one endpoint, filter by tag:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using Microsoft.AspNetCore.Diagnostics.HealthChecks;\n\napp.MapHealthChecks(\"/health/ready\", new HealthCheckOptions\n{\n    Predicate = check => check.Tags.Contains(\"ready\"),\n});\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> Microsoft.AspNetCore.Diagnostics.HealthChecks;\n\napp.MapHealthChecks(<span class=\"hljs-string\">&quot;/health/ready&quot;</span>, <span class=\"hljs-keyword\">new</span> HealthCheckOptions\n{\n    Predicate = check =&gt; check.Tags.Contains(<span class=\"hljs-string\">&quot;ready&quot;</span>),\n});\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Liveness versus readiness</h2>\n<p>Database connectivity normally belongs in readiness, not liveness. Restarting\na healthy process because PostgreSQL is briefly unavailable can amplify an\nincident.</p>\n<p>Recommended policy:</p>\n<table>\n<thead>\n<tr>\n<th>Probe</th>\n<th>Includes BlueTusk check?</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Liveness</td>\n<td>No</td>\n<td>Process is running and not deadlocked</td>\n</tr>\n<tr>\n<td>Readiness</td>\n<td>Yes</td>\n<td>Instance can accept work that requires PostgreSQL</td>\n</tr>\n<tr>\n<td>Startup</td>\n<td>Optional</td>\n<td>Slow initialization or migration coordination</td>\n</tr>\n</tbody>\n</table>\n<p>Configure the host’s health-check timeout below its request deadline and above\nnormal pool-acquisition plus network latency. Avoid sub-second probe intervals\nthat create load during a database incident.</p>\n<h2>Ownership and disposal</h2>\n<p>The dependency-injection container disposes the registered data source when the\nhost stops. Application services should dispose only the logical connections,\ncommands, readers and transactions they create.</p>\n<p>If an application owns multiple PostgreSQL configurations, register named\nwrapper services or explicit application abstractions. Avoid service-locator\nselection by raw connection string.</p>\n<h2>Test your registration</h2>\n<p>A unit test can resolve <code>BlueTuskDataSource</code> and <code>DbDataSource</code> and check that\nthey are the same instance. An integration test can run the readiness check\nagainst a PostgreSQL test container.</p>\n<h2>Migration from Npgsql DI</h2>\n<p>Provider-neutral services that consume <code>DbDataSource</code>, <code>DbConnection</code>,\n<code>DbCommand</code>, Dapper and explicit <code>DbTransaction</code> can usually retain those\nabstractions. Replace the registration and review provider-specific:</p>\n<ul>\n<li>type names and OIDs;</li>\n<li>connection-string options;</li>\n<li>notification and replication APIs;</li>\n<li>routine invocation conventions; and</li>\n<li>ambient transaction assumptions.</li>\n</ul>\n<p>See <a href=\"/documentation/provider/ado-net-compatibility\">Compatibility</a> for features BlueTusk does not support.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "pooling",
-    "summary": "Pool sizing, reset behavior, operational signals, and PgBouncer modes.",
-    "keywords": [
-      "pool",
-      "reset",
-      "pgbouncer"
-    ],
-    "order": 30,
-    "listed": true,
     "title": "Connection pooling",
-    "sourcePath": "docs/ado-net/pooling.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/pooling.md",
+    "summary": "Size connection pools, manage leases, and control session reset.",
+    "order": 2,
     "headings": [
-      {
-        "id": "connection-pooling",
-        "text": "Connection pooling",
-        "level": 1
-      },
       {
         "id": "settings",
         "text": "Settings",
-        "level": 2
-      },
-      {
-        "id": "what-happens-when-the-pool-is-full",
-        "text": "What happens when the pool is full?",
         "level": 2
       },
       {
@@ -949,156 +498,266 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1144,
-    "readMinutes": 6,
-    "searchText": "Connection pooling This page helps you size, warm up and monitor the connection pool, and understand what happens to a connection between uses. `BlueTuskDataSource` owns its own pool of physical connections, limited by `Maximum Pool Size`. Connections created directly with `new BlueTuskConnection(...)` remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it. For high-concurrency, session-neutral commands, enable the statement multiplexer and create commands directly from the data source: Settings Every keyword is described in [Configuration](configuration.md#pooling). Setting Default Meaning `Pooling` `true` Enables the data source's physical connection pool. `Minimum Pool Size` `0` Physical sessions opened by warm-up and before the first checkout. `Maximum Pool Size` `100` Hard limit for physical sessions in each host endpoint pool. `Connection Idle Lifetime` 5 minutes Maximum idle age checked before reuse; zero disables idle expiry. `Connection Lifetime` 1 hour Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. `Multiplexing` `false` Enables statement multiplexing; pooling must also be enabled. `Timeout` 15 seconds Limits connecting to the server and waiting for a free connection when the pool is full. Watch the pool from your own health or metrics code: Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate. What happens when the pool is full? When every connection is in use, `Open`, `OpenAsync` and data-source commands wait in order for a connection to be returned. The connection-string `Timeout` (default 15 seconds",
+    "sourcePath": "docs/ado-net/pooling.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/pooling.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Connection pooling</h1>\n<p>This page helps you size, warm up and monitor the connection pool, and\nunderstand what happens to a connection between uses.</p>\n<p><code>BlueTuskDataSource</code> owns its own pool of physical connections, limited by\n<code>Maximum Pool Size</code>. Connections created directly with <code>new BlueTuskConnection(...)</code> remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it.</p>\n"
+        "html": "<p><code>BlueTuskDataSource</code> owns an independent bounded physical connection pool. Connections created directly with <code>new BlueTuskConnection(...)</code> remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it.</p>\n"
       },
       {
         "kind": "code",
-        "code": "var settings = new BlueTuskConnectionStringBuilder(connectionString)\n{\n    Pooling = true,\n    MinimumPoolSize = 2,\n    MaximumPoolSize = 50,\n    ConnectionIdleLifetime = TimeSpan.FromMinutes(5),\n    ConnectionLifetime = TimeSpan.FromHours(1),\n};\n\nawait using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);\nawait dataSource.WarmUpAsync();\nawait using var connection = await dataSource.OpenConnectionAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> settings = <span class=\"hljs-keyword\">new</span> BlueTuskConnectionStringBuilder(connectionString)\n{\n    Pooling = <span class=\"hljs-literal\">true</span>,\n    MinimumPoolSize = <span class=\"hljs-number\">2</span>,\n    MaximumPoolSize = <span class=\"hljs-number\">50</span>,\n    ConnectionIdleLifetime = TimeSpan.FromMinutes(<span class=\"hljs-number\">5</span>),\n    ConnectionLifetime = TimeSpan.FromHours(<span class=\"hljs-number\">1</span>),\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = BlueTuskDataSource.Create(settings.ConnectionString);\n<span class=\"hljs-keyword\">await</span> dataSource.WarmUpAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n",
+        "code": "var settings = new BlueTuskConnectionStringBuilder(connectionString)\n{\n    Pooling = true,\n    MinimumPoolSize = 2,\n    MaximumPoolSize = 50,\n    ConnectionIdleLifetime = TimeSpan.FromMinutes(5),\n    ConnectionLifetime = TimeSpan.FromHours(1),\n};\n\nawait using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);\nawait dataSource.WarmUpAsync();\nawait using var connection = await dataSource.OpenConnectionAsync();",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> settings = <span class=\"hljs-keyword\">new</span> BlueTuskConnectionStringBuilder(connectionString)\n{\n    Pooling = <span class=\"hljs-literal\">true</span>,\n    MinimumPoolSize = <span class=\"hljs-number\">2</span>,\n    MaximumPoolSize = <span class=\"hljs-number\">50</span>,\n    ConnectionIdleLifetime = TimeSpan.FromMinutes(<span class=\"hljs-number\">5</span>),\n    ConnectionLifetime = TimeSpan.FromHours(<span class=\"hljs-number\">1</span>),\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = BlueTuskDataSource.Create(settings.ConnectionString);\n<span class=\"hljs-keyword\">await</span> dataSource.WarmUpAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>For high-concurrency, session-neutral commands, enable the statement\nmultiplexer and create commands directly from the data source:</p>\n"
+        "html": "<p>For high-concurrency, session-neutral commands, enable the bounded statement\nmultiplexer and create commands directly from the data source:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =>\n    {\n        options.WorkerCount = 4;\n        options.QueueCapacity = 1_024;\n        options.MaxPipelineCommands = 64;\n    })\n    .Build();\n\nawait using var command = dataSource.CreateCommand(\"SELECT $1::int4\");\ncommand.Parameters.Add(new BlueTuskParameter<int>(42));\nvar value = await command.ExecuteScalarAsync<int>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =&gt;\n    {\n        options.WorkerCount = <span class=\"hljs-number\">4</span>;\n        options.QueueCapacity = <span class=\"hljs-number\">1_024</span>;\n        options.MaxPipelineCommands = <span class=\"hljs-number\">64</span>;\n    })\n    .Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">42</span>));\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =>\n    {\n        options.WorkerCount = 4;\n        options.QueueCapacity = 1_024;\n        options.MaxPipelineCommands = 64;\n    })\n    .Build();\n\nawait using var command = dataSource.CreateCommand(\"SELECT $1::int4\");\ncommand.Parameters.Add(new BlueTuskParameter<int>(42));\nvar value = await command.ExecuteScalarAsync<int>();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing(options =&gt;\n    {\n        options.WorkerCount = <span class=\"hljs-number\">4</span>;\n        options.QueueCapacity = <span class=\"hljs-number\">1_024</span>;\n        options.MaxPipelineCommands = <span class=\"hljs-number\">64</span>;\n    })\n    .Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">42</span>));\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();",
         "language": "csharp"
       },
       {
-        "kind": "html",
-        "html": "<h2>Settings</h2>\n<p>Every keyword is described in <a href=\"/documentation/provider/configuration#pooling\">Configuration</a>.</p>\n<table>\n<thead>\n<tr>\n<th>Setting</th>\n<th class=\"align-right\">Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Pooling</code></td>\n<td class=\"align-right\"><code>true</code></td>\n<td>Enables the data source’s physical connection pool.</td>\n</tr>\n<tr>\n<td><code>Minimum Pool Size</code></td>\n<td class=\"align-right\"><code>0</code></td>\n<td>Physical sessions opened by warm-up and before the first checkout.</td>\n</tr>\n<tr>\n<td><code>Maximum Pool Size</code></td>\n<td class=\"align-right\"><code>100</code></td>\n<td>Hard limit for physical sessions in each host endpoint pool.</td>\n</tr>\n<tr>\n<td><code>Connection Idle Lifetime</code></td>\n<td class=\"align-right\">5 minutes</td>\n<td>Maximum idle age checked before reuse; zero disables idle expiry.</td>\n</tr>\n<tr>\n<td><code>Connection Lifetime</code></td>\n<td class=\"align-right\">1 hour</td>\n<td>Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry.</td>\n</tr>\n<tr>\n<td><code>Multiplexing</code></td>\n<td class=\"align-right\"><code>false</code></td>\n<td>Enables statement multiplexing; pooling must also be enabled.</td>\n</tr>\n<tr>\n<td><code>Timeout</code></td>\n<td class=\"align-right\">15 seconds</td>\n<td>Limits connecting to the server and waiting for a free connection when the pool is full.</td>\n</tr>\n</tbody>\n</table>\n<p>Watch the pool from your own health or metrics code:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var stats = dataSource.GetPoolStatistics();\nConsole.WriteLine(\n    $\"total={stats.Total} idle={stats.Idle} busy={stats.Busy} waiting={stats.Waiting}\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> stats = dataSource.GetPoolStatistics();\nConsole.WriteLine(\n    <span class=\"hljs-string\">$&quot;total=<span class=\"hljs-subst\">{stats.Total}</span> idle=<span class=\"hljs-subst\">{stats.Idle}</span> busy=<span class=\"hljs-subst\">{stats.Busy}</span> waiting=<span class=\"hljs-subst\">{stats.Waiting}</span>&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. <code>Minimum Pool Size</code> and <code>Maximum Pool Size</code> apply to each endpoint pool. <code>GetHostPoolStatistics()</code> exposes each partition; <code>GetPoolStatistics()</code> reports their aggregate.</p>\n<h2>What happens when the pool is full?</h2>\n<p>When every connection is in use, <code>Open</code>, <code>OpenAsync</code> and data-source commands\nwait in order for a connection to be returned. The connection-string <code>Timeout</code>\n(default 15 seconds, also reported as <code>DbConnection.ConnectionTimeout</code>) limits\nthis wait. When it expires, the open throws a <code>TimeoutException</code> that names\nthe endpoint, <code>Maximum Pool Size</code> and <code>Timeout</code>:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "The connection pool for db.example.com:5432 is exhausted: no connection became available within the 15-second Timeout. Close connections sooner, or raise 'Maximum Pool Size' (currently 100) or 'Timeout' in the connection string.\n",
-        "highlighted": "The connection pool for db.example.com:5432 is exhausted: no connection became available within the 15-second Timeout. Close connections sooner, or raise &#x27;Maximum Pool Size&#x27; (currently 100) or &#x27;Timeout&#x27; in the connection string.\n",
-        "language": "text"
+        "kind": "heading",
+        "heading": {
+          "id": "settings",
+          "text": "Settings",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>The caller leaves the queue without using a slot. A cancellation token ends\nthe wait sooner, with <code>OperationCanceledException</code>:</p>\n"
+        "html": "<table>\n<thead>\n<tr>\n<th>Setting</th>\n<th style=\"text-align:right\">Default</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Pooling</code></td>\n<td style=\"text-align:right\"><code>true</code></td>\n<td>Enables the data source’s physical connection pool.</td>\n</tr>\n<tr>\n<td><code>Minimum Pool Size</code></td>\n<td style=\"text-align:right\"><code>0</code></td>\n<td>Physical sessions opened by warm-up and before the first checkout.</td>\n</tr>\n<tr>\n<td><code>Maximum Pool Size</code></td>\n<td style=\"text-align:right\"><code>100</code></td>\n<td>Hard limit for physical sessions in each host endpoint pool.</td>\n</tr>\n<tr>\n<td><code>Connection Idle Lifetime</code></td>\n<td style=\"text-align:right\">5 minutes</td>\n<td>Maximum idle age checked before reuse; zero disables idle expiry.</td>\n</tr>\n<tr>\n<td><code>Connection Lifetime</code></td>\n<td style=\"text-align:right\">1 hour</td>\n<td>Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry.</td>\n</tr>\n<tr>\n<td><code>Multiplexing</code></td>\n<td style=\"text-align:right\"><code>false</code></td>\n<td>Enables bounded statement multiplexing; pooling must also be enabled.</td>\n</tr>\n</tbody>\n</table>\n<p>When the pool is at its maximum, asynchronous opens wait in order for returned capacity. The caller’s cancellation token cancels that wait without consuming a slot.</p>\n<p>Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. <code>Minimum Pool Size</code> and <code>Maximum Pool Size</code> apply to each endpoint pool. <code>GetHostPoolStatistics()</code> exposes each partition; <code>GetPoolStatistics()</code> reports their aggregate.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));\nawait using var connection = await dataSource.OpenConnectionAsync(timeout.Token);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> timeout = <span class=\"hljs-keyword\">new</span> CancellationTokenSource(TimeSpan.FromSeconds(<span class=\"hljs-number\">5</span>));\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync(timeout.Token);\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "reset-and-validation",
+          "text": "Reset and validation",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>In a <a href=\"/documentation/provider/multi-host\">multi-host</a> data source each endpoint pool applies the\nlimit, and a full endpoint pool is not marked as unavailable.</p>\n<blockquote>\n<p><strong>Note:</strong> <strong>Behaviour change in 1.1.0.</strong> In 1.0.0 and 1.1.0-rc.1 an open\nwaited for a free pooled connection with no time limit. If your application\nrelied on that, raise <code>Timeout</code>.</p>\n</blockquote>\n<h2>Reset and validation</h2>\n<p>Closing a logical connection makes its physical session available but does not block on network I/O. An open/close cycle that never accesses the physical session is marked clean and can be leased again without a server exchange. After any command, transaction, COPY, large-object, type-reload, or other session operation, BlueTusk resets the session before reuse:</p>\n<ol>\n<li>sends <code>ROLLBACK</code> if PostgreSQL reports an open or failed transaction;</li>\n<li>sends <code>DISCARD ALL</code>, which clears temporary objects, prepared statements, listeners, advisory locks, plans, sequence state, and changed session settings;</li>\n<li>verifies that the session remains open and PostgreSQL reports the idle transaction state.</li>\n</ol>\n<p>The reset round trip is also the health check for a touched lease. An untouched lease still verifies the locally observed open and idle state. A closed session, failed reset, expired session, or session from an earlier pool generation is discarded and replaced within the configured maximum. Logical connections reuse the data source’s validated immutable connection settings, and optional notification/large-object coordination state is allocated only when those features are used.</p>\n<p>For an eligible parameterized scalar command created directly from a single-host\ndata source, BlueTusk defers an idle session’s <code>DISCARD ALL</code> until command\nexecution. The reset and extended-query messages are written in one transport\nflush, while PostgreSQL still completes the reset before it processes the user\nquery. This removes a separate checkout round trip without weakening isolation.\nSessions in a transaction are reset before checkout, and explicit connections,\nprepared commands, simple-query execution, multi-host routing, and initial type\nmetadata loading retain the conservative reset-before-lease path.</p>\n<h2>Operations and diagnostics</h2>\n<ul>\n<li><code>WarmUpAsync()</code> opens the configured minimum number of physical sessions.</li>\n<li><code>GetPoolStatistics()</code> returns total, idle, busy, waiting, opened, reused, and discarded counts.</li>\n<li><code>GetHostPoolStatistics()</code> returns the same counters for each configured endpoint.</li>\n<li><code>ClearPool()</code> and <code>ClearPoolAsync()</code> close idle sessions and mark active sessions for disposal when they return.</li>\n<li>Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.</li>\n<li><code>GetMultiplexingStatistics()</code> reports queue, worker, completion, cancellation,\nfailure, and PostgreSQL pipeline counters for the data source.</li>\n</ul>\n<h2>Statement multiplexing</h2>\n<p>Multiplexing uses a fixed number of long-lived workers rather than assigning\none physical session to every logical command. The automatic worker count reserves\nat most half of the configured pool and never selects more than four workers.\nThe default queue holds 1,024 commands, a pipeline flush contains at most 64\nindependently synchronized commands, and a lane is recycled after 65,536\ncommands. Disposal drains for 30 seconds before physically aborting a stuck\nlane.</p>\n<p>Only commands created directly from <code>BlueTuskDataSource</code> are eligible. Commands\non explicit connections, enlisted transactions, explicitly prepared commands,\nand SQL that can depend on session state use a normal affine lease. This\nincludes transaction control, <code>SET</code>/<code>RESET</code>, temporary objects, LISTEN, COPY,\ncursors and sequential readers, explicit PREPARE/EXECUTE, large-object\nroutines, session advisory locks, <code>SHOW</code>/<code>current_setting</code>, and <code>set_config</code>.\n<code>CALL</code>, <code>DO</code>, and notification statements are conservatively affine too. Set\n<code>MultiplexingMode</code> to <code>Require</code> to reject every fallback (including explicit\nconnections and sequential readers), or <code>Disable</code> for a trusted user-defined\nroutine whose statefulness cannot be inferred from SQL text.</p>\n<p>Every command ends at its own PostgreSQL <code>Sync</code> boundary. Server errors,\nper-command timeouts, and caller cancellation are isolated from neighbouring\ncommands. Queue, pipeline, lease and shutdown limits are enforced separately.\nThe design is recorded in\n<a href=\"/documentation/architecture/architecture-decisions-0013-bounded-statement-multiplexing\">ADR 0013</a>.\nThe complete routing, PgBouncer, failure, and verification matrix is in\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">Multiplexing compatibility</a>.</p>\n<p>The <code>BlueTusk.Diagnostics</code> meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See <a href=\"/documentation/operations/observability\">Diagnostics and observability</a> for names, dimensions, and redaction rules.</p>\n"
+        "html": "<p>Closing a logical connection makes its physical session available but does not block on network I/O. An open/close cycle that never accesses the physical session is marked clean and can be leased again without a server exchange. After any command, transaction, COPY, large-object, type-reload, or other session operation, BlueTusk resets the session before reuse:</p>\n<ol>\n<li>sends <code>ROLLBACK</code> if PostgreSQL reports an open or failed transaction;</li>\n<li>sends <code>DISCARD ALL</code>, which clears temporary objects, prepared statements, listeners, advisory locks, plans, sequence state, and changed session settings;</li>\n<li>verifies that the session remains open and PostgreSQL reports the idle transaction state.</li>\n</ol>\n<p>The reset round trip is also the health check for a touched lease. An untouched lease still verifies the locally observed open and idle state. A closed session, failed reset, expired session, or session from an earlier pool generation is discarded and replaced within the configured maximum. Logical connections reuse the data source’s validated immutable connection settings, and optional notification/large-object coordination state is allocated only when those features are used.</p>\n<p>For an eligible parameterized scalar command created directly from a single-host\ndata source, BlueTusk defers an idle session’s <code>DISCARD ALL</code> until command\nexecution. The reset and extended-query messages are written in one transport\nflush, while PostgreSQL still completes the reset before it processes the user\nquery. This removes a separate checkout round trip without weakening isolation.\nSessions in a transaction are reset before checkout, and explicit connections,\nprepared commands, simple-query execution, multi-host routing, and initial type\nmetadata loading retain the conservative reset-before-lease path.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "operations-and-diagnostics",
+          "text": "Operations and diagnostics",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li><code>WarmUpAsync()</code> opens the configured minimum number of physical sessions.</li>\n<li><code>GetPoolStatistics()</code> returns total, idle, busy, waiting, opened, reused, and discarded counts.</li>\n<li><code>GetHostPoolStatistics()</code> returns the same counters for each configured endpoint.</li>\n<li><code>ClearPool()</code> and <code>ClearPoolAsync()</code> close idle sessions and mark active sessions for disposal when they return.</li>\n<li>Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.</li>\n<li><code>GetMultiplexingStatistics()</code> reports queue, worker, completion, cancellation,\nfailure, and PostgreSQL pipeline counters for the data source.</li>\n</ul>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "statement-multiplexing",
+          "text": "Statement multiplexing",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Multiplexing uses persistent, bounded worker lanes rather than assigning one\nphysical session to every logical command. The automatic worker count reserves\nat most half of the configured pool and never selects more than four workers.\nThe default queue holds 1,024 commands, a pipeline flush contains at most 64\nindependently synchronized commands, and a lane is recycled after 65,536\ncommands. Disposal drains for 30 seconds before physically aborting a stuck\nlane.</p>\n<p>Only commands created directly from <code>BlueTuskDataSource</code> are eligible. Commands\non explicit connections, enlisted transactions, explicitly prepared commands,\nand SQL that can depend on session state use a normal affine lease. This\nincludes transaction control, <code>SET</code>/<code>RESET</code>, temporary objects, LISTEN, COPY,\ncursors and sequential readers, explicit PREPARE/EXECUTE, large-object\nroutines, session advisory locks, <code>SHOW</code>/<code>current_setting</code>, and <code>set_config</code>.\n<code>CALL</code>, <code>DO</code>, and notification statements are conservatively affine too. Set\n<code>MultiplexingMode</code> to <code>Require</code> to reject every fallback—including explicit\nconnections and sequential readers—or <code>Disable</code> for a trusted user-defined\nroutine whose statefulness cannot be inferred from SQL text.</p>\n<p>Every command ends at its own PostgreSQL <code>Sync</code> boundary. Server errors,\nper-command timeouts, and caller cancellation are isolated from neighbouring\ncommands. Queue, pipeline, lease, and shutdown bounds are enforced independently.\nSee <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0013-bounded-statement-multiplexing.md\">ADR 0013</a>.\nThe complete routing, PgBouncer, failure, and verification matrix is in\n<a href=\"/documentation/provider/multiplexing-compatibility\">Multiplexing compatibility</a>.</p>\n<p>The <code>BlueTusk.Diagnostics</code> meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md\">Diagnostics and observability</a> for names, dimensions, and redaction rules.</p>\n<p>Use pool waiter counts and checkout latency to spot saturation. Check for long transactions, undisposed readers, and leaked logical connections before raising pool limits.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "multi-host",
-    "summary": "Multi-host routing, failover, target session attributes, and recovery.",
-    "keywords": [
-      "failover",
-      "host",
-      "topology"
-    ],
-    "order": 40,
-    "listed": true,
     "title": "Multi-host connections",
+    "summary": "Connect to primary and replica hosts with explicit targeting.",
+    "order": 3,
+    "headings": [],
     "sourcePath": "docs/ado-net/multi-host.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multi-host.md",
-    "headings": [
-      {
-        "id": "multi-host-connections",
-        "text": "Multi-host connections",
-        "level": 1
-      }
-    ],
-    "wordCount": 493,
-    "readMinutes": 3,
-    "searchText": "Multi-host connections This page helps you connect to a primary and its standbys with one connection string, and route work to the server role you need. BlueTusk accepts PostgreSQL's keyword/value multi-host form. `Host` is a comma-separated ordered list; `Port` can contain one shared port or a positionally matching list. Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver's address order, and attempts every returned address under one shared connect deadline. This respects the operating system's IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host's inner `BlueTuskTransportException`. `Target Session Attributes` accepts: `any` `primary` `standby` `prefer-primary` `prefer-standby` `read-write` `read-only` BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL's [multiple-host and target-session connection behavior](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS). `BlueTuskConnection.ConnectedEndpoint` reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads. `BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work t",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Multi-host connections</h1>\n<p>This page helps you connect to a primary and its standbys with one connection\nstring, and route work to the server role you need.</p>\n<p>BlueTusk accepts PostgreSQL’s keyword/value multi-host form. <code>Host</code> is a comma-separated ordered list; <code>Port</code> can contain one shared port or a positionally matching list.</p>\n"
+        "html": "<p>This page helps you connect to a primary and its standbys with one connection\nstring, and route work to the server role you need.</p>\n<p>BlueTusk accepts PostgreSQL’s keyword/value multi-host form. <code>Host</code> is a comma-separated ordered list; <code>Port</code> can contain one shared port or a positionally matching list.</p>\n"
       },
       {
         "kind": "code",
-        "code": "Host=db-a,db-b,db-c;Port=5432;Target Session Attributes=read-write\nHost=db-a,db-b;Port=5432,6432;Target Session Attributes=prefer-standby\n",
-        "highlighted": "Host=db-a,db-b,db-c;Port=5432;Target Session Attributes=read-write\nHost=db-a,db-b;Port=5432,6432;Target Session Attributes=prefer-standby\n",
+        "code": "Host=db-a,db-b,db-c;Port=5432;Target Session Attributes=read-write\nHost=db-a,db-b;Port=5432,6432;Target Session Attributes=prefer-standby",
+        "highlighted": "Host=db-a,db-b,db-c;Port=5432;Target Session Attributes=read-write\nHost=db-a,db-b;Port=5432,6432;Target Session Attributes=prefer-standby",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>Hosts are attempted in configuration order by default. Set <code>Load Balance Hosts=random</code> to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver’s address order, and attempts every returned address under one shared connect deadline. This respects the operating system’s IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host’s inner <code>BlueTuskTransportException</code>.</p>\n<p><code>Target Session Attributes</code> accepts:</p>\n<ul>\n<li><code>any</code></li>\n<li><code>primary</code></li>\n<li><code>standby</code></li>\n<li><code>prefer-primary</code></li>\n<li><code>prefer-standby</code></li>\n<li><code>read-write</code></li>\n<li><code>read-only</code></li>\n</ul>\n<p>BlueTusk probes <code>pg_is_in_recovery()</code> and <code>transaction_read_only</code> after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL’s <a href=\"https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS\" target=\"_blank\" rel=\"noreferrer\">multiple-host and target-session connection behavior</a>.</p>\n<p><code>BlueTuskConnection.ConnectedEndpoint</code> reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads.</p>\n<p><code>BlueTuskDataSource</code> partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.</p>\n<p>Pooled sources defer an endpoint after a network or server-availability failure\nfor a ten-second monotonic recheck interval. Healthy endpoints retain their\nconfigured relative order (or the selected random order). A healthy preferred\ntarget fallback can be used during that interval; saturation waits for healthy\npool capacity instead of repeatedly connecting to a recently failed endpoint.\nIf the other endpoints fail or do not provide an acceptable session, the source\ncan retry the deferred endpoint immediately. At most one recheck of a previously\nfailed endpoint runs concurrently. Authentication rejection and caller\ncancellation stop routing, and role mismatch does not mark a host unavailable.\nTargeted checkouts still refresh the server role before returning a lease.</p>\n<p>The interval is local to one data source and is not configurable in the current\nAPI. <code>ClearPool</code>/<code>ClearPoolAsync</code> clears its failure observations and restores\nthe configured preference on the next checkout. Unpooled connections continue\ntrying their configured host sequence independently. This routing policy does\nnot provide cluster fencing or replication durability. Plan your own timeouts\nfor connection attempts, pool waits and commands.</p>\n<p><code>GetPoolStatistics()</code> aggregates all endpoint pools. <code>GetHostPoolStatistics()</code> returns the same counters keyed by <code>BlueTuskHostEndpoint</code>. Pool-size settings apply per endpoint, so a three-host data source with <code>Maximum Pool Size=20</code> has an aggregate maximum of 60 physical sessions.</p>\n"
+        "html": "<p>Hosts are attempted in configuration order by default. Set <code>Load Balance Hosts=random</code> to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver’s address order, and attempts every returned address under one shared connect deadline. This respects the operating system’s IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host’s inner <code>BlueTuskTransportException</code>.</p>\n<p><code>Target Session Attributes</code> accepts:</p>\n<ul>\n<li><code>any</code></li>\n<li><code>primary</code></li>\n<li><code>standby</code></li>\n<li><code>prefer-primary</code></li>\n<li><code>prefer-standby</code></li>\n<li><code>read-write</code></li>\n<li><code>read-only</code></li>\n</ul>\n<p>BlueTusk probes <code>pg_is_in_recovery()</code> and <code>transaction_read_only</code> after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL’s <a href=\"https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS\">multiple-host and target-session connection behavior</a>.</p>\n<p><code>BlueTuskConnection.ConnectedEndpoint</code> reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads.</p>\n<p><code>BlueTuskDataSource</code> partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.</p>\n<p>Pooled sources defer an endpoint after a network or server-availability failure\nfor a ten-second monotonic recheck interval. Healthy endpoints retain their\nconfigured relative order (or the selected random order). A healthy preferred\ntarget fallback can be used during that interval; saturation waits for healthy\npool capacity instead of repeatedly connecting to a recently failed endpoint.\nIf the other endpoints fail or do not provide an acceptable session, the source\ncan retry the deferred endpoint immediately. At most one recheck of a previously\nfailed endpoint runs concurrently. Authentication rejection and caller\ncancellation stop routing, and role mismatch does not mark a host unavailable.\nTargeted checkouts still refresh the server role before returning a lease.</p>\n<p>The interval is local to one data source and is not configurable in the current\nAPI. <code>ClearPool</code>/<code>ClearPoolAsync</code> clears its failure observations and restores\nthe configured preference on the next checkout. Unpooled connections continue\ntrying their configured host sequence independently. This routing policy does\nnot provide cluster fencing or replication durability. Plan your own timeouts\nfor connection attempts, pool waits and commands.</p>\n<p><code>GetPoolStatistics()</code> aggregates all endpoint pools. <code>GetHostPoolStatistics()</code> returns the same counters keyed by <code>BlueTuskHostEndpoint</code>. Pool-size settings apply per endpoint, so a three-host data source with <code>Maximum Pool Size=20</code> has an aggregate maximum of 60 physical sessions.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "batches",
-    "summary": "Execute ordered command batches with PostgreSQL-aware error behavior.",
-    "keywords": [
-      "batch",
-      "command"
-    ],
-    "order": 50,
-    "listed": true,
-    "title": "Batches",
-    "sourcePath": "docs/ado-net/batches.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/batches.md",
+    "categoryLabel": "ADO.NET",
+    "slug": "cloud-identity",
+    "title": "Cloud identity",
+    "summary": "Use cloud credentials and rotate database tokens.",
+    "order": 4,
     "headings": [
       {
-        "id": "batches",
-        "text": "Batches",
-        "level": 1
+        "id": "aws-rds-and-aurora-postgresql",
+        "text": "AWS RDS and Aurora PostgreSQL",
+        "level": 2
       },
+      {
+        "id": "azure-database-for-postgresql",
+        "text": "Azure Database for PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "google-cloud-sql-for-postgresql",
+        "text": "Google Cloud SQL for PostgreSQL",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/cloud-identity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/cloud-identity.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>This page helps you connect to AWS RDS and Aurora, Azure Database for\nPostgreSQL, or Google Cloud SQL with a cloud identity instead of a stored\npassword.</p>\n<p>The cloud SDKs are kept out of the core provider. Install only the adapter for\nthe service you use:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet add package BlueTusk.Identity.Aws --version 1.2.0\ndotnet add package BlueTusk.Identity.Azure --version 1.2.0\ndotnet add package BlueTusk.Identity.GoogleCloud --version 1.2.0",
+        "highlighted": "dotnet add package BlueTusk.Identity.Aws <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.2</span>.<span class=\"hljs-number\">0</span>\ndotnet add package BlueTusk.Identity.Azure <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.2</span>.<span class=\"hljs-number\">0</span>\ndotnet add package BlueTusk.Identity.GoogleCloud <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.2</span>.<span class=\"hljs-number\">0</span>",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each adapter installs an access-token callback on the data-source builder and\nrequires TLS before the callback is invoked. A token is acquired for every new\nphysical connection. Checking an existing physical connection out of the pool\ndoes not acquire another token because PostgreSQL does not authenticate that\nsession again. An authenticated session can outlive its token; <code>Connection Lifetime</code> and <code>ClearPoolAsync()</code> limit how long it stays in use.</p>\n<p>Provider exceptions and token values are not attached to BlueTusk’s\nauthentication errors. Tokens are never placed in the connection string or\nlogged by the adapters. The returned .NET <code>string</code> is immutable and cannot be\noverwritten, so applications should not retain or log it.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "aws-rds-and-aurora-postgresql",
+          "text": "AWS RDS and Aurora PostgreSQL",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Identity.Aws</code> uses AWS SDK for .NET v4 to generate a SigV4 RDS IAM\nauthentication token from the host, port, and PostgreSQL username of the\nphysical connection being opened:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using Amazon;\nusing BlueTusk.Data;\nusing BlueTusk.Identity.Aws;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAwsRdsIamAuthentication(RegionEndpoint.EUWest2)\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> Amazon;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.Aws;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAwsRdsIamAuthentication(RegionEndpoint.EUWest2)\n    .Build();",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The parameterless overload uses the AWS SDK’s standard region and credential\nresolution chains. Other overloads accept an explicit <code>AWSCredentials</code>,\n<code>RegionEndpoint</code>, or both. Synchronous and asynchronous BlueTusk opens use the\ncorresponding AWS SDK token-generation path.</p>\n<p>Enable IAM database authentication, grant the PostgreSQL role <code>rds_iam</code>, and\nallow the AWS identity to perform <code>rds-db:connect</code>. Use the actual RDS or Aurora\nendpoint rather than a custom DNS alias because the host is part of the\nsignature. AWS tokens are valid for 15 minutes; BlueTusk requests a fresh token\nfor each new physical connection rather than caching it. See AWS’s\n<a href=\"https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html\">IAM database authentication guide</a>\nand <a href=\"https://docs.aws.amazon.com/sdkfornet/v4/apidocs/items/RDS/TRDSAuthTokenGenerator.html\">.NET token-generator API</a>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "azure-database-for-postgresql",
+          "text": "Azure Database for PostgreSQL",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Identity.Azure</code> accepts any <code>Azure.Core.TokenCredential</code>, including\nmanaged identity, workload identity, a service principal, or a local developer\ncredential:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using Azure.Identity;\nusing BlueTusk.Data;\nusing BlueTusk.Identity.Azure;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseAzurePostgreSqlEntraAuthentication(new DefaultAzureCredential())\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> Azure.Identity;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.Azure;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseAzurePostgreSqlEntraAuthentication(<span class=\"hljs-keyword\">new</span> DefaultAzureCredential())\n    .Build();",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The adapter requests the public-cloud PostgreSQL scope\n<code>https://ossrdbms-aad.database.windows.net/.default</code>. Pass the documented scope\nexplicitly for a sovereign cloud. Configure the connection username for the\nMicrosoft Entra principal created in PostgreSQL. Synchronous and asynchronous\nBlueTusk opens call the matching <code>TokenCredential</code> API. The adapter package\ndepends on <code>Azure.Core</code>; the application chooses and owns its <code>Azure.Identity</code>\ncredential implementation. See Microsoft’s\n<a href=\"https://learn.microsoft.com/azure/postgresql/security/security-connect-with-managed-identity\">managed identity connection guide</a>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "google-cloud-sql-for-postgresql",
+          "text": "Google Cloud SQL for PostgreSQL",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Identity.GoogleCloud</code> scopes a <code>GoogleCredential</code> for Cloud SQL login\nand supplies its access token as the PostgreSQL password:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Identity.GoogleCloud;\nusing Google.Apis.Auth.OAuth2;\n\nvar credential = await GoogleCredential.GetApplicationDefaultAsync();\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .UseGoogleCloudSqlIamAuthentication(credential)\n    .Build();",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Identity.GoogleCloud;\n<span class=\"hljs-keyword\">using</span> Google.Apis.Auth.OAuth2;\n\n<span class=\"hljs-keyword\">var</span> credential = <span class=\"hljs-keyword\">await</span> GoogleCredential.GetApplicationDefaultAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .UseGoogleCloudSqlIamAuthentication(credential)\n    .Build();",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Google’s official .NET token surface is asynchronous. Use\n<code>OpenConnectionAsync</code>; a synchronous physical open fails with the standard\nmissing-synchronous-provider error instead of blocking asynchronous credential\nI/O. The advanced <code>ITokenAccess</code> overload accepts an already scoped token\nsource. Configure Cloud SQL IAM database authentication and grant\n<code>cloudsql.instances.login</code>. A service-account PostgreSQL username omits the\n<code>.gserviceaccount.com</code> suffix.</p>\n<p>This adapter handles identity only. Use an authorized public or private route,\nor the Cloud SQL Auth Proxy, for network connectivity. See Google’s\n<a href=\"https://docs.cloud.google.com/sql/docs/postgres/iam-logins\">IAM database login guide</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "batches",
+    "title": "Batches",
+    "summary": "Send multiple parameterized statements in a batch.",
+    "order": 5,
+    "headings": [
       {
         "id": "several-statements-in-one-command",
         "text": "Several statements in one command",
         "level": 2
       }
     ],
-    "wordCount": 549,
-    "readMinutes": 3,
-    "searchText": "Batches This page helps you send several SQL statements to PostgreSQL in one round trip, either as a `BlueTuskBatch` or as one multi-statement command. `BlueTuskBatch` implements the .NET `DbBatch` abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as `BlueTuskCommand`. `ExecuteReaderAsync` exposes one result in command order, including empty non-query results. `ExecuteNonQueryAsync` returns the sum of affected rows, while every `BlueTuskBatchCommand.RecordsAffected` reports its own command tag. `ExecuteScalarAsync` returns the first field of the first row. Set `Transaction` to enlist the complete protocol cycle in the connection's active transaction. `Timeout`, cancellation tokens, `Cancel()`, and `CancelAsync()` use PostgreSQL's cancellation channel and drain through `ReadyForQuery` before the connection can be reused. `PrepareAsync` creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared. Several statements in one command **Note:** New in 1.1.0. Not available in 1.0.0 or 1.1.0-rc.1. A buffered `BlueTuskCommand` also accepts ordinary parameterized, semicolon-separated statements. EF Core uses this path for its write batches: Named parameters are rebound separately for each statement. Positional `$1`, `$2`, etc. retain their ordinals in the parent command's parameter collection. Do not mix named and positional placeholders. Quoted strings, quoted identifiers, dollar-quoted bodies and SQL comments can contain semicolons without creating a new statement. Supply data through parameters, not string interpolation. The driver uses se",
+    "sourcePath": "docs/ado-net/batches.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/batches.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Batches</h1>\n<p>This page helps you send several SQL statements to PostgreSQL in one round\ntrip, either as a <code>BlueTuskBatch</code> or as one multi-statement command.</p>\n<p><code>BlueTuskBatch</code> implements the .NET <code>DbBatch</code> abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as <code>BlueTuskCommand</code>.</p>\n"
+        "html": "<p>This page helps you send several SQL statements to PostgreSQL in one round\ntrip, either as a <code>BlueTuskBatch</code> or as one multi-statement command.</p>\n<p><code>BlueTuskBatch</code> implements the .NET <code>DbBatch</code> abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as <code>BlueTuskCommand</code>.</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var batch = connection.CreateBatch();\n\nvar insert = batch.BatchCommands.Add(\n    \"INSERT INTO app.people (id, name) VALUES (@id, @name)\");\ninsert.Parameters.Add(new BlueTuskParameter<Guid>(id) { ParameterName = \"id\" });\ninsert.Parameters.Add(new BlueTuskParameter<string>(name) { ParameterName = \"name\" });\n\nvar select = batch.BatchCommands.Add(\n    \"SELECT id, name FROM app.people WHERE id = @id\");\nselect.Parameters.Add(new BlueTuskParameter<Guid>(id) { ParameterName = \"id\" });\n\nawait using var reader = await batch.ExecuteReaderAsync();\nawait reader.NextResultAsync();\nwhile (await reader.ReadAsync())\n{\n    Console.WriteLine($\"{reader.GetGuid(0)}: {reader.GetString(1)}\");\n}\n\nConsole.WriteLine(insert.RecordsAffected);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> batch = connection.CreateBatch();\n\n<span class=\"hljs-keyword\">var</span> insert = batch.BatchCommands.Add(\n    <span class=\"hljs-string\">&quot;INSERT INTO app.people (id, name) VALUES (@id, @name)&quot;</span>);\ninsert.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(id) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\ninsert.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(name) { ParameterName = <span class=\"hljs-string\">&quot;name&quot;</span> });\n\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">select</span> = batch.BatchCommands.Add(\n    <span class=\"hljs-string\">&quot;SELECT id, name FROM app.people WHERE id = @id&quot;</span>);\n<span class=\"hljs-keyword\">select</span>.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(id) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> batch.ExecuteReaderAsync();\n<span class=\"hljs-keyword\">await</span> reader.NextResultAsync();\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> reader.ReadAsync())\n{\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{reader.GetGuid(<span class=\"hljs-number\">0</span>)}</span>: <span class=\"hljs-subst\">{reader.GetString(<span class=\"hljs-number\">1</span>)}</span>&quot;</span>);\n}\n\nConsole.WriteLine(insert.RecordsAffected);\n",
+        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nawait using var batch = connection.CreateBatch();\n\nvar insert = batch.BatchCommands.Add(\n    \"INSERT INTO app.people (id, name) VALUES (@id, @name)\");\ninsert.Parameters.Add(new BlueTuskParameter<Guid>(id) { ParameterName = \"id\" });\ninsert.Parameters.Add(new BlueTuskParameter<string>(name) { ParameterName = \"name\" });\n\nvar select = batch.BatchCommands.Add(\n    \"SELECT id, name FROM app.people WHERE id = @id\");\nselect.Parameters.Add(new BlueTuskParameter<Guid>(id) { ParameterName = \"id\" });\n\nawait using var reader = await batch.ExecuteReaderAsync();\nawait reader.NextResultAsync();\nwhile (await reader.ReadAsync())\n{\n    Console.WriteLine($\"{reader.GetGuid(0)}: {reader.GetString(1)}\");\n}\n\nConsole.WriteLine(insert.RecordsAffected);",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> batch = connection.CreateBatch();\n\n<span class=\"hljs-keyword\">var</span> insert = batch.BatchCommands.Add(\n    <span class=\"hljs-string\">&quot;INSERT INTO app.people (id, name) VALUES (@id, @name)&quot;</span>);\ninsert.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(id) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\ninsert.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(name) { ParameterName = <span class=\"hljs-string\">&quot;name&quot;</span> });\n\n<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">select</span> = batch.BatchCommands.Add(\n    <span class=\"hljs-string\">&quot;SELECT id, name FROM app.people WHERE id = @id&quot;</span>);\n<span class=\"hljs-keyword\">select</span>.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(id) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> batch.ExecuteReaderAsync();\n<span class=\"hljs-keyword\">await</span> reader.NextResultAsync();\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> reader.ReadAsync())\n{\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{reader.GetGuid(<span class=\"hljs-number\">0</span>)}</span>: <span class=\"hljs-subst\">{reader.GetString(<span class=\"hljs-number\">1</span>)}</span>&quot;</span>);\n}\n\nConsole.WriteLine(insert.RecordsAffected);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>ExecuteReaderAsync</code> exposes one result in command order, including empty non-query results. <code>ExecuteNonQueryAsync</code> returns the sum of affected rows, while every <code>BlueTuskBatchCommand.RecordsAffected</code> reports its own command tag. <code>ExecuteScalarAsync</code> returns the first field of the first row.</p>\n<p>Set <code>Transaction</code> to enlist the complete protocol cycle in the connection’s active transaction. <code>Timeout</code>, cancellation tokens, <code>Cancel()</code>, and <code>CancelAsync()</code> use PostgreSQL’s cancellation channel and drain through <code>ReadyForQuery</code> before the connection can be reused.</p>\n<p><code>PrepareAsync</code> creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared.</p>\n<h2>Several statements in one command</h2>\n<blockquote>\n<p><strong>Note:</strong> New in 1.1.0. Not available in 1.0.0 or 1.1.0-rc.1.</p>\n</blockquote>\n<p>A buffered <code>BlueTuskCommand</code> also accepts ordinary parameterized,\nsemicolon-separated statements. EF Core uses this path for its write batches:</p>\n"
+        "html": "<p><code>ExecuteReaderAsync</code> exposes one result in command order, including empty non-query results. <code>ExecuteNonQueryAsync</code> returns the sum of affected rows, while every <code>BlueTuskBatchCommand.RecordsAffected</code> reports its own command tag. <code>ExecuteScalarAsync</code> returns the first field of the first row.</p>\n<p>Set <code>Transaction</code> to enlist the complete protocol cycle in the connection’s active transaction. <code>Timeout</code>, cancellation tokens, <code>Cancel()</code>, and <code>CancelAsync()</code> use PostgreSQL’s cancellation channel and drain through <code>ReadyForQuery</code> before the connection can be reused.</p>\n<p><code>PrepareAsync</code> creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "several-statements-in-one-command",
+          "text": "Several statements in one command",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>A buffered <code>BlueTuskCommand</code> also accepts ordinary parameterized,\nsemicolon-separated statements. EF Core uses this path for its write batches:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var command = new BlueTuskCommand(\n    \"SELECT @id::int4; SELECT @id::int4 + 1;\", connection);\ncommand.Parameters.Add(new BlueTuskParameter<int>(41) { ParameterName = \"id\" });\n\nawait using var reader = await command.ExecuteReaderAsync(cancellationToken);\nawait reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(0)); // 41\nawait reader.NextResultAsync(cancellationToken);\nawait reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(0)); // 42\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT @id::int4; SELECT @id::int4 + 1;&quot;</span>, connection);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">41</span>) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(cancellationToken);\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(<span class=\"hljs-number\">0</span>)); <span class=\"hljs-comment\">// 41</span>\n<span class=\"hljs-keyword\">await</span> reader.NextResultAsync(cancellationToken);\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(<span class=\"hljs-number\">0</span>)); <span class=\"hljs-comment\">// 42</span>\n",
+        "code": "await using var command = new BlueTuskCommand(\n    \"SELECT @id::int4; SELECT @id::int4 + 1;\", connection);\ncommand.Parameters.Add(new BlueTuskParameter<int>(41) { ParameterName = \"id\" });\n\nawait using var reader = await command.ExecuteReaderAsync(cancellationToken);\nawait reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(0)); // 41\nawait reader.NextResultAsync(cancellationToken);\nawait reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(0)); // 42",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT @id::int4; SELECT @id::int4 + 1;&quot;</span>, connection);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">41</span>) { ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(cancellationToken);\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(<span class=\"hljs-number\">0</span>)); <span class=\"hljs-comment\">// 41</span>\n<span class=\"hljs-keyword\">await</span> reader.NextResultAsync(cancellationToken);\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken);\nConsole.WriteLine(reader.GetInt32(<span class=\"hljs-number\">0</span>)); <span class=\"hljs-comment\">// 42</span>",
         "language": "csharp"
       },
       {
@@ -1109,26 +768,12 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "copy",
-    "summary": "Text and binary COPY APIs, typed values, cancellation, and completion.",
-    "keywords": [
-      "copy",
-      "import",
-      "export",
-      "binary"
-    ],
-    "order": 60,
-    "listed": true,
     "title": "COPY",
-    "sourcePath": "docs/ado-net/copy.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/copy.md",
+    "summary": "Bulk-import and export data with PostgreSQL COPY.",
+    "order": 6,
     "headings": [
-      {
-        "id": "copy",
-        "text": "COPY",
-        "level": 1
-      },
       {
         "id": "typed-binary-copy",
         "text": "Typed binary COPY",
@@ -1140,24 +785,24 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 3
       }
     ],
-    "wordCount": 920,
-    "readMinutes": 5,
-    "searchText": "COPY This page helps you import and export many rows quickly with PostgreSQL's `COPY` command, as raw text, CSV or binary streams, or as typed binary rows. `BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation. The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream. For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks: Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names. The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends `CopyFail` or a cancellation request as appropriate and drains through `ReadyForQuery` before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller's next command. Typed binary COPY `BeginBinaryImportAsync` writes PostgreSQL's binary COPY header, rows, field lengths, null markers, and trailer while using the data source's catalogue-loaded binary codecs: `StartRowAsync` uses the server-reported column count and requires every field to be written before another row or completion. `WriteAsync<T>` infers the PostgreSQL type from the same registry used for parameters; an overload accepts an",
+    "sourcePath": "docs/ado-net/copy.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/copy.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>COPY</h1>\n<p>This page helps you import and export many rows quickly with PostgreSQL’s\n<code>COPY</code> command, as raw text, CSV or binary streams, or as typed binary rows.</p>\n<p><code>BlueTuskConnection.CopyFrom</code>/<code>CopyTo</code> and <code>CopyFromAsync</code>/<code>CopyToAsync</code> stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation.</p>\n"
+        "html": "<p>This page helps you import and export many rows quickly with PostgreSQL’s\n<code>COPY</code> command, as raw text, CSV or binary streams, or as typed binary rows.</p>\n<p><code>BlueTuskConnection.CopyFrom</code>/<code>CopyTo</code> and <code>CopyFromAsync</code>/<code>CopyToAsync</code> stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation.</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var source = File.OpenRead(\"people.csv\");\nvar imported = await connection.CopyFromAsync(\n    \"\"\"\n    COPY app.people (id, name)\n    FROM STDIN WITH (FORMAT CSV, HEADER true)\n    \"\"\",\n    source);\n\nConsole.WriteLine($\"Imported {imported.RowsAffected} rows\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> source = File.OpenRead(<span class=\"hljs-string\">&quot;people.csv&quot;</span>);\n<span class=\"hljs-keyword\">var</span> imported = <span class=\"hljs-keyword\">await</span> connection.CopyFromAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY app.people (id, name)\n    FROM STDIN WITH (FORMAT CSV, HEADER true)\n    &quot;&quot;&quot;</span>,\n    source);\n\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;Imported <span class=\"hljs-subst\">{imported.RowsAffected}</span> rows&quot;</span>);\n",
+        "code": "await using var source = File.OpenRead(\"people.csv\");\nvar imported = await connection.CopyFromAsync(\n    \"\"\"\n    COPY app.people (id, name)\n    FROM STDIN WITH (FORMAT CSV, HEADER true)\n    \"\"\",\n    source);\n\nConsole.WriteLine($\"Imported {imported.RowsAffected} rows\");",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> source = File.OpenRead(<span class=\"hljs-string\">&quot;people.csv&quot;</span>);\n<span class=\"hljs-keyword\">var</span> imported = <span class=\"hljs-keyword\">await</span> connection.CopyFromAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY app.people (id, name)\n    FROM STDIN WITH (FORMAT CSV, HEADER true)\n    &quot;&quot;&quot;</span>,\n    source);\n\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;Imported <span class=\"hljs-subst\">{imported.RowsAffected}</span> rows&quot;</span>);",
         "language": "csharp"
       },
       {
         "kind": "code",
-        "code": "await using var destination = File.Create(\"people.copy\");\nvar exported = await connection.CopyToAsync(\n    \"\"\"\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    \"\"\",\n    destination);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> destination = File.Create(<span class=\"hljs-string\">&quot;people.copy&quot;</span>);\n<span class=\"hljs-keyword\">var</span> exported = <span class=\"hljs-keyword\">await</span> connection.CopyToAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    &quot;&quot;&quot;</span>,\n    destination);\n",
+        "code": "await using var destination = File.Create(\"people.copy\");\nvar exported = await connection.CopyToAsync(\n    \"\"\"\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    \"\"\",\n    destination);",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> destination = File.Create(<span class=\"hljs-string\">&quot;people.copy&quot;</span>);\n<span class=\"hljs-keyword\">var</span> exported = <span class=\"hljs-keyword\">await</span> connection.CopyToAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    &quot;&quot;&quot;</span>,\n    destination);",
         "language": "csharp"
       },
       {
@@ -1166,18 +811,30 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "using var source = new StringReader(\"1,\\\"Chloé Zoë\\\"\\n\");\nawait connection.CopyTextFromAsync(\n    \"COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)\",\n    source);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> StringReader(<span class=\"hljs-string\">&quot;1,\\&quot;Chloé Zoë\\&quot;\\n&quot;</span>);\n<span class=\"hljs-keyword\">await</span> connection.CopyTextFromAsync(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)&quot;</span>,\n    source);\n",
+        "code": "using var source = new StringReader(\"1,\\\"Chloé Zoë\\\"\\n\");\nawait connection.CopyTextFromAsync(\n    \"COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)\",\n    source);",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> source = <span class=\"hljs-keyword\">new</span> StringReader(<span class=\"hljs-string\">&quot;1,\\&quot;Chloé Zoë\\&quot;\\n&quot;</span>);\n<span class=\"hljs-keyword\">await</span> connection.CopyTextFromAsync(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)&quot;</span>,\n    source);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names.</p>\n<p>The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends <code>CopyFail</code> or a cancellation request as appropriate and drains through <code>ReadyForQuery</code> before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller’s next command.</p>\n<h2>Typed binary COPY</h2>\n<p><code>BeginBinaryImportAsync</code> writes PostgreSQL’s binary COPY header, rows, field lengths, null markers, and trailer while using the data source’s catalogue-loaded binary codecs:</p>\n"
+        "html": "<p>Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names.</p>\n<p>The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends <code>CopyFail</code> or a cancellation request as appropriate and drains through <code>ReadyForQuery</code> before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller’s next command.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "typed-binary-copy",
+          "text": "Typed binary COPY",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BeginBinaryImportAsync</code> writes PostgreSQL’s binary COPY header, rows, field lengths, null markers, and trailer while using the data source’s catalogue-loaded binary codecs:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var importer = await connection.BeginBinaryImportAsync(\n    \"COPY app.people (id, name) FROM STDIN WITH (FORMAT BINARY)\");\n\nawait importer.StartRowAsync();\nawait importer.WriteAsync(42);\nawait importer.WriteAsync(\"Chloé Zoë\");\n\nvar rows = await importer.CompleteAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> importer = <span class=\"hljs-keyword\">await</span> connection.BeginBinaryImportAsync(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN WITH (FORMAT BINARY)&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> importer.StartRowAsync();\n<span class=\"hljs-keyword\">await</span> importer.WriteAsync(<span class=\"hljs-number\">42</span>);\n<span class=\"hljs-keyword\">await</span> importer.WriteAsync(<span class=\"hljs-string\">&quot;Chloé Zoë&quot;</span>);\n\n<span class=\"hljs-keyword\">var</span> rows = <span class=\"hljs-keyword\">await</span> importer.CompleteAsync();\n",
+        "code": "await using var importer = await connection.BeginBinaryImportAsync(\n    \"COPY app.people (id, name) FROM STDIN WITH (FORMAT BINARY)\");\n\nawait importer.StartRowAsync();\nawait importer.WriteAsync(42);\nawait importer.WriteAsync(\"Chloé Zoë\");\n\nvar rows = await importer.CompleteAsync();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> importer = <span class=\"hljs-keyword\">await</span> connection.BeginBinaryImportAsync(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN WITH (FORMAT BINARY)&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> importer.StartRowAsync();\n<span class=\"hljs-keyword\">await</span> importer.WriteAsync(<span class=\"hljs-number\">42</span>);\n<span class=\"hljs-keyword\">await</span> importer.WriteAsync(<span class=\"hljs-string\">&quot;Chloé Zoë&quot;</span>);\n\n<span class=\"hljs-keyword\">var</span> rows = <span class=\"hljs-keyword\">await</span> importer.CompleteAsync();",
         "language": "csharp"
       },
       {
@@ -1186,18 +843,30 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "await using var exporter = await connection.BeginBinaryExportAsync(\n    \"\"\"\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    \"\"\");\n\nwhile (await exporter.StartRowAsync() != -1)\n{\n    var id = await exporter.ReadAsync<int>();\n    var name = await exporter.ReadAsync<string>();\n    Console.WriteLine($\"{id}: {name}\");\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> exporter = <span class=\"hljs-keyword\">await</span> connection.BeginBinaryExportAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    &quot;&quot;&quot;</span>);\n\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> exporter.StartRowAsync() != <span class=\"hljs-number\">-1</span>)\n{\n    <span class=\"hljs-keyword\">var</span> id = <span class=\"hljs-keyword\">await</span> exporter.ReadAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n    <span class=\"hljs-keyword\">var</span> name = <span class=\"hljs-keyword\">await</span> exporter.ReadAsync&lt;<span class=\"hljs-built_in\">string</span>&gt;();\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{id}</span>: <span class=\"hljs-subst\">{name}</span>&quot;</span>);\n}\n",
+        "code": "await using var exporter = await connection.BeginBinaryExportAsync(\n    \"\"\"\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    \"\"\");\n\nwhile (await exporter.StartRowAsync() != -1)\n{\n    var id = await exporter.ReadAsync<int>();\n    var name = await exporter.ReadAsync<string>();\n    Console.WriteLine($\"{id}: {name}\");\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> exporter = <span class=\"hljs-keyword\">await</span> connection.BeginBinaryExportAsync(\n    <span class=\"hljs-string\">&quot;&quot;&quot;\n    COPY (\n        SELECT id, name\n        FROM app.people\n        ORDER BY id\n    ) TO STDOUT WITH (FORMAT BINARY)\n    &quot;&quot;&quot;</span>);\n\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> exporter.StartRowAsync() != <span class=\"hljs-number\">-1</span>)\n{\n    <span class=\"hljs-keyword\">var</span> id = <span class=\"hljs-keyword\">await</span> exporter.ReadAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n    <span class=\"hljs-keyword\">var</span> name = <span class=\"hljs-keyword\">await</span> exporter.ReadAsync&lt;<span class=\"hljs-built_in\">string</span>&gt;();\n    Console.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{id}</span>: <span class=\"hljs-subst\">{name}</span>&quot;</span>);\n}",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Arrays and other catalogue-composed values use their existing binary codecs. <code>ReadAsync&lt;T&gt;</code> also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.</p>\n<p>Typed imports and exports stream through a stateful protocol operation; neither buffers the complete transfer. The asynchronous importer uses a pooled 64 KiB write buffer, flushing it before accepting more data when it fills. Large fields and general-purpose codecs can require additional field-sized storage: 64 KiB is not a maximum field size or a total-memory guarantee. Supplying a cancellation token uses the same direct import path, without an extra producer/consumer pipe or background transfer task.</p>\n<p>COPY-mode initialization is ordered independently from transfer completion, including immediate empty exports under concurrent load. Always use <code>await using</code> with an asynchronous importer or exporter. Disposing an unfinished operation aborts and drains COPY before releasing its connection.</p>\n<h3>Cancellation, errors, and transactions</h3>\n<p>Pass the token to startup, row writes, and completion. Cancellation is cooperative: BlueTusk finishes an in-progress protocol write or drains the server response rather than leaving a partial message for the next command. A token is not a guarantee of an immediate return, and cancellation after completion has begun does not guarantee that PostgreSQL rolled the operation back.</p>\n<p>If cancellation wins while an import is waiting to start, BlueTusk sends a PostgreSQL cancellation request, drains the response, and synchronizes before reusing the connection. If cleanup cannot establish a safe state, the physical connection is discarded. If the import was inside an explicit transaction, roll that transaction back before issuing more commands; cancellation or a constraint error can leave it aborted.</p>\n<p>Startup and completion errors reported by PostgreSQL are exposed as <code>BlueTuskException</code>, including their <code>SqlState</code>. A fully drained server error does not by itself make the physical connection unusable. For example, a failed check constraint reports <code>23514</code>; the transaction may still need a rollback.</p>\n<p><code>CompleteAsync</code> finishes COPY and checks PostgreSQL’s row count. It does not commit an enclosing transaction: call that transaction’s <code>CommitAsync</code> separately.</p>\n<p>The asynchronous import path retains the <code>bluetusk.copy.bytes</code> counter and records <code>bluetusk.commands.duration</code> from startup through completion or cleanup. Buffered bytes that were never sent are not counted as transferred bytes.</p>\n<p>Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:</p>\n"
+        "html": "<p>Arrays and other catalogue-composed values use their existing binary codecs. <code>ReadAsync&lt;T&gt;</code> also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.</p>\n<p>Typed imports and exports stream through a stateful protocol operation; neither buffers the complete transfer. The asynchronous importer uses a pooled 64 KiB write buffer, flushing it before accepting more data when it fills. Large fields and general-purpose codecs can require additional field-sized storage: 64 KiB is not a maximum field size or a total-memory guarantee. Supplying a cancellation token uses the same direct import path, without an extra producer/consumer pipe or background transfer task.</p>\n<p>COPY-mode initialization is ordered independently from transfer completion, including immediate empty exports under concurrent load. Always use <code>await using</code> with an asynchronous importer or exporter. Disposing an unfinished operation aborts and drains COPY before releasing its connection.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "cancellation-errors-and-transactions",
+          "text": "Cancellation, errors, and transactions",
+          "level": 3
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Pass the token to startup, row writes, and completion. Cancellation is cooperative: BlueTusk finishes an in-progress protocol write or drains the server response rather than leaving a partial message for the next command. A token is not a guarantee of an immediate return, and cancellation after completion has begun does not guarantee that PostgreSQL rolled the operation back.</p>\n<p>If cancellation wins while an import is waiting to start, BlueTusk sends a PostgreSQL cancellation request, drains the response, and synchronizes before reusing the connection. If cleanup cannot establish a safe state, the physical connection is discarded. If the import was inside an explicit transaction, roll that transaction back before issuing more commands; cancellation or a constraint error can leave it aborted.</p>\n<p>Startup and completion errors reported by PostgreSQL are exposed as <code>BlueTuskException</code>, including their <code>SqlState</code>. A fully drained server error does not by itself make the physical connection unusable. For example, a failed check constraint reports <code>23514</code>; the transaction may still need a rollback.</p>\n<p><code>CompleteAsync</code> finishes COPY and checks PostgreSQL’s row count. It does not commit an enclosing transaction: call that transaction’s <code>CommitAsync</code> separately.</p>\n<p>The asynchronous import path retains the <code>bluetusk.copy.bytes</code> counter and records <code>bluetusk.commands.duration</code> from startup through completion or cleanup. Buffered bytes that were never sent are not counted as transferred bytes.</p>\n<p>Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:</p>\n"
       },
       {
         "kind": "code",
-        "code": "using var importer = connection.BeginBinaryImport(\n    \"COPY app.people (id, name) FROM STDIN BINARY\");\nimporter.StartRow();\nimporter.Write(42);\nimporter.Write(\"Chloé Zoë\");\nvar rows = importer.Complete();\n\nusing var exporter = connection.BeginBinaryExport(\n    \"COPY app.people (id, name) TO STDOUT BINARY\");\nwhile (exporter.StartRow() != -1)\n{\n    var id = exporter.Read<int>();\n    var name = exporter.Read<string>();\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> importer = connection.BeginBinaryImport(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN BINARY&quot;</span>);\nimporter.StartRow();\nimporter.Write(<span class=\"hljs-number\">42</span>);\nimporter.Write(<span class=\"hljs-string\">&quot;Chloé Zoë&quot;</span>);\n<span class=\"hljs-keyword\">var</span> rows = importer.Complete();\n\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> exporter = connection.BeginBinaryExport(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) TO STDOUT BINARY&quot;</span>);\n<span class=\"hljs-keyword\">while</span> (exporter.StartRow() != <span class=\"hljs-number\">-1</span>)\n{\n    <span class=\"hljs-keyword\">var</span> id = exporter.Read&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n    <span class=\"hljs-keyword\">var</span> name = exporter.Read&lt;<span class=\"hljs-built_in\">string</span>&gt;();\n}\n",
+        "code": "using var importer = connection.BeginBinaryImport(\n    \"COPY app.people (id, name) FROM STDIN BINARY\");\nimporter.StartRow();\nimporter.Write(42);\nimporter.Write(\"Chloé Zoë\");\nvar rows = importer.Complete();\n\nusing var exporter = connection.BeginBinaryExport(\n    \"COPY app.people (id, name) TO STDOUT BINARY\");\nwhile (exporter.StartRow() != -1)\n{\n    var id = exporter.Read<int>();\n    var name = exporter.Read<string>();\n}",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> importer = connection.BeginBinaryImport(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) FROM STDIN BINARY&quot;</span>);\nimporter.StartRow();\nimporter.Write(<span class=\"hljs-number\">42</span>);\nimporter.Write(<span class=\"hljs-string\">&quot;Chloé Zoë&quot;</span>);\n<span class=\"hljs-keyword\">var</span> rows = importer.Complete();\n\n<span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> exporter = connection.BeginBinaryExport(\n    <span class=\"hljs-string\">&quot;COPY app.people (id, name) TO STDOUT BINARY&quot;</span>);\n<span class=\"hljs-keyword\">while</span> (exporter.StartRow() != <span class=\"hljs-number\">-1</span>)\n{\n    <span class=\"hljs-keyword\">var</span> id = exporter.Read&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n    <span class=\"hljs-keyword\">var</span> name = exporter.Read&lt;<span class=\"hljs-built_in\">string</span>&gt;();\n}",
         "language": "csharp"
       },
       {
@@ -1208,24 +877,12 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "large-objects",
-    "summary": "Large-object ownership and streaming behavior.",
-    "keywords": [
-      "large objects",
-      "stream"
-    ],
-    "order": 70,
-    "listed": true,
     "title": "Large objects",
-    "sourcePath": "docs/ado-net/large-objects.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/large-objects.md",
+    "summary": "Read and write large objects inside transactions.",
+    "order": 7,
     "headings": [
-      {
-        "id": "large-objects",
-        "text": "Large objects",
-        "level": 1
-      },
       {
         "id": "transaction-ownership",
         "text": "Transaction ownership",
@@ -1237,59 +894,70 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 384,
-    "readMinutes": 2,
-    "searchText": "Large objects This page helps you store and stream binary data as PostgreSQL large objects. For most data, a `bytea` column read with a [sequential reader](sequential-readers.md) is simpler; use large objects when you need seekable, chunked access to very large values. PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream: `CreateLargeObjectAsync(uint preferredObjectId, ...)` requests a particular OID; passing zero, or using the overload without an OID, lets PostgreSQL assign one. `DeleteLargeObjectAsync` calls `lo_unlink` and permanently removes the object when its transaction commits. Transaction ownership PostgreSQL requires every large-object descriptor to remain inside a transaction: If the connection has no active transaction, `OpenLargeObjectAsync` starts an implicit transaction. Successful asynchronous disposal closes the descriptor and commits. A failed read, write, seek, or truncate rolls it back. Only one implicitly transactional stream can be open on a connection. Begin an explicit transaction when multiple descriptors must overlap. If the caller already owns a `BlueTuskTransaction`, large-object creation, deletion, and streams join it. The caller remains responsible for commit or rollback, and multiple streams may be open. Creating or deleting outside an explicit transaction uses a short implicit transaction. Use `using` with `CreateLargeObject`, `OpenLargeObject`, and `DeleteLargeObject` for the native synchronous path, or `await using` with their asynchronous counterparts. Successful disposal closes the descriptor and commits an implicit transaction in both modes; a failed operation rolls it back. Stream behavior `BlueTuskLargeObjectStream` exposes: synchronous and asynchronous reads and writes; 64-bit `Seek`/`SeekAsync` and `SetLength`/`SetLengthAsync`; cached `Length` and `Position`; the backing `ObjectId`; `Fi",
+    "sourcePath": "docs/ado-net/large-objects.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/large-objects.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Large objects</h1>\n<p>This page helps you store and stream binary data as PostgreSQL large objects.\nFor most data, a <code>bytea</code> column read with a\n<a href=\"/documentation/provider/sequential-readers\">sequential reader</a> is simpler; use large objects when\nyou need seekable, chunked access to very large values.</p>\n<p>PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream:</p>\n"
+        "html": "<p>This page helps you store and stream binary data as PostgreSQL large objects.\nFor most data, a <code>bytea</code> column read with a\n<a href=\"/documentation/provider/sequential-readers\">sequential reader</a> is simpler; use large objects when\nyou need seekable, chunked access to very large values.</p>\n<p>PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var objectId = await connection.CreateLargeObjectAsync();\n\nawait using (var stream =\n    await connection.OpenLargeObjectAsync(\n        objectId,\n        FileAccess.ReadWrite))\n{\n    await stream.WriteAsync(payload);\n    await stream.SeekAsync(0, SeekOrigin.Begin);\n    _ = await stream.ReadAsync(buffer);\n}\n\nawait connection.DeleteLargeObjectAsync(objectId);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> objectId = <span class=\"hljs-keyword\">await</span> connection.CreateLargeObjectAsync();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> stream =\n    <span class=\"hljs-keyword\">await</span> connection.OpenLargeObjectAsync(\n        objectId,\n        FileAccess.ReadWrite))\n{\n    <span class=\"hljs-keyword\">await</span> stream.WriteAsync(payload);\n    <span class=\"hljs-keyword\">await</span> stream.SeekAsync(<span class=\"hljs-number\">0</span>, SeekOrigin.Begin);\n    _ = <span class=\"hljs-keyword\">await</span> stream.ReadAsync(buffer);\n}\n\n<span class=\"hljs-keyword\">await</span> connection.DeleteLargeObjectAsync(objectId);\n",
+        "code": "var objectId = await connection.CreateLargeObjectAsync();\n\nawait using (var stream =\n    await connection.OpenLargeObjectAsync(\n        objectId,\n        FileAccess.ReadWrite))\n{\n    await stream.WriteAsync(payload);\n    await stream.SeekAsync(0, SeekOrigin.Begin);\n    _ = await stream.ReadAsync(buffer);\n}\n\nawait connection.DeleteLargeObjectAsync(objectId);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> objectId = <span class=\"hljs-keyword\">await</span> connection.CreateLargeObjectAsync();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> stream =\n    <span class=\"hljs-keyword\">await</span> connection.OpenLargeObjectAsync(\n        objectId,\n        FileAccess.ReadWrite))\n{\n    <span class=\"hljs-keyword\">await</span> stream.WriteAsync(payload);\n    <span class=\"hljs-keyword\">await</span> stream.SeekAsync(<span class=\"hljs-number\">0</span>, SeekOrigin.Begin);\n    _ = <span class=\"hljs-keyword\">await</span> stream.ReadAsync(buffer);\n}\n\n<span class=\"hljs-keyword\">await</span> connection.DeleteLargeObjectAsync(objectId);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>CreateLargeObjectAsync(uint preferredObjectId, ...)</code> requests a particular OID; passing zero, or using the overload without an OID, lets PostgreSQL assign one. <code>DeleteLargeObjectAsync</code> calls <code>lo_unlink</code> and permanently removes the object when its transaction commits.</p>\n<h2>Transaction ownership</h2>\n<p>PostgreSQL requires every large-object descriptor to remain inside a transaction:</p>\n<ul>\n<li>If the connection has no active transaction, <code>OpenLargeObjectAsync</code> starts an implicit transaction. Successful asynchronous disposal closes the descriptor and commits. A failed read, write, seek, or truncate rolls it back.</li>\n<li>Only one implicitly transactional stream can be open on a connection. Begin an explicit transaction when multiple descriptors must overlap.</li>\n<li>If the caller already owns a <code>BlueTuskTransaction</code>, large-object creation, deletion, and streams join it. The caller remains responsible for commit or rollback, and multiple streams may be open.</li>\n<li>Creating or deleting outside an explicit transaction uses a short implicit transaction.</li>\n</ul>\n<p>Use <code>using</code> with <code>CreateLargeObject</code>, <code>OpenLargeObject</code>, and <code>DeleteLargeObject</code> for the native synchronous path, or <code>await using</code> with their asynchronous counterparts. Successful disposal closes the descriptor and commits an implicit transaction in both modes; a failed operation rolls it back.</p>\n<h2>Stream behavior</h2>\n<p><code>BlueTuskLargeObjectStream</code> exposes:</p>\n<ul>\n<li>synchronous and asynchronous reads and writes;</li>\n<li>64-bit <code>Seek</code>/<code>SeekAsync</code> and <code>SetLength</code>/<code>SetLengthAsync</code>;</li>\n<li>cached <code>Length</code> and <code>Position</code>;</li>\n<li>the backing <code>ObjectId</code>;</li>\n<li><code>FileAccess.Read</code>, <code>Write</code>, and <code>ReadWrite</code> enforcement.</li>\n</ul>\n<p>Transfers are split into chunks of at most 1 MiB. Each write reaches PostgreSQL before the method returns, so <code>Flush</code> and <code>FlushAsync</code> have no additional server work. Opening with <code>FileAccess.Write</code> does not truncate an existing object; call <code>SetLength(0)</code> or <code>SetLengthAsync(0)</code> when replacement semantics are required.</p>\n<p>Large objects live in the database independently of table rows. PostgreSQL does not automatically delete an object when an OID column is deleted, so applications should call <code>DeleteLargeObjectAsync</code> or arrange database-side ownership cleanup.</p>\n"
+        "html": "<p><code>CreateLargeObjectAsync(uint preferredObjectId, ...)</code> requests a particular OID; passing zero, or using the overload without an OID, lets PostgreSQL assign one. <code>DeleteLargeObjectAsync</code> calls <code>lo_unlink</code> and permanently removes the object when its transaction commits.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "transaction-ownership",
+          "text": "Transaction ownership",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL requires every large-object descriptor to remain inside a transaction:</p>\n<ul>\n<li>If the connection has no active transaction, <code>OpenLargeObjectAsync</code> starts an implicit transaction. Successful asynchronous disposal closes the descriptor and commits. A failed read, write, seek, or truncate rolls it back.</li>\n<li>Only one implicitly transactional stream can be open on a connection. Begin an explicit transaction when multiple descriptors must overlap.</li>\n<li>If the caller already owns a <code>BlueTuskTransaction</code>, large-object creation, deletion, and streams join it. The caller remains responsible for commit or rollback, and multiple streams may be open.</li>\n<li>Creating or deleting outside an explicit transaction uses a short implicit transaction.</li>\n</ul>\n<p>Use <code>using</code> with <code>CreateLargeObject</code>, <code>OpenLargeObject</code>, and <code>DeleteLargeObject</code> for the native synchronous path, or <code>await using</code> with their asynchronous counterparts. Successful disposal closes the descriptor and commits an implicit transaction in both modes; a failed operation rolls it back.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "stream-behavior",
+          "text": "Stream behavior",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTuskLargeObjectStream</code> exposes:</p>\n<ul>\n<li>synchronous and asynchronous reads and writes;</li>\n<li>64-bit <code>Seek</code>/<code>SeekAsync</code> and <code>SetLength</code>/<code>SetLengthAsync</code>;</li>\n<li>cached <code>Length</code> and <code>Position</code>;</li>\n<li>the backing <code>ObjectId</code>;</li>\n<li><code>FileAccess.Read</code>, <code>Write</code>, and <code>ReadWrite</code> enforcement.</li>\n</ul>\n<p>Transfers are split into chunks of at most 1 MiB. Each write reaches PostgreSQL before the method returns, so <code>Flush</code> and <code>FlushAsync</code> have no additional server work. Opening with <code>FileAccess.Write</code> does not truncate an existing object; call <code>SetLength(0)</code> or <code>SetLengthAsync(0)</code> when replacement semantics are required.</p>\n<p>Large objects live in the database independently of table rows. PostgreSQL does not automatically delete an object when an OID column is deleted, so applications should call <code>DeleteLargeObjectAsync</code> or arrange database-side ownership cleanup.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "notifications",
-    "summary": "LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.",
-    "keywords": [
-      "listen",
-      "notify"
-    ],
-    "order": 80,
-    "listed": true,
     "title": "Asynchronous notifications",
+    "summary": "Listen for PostgreSQL notifications on a dedicated session.",
+    "order": 8,
+    "headings": [],
     "sourcePath": "docs/ado-net/notifications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/notifications.md",
-    "headings": [
-      {
-        "id": "asynchronous-notifications",
-        "text": "Asynchronous notifications",
-        "level": 1
-      }
-    ],
-    "wordCount": 391,
-    "readMinutes": 2,
-    "searchText": "Asynchronous notifications This page helps you receive PostgreSQL `LISTEN`/`NOTIFY` messages in .NET, for example to wake a worker when a row changes. Notifications are not durable: a listener that is not connected misses them. To process every committed change, use [Streams](../streams/README.md). `BlueTuskConnection` exposes notifications as an asynchronous stream: The loop runs until `stoppingToken` is cancelled, which throws `OperationCanceledException`, or until the connection closes. The synchronous path uses a dedicated blocking listener session and a long-running worker, while normal commands continue on the connection's primary session: `UnlistenAll()` synchronously stops every listener. Synchronous listener disposal closes the blocking socket to interrupt its receive loop; it does not block on asynchronous network I/O. `BlueTuskNotification` contains the publishing backend process ID, the channel reported by PostgreSQL, and the payload. PostgreSQL delivers a notification only after the publishing transaction commits; notifications produced by an aborted transaction are discarded. Channel names are PostgreSQL identifiers. `ListenAsync` quotes them through BlueTusk's central identifier-quoting path, so mixed case, whitespace, Unicode, reserved words, and embedded double quotes are safe. Empty names and names containing a null character are rejected. Payload values should be sent as parameters: Calling `ListenAsync` repeatedly for the same channel is idempotent. Use `UnlistenAsync(channel)` for one channel or `UnlistenAllAsync()` for all channels. Closing or disposing the connection stops every listener and completes the current `Notifications` enumeration. Reopening the same connection creates a fresh notification stream. BlueTusk uses a dedicated, non-pooled physical session for each active channel. This keeps the logical connection's normal session available for commands while the notification consumer is waiting and prevents session-level `LISTEN` state f",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Asynchronous notifications</h1>\n<p>This page helps you receive PostgreSQL <code>LISTEN</code>/<code>NOTIFY</code> messages in .NET, for\nexample to wake a worker when a row changes. Notifications are not durable: a\nlistener that is not connected misses them. To process every committed change,\nuse <a href=\"/documentation/real-time/streams\">Streams</a>.</p>\n<p><code>BlueTuskConnection</code> exposes notifications as an asynchronous stream:</p>\n"
+        "html": "<p>This page helps you receive PostgreSQL <code>LISTEN</code>/<code>NOTIFY</code> messages in .NET, for\nexample to wake a worker when a row changes. Notifications are not durable: a\nlistener that is not connected misses them. To process every committed change,\nuse <a href=\"/documentation/real-time/streams\">Streams</a>.</p>\n<p><code>BlueTuskConnection</code> exposes notifications as an asynchronous stream:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var connection = new BlueTuskConnection(connectionString);\nawait connection.OpenAsync();\nawait connection.ListenAsync(\"orders\");\n\nawait foreach (var notification in connection.Notifications.WithCancellation(stoppingToken))\n{\n    Console.WriteLine(\n        $\"{notification.ProcessId}: {notification.Channel}: {notification.Payload}\");\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">new</span> BlueTuskConnection(connectionString);\n<span class=\"hljs-keyword\">await</span> connection.OpenAsync();\n<span class=\"hljs-keyword\">await</span> connection.ListenAsync(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> notification <span class=\"hljs-keyword\">in</span> connection.Notifications.WithCancellation(stoppingToken))\n{\n    Console.WriteLine(\n        <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{notification.ProcessId}</span>: <span class=\"hljs-subst\">{notification.Channel}</span>: <span class=\"hljs-subst\">{notification.Payload}</span>&quot;</span>);\n}\n",
+        "code": "await using var connection = new BlueTuskConnection(connectionString);\nawait connection.OpenAsync();\nawait connection.ListenAsync(\"orders\");\n\nawait foreach (var notification in connection.Notifications.WithCancellation(stoppingToken))\n{\n    Console.WriteLine(\n        $\"{notification.ProcessId}: {notification.Channel}: {notification.Payload}\");\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">new</span> BlueTuskConnection(connectionString);\n<span class=\"hljs-keyword\">await</span> connection.OpenAsync();\n<span class=\"hljs-keyword\">await</span> connection.ListenAsync(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> notification <span class=\"hljs-keyword\">in</span> connection.Notifications.WithCancellation(stoppingToken))\n{\n    Console.WriteLine(\n        <span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{notification.ProcessId}</span>: <span class=\"hljs-subst\">{notification.Channel}</span>: <span class=\"hljs-subst\">{notification.Payload}</span>&quot;</span>);\n}",
         "language": "csharp"
       },
       {
@@ -1298,8 +966,8 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "connection.Listen(\"orders\");\nvar notification = connection.WaitForNotification();\nConsole.WriteLine(notification.Payload);\nconnection.Unlisten(\"orders\");\n",
-        "highlighted": "connection.Listen(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> notification = connection.WaitForNotification();\nConsole.WriteLine(notification.Payload);\nconnection.Unlisten(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n",
+        "code": "connection.Listen(\"orders\");\nvar notification = connection.WaitForNotification();\nConsole.WriteLine(notification.Payload);\nconnection.Unlisten(\"orders\");",
+        "highlighted": "connection.Listen(<span class=\"hljs-string\">&quot;orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> notification = connection.WaitForNotification();\nConsole.WriteLine(notification.Payload);\nconnection.Unlisten(<span class=\"hljs-string\">&quot;orders&quot;</span>);",
         "language": "csharp"
       },
       {
@@ -1308,8 +976,8 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "code",
-        "code": "await using var notify = new BlueTuskCommand(\n    \"SELECT pg_notify($1, $2)\",\n    connection);\nnotify.Parameters.Add(new BlueTuskParameter<string>(\"orders\"));\nnotify.Parameters.Add(new BlueTuskParameter<string>(\"order-42-created\"));\nawait notify.ExecuteNonQueryAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> notify = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT pg_notify($1, $2)&quot;</span>,\n    connection);\nnotify.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;orders&quot;</span>));\nnotify.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;order-42-created&quot;</span>));\n<span class=\"hljs-keyword\">await</span> notify.ExecuteNonQueryAsync();\n",
+        "code": "await using var notify = new BlueTuskCommand(\n    \"SELECT pg_notify($1, $2)\",\n    connection);\nnotify.Parameters.Add(new BlueTuskParameter<string>(\"orders\"));\nnotify.Parameters.Add(new BlueTuskParameter<string>(\"order-42-created\"));\nawait notify.ExecuteNonQueryAsync();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> notify = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT pg_notify($1, $2)&quot;</span>,\n    connection);\nnotify.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;orders&quot;</span>));\nnotify.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>&gt;(<span class=\"hljs-string\">&quot;order-42-created&quot;</span>));\n<span class=\"hljs-keyword\">await</span> notify.ExecuteNonQueryAsync();",
         "language": "csharp"
       },
       {
@@ -1320,74 +988,58 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "sequential-readers",
-    "summary": "Bounded sequential reads for large PostgreSQL values.",
-    "keywords": [
-      "reader",
-      "streaming",
-      "memory"
-    ],
-    "order": 90,
-    "listed": true,
     "title": "Sequential readers",
-    "sourcePath": "docs/ado-net/sequential-readers.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/sequential-readers.md",
+    "summary": "Stream result values without buffering entire rows.",
+    "order": 9,
     "headings": [
-      {
-        "id": "sequential-readers",
-        "text": "Sequential readers",
-        "level": 1
-      },
       {
         "id": "rules-for-sequential-access",
         "text": "Rules for sequential access",
         "level": 2
       }
     ],
-    "wordCount": 408,
-    "readMinutes": 2,
-    "searchText": "Sequential readers This page helps you read large values, such as files in `bytea` columns or big JSON documents, without loading whole rows into memory. By default a data reader buffers each result before you read it. Pass `CommandBehavior.SequentialAccess` to stream the result from the connection instead. You can then read a field as a `Stream` (`GetStream`) or a `TextReader` (`GetTextReader`) while its bytes are still arriving. By default the whole result is streamed in one request (`SequentialFetchSize = 0`). Set `SequentialFetchSize` to a positive number to fetch that many rows at a time; this makes the reader available sooner for a long-running query and lets you cancel between fetches. Here `destination` is any writable `Stream`, such as a file. Rules for sequential access Read fields in column order. Going back to an earlier column, or opening a field while another field's stream is still open, throws `InvalidOperationException` (`The active field stream must be consumed or disposed before accessing another field.`). `GetStream` reads `bytea`. `GetTextReader` reads `text`, `json` and `jsonb` and checks the UTF-8 as it goes. `Stream.ReadAsync` can return fewer bytes than you asked for. Keep reading until it returns zero, or use `CopyToAsync`. Scalar getters such as `GetInt64` read only their own field. The reader holds its connection until it finishes or is disposed. Dispose it promptly; disposing early skips the remaining rows without loading them. `CommandTimeout`, `Cancel()`, `CancelAsync()` and cancellation tokens cancel the query on the server and leave the connection usable. With the default fetch size, `ExecuteReaderAsync` waits until PostgreSQL starts sending results. Pass a cancellation token or set `CommandTimeout` if that wait must be limited. A sequential reader returns one result set. `NextResult` returns `false`. Do not use `SequentialAccess` with a multi-statement command. Inside an explicit transaction, `bytea` values arrive in text format and",
+    "sourcePath": "docs/ado-net/sequential-readers.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/sequential-readers.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Sequential readers</h1>\n<p>This page helps you read large values, such as files in <code>bytea</code> columns or big\nJSON documents, without loading whole rows into memory.</p>\n<p>By default a data reader buffers each result before you read it. Pass\n<code>CommandBehavior.SequentialAccess</code> to stream the result from the connection\ninstead. You can then read a field as a <code>Stream</code> (<code>GetStream</code>) or a\n<code>TextReader</code> (<code>GetTextReader</code>) while its bytes are still arriving.</p>\n<p>By default the whole result is streamed in one request\n(<code>SequentialFetchSize = 0</code>). Set <code>SequentialFetchSize</code> to a positive number to\nfetch that many rows at a time; this makes the reader available sooner for a\nlong-running query and lets you cancel between fetches.</p>\n"
+        "html": "<p>This page helps you read large values, such as files in <code>bytea</code> columns or big\nJSON documents, without loading whole rows into memory.</p>\n<p>By default a data reader buffers each result before you read it. Pass\n<code>CommandBehavior.SequentialAccess</code> to stream the result from the connection\ninstead. You can then read a field as a <code>Stream</code> (<code>GetStream</code>) or a\n<code>TextReader</code> (<code>GetTextReader</code>) while its bytes are still arriving.</p>\n<p>By default the whole result is streamed in one request\n(<code>SequentialFetchSize = 0</code>). Set <code>SequentialFetchSize</code> to a positive number to\nfetch that many rows at a time; this makes the reader available sooner for a\nlong-running query and lets you cancel between fetches.</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var command = new BlueTuskCommand(\n    \"SELECT id, payload, document FROM app.assets ORDER BY id\",\n    connection)\n{\n    SequentialFetchSize = 16,\n};\n\nawait using var reader = await command.ExecuteReaderAsync(\n    CommandBehavior.SequentialAccess,\n    cancellationToken);\n\nwhile (await reader.ReadAsync(cancellationToken))\n{\n    var id = reader.GetInt64(0);\n\n    // Read each field in column order and finish it before opening the next.\n    await using (var payload = reader.GetStream(1))\n    {\n        await payload.CopyToAsync(destination, cancellationToken);\n    }\n\n    using (var document = reader.GetTextReader(2))\n    {\n        var json = await document.ReadToEndAsync(cancellationToken);\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT id, payload, document FROM app.assets ORDER BY id&quot;</span>,\n    connection)\n{\n    SequentialFetchSize = <span class=\"hljs-number\">16</span>,\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(\n    CommandBehavior.SequentialAccess,\n    cancellationToken);\n\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken))\n{\n    <span class=\"hljs-keyword\">var</span> id = reader.GetInt64(<span class=\"hljs-number\">0</span>);\n\n    <span class=\"hljs-comment\">// Read each field in column order and finish it before opening the next.</span>\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> payload = reader.GetStream(<span class=\"hljs-number\">1</span>))\n    {\n        <span class=\"hljs-keyword\">await</span> payload.CopyToAsync(destination, cancellationToken);\n    }\n\n    <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> document = reader.GetTextReader(<span class=\"hljs-number\">2</span>))\n    {\n        <span class=\"hljs-keyword\">var</span> json = <span class=\"hljs-keyword\">await</span> document.ReadToEndAsync(cancellationToken);\n    }\n}\n",
+        "code": "await using var command = new BlueTuskCommand(\n    \"SELECT id, payload, document FROM app.assets ORDER BY id\",\n    connection)\n{\n    SequentialFetchSize = 16,\n};\n\nawait using var reader = await command.ExecuteReaderAsync(\n    CommandBehavior.SequentialAccess,\n    cancellationToken);\n\nwhile (await reader.ReadAsync(cancellationToken))\n{\n    var id = reader.GetInt64(0);\n\n    // Read each field in column order and finish it before opening the next.\n    await using (var payload = reader.GetStream(1))\n    {\n        await payload.CopyToAsync(destination, cancellationToken);\n    }\n\n    using (var document = reader.GetTextReader(2))\n    {\n        var json = await document.ReadToEndAsync(cancellationToken);\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = <span class=\"hljs-keyword\">new</span> BlueTuskCommand(\n    <span class=\"hljs-string\">&quot;SELECT id, payload, document FROM app.assets ORDER BY id&quot;</span>,\n    connection)\n{\n    SequentialFetchSize = <span class=\"hljs-number\">16</span>,\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(\n    CommandBehavior.SequentialAccess,\n    cancellationToken);\n\n<span class=\"hljs-keyword\">while</span> (<span class=\"hljs-keyword\">await</span> reader.ReadAsync(cancellationToken))\n{\n    <span class=\"hljs-keyword\">var</span> id = reader.GetInt64(<span class=\"hljs-number\">0</span>);\n\n    <span class=\"hljs-comment\">// Read each field in column order and finish it before opening the next.</span>\n    <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> payload = reader.GetStream(<span class=\"hljs-number\">1</span>))\n    {\n        <span class=\"hljs-keyword\">await</span> payload.CopyToAsync(destination, cancellationToken);\n    }\n\n    <span class=\"hljs-keyword\">using</span> (<span class=\"hljs-keyword\">var</span> document = reader.GetTextReader(<span class=\"hljs-number\">2</span>))\n    {\n        <span class=\"hljs-keyword\">var</span> json = <span class=\"hljs-keyword\">await</span> document.ReadToEndAsync(cancellationToken);\n    }\n}",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Here <code>destination</code> is any writable <code>Stream</code>, such as a file.</p>\n<h2>Rules for sequential access</h2>\n<ul>\n<li>Read fields in column order. Going back to an earlier column, or opening a\nfield while another field’s stream is still open, throws\n<code>InvalidOperationException</code>\n(<code>The active field stream must be consumed or disposed before accessing another field.</code>).</li>\n<li><code>GetStream</code> reads <code>bytea</code>. <code>GetTextReader</code> reads <code>text</code>, <code>json</code> and <code>jsonb</code>\nand checks the UTF-8 as it goes.</li>\n<li><code>Stream.ReadAsync</code> can return fewer bytes than you asked for. Keep reading\nuntil it returns zero, or use <code>CopyToAsync</code>.</li>\n<li>Scalar getters such as <code>GetInt64</code> read only their own field.</li>\n<li>The reader holds its connection until it finishes or is disposed. Dispose it\npromptly; disposing early skips the remaining rows without loading them.</li>\n<li><code>CommandTimeout</code>, <code>Cancel()</code>, <code>CancelAsync()</code> and cancellation tokens cancel\nthe query on the server and leave the connection usable.</li>\n<li>With the default fetch size, <code>ExecuteReaderAsync</code> waits until PostgreSQL\nstarts sending results. Pass a cancellation token or set <code>CommandTimeout</code> if\nthat wait must be limited.</li>\n<li>A sequential reader returns one result set. <code>NextResult</code> returns <code>false</code>.\nDo not use <code>SequentialAccess</code> with a multi-statement command.</li>\n<li>Inside an explicit transaction, <code>bytea</code> values arrive in text format and are\ndecoded in memory rather than streamed.</li>\n</ul>\n<p>Buffered readers (the default) allow random field access and multiple result\nsets.</p>\n"
+        "html": "<p>Here <code>destination</code> is any writable <code>Stream</code>, such as a file.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "rules-for-sequential-access",
+          "text": "Rules for sequential access",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>Read fields in column order. Going back to an earlier column, or opening a\nfield while another field’s stream is still open, throws\n<code>InvalidOperationException</code>\n(<code>The active field stream must be consumed or disposed before accessing another field.</code>).</li>\n<li><code>GetStream</code> reads <code>bytea</code>. <code>GetTextReader</code> reads <code>text</code>, <code>json</code> and <code>jsonb</code>\nand checks the UTF-8 as it goes.</li>\n<li><code>Stream.ReadAsync</code> can return fewer bytes than you asked for. Keep reading\nuntil it returns zero, or use <code>CopyToAsync</code>.</li>\n<li>Scalar getters such as <code>GetInt64</code> read only their own field.</li>\n<li>The reader holds its connection until it finishes or is disposed. Dispose it\npromptly; disposing early skips the remaining rows without loading them.</li>\n<li><code>CommandTimeout</code>, <code>Cancel()</code>, <code>CancelAsync()</code> and cancellation tokens cancel\nthe query on the server and leave the connection usable.</li>\n<li>With the default fetch size, <code>ExecuteReaderAsync</code> waits until PostgreSQL\nstarts sending results. Pass a cancellation token or set <code>CommandTimeout</code> if\nthat wait must be limited.</li>\n<li>A sequential reader returns one result set. <code>NextResult</code> returns <code>false</code>.\nDo not use <code>SequentialAccess</code> with a multi-statement command.</li>\n<li>Inside an explicit transaction, <code>bytea</code> values arrive in text format and are\ndecoded in memory rather than streamed.</li>\n</ul>\n<p>Buffered readers (the default) allow random field access and multiple result\nsets.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "schema-discovery",
-    "summary": "Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.",
-    "keywords": [
-      "schema",
-      "metadata",
-      "GetSchema",
-      "columns",
-      "catalogue"
-    ],
-    "order": 95,
-    "listed": true,
     "title": "Schema discovery",
-    "sourcePath": "docs/ado-net/schema-discovery.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/schema-discovery.md",
+    "summary": "Inspect database and result-set metadata.",
+    "order": 10,
     "headings": [
-      {
-        "id": "schema-discovery",
-        "text": "Schema discovery",
-        "level": 1
-      },
       {
         "id": "connection-collections",
         "text": "Connection collections",
@@ -1414,78 +1066,124 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 491,
-    "readMinutes": 3,
-    "searchText": "Schema discovery This page helps you read database metadata at run time (tables, columns and the shape of a query result) through the standard ADO.NET schema APIs. Connection collections Call `GetSchema()` to list supported collections: BlueTusk supports these collections: Collection Requires open connection Purpose `MetaDataCollections` No Lists the available schema collections `DataSourceInformation` No Provider and identifier behavior `DataTypes` No Provider type metadata `Restrictions` No Restriction positions for each collection `ReservedWords` No PostgreSQL reserved words `Databases` Yes Visible databases `Schemas` Yes Visible schemas `Tables` Yes Tables and views filtered by restrictions `Columns` Yes Column metadata filtered by restrictions Catalogue-backed collections require an open connection because visibility is defined by the authenticated PostgreSQL session. Restrictions Restrictions are positional and collection-specific. For example: Use `null` for a restriction you do not want to constrain. Treat returned metadata as the current authenticated view of the catalogue, not a durable schema snapshot. Reader column schema After executing a command, use `GetColumnSchema` or `GetSchemaTable`: Column metadata exposes the information available from PostgreSQL row descriptions and provider type resolution, including: column name and ordinal; CLR data type; provider type identity and name; nullability when known; size/precision/scale when known; and source relation/column metadata when PostgreSQL supplies it. Unavailable metadata remains unavailable; BlueTusk does not invent key or origin information. Intentional exclusions `CommandBehavior.SchemaOnly` and `CommandBehavior.KeyInfo` are not supported and throw `NotSupportedException`. Silently treating either as `CommandBehavior.Default` would execute behavior the caller did not request. When you need PostgreSQL to describe a result shape, run a query that returns no rows: This still parses, plans and describes",
+    "sourcePath": "docs/ado-net/schema-discovery.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/schema-discovery.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Schema discovery</h1>\n<p>This page helps you read database metadata at run time (tables, columns and\nthe shape of a query result) through the standard ADO.NET schema APIs.</p>\n<h2>Connection collections</h2>\n<p>Call <code>GetSchema()</code> to list supported collections:</p>\n"
+        "html": "<p>BlueTusk implements provider-neutral ADO.NET schema discovery for applications,\nlibraries and diagnostic tools that inspect database metadata at runtime.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "connection-collections",
+          "text": "Connection collections",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Call <code>GetSchema()</code> to list supported collections:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nvar collections = await connection.GetSchemaAsync();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">var</span> collections = <span class=\"hljs-keyword\">await</span> connection.GetSchemaAsync();\n",
+        "code": "await using var connection = await dataSource.OpenConnectionAsync();\nvar collections = await connection.GetSchemaAsync();",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">var</span> collections = <span class=\"hljs-keyword\">await</span> connection.GetSchemaAsync();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>BlueTusk supports these collections:</p>\n<table>\n<thead>\n<tr>\n<th>Collection</th>\n<th>Requires open connection</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MetaDataCollections</code></td>\n<td>No</td>\n<td>Lists the available schema collections</td>\n</tr>\n<tr>\n<td><code>DataSourceInformation</code></td>\n<td>No</td>\n<td>Provider and identifier behavior</td>\n</tr>\n<tr>\n<td><code>DataTypes</code></td>\n<td>No</td>\n<td>Provider type metadata</td>\n</tr>\n<tr>\n<td><code>Restrictions</code></td>\n<td>No</td>\n<td>Restriction positions for each collection</td>\n</tr>\n<tr>\n<td><code>ReservedWords</code></td>\n<td>No</td>\n<td>PostgreSQL reserved words</td>\n</tr>\n<tr>\n<td><code>Databases</code></td>\n<td>Yes</td>\n<td>Visible databases</td>\n</tr>\n<tr>\n<td><code>Schemas</code></td>\n<td>Yes</td>\n<td>Visible schemas</td>\n</tr>\n<tr>\n<td><code>Tables</code></td>\n<td>Yes</td>\n<td>Tables and views filtered by restrictions</td>\n</tr>\n<tr>\n<td><code>Columns</code></td>\n<td>Yes</td>\n<td>Column metadata filtered by restrictions</td>\n</tr>\n</tbody>\n</table>\n<p>Catalogue-backed collections require an open connection because visibility is\ndefined by the authenticated PostgreSQL session.</p>\n<h2>Restrictions</h2>\n<p>Restrictions are positional and collection-specific. For example:</p>\n"
+        "html": "<p>Supported collections include:</p>\n<table>\n<thead>\n<tr>\n<th>Collection</th>\n<th>Requires open connection</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>MetaDataCollections</code></td>\n<td>No</td>\n<td>Lists the available schema collections</td>\n</tr>\n<tr>\n<td><code>DataSourceInformation</code></td>\n<td>No</td>\n<td>Provider and identifier behavior</td>\n</tr>\n<tr>\n<td><code>DataTypes</code></td>\n<td>No</td>\n<td>Provider type metadata</td>\n</tr>\n<tr>\n<td><code>Restrictions</code></td>\n<td>No</td>\n<td>Restriction positions for each collection</td>\n</tr>\n<tr>\n<td><code>ReservedWords</code></td>\n<td>No</td>\n<td>PostgreSQL reserved words</td>\n</tr>\n<tr>\n<td><code>Databases</code></td>\n<td>Yes</td>\n<td>Visible databases</td>\n</tr>\n<tr>\n<td><code>Schemas</code></td>\n<td>Yes</td>\n<td>Visible schemas</td>\n</tr>\n<tr>\n<td><code>Tables</code></td>\n<td>Yes</td>\n<td>Tables and views filtered by restrictions</td>\n</tr>\n<tr>\n<td><code>Columns</code></td>\n<td>Yes</td>\n<td>Column metadata filtered by restrictions</td>\n</tr>\n</tbody>\n</table>\n<p>Catalogue-backed collections require an open connection because visibility is\ndefined by the authenticated PostgreSQL session.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "restrictions",
+          "text": "Restrictions",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Restrictions are positional and collection-specific. For example:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var tables = await connection.GetSchemaAsync(\n    \"Tables\",\n    [\n        connection.Database,\n        \"public\",\n        \"orders\",\n        \"BASE TABLE\",\n    ]);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> tables = <span class=\"hljs-keyword\">await</span> connection.GetSchemaAsync(\n    <span class=\"hljs-string\">&quot;Tables&quot;</span>,\n    [\n        connection.Database,\n        <span class=\"hljs-string\">&quot;public&quot;</span>,\n        <span class=\"hljs-string\">&quot;orders&quot;</span>,\n        <span class=\"hljs-string\">&quot;BASE TABLE&quot;</span>,\n    ]);\n",
+        "code": "var tables = await connection.GetSchemaAsync(\n    \"Tables\",\n    [\n        connection.Database,\n        \"public\",\n        \"orders\",\n        \"BASE TABLE\",\n    ]);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> tables = <span class=\"hljs-keyword\">await</span> connection.GetSchemaAsync(\n    <span class=\"hljs-string\">&quot;Tables&quot;</span>,\n    [\n        connection.Database,\n        <span class=\"hljs-string\">&quot;public&quot;</span>,\n        <span class=\"hljs-string\">&quot;orders&quot;</span>,\n        <span class=\"hljs-string\">&quot;BASE TABLE&quot;</span>,\n    ]);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>null</code> for a restriction you do not want to constrain. Treat returned\nmetadata as the current authenticated view of the catalogue, not a durable\nschema snapshot.</p>\n<h2>Reader column schema</h2>\n<p>After executing a command, use <code>GetColumnSchema</code> or <code>GetSchemaTable</code>:</p>\n"
+        "html": "<p>Use <code>null</code> for a restriction you do not want to constrain. Treat returned\nmetadata as the current authenticated view of the catalogue, not a durable\nschema snapshot.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "reader-column-schema",
+          "text": "Reader column schema",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>After executing a command, use <code>GetColumnSchema</code> or <code>GetSchemaTable</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var command = connection.CreateCommand();\ncommand.CommandText = \"\"\"\n    SELECT id, created_at, payload\n    FROM events\n    WHERE tenant_id = @tenant_id\n    \"\"\";\ncommand.Parameters.Add(\n    new BlueTuskParameter<Guid>(tenantId) { ParameterName = \"tenant_id\" });\n\nawait using var reader = await command.ExecuteReaderAsync(cancellationToken);\nvar columns = await reader.GetColumnSchemaAsync(cancellationToken);\nvar table = await reader.GetSchemaTableAsync(cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = connection.CreateCommand();\ncommand.CommandText = <span class=\"hljs-string\">&quot;&quot;&quot;\n    SELECT id, created_at, payload\n    FROM events\n    WHERE tenant_id = @tenant_id\n    &quot;&quot;&quot;</span>;\ncommand.Parameters.Add(\n    <span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(tenantId) { ParameterName = <span class=\"hljs-string\">&quot;tenant_id&quot;</span> });\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(cancellationToken);\n<span class=\"hljs-keyword\">var</span> columns = <span class=\"hljs-keyword\">await</span> reader.GetColumnSchemaAsync(cancellationToken);\n<span class=\"hljs-keyword\">var</span> table = <span class=\"hljs-keyword\">await</span> reader.GetSchemaTableAsync(cancellationToken);\n",
+        "code": "await using var command = connection.CreateCommand();\ncommand.CommandText = \"\"\"\n    SELECT id, created_at, payload\n    FROM events\n    WHERE tenant_id = @tenant_id\n    \"\"\";\ncommand.Parameters.Add(\n    new BlueTuskParameter<Guid>(\"tenant_id\", tenantId));\n\nawait using var reader = await command.ExecuteReaderAsync(cancellationToken);\nvar columns = await reader.GetColumnSchemaAsync(cancellationToken);\nvar table = await reader.GetSchemaTableAsync(cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = connection.CreateCommand();\ncommand.CommandText = <span class=\"hljs-string\">&quot;&quot;&quot;\n    SELECT id, created_at, payload\n    FROM events\n    WHERE tenant_id = @tenant_id\n    &quot;&quot;&quot;</span>;\ncommand.Parameters.Add(\n    <span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;Guid&gt;(<span class=\"hljs-string\">&quot;tenant_id&quot;</span>, tenantId));\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync(cancellationToken);\n<span class=\"hljs-keyword\">var</span> columns = <span class=\"hljs-keyword\">await</span> reader.GetColumnSchemaAsync(cancellationToken);\n<span class=\"hljs-keyword\">var</span> table = <span class=\"hljs-keyword\">await</span> reader.GetSchemaTableAsync(cancellationToken);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Column metadata exposes the information available from PostgreSQL row\ndescriptions and provider type resolution, including:</p>\n<ul>\n<li>column name and ordinal;</li>\n<li>CLR data type;</li>\n<li>provider type identity and name;</li>\n<li>nullability when known;</li>\n<li>size/precision/scale when known; and</li>\n<li>source relation/column metadata when PostgreSQL supplies it.</li>\n</ul>\n<p>Unavailable metadata remains unavailable; BlueTusk does not invent key or\norigin information.</p>\n<h2>Intentional exclusions</h2>\n<p><code>CommandBehavior.SchemaOnly</code> and <code>CommandBehavior.KeyInfo</code> are not supported\nand throw <code>NotSupportedException</code>. Silently treating either as\n<code>CommandBehavior.Default</code> would execute behavior the caller did not request.</p>\n<p>When you need PostgreSQL to describe a result shape, run a query that returns\nno rows:</p>\n"
+        "html": "<p>Column metadata exposes the information available from PostgreSQL row\ndescriptions and provider type resolution, including:</p>\n<ul>\n<li>column name and ordinal;</li>\n<li>CLR data type;</li>\n<li>provider type identity and name;</li>\n<li>nullability when known;</li>\n<li>size/precision/scale when known; and</li>\n<li>source relation/column metadata when PostgreSQL supplies it.</li>\n</ul>\n<p>Unavailable metadata remains unavailable; BlueTusk does not invent key or\norigin information.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "intentional-exclusions",
+          "text": "Intentional exclusions",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>CommandBehavior.SchemaOnly</code> and <code>CommandBehavior.KeyInfo</code> are unsupported\nand throw <code>NotSupportedException</code>. Silently treating either as\n<code>CommandBehavior.Default</code> would execute behavior the caller did not request.</p>\n<p>Use a bounded query that returns no rows when you need PostgreSQL to describe a\nresult shape:</p>\n"
       },
       {
         "kind": "code",
-        "code": "SELECT id, created_at, payload\nFROM events\nWHERE false\n",
-        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> id, created_at, payload\n<span class=\"hljs-keyword\">FROM</span> events\n<span class=\"hljs-keyword\">WHERE</span> <span class=\"hljs-literal\">false</span>\n",
+        "code": "SELECT id, created_at, payload\nFROM events\nWHERE false",
+        "highlighted": "<span class=\"hljs-keyword\">SELECT</span> id, created_at, payload\n<span class=\"hljs-keyword\">FROM</span> events\n<span class=\"hljs-keyword\">WHERE</span> <span class=\"hljs-literal\">false</span>",
         "language": "sql"
       },
       {
         "kind": "html",
-        "html": "<p>This still parses, plans and describes an ordinary query, so apply the same SQL\ntrust and timeout policy as any other command.</p>\n<h2>Tooling guidance</h2>\n<p>Schema discovery is useful for:</p>\n<ul>\n<li>Dapper-style mapping diagnostics;</li>\n<li>admin and inspection tools;</li>\n<li>code-generation inputs;</li>\n<li>compatibility probes; and</li>\n<li>generic data export.</li>\n</ul>\n<p>It is not a replacement for EF Core reverse engineering, which preserves a\nlarger PostgreSQL-specific model including indexes, constraints, policies,\npartitions, routines, extensions and other schema objects.</p>\n<p>For database-first EF workflows, use the\n<a href=\"/documentation/ef-core/overview\">EF Core scaffolding guidance</a>. For catalogue-driven\nprovider types, read the <a href=\"/documentation/provider/types\">type system guide</a>.</p>\n"
+        "html": "<p>This still parses, plans and describes an ordinary query, so apply the same SQL\ntrust and timeout policy as any other command.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "tooling-guidance",
+          "text": "Tooling guidance",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Schema discovery is useful for:</p>\n<ul>\n<li>Dapper-style mapping diagnostics;</li>\n<li>admin and inspection tools;</li>\n<li>code-generation inputs;</li>\n<li>compatibility probes; and</li>\n<li>generic data export.</li>\n</ul>\n<p>It is not a replacement for EF Core reverse engineering, which preserves a\nlarger PostgreSQL-specific model including indexes, constraints, policies,\npartitions, routines, extensions and other schema objects.</p>\n<p>For database-first EF workflows, use the\n<a href=\"/documentation/ef-core/overview\">EF Core scaffolding guidance</a>. For catalogue-driven\nprovider types, read the <a href=\"/documentation/provider/types\">type system guide</a>.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "types",
-    "summary": "Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.",
-    "keywords": [
-      "types",
-      "arrays",
-      "ranges",
-      "json"
-    ],
-    "order": 100,
-    "listed": true,
     "title": "Use PostgreSQL types",
-    "sourcePath": "docs/types/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/README.md",
+    "summary": "Map PostgreSQL types, including domains, arrays, enums, composites, and ranges.",
+    "order": 11,
     "headings": [
-      {
-        "id": "use-postgresql-types",
-        "text": "Use PostgreSQL types",
-        "level": 1
-      },
       {
         "id": "the-normal-path",
         "text": "The normal path",
@@ -1512,758 +1210,110 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 631,
-    "readMinutes": 3,
-    "searchText": "Use PostgreSQL types BlueTusk maps common PostgreSQL values directly to normal .NET types. Start here to read and write values safely; use the [complete type reference](reference.md) only when you need a specialised or catalogue-defined type. The normal path Use typed parameters and typed reader methods. BlueTusk sends parameter values separately from SQL and chooses the PostgreSQL wire format for you: Common mappings PostgreSQL Typical .NET type Notes `int2`, `int4`, `int8` `short`, `int`, `long` Use the matching width. `numeric` `decimal` Check precision and scale in the schema. `text`, `varchar` `string` Length rules remain a schema concern. `uuid` `Guid` Native binary mapping. `bytea` `byte[]` or streaming API Stream very large values. `date` `DateOnly` Calendar date without a time zone. `timestamp` `DateTime` No time-zone conversion. `timestamptz` `DateTimeOffset` Prefer UTC at application boundaries. `json`, `jsonb` JSON/string mapping Choose an explicit application representation. `type[]` `T[]` Element mapping must also be known. `ExecuteScalarAsync<T>()` converts its result with the same rules as `GetFieldValue<T>()`, so `ExecuteScalarAsync<decimal>()` reads a `numeric` result. For a column that can be `NULL`, ask for a nullable type such as `decimal?` or `int?`: a non-nullable `T` returns its default value instead. Null values need a type PostgreSQL cannot always infer the intended type of a null parameter. State it explicitly: Use `DbType`, `PostgreSqlTypeOid`, or `PostgreSqlTypeName`; do not rely on an ambiguous server guess. `PostgreSqlTypeName` must include the schema, for example `pg_catalog.jsonb` or `app.order_status`. The same applies to a `string[]` parameter, as in the first example: give it `PostgreSqlTypeName = \"pg_catalog.text[]\"`. Map application-defined types once Register enums and composites before building the long-lived data source: Without a labels dictionary, `MapEnum` takes each member's label from `[BlueTuskName(\"paid\")]` (namespace ",
+    "sourcePath": "docs/types/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/README.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Use PostgreSQL types</h1>\n<p>BlueTusk maps common PostgreSQL values directly to normal .NET types. Start\nhere to read and write values safely; use the <a href=\"/documentation/provider/types-reference\">complete type\nreference</a> only when you need a specialised or catalogue-defined\ntype.</p>\n<h2>The normal path</h2>\n<p>Use typed parameters and typed reader methods. BlueTusk sends parameter values\nseparately from SQL and chooses the PostgreSQL wire format for you:</p>\n"
+        "html": "<p>BlueTusk maps common PostgreSQL values directly to normal .NET types. Start\nhere to read and write values safely; use the <a href=\"/documentation/provider/types-reference\">complete type\nreference</a> only when you need a specialised or catalogue-defined\ntype.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "the-normal-path",
+          "text": "The normal path",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use typed parameters and typed reader methods. BlueTusk sends parameter values\nseparately from SQL and chooses the PostgreSQL wire format for you:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var command = dataSource.CreateCommand(\n    \"SELECT @id::int8, @created::timestamptz, @tags::text[]\");\n\ncommand.Parameters.Add(new BlueTuskParameter<long>(42)\n{\n    ParameterName = \"id\",\n});\ncommand.Parameters.Add(new BlueTuskParameter<DateTimeOffset>(DateTimeOffset.UtcNow)\n{\n    ParameterName = \"created\",\n});\ncommand.Parameters.Add(new BlueTuskParameter<string[]>([\"paid\", \"priority\"])\n{\n    ParameterName = \"tags\",\n    PostgreSqlTypeName = \"pg_catalog.text[]\",\n});\n\nawait using var reader = await command.ExecuteReaderAsync();\nawait reader.ReadAsync();\n\nvar id = reader.GetInt64(0);\nvar created = reader.GetFieldValue<DateTimeOffset>(1);\nvar tags = reader.GetFieldValue<string[]>(2);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT @id::int8, @created::timestamptz, @tags::text[]&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">42</span>)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span>,\n});\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;DateTimeOffset&gt;(DateTimeOffset.UtcNow)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;created&quot;</span>,\n});\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>[]&gt;([<span class=\"hljs-string\">&quot;paid&quot;</span>, <span class=\"hljs-string\">&quot;priority&quot;</span>])\n{\n    ParameterName = <span class=\"hljs-string\">&quot;tags&quot;</span>,\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;pg_catalog.text[]&quot;</span>,\n});\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync();\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync();\n\n<span class=\"hljs-keyword\">var</span> id = reader.GetInt64(<span class=\"hljs-number\">0</span>);\n<span class=\"hljs-keyword\">var</span> created = reader.GetFieldValue&lt;DateTimeOffset&gt;(<span class=\"hljs-number\">1</span>);\n<span class=\"hljs-keyword\">var</span> tags = reader.GetFieldValue&lt;<span class=\"hljs-built_in\">string</span>[]&gt;(<span class=\"hljs-number\">2</span>);\n",
+        "code": "await using var command = dataSource.CreateCommand(\n    \"SELECT @id::int8, @created::timestamptz, @tags::text[]\");\n\ncommand.Parameters.Add(new BlueTuskParameter<long>(42)\n{\n    ParameterName = \"id\",\n});\ncommand.Parameters.Add(new BlueTuskParameter<DateTimeOffset>(DateTimeOffset.UtcNow)\n{\n    ParameterName = \"created\",\n});\ncommand.Parameters.Add(new BlueTuskParameter<string[]>([\"paid\", \"priority\"])\n{\n    ParameterName = \"tags\",\n    PostgreSqlTypeName = \"pg_catalog.text[]\",\n});\n\nawait using var reader = await command.ExecuteReaderAsync();\nawait reader.ReadAsync();\n\nvar id = reader.GetInt64(0);\nvar created = reader.GetFieldValue<DateTimeOffset>(1);\nvar tags = reader.GetFieldValue<string[]>(2);",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT @id::int8, @created::timestamptz, @tags::text[]&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">long</span>&gt;(<span class=\"hljs-number\">42</span>)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;id&quot;</span>,\n});\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;DateTimeOffset&gt;(DateTimeOffset.UtcNow)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;created&quot;</span>,\n});\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">string</span>[]&gt;([<span class=\"hljs-string\">&quot;paid&quot;</span>, <span class=\"hljs-string\">&quot;priority&quot;</span>])\n{\n    ParameterName = <span class=\"hljs-string\">&quot;tags&quot;</span>,\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;pg_catalog.text[]&quot;</span>,\n});\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> reader = <span class=\"hljs-keyword\">await</span> command.ExecuteReaderAsync();\n<span class=\"hljs-keyword\">await</span> reader.ReadAsync();\n\n<span class=\"hljs-keyword\">var</span> id = reader.GetInt64(<span class=\"hljs-number\">0</span>);\n<span class=\"hljs-keyword\">var</span> created = reader.GetFieldValue&lt;DateTimeOffset&gt;(<span class=\"hljs-number\">1</span>);\n<span class=\"hljs-keyword\">var</span> tags = reader.GetFieldValue&lt;<span class=\"hljs-built_in\">string</span>[]&gt;(<span class=\"hljs-number\">2</span>);",
+        "language": "csharp"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "common-mappings",
+          "text": "Common mappings",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>PostgreSQL</th>\n<th>Typical .NET type</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>int2</code>, <code>int4</code>, <code>int8</code></td>\n<td><code>short</code>, <code>int</code>, <code>long</code></td>\n<td>Use the matching width.</td>\n</tr>\n<tr>\n<td><code>numeric</code></td>\n<td><code>decimal</code></td>\n<td>Check precision and scale in the schema.</td>\n</tr>\n<tr>\n<td><code>text</code>, <code>varchar</code></td>\n<td><code>string</code></td>\n<td>Length rules remain a schema concern.</td>\n</tr>\n<tr>\n<td><code>uuid</code></td>\n<td><code>Guid</code></td>\n<td>Native binary mapping.</td>\n</tr>\n<tr>\n<td><code>bytea</code></td>\n<td><code>byte[]</code> or streaming API</td>\n<td>Stream very large values.</td>\n</tr>\n<tr>\n<td><code>date</code></td>\n<td><code>DateOnly</code></td>\n<td>Calendar date without a time zone.</td>\n</tr>\n<tr>\n<td><code>timestamp</code></td>\n<td><code>DateTime</code></td>\n<td>No time-zone conversion.</td>\n</tr>\n<tr>\n<td><code>timestamptz</code></td>\n<td><code>DateTimeOffset</code></td>\n<td>Prefer UTC at application boundaries.</td>\n</tr>\n<tr>\n<td><code>json</code>, <code>jsonb</code></td>\n<td>JSON/string mapping</td>\n<td>Choose an explicit application representation.</td>\n</tr>\n<tr>\n<td><code>type[]</code></td>\n<td><code>T[]</code></td>\n<td>Element mapping must also be known.</td>\n</tr>\n</tbody>\n</table>\n<p><code>ExecuteScalarAsync&lt;T&gt;()</code> converts its result with the same rules as\n<code>GetFieldValue&lt;T&gt;()</code>, so <code>ExecuteScalarAsync&lt;decimal&gt;()</code> reads a <code>numeric</code>\nresult. For a column that can be <code>NULL</code>, ask for a nullable type such as\n<code>decimal?</code> or <code>int?</code>: a non-nullable <code>T</code> returns its default value instead.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "null-values-need-a-type",
+          "text": "Null values need a type",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL cannot always infer the intended type of a null parameter. State it\nexplicitly:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "command.Parameters.Add(new BlueTuskParameter(null)\n{\n    ParameterName = \"status\",\n    PostgreSqlTypeName = \"app.order_status\",\n});",
+        "highlighted": "command.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter(<span class=\"hljs-literal\">null</span>)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;status&quot;</span>,\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;app.order_status&quot;</span>,\n});",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<h2>Common mappings</h2>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL</th>\n<th>Typical .NET type</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>int2</code>, <code>int4</code>, <code>int8</code></td>\n<td><code>short</code>, <code>int</code>, <code>long</code></td>\n<td>Use the matching width.</td>\n</tr>\n<tr>\n<td><code>numeric</code></td>\n<td><code>decimal</code></td>\n<td>Check precision and scale in the schema.</td>\n</tr>\n<tr>\n<td><code>text</code>, <code>varchar</code></td>\n<td><code>string</code></td>\n<td>Length rules remain a schema concern.</td>\n</tr>\n<tr>\n<td><code>uuid</code></td>\n<td><code>Guid</code></td>\n<td>Native binary mapping.</td>\n</tr>\n<tr>\n<td><code>bytea</code></td>\n<td><code>byte[]</code> or streaming API</td>\n<td>Stream very large values.</td>\n</tr>\n<tr>\n<td><code>date</code></td>\n<td><code>DateOnly</code></td>\n<td>Calendar date without a time zone.</td>\n</tr>\n<tr>\n<td><code>timestamp</code></td>\n<td><code>DateTime</code></td>\n<td>No time-zone conversion.</td>\n</tr>\n<tr>\n<td><code>timestamptz</code></td>\n<td><code>DateTimeOffset</code></td>\n<td>Prefer UTC at application boundaries.</td>\n</tr>\n<tr>\n<td><code>json</code>, <code>jsonb</code></td>\n<td>JSON/string mapping</td>\n<td>Choose an explicit application representation.</td>\n</tr>\n<tr>\n<td><code>type[]</code></td>\n<td><code>T[]</code></td>\n<td>Element mapping must also be known.</td>\n</tr>\n</tbody>\n</table>\n<p><code>ExecuteScalarAsync&lt;T&gt;()</code> converts its result with the same rules as\n<code>GetFieldValue&lt;T&gt;()</code>, so <code>ExecuteScalarAsync&lt;decimal&gt;()</code> reads a <code>numeric</code>\nresult. For a column that can be <code>NULL</code>, ask for a nullable type such as\n<code>decimal?</code> or <code>int?</code>: a non-nullable <code>T</code> returns its default value instead.</p>\n<h2>Null values need a type</h2>\n<p>PostgreSQL cannot always infer the intended type of a null parameter. State it\nexplicitly:</p>\n"
+        "html": "<p>Use <code>DbType</code>, <code>PostgreSqlTypeOid</code>, or <code>PostgreSqlTypeName</code>; do not rely on an\nambiguous server guess. <code>PostgreSqlTypeName</code> must include the schema, for\nexample <code>pg_catalog.jsonb</code> or <code>app.order_status</code>. The same applies to a\n<code>string[]</code> parameter, as in the first example: give it\n<code>PostgreSqlTypeName = &quot;pg_catalog.text[]&quot;</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "map-application-defined-types-once",
+          "text": "Map application-defined types once",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Register enums and composites before building the long-lived data source:</p>\n"
       },
       {
         "kind": "code",
-        "code": "command.Parameters.Add(new BlueTuskParameter(null)\n{\n    ParameterName = \"status\",\n    PostgreSqlTypeName = \"app.order_status\",\n});\n",
-        "highlighted": "command.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter(<span class=\"hljs-literal\">null</span>)\n{\n    ParameterName = <span class=\"hljs-string\">&quot;status&quot;</span>,\n    PostgreSqlTypeName = <span class=\"hljs-string\">&quot;app.order_status&quot;</span>,\n});\n",
+        "code": "var builder = new BlueTuskDataSourceBuilder(connectionString);\nbuilder.MapEnum(\"app.order_status\", new Dictionary<OrderStatus, string>\n{\n    [OrderStatus.Pending] = \"pending\",\n    [OrderStatus.Paid] = \"paid\",\n});\nbuilder.MapComposite<Address>(\"app.address\");\nawait using var dataSource = builder.Build();",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> builder = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString);\nbuilder.MapEnum(<span class=\"hljs-string\">&quot;app.order_status&quot;</span>, <span class=\"hljs-keyword\">new</span> Dictionary&lt;OrderStatus, <span class=\"hljs-built_in\">string</span>&gt;\n{\n    [<span class=\"hljs-meta\">OrderStatus.Pending</span>] = <span class=\"hljs-string\">&quot;pending&quot;</span>,\n    [<span class=\"hljs-meta\">OrderStatus.Paid</span>] = <span class=\"hljs-string\">&quot;paid&quot;</span>,\n});\nbuilder.MapComposite&lt;Address&gt;(<span class=\"hljs-string\">&quot;app.address&quot;</span>);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = builder.Build();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>DbType</code>, <code>PostgreSqlTypeOid</code>, or <code>PostgreSqlTypeName</code>; do not rely on an\nambiguous server guess. <code>PostgreSqlTypeName</code> must include the schema, for\nexample <code>pg_catalog.jsonb</code> or <code>app.order_status</code>. The same applies to a\n<code>string[]</code> parameter, as in the first example: give it\n<code>PostgreSqlTypeName = &quot;pg_catalog.text[]&quot;</code>.</p>\n<h2>Map application-defined types once</h2>\n<p>Register enums and composites before building the long-lived data source:</p>\n"
+        "html": "<p>Without a labels dictionary, <code>MapEnum</code> takes each member’s label from\n<code>[BlueTuskName(&quot;paid&quot;)]</code> (namespace <code>BlueTusk.TypeSystem</code>), then from\n<code>[EnumMember(Value = &quot;paid&quot;)]</code>, and otherwise uses the CLR member name exactly\n(<code>Paid</code>, not <code>paid</code>). With EF Core, prefer the attributes: LINQ writes an enum\nconstant with its attribute label but cannot see a labels dictionary (see\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/concepts.md#postgresql-enums-need-three-pieces\">EF Core enums</a>).\n<code>MapComposite</code> matches members to fields by snake_case name (<code>HouseNumber</code> to\n<code>house_number</code>).</p>\n<p>A mapped type does not have to exist when the data source first connects.\nUntil the catalogue contains it, the mapping stays unresolved and only a value\nthat uses it fails. EF Core migrations reload the catalogue after they run, so\nan application can map <code>app.order_status</code> before the migration that creates it.\nAfter creating or changing a type any other way while the application is\nrunning, call <code>ReloadTypesAsync()</code> on the data source before using the new\ncatalogue shape.</p>\n"
       },
       {
-        "kind": "code",
-        "code": "var builder = new BlueTuskDataSourceBuilder(connectionString);\nbuilder.MapEnum(\"app.order_status\", new Dictionary<OrderStatus, string>\n{\n    [OrderStatus.Pending] = \"pending\",\n    [OrderStatus.Paid] = \"paid\",\n});\nbuilder.MapComposite<Address>(\"app.address\");\nawait using var dataSource = builder.Build();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> builder = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString);\nbuilder.MapEnum(<span class=\"hljs-string\">&quot;app.order_status&quot;</span>, <span class=\"hljs-keyword\">new</span> Dictionary&lt;OrderStatus, <span class=\"hljs-built_in\">string</span>&gt;\n{\n    [<span class=\"hljs-meta\">OrderStatus.Pending</span>] = <span class=\"hljs-string\">&quot;pending&quot;</span>,\n    [<span class=\"hljs-meta\">OrderStatus.Paid</span>] = <span class=\"hljs-string\">&quot;paid&quot;</span>,\n});\nbuilder.MapComposite&lt;Address&gt;(<span class=\"hljs-string\">&quot;app.address&quot;</span>);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = builder.Build();\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "production-rules",
+          "text": "Production rules",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<p>Without a labels dictionary, <code>MapEnum</code> takes each member’s label from\n<code>[BlueTuskName(&quot;paid&quot;)]</code> (namespace <code>BlueTusk.TypeSystem</code>), then from\n<code>[EnumMember(Value = &quot;paid&quot;)]</code>, and otherwise uses the CLR member name exactly\n(<code>Paid</code>, not <code>paid</code>). With EF Core, prefer the attributes: LINQ writes an enum\nconstant with its attribute label but cannot see a labels dictionary (see\n<a href=\"/documentation/ef-core/concepts#postgresql-enums-need-three-pieces\">EF Core enums</a>).\n<code>MapComposite</code> matches members to fields by snake_case name (<code>HouseNumber</code> to\n<code>house_number</code>).</p>\n<p>A mapped type does not have to exist when the data source first connects.\nUntil the catalogue contains it, the mapping stays unresolved and only a value\nthat uses it fails. EF Core migrations reload the catalogue after they run, so\nan application can map <code>app.order_status</code> before the migration that creates it.\nAfter creating or changing a type any other way while the application is\nrunning, call <code>ReloadTypesAsync()</code> on the data source before using the new\ncatalogue shape.</p>\n<h2>Production rules</h2>\n<ul>\n<li>Keep the database schema and CLR mapping versioned together.</li>\n<li>Prefer typed parameters over string conversion.</li>\n<li>Use sequential readers for large binary or text values.</li>\n<li>Treat unknown extension values as opaque until a semantic codec is installed.</li>\n<li>Test boundary values: null, infinity, precision, time zones, and array bounds.</li>\n</ul>\n<p>The <a href=\"/documentation/provider/types-reference\">complete reference</a> documents numeric edge cases, temporal\nrules, ranges, multiranges, arrays, composites, domains, vectors, JSONPath,\ncatalogue vectors, and opaque values.</p>\n"
+        "html": "<ul>\n<li>Keep the database schema and CLR mapping versioned together.</li>\n<li>Prefer typed parameters over string conversion.</li>\n<li>Use sequential readers for large binary or text values.</li>\n<li>Treat unknown extension values as opaque until a semantic codec is installed.</li>\n<li>Test boundary values: null, infinity, precision, time zones, and array bounds.</li>\n</ul>\n<p>The <a href=\"/documentation/provider/types-reference\">complete reference</a> documents numeric edge cases, temporal\nrules, ranges, multiranges, arrays, composites, domains, vectors, JSONPath,\ncatalogue vectors, and opaque values.</p>\n"
       }
     ]
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "repack",
-    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
-    "keywords": [
-      "repack",
-      "maintenance",
-      "postgresql 19",
-      "bloat"
-    ],
-    "order": 105,
-    "listed": true,
-    "title": "PostgreSQL 19 native REPACK",
-    "sourcePath": "docs/ado-net/repack.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
-    "headings": [
-      {
-        "id": "postgresql-19-native-repack",
-        "text": "PostgreSQL 19 native REPACK",
-        "level": 1
-      },
-      {
-        "id": "repack-one-table",
-        "text": "Repack one table",
-        "level": 2
-      },
-      {
-        "id": "choose-the-operation",
-        "text": "Choose the operation",
-        "level": 2
-      },
-      {
-        "id": "monitor-progress",
-        "text": "Monitor progress",
-        "level": 2
-      },
-      {
-        "id": "production-checks",
-        "text": "Production checks",
-        "level": 2
-      }
-    ],
-    "wordCount": 712,
-    "readMinutes": 4,
-    "searchText": "PostgreSQL 19 native REPACK **Note:** New in 1.1.0. Requires PostgreSQL 19 (preview). PostgreSQL 19 is not yet a final release, so use this API for development and testing until it is. Not available in 1.0.0 or 1.1.0-rc.1. This page helps you reclaim disk space from a bloated table with PostgreSQL 19's native `REPACK` command, and monitor its progress from .NET. This is the PostgreSQL command, not the separate `pg_repack` extension. The `BlueTusk.Data.Maintenance` namespace (in the `BlueTusk.Data` package) supports every documented PostgreSQL 19 form through `BlueTuskRepackRequest`, rejects invalid combinations before sending SQL, and reads live progress from `pg_stat_progress_repack`. On PostgreSQL 18 and earlier, `connection.SupportsRepack` is `false` and the API throws `NotSupportedException`. Repack one table Open a dedicated connection. A repack owns that physical session until the server completes or the operation is cancelled. `CommandTimeoutSeconds = 0` disables the client timeout, which is usually the right choice for scheduled maintenance. Cancellation still sends PostgreSQL's normal cancellation request and restores the connection to a usable protocol state. Choose the operation Goal Request Rewrite one table `ForTable(\"events\", \"app\")` Keep a supported table available Set `Concurrently = true` Refresh all table statistics Set `Analyze = true` Refresh selected column statistics Set `Analyze = true` and `AnalyzeColumns = [\"tenant_id\"]` Physically order by the configured clustering index Set `UseIndex = true` Choose and remember a clustering index Set `IndexName = \"events_created_at_idx\"` Emit PostgreSQL information messages Set `Verbose = true` Process all eligible relations in the database `ForDatabase()` Process all relations with a configured clustering index `ForDatabase() with { UseIndex = true }` Table, schema, index, and column names are quoted as PostgreSQL identifiers; they are never concatenated as untrusted SQL fragments. BlueTusk sends `REPACK`",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>PostgreSQL 19 native REPACK</h1>\n<blockquote>\n<p><strong>Note:</strong> New in 1.1.0. Requires PostgreSQL 19 (preview). PostgreSQL 19 is\nnot yet a final release, so use this API for development and testing until it\nis. Not available in 1.0.0 or 1.1.0-rc.1.</p>\n</blockquote>\n<p>This page helps you reclaim disk space from a bloated table with PostgreSQL\n19’s native <code>REPACK</code> command, and monitor its progress from .NET. This is the\nPostgreSQL command, not the separate <code>pg_repack</code> extension.</p>\n<p>The <code>BlueTusk.Data.Maintenance</code> namespace (in the <code>BlueTusk.Data</code> package)\nsupports every documented PostgreSQL 19 form through <code>BlueTuskRepackRequest</code>,\nrejects invalid combinations before sending SQL, and reads live progress from\n<code>pg_stat_progress_repack</code>. On PostgreSQL 18 and earlier,\n<code>connection.SupportsRepack</code> is <code>false</code> and the API throws\n<code>NotSupportedException</code>.</p>\n<h2>Repack one table</h2>\n<p>Open a dedicated connection. A repack owns that physical session until the\nserver completes or the operation is cancelled.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.Maintenance;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var connection = await dataSource.OpenConnectionAsync();\n\nif (connection.SupportsRepack is not true)\n{\n    throw new InvalidOperationException(\"PostgreSQL 19 or later is required.\");\n}\n\nawait connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(\"events\", \"app\") with\n    {\n        Concurrently = true,\n        Analyze = true,\n        CommandTimeoutSeconds = 0,\n    },\n    stoppingToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.Maintenance;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">if</span> (connection.SupportsRepack <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">true</span>)\n{\n    <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;PostgreSQL 19 or later is required.&quot;</span>);\n}\n\n<span class=\"hljs-keyword\">await</span> connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(<span class=\"hljs-string\">&quot;events&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>) <span class=\"hljs-keyword\">with</span>\n    {\n        Concurrently = <span class=\"hljs-literal\">true</span>,\n        Analyze = <span class=\"hljs-literal\">true</span>,\n        CommandTimeoutSeconds = <span class=\"hljs-number\">0</span>,\n    },\n    stoppingToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>CommandTimeoutSeconds = 0</code> disables the client timeout, which is usually the\nright choice for scheduled maintenance. Cancellation still sends PostgreSQL’s\nnormal cancellation request and restores the connection to a usable protocol\nstate.</p>\n<h2>Choose the operation</h2>\n<table>\n<thead>\n<tr>\n<th>Goal</th>\n<th>Request</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Rewrite one table</td>\n<td><code>ForTable(&quot;events&quot;, &quot;app&quot;)</code></td>\n</tr>\n<tr>\n<td>Keep a supported table available</td>\n<td>Set <code>Concurrently = true</code></td>\n</tr>\n<tr>\n<td>Refresh all table statistics</td>\n<td>Set <code>Analyze = true</code></td>\n</tr>\n<tr>\n<td>Refresh selected column statistics</td>\n<td>Set <code>Analyze = true</code> and <code>AnalyzeColumns = [&quot;tenant_id&quot;]</code></td>\n</tr>\n<tr>\n<td>Physically order by the configured clustering index</td>\n<td>Set <code>UseIndex = true</code></td>\n</tr>\n<tr>\n<td>Choose and remember a clustering index</td>\n<td>Set <code>IndexName = &quot;events_created_at_idx&quot;</code></td>\n</tr>\n<tr>\n<td>Emit PostgreSQL information messages</td>\n<td>Set <code>Verbose = true</code></td>\n</tr>\n<tr>\n<td>Process all eligible relations in the database</td>\n<td><code>ForDatabase()</code></td>\n</tr>\n<tr>\n<td>Process all relations with a configured clustering index</td>\n<td><code>ForDatabase() with { UseIndex = true }</code></td>\n</tr>\n</tbody>\n</table>\n<p>Table, schema, index, and column names are quoted as PostgreSQL identifiers;\nthey are never concatenated as untrusted SQL fragments. BlueTusk sends\n<code>REPACK</code> over the simple protocol on a non-multiplexed connection because it is\nconnection-affine maintenance work.</p>\n<p>For a newly introduced PostgreSQL feature without a BlueTusk convenience API,\nuse a parameterized <code>BlueTuskCommand</code>. BlueTusk does not maintain an allow-list\nof SQL statements, so native PostgreSQL grammar remains available immediately.</p>\n<h2>Monitor progress</h2>\n<p>Poll from a second connection while the maintenance connection is busy:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var observer = await dataSource.OpenConnectionAsync();\n\nforeach (var operation in await observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        \"REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt\",\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent is { } percent ? percent / 100 : null,\n        operation.IndexRebuildCount);\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> observer = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> operation <span class=\"hljs-keyword\">in</span> <span class=\"hljs-keyword\">await</span> observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        <span class=\"hljs-string\">&quot;REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt&quot;</span>,\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent <span class=\"hljs-keyword\">is</span> { } percent ? percent / <span class=\"hljs-number\">100</span> : <span class=\"hljs-literal\">null</span>,\n        operation.IndexRebuildCount);\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The returned model includes the database and relation OIDs, command, phase,\nindex OID, tuple counters, heap-block counters, index rebuild count, and a\n<code>HeapScanPercent</code> from 0 to 100 when PostgreSQL reports a block total. A completed\noperation disappears from the view, so store any history your operations team\nneeds outside PostgreSQL.</p>\n<h2>Production checks</h2>\n<p>Before scheduling <code>REPACK</code>:</p>\n<ol>\n<li>Grant the execution role <code>MAINTAIN</code> on each target table.</li>\n<li>Budget free disk for a complete table and index copy. A sort can require up\nto roughly twice the table size plus its indexes.</li>\n<li>Use <code>CONCURRENTLY</code> only for a logged, non-partitioned user table with a\nprimary key or index-based replica identity.</li>\n<li>Reserve a <code>max_repack_replication_slots</code> slot and enough WAL capacity for a\nconcurrent run.</li>\n<li>Choose a quiet period. Concurrent mode shortens the final exclusive lock,\nbut it still needs one to swap relation files and catch-up work can extend it.</li>\n<li>Alert on a stalled phase, rapidly growing WAL or temporary storage, lock\nwaits, cancellation, and server errors.</li>\n<li>Verify table row counts and application health after completion.</li>\n</ol>\n<p>Database-wide and concurrent operations cannot run inside a transaction.\nPostgreSQL also rejects a partitioned-table repack inside a transaction. The\nBlueTusk request validator rejects transaction and option combinations it can\nprove invalid; the server makes the final check for each table.</p>\n<p>The command’s full behavior and restrictions are defined by the PostgreSQL 19\n<a href=\"https://www.postgresql.org/docs/19/sql-repack.html\" target=\"_blank\" rel=\"noreferrer\"><code>REPACK</code> documentation</a>,\nand the progress columns and phases are defined by\n<a href=\"https://www.postgresql.org/docs/19/progress-reporting.html#REPACK-PROGRESS-REPORTING\" target=\"_blank\" rel=\"noreferrer\"><code>pg_stat_progress_repack</code></a>.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "pipeline-mode",
-    "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
-    "keywords": [
-      "pipeline",
-      "protocol"
-    ],
-    "order": 110,
-    "listed": true,
-    "title": "PostgreSQL pipeline mode",
-    "sourcePath": "docs/pipeline-mode.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/pipeline-mode.md",
-    "headings": [
-      {
-        "id": "postgresql-pipeline-mode",
-        "text": "PostgreSQL pipeline mode",
-        "level": 1
-      }
-    ],
-    "wordCount": 294,
-    "readMinutes": 2,
-    "searchText": "PostgreSQL pipeline mode `BlueTusk.Client` supports PostgreSQL pipeline mode on PostgreSQL 14 and later. A pipeline sends multiple extended-query synchronization groups in one network flush, preserves result order, and avoids waiting for each group before sending the next one. This feature is independent of the .NET `System.IO.Pipelines` buffering library. BlueTusk implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport. A separate benchmark-backed evaluation retained the ArrayPool/Span/Memory transport; see [ADR 0005](architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md). Each `BlueTuskPipelineGroup` ends with an explicit protocol `Sync`. A server error is attached to the affected group's result after BlueTusk drains through that group's `ReadyForQuery`. PostgreSQL can then execute the next already-sent group: The synchronous `ExecutePipeline` method has the same ordered result and error contract. Query parameters use the same `BlueTuskExtendedQueryParameter` representation as other Client-layer extended-query APIs. Cancellation sends PostgreSQL `CancelRequest`, drains the active group and every already-sent group to their synchronization boundaries, and throws `OperationCanceledException` only after the session is safe to reuse. A connection that fails during a partial write or cannot recover to `ReadyForQuery` is closed instead of being reused. `BlueTuskSession.Capabilities` and `BlueTuskConnection.ServerCapabilities` expose the authenticated server version and detected features. ADO.NET physical sessions probe PostgreSQL 19's documented `information_schema.property_graphs` view before enabling `SupportsSqlPgq`; low-level normal SQL sessions can call `ProbeOptionalCapabilities` or its asynchronous counterpart explicitly. `SupportsOAuthBearer` becomes true only on a connection that actually completed native OAUTHBEARER negotiation. A version number alone is not treated as product support.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>PostgreSQL pipeline mode</h1>\n<p><code>BlueTusk.Client</code> supports PostgreSQL pipeline mode on PostgreSQL 14 and later. A pipeline sends multiple extended-query synchronization groups in one network flush, preserves result order, and avoids waiting for each group before sending the next one.</p>\n<p>This feature is independent of the .NET <code>System.IO.Pipelines</code> buffering library. BlueTusk implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport. A separate benchmark-backed evaluation retained the ArrayPool/Span/Memory transport; see <a href=\"/documentation/architecture/architecture-decisions-0005-postgresql-pipeline-mode-and-transport-pipelines\">ADR 0005</a>.</p>\n<p>Each <code>BlueTuskPipelineGroup</code> ends with an explicit protocol <code>Sync</code>. A server error is attached to the affected group’s result after BlueTusk drains through that group’s <code>ReadyForQuery</code>. PostgreSQL can then execute the next already-sent group:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var session = await BlueTuskSession.OpenAsync(options);\n\nvar pipeline = await session.ExecutePipelineAsync(\n[\n    new BlueTuskPipelineGroup(\n    [\n        new BlueTuskBatchQuery(\"INSERT INTO app.items(value) VALUES (1)\", []),\n        new BlueTuskBatchQuery(\"INSERT INTO app.items(value) VALUES (2)\", []),\n    ]),\n    new BlueTuskPipelineGroup(\n    [\n        new BlueTuskBatchQuery(\"SELECT count(*) FROM app.items\", []),\n    ]),\n]);\n\nforeach (var group in pipeline.Groups)\n{\n    if (group.Error is { } error)\n    {\n        Console.Error.WriteLine($\"{error.SqlState}: {error.Message}\");\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> session = <span class=\"hljs-keyword\">await</span> BlueTuskSession.OpenAsync(options);\n\n<span class=\"hljs-keyword\">var</span> pipeline = <span class=\"hljs-keyword\">await</span> session.ExecutePipelineAsync(\n[\n    <span class=\"hljs-keyword\">new</span> BlueTuskPipelineGroup(\n    [\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;INSERT INTO app.items(value) VALUES (1)&quot;</span>, []),\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;INSERT INTO app.items(value) VALUES (2)&quot;</span>, []),\n    ]),\n    <span class=\"hljs-keyword\">new</span> BlueTuskPipelineGroup(\n    [\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;SELECT count(*) FROM app.items&quot;</span>, []),\n    ]),\n]);\n\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">group</span> <span class=\"hljs-keyword\">in</span> pipeline.Groups)\n{\n    <span class=\"hljs-keyword\">if</span> (<span class=\"hljs-keyword\">group</span>.Error <span class=\"hljs-keyword\">is</span> { } error)\n    {\n        Console.Error.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{error.SqlState}</span>: <span class=\"hljs-subst\">{error.Message}</span>&quot;</span>);\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The synchronous <code>ExecutePipeline</code> method has the same ordered result and error contract. Query parameters use the same <code>BlueTuskExtendedQueryParameter</code> representation as other Client-layer extended-query APIs.</p>\n<p>Cancellation sends PostgreSQL <code>CancelRequest</code>, drains the active group and every already-sent group to their synchronization boundaries, and throws <code>OperationCanceledException</code> only after the session is safe to reuse. A connection that fails during a partial write or cannot recover to <code>ReadyForQuery</code> is closed instead of being reused.</p>\n<p><code>BlueTuskSession.Capabilities</code> and <code>BlueTuskConnection.ServerCapabilities</code> expose the authenticated server version and detected features. ADO.NET physical sessions probe PostgreSQL 19’s documented <code>information_schema.property_graphs</code> view before enabling <code>SupportsSqlPgq</code>; low-level normal SQL sessions can call <code>ProbeOptionalCapabilities</code> or its asynchronous counterpart explicitly. <code>SupportsOAuthBearer</code> becomes true only on a connection that actually completed native OAUTHBEARER negotiation. A version number alone is not treated as product support.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "replication",
-    "summary": "Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.",
-    "keywords": [
-      "logical",
-      "physical",
-      "wal",
-      "pgoutput"
-    ],
-    "order": 120,
-    "listed": true,
-    "title": "Start PostgreSQL replication",
-    "sourcePath": "docs/replication/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/README.md",
-    "headings": [
-      {
-        "id": "start-postgresql-replication",
-        "text": "Start PostgreSQL replication",
-        "level": 1
-      },
-      {
-        "id": "choose-the-right-layer",
-        "text": "Choose the right layer",
-        "level": 2
-      },
-      {
-        "id": "1-configure-postgresql",
-        "text": "1. Configure PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-open-a-dedicated-session",
-        "text": "2. Open a dedicated session",
-        "level": 2
-      },
-      {
-        "id": "3-read-pgoutput",
-        "text": "3. Read `pgoutput`",
-        "level": 2
-      },
-      {
-        "id": "run-the-complete-example",
-        "text": "Run the complete example",
-        "level": 2
-      },
-      {
-        "id": "operate-it-safely",
-        "text": "Operate it safely",
-        "level": 2
-      }
-    ],
-    "wordCount": 430,
-    "readMinutes": 2,
-    "searchText": "Start PostgreSQL replication Use `BlueTusk.Replication` when you need direct access to PostgreSQL's logical or physical replication protocol. If your goal is an application change feed, start with [Streams](../streams/README.md); it adds transaction assembly, spooling, checkpoints, leases, and safe acknowledgement. Choose the right layer Need Start with Decode raw `pgoutput` messages This replication guide Receive complete committed transactions [Streams](../streams/README.md) Copy those transactions to another system [Sync](../sync/README.md) Keep browser clients updated [Live](../live/README.md) Replication sessions are dedicated. They do not come from the normal ADO.NET pool. 1. Configure PostgreSQL Set `wal_level = logical`, then create a publication and a replication role with only the required rights: Create the logical slot through controlled provisioning or the application bootstrap process. Give every consumer its own slot; two independent consumers must not race over one checkpoint. Do not create a slot while migrations or other table creation run in the same database: PostgreSQL can create a slot that then fails on every attempt to decode writes to the new tables. See [creating a slot while the schema changes](../streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber) for the symptoms and the recovery. 2. Open a dedicated session 3. Read `pgoutput` Never acknowledge a payload merely because it was received. The safe point is the transaction-end LSN after the downstream effect and checkpoint are durable. Run the complete example Use TLS outside an isolated local environment. Operate it safely Alert on retained WAL and slot inactivity. Persist the source system identifier, database, slot, publication fingerprint, and last acknowledged transaction-end LSN together. Stop on a source-identity mismatch instead of silently continuing. Bound message size and reconnect delay. Drop unused slots deliberately; an abandoned slot can retain WAL indef",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Start PostgreSQL replication</h1>\n<p>Use <code>BlueTusk.Replication</code> when you need direct access to PostgreSQL’s logical\nor physical replication protocol. If your goal is an application change feed,\nstart with <a href=\"/documentation/real-time/streams\">Streams</a>; it adds transaction assembly,\nspooling, checkpoints, leases, and safe acknowledgement.</p>\n<h2>Choose the right layer</h2>\n<table>\n<thead>\n<tr>\n<th>Need</th>\n<th>Start with</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Decode raw <code>pgoutput</code> messages</td>\n<td>This replication guide</td>\n</tr>\n<tr>\n<td>Receive complete committed transactions</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n</tr>\n<tr>\n<td>Copy those transactions to another system</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n</tr>\n<tr>\n<td>Keep browser clients updated</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n</tr>\n</tbody>\n</table>\n<p>Replication sessions are dedicated. They do not come from the normal ADO.NET\npool.</p>\n<h2>1. Configure PostgreSQL</h2>\n<p>Set <code>wal_level = logical</code>, then create a publication and a replication role\nwith only the required rights:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "CREATE PUBLICATION app_changes FOR TABLE app.orders;\n",
-        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> PUBLICATION app_changes <span class=\"hljs-keyword\">FOR</span> <span class=\"hljs-keyword\">TABLE</span> app.orders;\n",
-        "language": "sql"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Create the logical slot through controlled provisioning or the application\nbootstrap process. Give every consumer its own slot; two independent consumers\nmust not race over one checkpoint. Do not create a slot while migrations or\nother table creation run in the same database: PostgreSQL can create a slot that\nthen fails on every attempt to decode writes to the new tables. See\n<a href=\"/documentation/real-time/streams-troubleshooting#a-new-slot-fails-with-could-not-map-filenumber\">creating a slot while the schema changes</a>\nfor the symptoms and the recovery.</p>\n<h2>2. Open a dedicated session</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.Replication;\nusing BlueTusk.Replication.PgOutput;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n\nvar server = await replication.IdentifySystemAsync(cancellationToken);\nConsole.WriteLine($\"System={server.SystemIdentifier} WAL={server.WalPosition}\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication.PgOutput;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n\n<span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(cancellationToken);\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;System=<span class=\"hljs-subst\">{server.SystemIdentifier}</span> WAL=<span class=\"hljs-subst\">{server.WalPosition}</span>&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>3. Read <code>pgoutput</code></h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var stream = replication.StartReplicationAsync(\n    slotName: \"orders_app\",\n    publicationName: \"app_changes\",\n    cancellationToken: cancellationToken);\n\nawait foreach (var envelope in stream.DecodePgOutputAsync(\n    cancellationToken: cancellationToken))\n{\n    await HandleMessageAsync(envelope.Message, cancellationToken);\n\n    if (envelope.TryGetTransactionEndPosition(out var applied))\n    {\n        // Send feedback only after the complete transaction and its checkpoint\n        // are durable in your system.\n        await replication.SendStandbyStatusUpdateAsync(\n            new BlueTuskStandbyStatus(applied, applied, applied),\n            cancellationToken);\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    slotName: <span class=\"hljs-string\">&quot;orders_app&quot;</span>,\n    publicationName: <span class=\"hljs-string\">&quot;app_changes&quot;</span>,\n    cancellationToken: cancellationToken);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> stream.DecodePgOutputAsync(\n    cancellationToken: cancellationToken))\n{\n    <span class=\"hljs-keyword\">await</span> HandleMessageAsync(envelope.Message, cancellationToken);\n\n    <span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n    {\n        <span class=\"hljs-comment\">// Send feedback only after the complete transaction and its checkpoint</span>\n        <span class=\"hljs-comment\">// are durable in your system.</span>\n        <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n            <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(applied, applied, applied),\n            cancellationToken);\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Never acknowledge a payload merely because it was received. The safe point is\nthe transaction-end LSN after the downstream effect and checkpoint are durable.</p>\n<h2>Run the complete example</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project samples/BlueTusk.Samples.Replication -- orders_app app_changes\n",
-        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Replication <span class=\"hljs-literal\">--</span> orders_app app_changes\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Use TLS outside an isolated local environment.</p>\n<h2>Operate it safely</h2>\n<ul>\n<li>Alert on retained WAL and slot inactivity.</li>\n<li>Persist the source system identifier, database, slot, publication fingerprint,\nand last acknowledged transaction-end LSN together.</li>\n<li>Stop on a source-identity mismatch instead of silently continuing.</li>\n<li>Bound message size and reconnect delay.</li>\n<li>Drop unused slots deliberately; an abandoned slot can retain WAL indefinitely.</li>\n</ul>\n<p>The <a href=\"/documentation/provider/replication-reference\">replication reference</a> covers slot discovery, physical\nreplication, feedback timing, restart LSNs, custom output plug-ins, reconnect,\nand resume behavior.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-compatibility",
-    "summary": "This page helps you check which standard ADO.NET features BlueTusk.Data supports before you port code to it, including code written for Npgsql. A feature marked Not supported throws an exception; BlueTusk never silently",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "compatibility"
-    ],
-    "order": 1009,
-    "title": "ADO.NET compatibility",
-    "sourcePath": "docs/ado-net/compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/compatibility.md",
-    "headings": [
-      {
-        "id": "ado-net-compatibility",
-        "text": "ADO.NET compatibility",
-        "level": 1
-      },
-      {
-        "id": "host-registration",
-        "text": "Host registration",
-        "level": 2
-      },
-      {
-        "id": "migration-from-npgsql",
-        "text": "Migration from Npgsql",
-        "level": 2
-      }
-    ],
-    "wordCount": 586,
-    "readMinutes": 3,
-    "searchText": "ADO.NET compatibility This page helps you check which standard ADO.NET features `BlueTusk.Data` supports before you port code to it, including code written for Npgsql. A feature marked **Not supported** throws an exception; BlueTusk never silently approximates it. Feature Status Details Text commands Supported `CommandType.Text`, named or positional parameters, sync/async execution and local transactions. Stored procedures and functions Supported through SQL text Use `CALL ...` for procedures and `SELECT ...` for functions. PostgreSQL `OUT` and `INOUT` values are read from returned result rows. `CommandType.StoredProcedure` Not supported Setting it throws `NotSupportedException`. Write `CALL` or `SELECT` SQL instead. Parameter directions `Input` supported `Output`, `InputOutput` and `ReturnValue` throw `NotSupportedException`. Use PostgreSQL result rows for output values. Local transactions Supported `BeginTransaction`, command enlistment, commit, rollback and async equivalents. Savepoints Supported through SQL Run `SAVEPOINT`, `ROLLBACK TO SAVEPOINT` and `RELEASE SAVEPOINT` as enlisted commands. `DbTransaction.Save`, `Release` and named `Rollback` throw `NotSupportedException`. `System.Transactions` ambient/distributed enlistment Not supported No promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. `CommandBehavior.Default` Supported All rows and result sets are buffered unless sequential access is selected. `SingleRow` Supported At most the first row is exposed. `SingleResult` Supported `NextResult` returns false after the first result set. `SequentialAccess` Supported Uses the incremental portal reader; combine with `SingleRow`, `SingleResult` or `CloseConnection` as needed. `CloseConnection` Supported Closing or disposing the reader closes its logical connection. `SchemaOnly` and `KeyInfo` Not supported Both throw `NotSupportedException`; they are never silently ignored. Reader schema Supported `GetColumnSchema`, `GetSchem",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>ADO.NET compatibility</h1>\n<p>This page helps you check which standard ADO.NET features <code>BlueTusk.Data</code>\nsupports before you port code to it, including code written for Npgsql. A\nfeature marked <strong>Not supported</strong> throws an exception; BlueTusk never silently\napproximates it.</p>\n<table>\n<thead>\n<tr>\n<th>Feature</th>\n<th>Status</th>\n<th>Details</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Text commands</td>\n<td>Supported</td>\n<td><code>CommandType.Text</code>, named or positional parameters, sync/async execution and local transactions.</td>\n</tr>\n<tr>\n<td>Stored procedures and functions</td>\n<td>Supported through SQL text</td>\n<td>Use <code>CALL ...</code> for procedures and <code>SELECT ...</code> for functions. PostgreSQL <code>OUT</code> and <code>INOUT</code> values are read from returned result rows.</td>\n</tr>\n<tr>\n<td><code>CommandType.StoredProcedure</code></td>\n<td>Not supported</td>\n<td>Setting it throws <code>NotSupportedException</code>. Write <code>CALL</code> or <code>SELECT</code> SQL instead.</td>\n</tr>\n<tr>\n<td>Parameter directions</td>\n<td><code>Input</code> supported</td>\n<td><code>Output</code>, <code>InputOutput</code> and <code>ReturnValue</code> throw <code>NotSupportedException</code>. Use PostgreSQL result rows for output values.</td>\n</tr>\n<tr>\n<td>Local transactions</td>\n<td>Supported</td>\n<td><code>BeginTransaction</code>, command enlistment, commit, rollback and async equivalents.</td>\n</tr>\n<tr>\n<td>Savepoints</td>\n<td>Supported through SQL</td>\n<td>Run <code>SAVEPOINT</code>, <code>ROLLBACK TO SAVEPOINT</code> and <code>RELEASE SAVEPOINT</code> as enlisted commands. <code>DbTransaction.Save</code>, <code>Release</code> and named <code>Rollback</code> throw <code>NotSupportedException</code>.</td>\n</tr>\n<tr>\n<td><code>System.Transactions</code> ambient/distributed enlistment</td>\n<td>Not supported</td>\n<td>No promotable, distributed or ambient enlistment. Keep work inside an explicit <code>DbTransaction</code>.</td>\n</tr>\n<tr>\n<td><code>CommandBehavior.Default</code></td>\n<td>Supported</td>\n<td>All rows and result sets are buffered unless sequential access is selected.</td>\n</tr>\n<tr>\n<td><code>SingleRow</code></td>\n<td>Supported</td>\n<td>At most the first row is exposed.</td>\n</tr>\n<tr>\n<td><code>SingleResult</code></td>\n<td>Supported</td>\n<td><code>NextResult</code> returns false after the first result set.</td>\n</tr>\n<tr>\n<td><code>SequentialAccess</code></td>\n<td>Supported</td>\n<td>Uses the incremental portal reader; combine with <code>SingleRow</code>, <code>SingleResult</code> or <code>CloseConnection</code> as needed.</td>\n</tr>\n<tr>\n<td><code>CloseConnection</code></td>\n<td>Supported</td>\n<td>Closing or disposing the reader closes its logical connection.</td>\n</tr>\n<tr>\n<td><code>SchemaOnly</code> and <code>KeyInfo</code></td>\n<td>Not supported</td>\n<td>Both throw <code>NotSupportedException</code>; they are never silently ignored.</td>\n</tr>\n<tr>\n<td>Reader schema</td>\n<td>Supported</td>\n<td><code>GetColumnSchema</code>, <code>GetSchemaTable</code> and async equivalents expose names, ordinals, CLR/provider types and available origin metadata.</td>\n</tr>\n<tr>\n<td>Connection schema</td>\n<td>Supported</td>\n<td><code>MetaDataCollections</code>, <code>DataSourceInformation</code>, <code>DataTypes</code>, <code>Restrictions</code>, <code>ReservedWords</code>, <code>Databases</code>, <code>Schemas</code>, <code>Tables</code> and <code>Columns</code>. Live catalogue collections require an open connection.</td>\n</tr>\n<tr>\n<td>Dapper</td>\n<td>Supported</td>\n<td>Parameter binding, command execution and mapping to your classes are tested against a real server.</td>\n</tr>\n<tr>\n<td>Dependency injection</td>\n<td>Supported</td>\n<td><code>BlueTusk.Data.DependencyInjection</code> registers one shared <code>BlueTuskDataSource</code> as both its concrete type and <code>DbDataSource</code>.</td>\n</tr>\n<tr>\n<td>Readiness health check</td>\n<td>Supported</td>\n<td>The DI integration registers a <code>bluetusk</code> check tagged <code>bluetusk</code> and <code>ready</code>; it opens a connection and executes <code>SELECT 1</code>.</td>\n</tr>\n<tr>\n<td>PostgreSQL 19 native <code>REPACK</code></td>\n<td>New in 1.1.0; preview</td>\n<td>Requires PostgreSQL 19, which is in preview. See <a href=\"/documentation/provider/repack\">Native REPACK</a>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Host registration</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "services.AddDataSource(\n    configuration.GetConnectionString(\"PostgreSQL\")!,\n    builder => builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: \"postgresql\");\n",
-        "highlighted": "services.AddDataSource(\n    configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!,\n    builder =&gt; builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: <span class=\"hljs-string\">&quot;postgresql&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Resolve <code>BlueTuskDataSource</code> for provider-specific features or <code>DbDataSource</code>\nfor provider-neutral application code. Keep the registered data source\nlong-lived so it owns and reuses the physical pool.</p>\n<h2>Migration from Npgsql</h2>\n<p>For provider-neutral code, change the data-source registration and retain\n<code>DbConnection</code>, <code>DbCommand</code>, <code>DbDataReader</code>, Dapper and explicit\n<code>DbTransaction</code> usage. Replace provider-specific parameter types with\n<code>BlueTuskParameter</code>, <code>DbType</code>, <code>PostgreSqlTypeOid</code> or\n<code>PostgreSqlTypeName</code>.</p>\n<p>Rewrite <code>CommandType.StoredProcedure</code> calls as explicit PostgreSQL SQL:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "command.CommandType = CommandType.Text;\ncommand.CommandText = \"CALL app.rotate_keys(@tenant_id)\";\n",
-        "highlighted": "command.CommandType = CommandType.Text;\ncommand.CommandText = <span class=\"hljs-string\">&quot;CALL app.rotate_keys(@tenant_id)&quot;</span>;\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Read procedure/function output from the returned row rather than output\nparameters. Replace <code>TransactionScope</code> with an explicit local transaction.\nIf your app needs ambient or distributed transactions, output parameters,\n<code>SchemaOnly</code> or <code>KeyInfo</code>, keep it on a provider that implements them.</p>\n<p>Also review connection strings when you migrate: BlueTusk has no keyword\naliases, ignores unknown keywords by default (Npgsql rejects them; see\n<a href=\"/documentation/provider/configuration#reject-unknown-keywords\">Reject unknown keywords</a>) and\ndefaults to <code>SSL Mode=VerifyFull</code>. See\n<a href=\"/documentation/provider/configuration#how-the-connection-string-is-parsed\">Configuration</a>.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-multiplexing-compatibility",
-    "summary": "This page helps you decide whether multiplexing suits your workload, and shows which commands it shares across connections and which it keeps on a dedicated session.",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "multiplexing",
-      "compatibility"
-    ],
-    "order": 1016,
-    "title": "Multiplexing compatibility",
-    "sourcePath": "docs/ado-net/multiplexing-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multiplexing-compatibility.md",
-    "headings": [
-      {
-        "id": "multiplexing-compatibility",
-        "text": "Multiplexing compatibility",
-        "level": 1
-      },
-      {
-        "id": "routing-matrix",
-        "text": "Routing matrix",
-        "level": 2
-      },
-      {
-        "id": "how-the-scheduler-behaves",
-        "text": "How the scheduler behaves",
-        "level": 2
-      },
-      {
-        "id": "pgbouncer",
-        "text": "PgBouncer",
-        "level": 2
-      }
-    ],
-    "wordCount": 739,
-    "readMinutes": 4,
-    "searchText": "Multiplexing compatibility This page helps you decide whether multiplexing suits your workload, and shows which commands it shares across connections and which it keeps on a dedicated session. Multiplexing is opt-in. It runs independent commands created directly from a `BlueTuskDataSource` over a small number of shared physical connections. It never moves session state, such as a transaction, between connections. You can also turn it on with `Multiplexing=true` in the connection string. Options are listed in [Configuration](configuration.md#multiplexing-options). Routing matrix \"Affine\" means the command runs on a dedicated session, as it would without multiplexing. Command Route Why Independent text and parameterised commands from the data source Shared A first-in, first-out queue writes up to `MaxPipelineCommands` commands per flush, each with its own PostgreSQL `Sync`. Commands on an explicit `BlueTuskConnection` Dedicated You own the session. `Require` throws before execution instead of falling back. Transactions and savepoints Affine Transaction state, failures, and savepoints belong to one backend. Explicitly prepared commands and SQL `PREPARE`/`EXECUTE`/`DEALLOCATE` Affine Prepared statement identity belongs to a backend session. Sequential readers and cursors Affine A portal remains live until the reader completes or is disposed. `Require` throws. COPY import/export Affine COPY changes the protocol state until completion, cancellation, or abort recovery. Large objects and `lo_*`/legacy large-object routines Affine Descriptors and their owning transaction belong to one connection. `LISTEN`/`UNLISTEN` and notification APIs Affine Listener registration and the notification pump own dedicated session state. `NOTIFY` is conservatively routed affine as well. Temporary objects and `pg_temp` Affine Temporary schemas and objects belong to one backend. Session advisory locks Affine Lock ownership is the backend process. Transaction-scoped advisory-lock routines are co",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Multiplexing compatibility</h1>\n<p>This page helps you decide whether multiplexing suits your workload, and shows\nwhich commands it shares across connections and which it keeps on a dedicated\nsession.</p>\n<p>Multiplexing is opt-in. It runs independent commands created directly from a\n<code>BlueTuskDataSource</code> over a small number of shared physical connections. It\nnever moves session state, such as a transaction, between connections.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing()\n    .Build();\n\n// Shared: an independent statement from the data source.\nawait using var count = dataSource.CreateCommand(\"SELECT count(*) FROM app.orders\");\nvar orders = await count.ExecuteScalarAsync<long>();\n\n// Fail instead of falling back to a dedicated session.\nawait using var strict = dataSource.CreateCommand(\"SELECT now()\");\nstrict.MultiplexingMode = BlueTuskMultiplexingMode.Require;\nvar now = await strict.ExecuteScalarAsync<DateTimeOffset>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .EnableMultiplexing()\n    .Build();\n\n<span class=\"hljs-comment\">// Shared: an independent statement from the data source.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> count = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT count(*) FROM app.orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> orders = <span class=\"hljs-keyword\">await</span> count.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">long</span>&gt;();\n\n<span class=\"hljs-comment\">// Fail instead of falling back to a dedicated session.</span>\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> strict = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT now()&quot;</span>);\nstrict.MultiplexingMode = BlueTuskMultiplexingMode.Require;\n<span class=\"hljs-keyword\">var</span> now = <span class=\"hljs-keyword\">await</span> strict.ExecuteScalarAsync&lt;DateTimeOffset&gt;();\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>You can also turn it on with <code>Multiplexing=true</code> in the connection string.\nOptions are listed in <a href=\"/documentation/provider/configuration#multiplexing-options\">Configuration</a>.</p>\n<h2>Routing matrix</h2>\n<p>“Affine” means the command runs on a dedicated session, as it would without\nmultiplexing.</p>\n<table>\n<thead>\n<tr>\n<th>Command</th>\n<th>Route</th>\n<th>Why</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Independent text and parameterised commands from the data source</td>\n<td>Shared</td>\n<td>A first-in, first-out queue writes up to <code>MaxPipelineCommands</code> commands per flush, each with its own PostgreSQL <code>Sync</code>.</td>\n</tr>\n<tr>\n<td>Commands on an explicit <code>BlueTuskConnection</code></td>\n<td>Dedicated</td>\n<td>You own the session. <code>Require</code> throws before execution instead of falling back.</td>\n</tr>\n<tr>\n<td>Transactions and savepoints</td>\n<td>Affine</td>\n<td>Transaction state, failures, and savepoints belong to one backend.</td>\n</tr>\n<tr>\n<td>Explicitly prepared commands and SQL <code>PREPARE</code>/<code>EXECUTE</code>/<code>DEALLOCATE</code></td>\n<td>Affine</td>\n<td>Prepared statement identity belongs to a backend session.</td>\n</tr>\n<tr>\n<td>Sequential readers and cursors</td>\n<td>Affine</td>\n<td>A portal remains live until the reader completes or is disposed. <code>Require</code> throws.</td>\n</tr>\n<tr>\n<td>COPY import/export</td>\n<td>Affine</td>\n<td>COPY changes the protocol state until completion, cancellation, or abort recovery.</td>\n</tr>\n<tr>\n<td>Large objects and <code>lo_*</code>/legacy large-object routines</td>\n<td>Affine</td>\n<td>Descriptors and their owning transaction belong to one connection.</td>\n</tr>\n<tr>\n<td><code>LISTEN</code>/<code>UNLISTEN</code> and notification APIs</td>\n<td>Affine</td>\n<td>Listener registration and the notification pump own dedicated session state. <code>NOTIFY</code> is conservatively routed affine as well.</td>\n</tr>\n<tr>\n<td>Temporary objects and <code>pg_temp</code></td>\n<td>Affine</td>\n<td>Temporary schemas and objects belong to one backend.</td>\n</tr>\n<tr>\n<td>Session advisory locks</td>\n<td>Affine</td>\n<td>Lock ownership is the backend process. Transaction-scoped advisory-lock routines are conservatively affine too.</td>\n</tr>\n<tr>\n<td><code>SET</code>, <code>RESET</code>, <code>SHOW</code>, <code>set_config</code>, <code>current_setting</code>, <code>currval</code>, and <code>lastval</code></td>\n<td>Affine</td>\n<td>These mutate or observe session-local settings/sequence state.</td>\n</tr>\n<tr>\n<td><code>CALL</code>, <code>DO</code>, and unknown stateful user routines</td>\n<td>Affine</td>\n<td><code>CALL</code> and <code>DO</code> always use a dedicated session. SQL text cannot prove a function has no side effects on the session; set <code>MultiplexingMode.Disable</code> for a stateful routine.</td>\n</tr>\n<tr>\n<td>Replication</td>\n<td>Dedicated</td>\n<td>Replication owns an unpooled physical/logical <code>COPY BOTH</code> session and never enters the statement scheduler.</td>\n</tr>\n</tbody>\n</table>\n<p><code>MultiplexingMode.Auto</code> uses this routing table,\n<code>MultiplexingMode.Require</code> rejects every fallback, and\n<code>MultiplexingMode.Disable</code> deliberately obtains an affine lease. The classifier\nskips quoted strings, quoted identifiers, dollar-quoted bodies, line comments,\nand nested block comments before inspecting tokens. It remains conservative;\nit is not a SQL authorisation boundary.</p>\n<h2>How the scheduler behaves</h2>\n<ul>\n<li>The queue size, pipeline size, worker count, commands per lease and shutdown\ntime each have their own limit (see\n<a href=\"/documentation/provider/configuration#multiplexing-options\">Configuration</a>).</li>\n<li>Accepted commands are serviced FIFO per lane. Multiple lanes increase\nconcurrency without allowing one lane to retain a pool lease beyond\n<code>MaxCommandsPerLease</code>.</li>\n<li>Cancellation while waiting for channel admission does not enter the queue.\nCancellation after admission completes that request and preserves the lane.</li>\n<li>Pool exhaustion remains cancellable. For pools of two or more sessions, the\nautomatic worker count consumes at most half the configured pool; a\none-session pool cannot reserve simultaneous affine capacity.</li>\n<li>Each command has its own protocol synchronization group. A server error,\ncaller cancellation, or command timeout is drained through <code>ReadyForQuery</code>\nbefore the next group completes.</li>\n<li>Disposal stops admission, drains accepted work up to <code>ShutdownTimeout</code>, then\naborts stuck physical transports and completes every remaining request.</li>\n<li>A touched lease is rolled back if needed and runs <code>DISCARD ALL</code> before reuse,\nclearing settings, temporary objects, listeners, advisory locks, and\nprepared statements.</li>\n</ul>\n<p>The process-wide <code>BlueTusk.Diagnostics</code> meter exposes pending/executing\nup/down counters, admission and outcome counters, queue-wait duration, pipeline\nsize, and forced-shutdown count. <code>GetMultiplexingStatistics()</code> remains the\nper-data-source point-in-time view.</p>\n<h2>PgBouncer</h2>\n<p>Multiplexing is tested through PgBouncer 1.24 in both session and transaction\nmodes. In transaction mode, explicit preparation needs PgBouncer’s\nprotocol-level prepared-statement support, and BlueTusk does not emulate\nsession state on top of transaction pooling. See\n<a href=\"/documentation/provider/troubleshooting#pgbouncer-and-prepared-statements\">Troubleshooting</a>.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-nativeaot",
-    "summary": "This page helps you publish a trimmed or NativeAOT application that uses BlueTusk.Data, and lists the few features that need a JIT runtime.",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "nativeaot"
-    ],
-    "order": 1017,
-    "title": "NativeAOT and trimming",
-    "sourcePath": "docs/ado-net/nativeaot.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/nativeaot.md",
-    "headings": [
-      {
-        "id": "nativeaot-and-trimming",
-        "text": "NativeAOT and trimming",
-        "level": 1
-      },
-      {
-        "id": "what-is-supported",
-        "text": "What is supported",
-        "level": 2
-      },
-      {
-        "id": "set-up-your-project",
-        "text": "Set up your project",
-        "level": 2
-      },
-      {
-        "id": "composite-and-enum-mappings",
-        "text": "Composite and enum mappings",
-        "level": 2
-      },
-      {
-        "id": "array-boundary",
-        "text": "Array boundary",
-        "level": 2
-      },
-      {
-        "id": "range-boundary",
-        "text": "Range boundary",
-        "level": 2
-      },
-      {
-        "id": "other-bluetusk-packages",
-        "text": "Other BlueTusk packages",
-        "level": 2
-      }
-    ],
-    "wordCount": 566,
-    "readMinutes": 3,
-    "searchText": "NativeAOT and trimming This page helps you publish a trimmed or NativeAOT application that uses `BlueTusk.Data`, and lists the few features that need a JIT runtime. What is supported The provider core supports full trimming and NativeAOT. That covers `BlueTusk.Data` and the packages it depends on: `BlueTusk.Client`, `BlueTusk.Protocol`, `BlueTusk.Transport`, `BlueTusk.Security`, `BlueTusk.TypeSystem`, `BlueTusk.Diagnostics` and `BlueTusk.Extensions.Abstractions`. Connection strings, SCRAM authentication, data sources, commands, built-in types and one-dimensional arrays all work. Every build of the provider is published and run as a trimmed app and as a NativeAOT app on Windows x64 and Linux x64. Those smoke apps do not contact a server, so test your own app against PostgreSQL after publishing. Set up your project Turn on NativeAOT and add the composite source generator: `PublishAot` also turns on the trimming and AOT analyzers at build time, so unsupported patterns show up as build warnings. Composite and enum mappings Prefer the `BlueTusk.SourceGeneration` composite generator in NativeAOT applications. It produces direct member access and avoids reflection during normal encoding and decoding: The generator adds a static `RegisterCodec` method to every `partial` type marked with `[BlueTuskComposite]`. Members match composite fields by snake_case name (`HouseNumber` matches `house_number`). `MapComposite<T>` remains available for statically known public constructors, properties, and fields. Its generic annotations preserve those members during trimming. Source generation is still preferred because it gives compile-time mapping diagnostics and removes reflection from the hot path. `MapEnum<TEnum>` preserves the enum fields needed by its label mapping. Dynamically discovering a CLR type by name and then constructing a closed generic mapping is not supported in NativeAOT; register the concrete type directly in application code. Array boundary NativeAOT supports one-dime",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>NativeAOT and trimming</h1>\n<p>This page helps you publish a trimmed or NativeAOT application that uses\n<code>BlueTusk.Data</code>, and lists the few features that need a JIT runtime.</p>\n<h2>What is supported</h2>\n<p>The provider core supports full trimming and NativeAOT. That covers\n<code>BlueTusk.Data</code> and the packages it depends on: <code>BlueTusk.Client</code>,\n<code>BlueTusk.Protocol</code>, <code>BlueTusk.Transport</code>, <code>BlueTusk.Security</code>,\n<code>BlueTusk.TypeSystem</code>, <code>BlueTusk.Diagnostics</code> and\n<code>BlueTusk.Extensions.Abstractions</code>. Connection strings, SCRAM authentication,\ndata sources, commands, built-in types and one-dimensional arrays all work.</p>\n<p>Every build of the provider is published and run as a trimmed app and as a\nNativeAOT app on Windows x64 and Linux x64. Those smoke apps do not contact a\nserver, so test your own app against PostgreSQL after publishing.</p>\n<h2>Set up your project</h2>\n<p>Turn on NativeAOT and add the composite source generator:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "<PropertyGroup>\n  <PublishAot>true</PublishAot>\n</PropertyGroup>\n",
-        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PropertyGroup</span>&gt;</span>\n  <span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PublishAot</span>&gt;</span>true<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">PublishAot</span>&gt;</span>\n<span class=\"hljs-tag\">&lt;/<span class=\"hljs-name\">PropertyGroup</span>&gt;</span>\n",
-        "language": "xml"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet add package BlueTusk.Data\ndotnet add package BlueTusk.SourceGeneration\n",
-        "highlighted": "dotnet add package BlueTusk.Data\ndotnet add package BlueTusk.SourceGeneration\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>PublishAot</code> also turns on the trimming and AOT analyzers at build time, so\nunsupported patterns show up as build warnings.</p>\n<h2>Composite and enum mappings</h2>\n<p>Prefer the <code>BlueTusk.SourceGeneration</code> composite generator in NativeAOT\napplications. It produces direct member access and avoids reflection during\nnormal encoding and decoding:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "using BlueTusk.Data;\nusing BlueTusk.TypeSystem;\n\nvar builder = new BlueTuskDataSourceBuilder(connectionString);\nAddress.RegisterCodec(builder.Types);\nawait using var dataSource = builder.Build();\n\n[BlueTuskComposite(\"app\", \"address\")]\ninternal sealed partial record Address(int HouseNumber, string Street);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.TypeSystem;\n\n<span class=\"hljs-keyword\">var</span> builder = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString);\nAddress.RegisterCodec(builder.Types);\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = builder.Build();\n\n[<span class=\"hljs-meta\">BlueTuskComposite(<span class=\"hljs-string\">&quot;app&quot;</span>, <span class=\"hljs-string\">&quot;address&quot;</span>)</span>]\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">internal</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">partial</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">Address</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">int</span> HouseNumber, <span class=\"hljs-built_in\">string</span> Street</span>)</span>;\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The generator adds a static <code>RegisterCodec</code> method to every <code>partial</code> type\nmarked with <code>[BlueTuskComposite]</code>. Members match composite fields by snake_case\nname (<code>HouseNumber</code> matches <code>house_number</code>).</p>\n<p><code>MapComposite&lt;T&gt;</code> remains available for statically known public constructors,\nproperties, and fields. Its generic annotations preserve those members during\ntrimming. Source generation is still preferred because it gives compile-time\nmapping diagnostics and removes reflection from the hot path.</p>\n<p><code>MapEnum&lt;TEnum&gt;</code> preserves the enum fields needed by its label mapping.\nDynamically discovering a CLR type by name and then constructing a closed\ngeneric mapping is not supported in NativeAOT; register the concrete type\ndirectly in application code.</p>\n<h2>Array boundary</h2>\n<p>NativeAOT supports one-dimensional PostgreSQL arrays with the standard lower\nbound of 1. The provider creates these arrays through statically rooted generic\ncode.</p>\n<p>Multidimensional arrays and arrays with non-standard lower bounds require\nruntime array construction and are therefore supported only by JIT deployments.\nA NativeAOT application receives an explicit <code>NotSupportedException</code> instead\nof a silent shape change. JIT deployments retain ranks one through six and\nnon-standard lower bounds.</p>\n<p>Custom element codecs used by an array must derive from <code>BlueTuskCodec&lt;T&gt;</code> in a\nNativeAOT application. A codec that implements <code>IBlueTuskCodec</code> directly does\nnot provide a statically rooted array factory and is rejected with an\nactionable <code>NotSupportedException</code>. The direct implementation remains\nsupported in JIT deployments.</p>\n<p><code>DbDataReader.GetFieldValue&lt;T&gt;</code> returns a codec-native array without conversion.\nOne-dimensional conversions to <code>decimal[]</code>, <code>TimeOnly[]</code>, and <code>TimeSpan[]</code> are\nalso statically supported. An arbitrary conversion to an array type selected at\nruntime requires a JIT deployment.</p>\n<h2>Range boundary</h2>\n<p>The built-in <code>int4</code>, <code>int8</code>, <code>numeric</code>, <code>date</code>, <code>timestamp</code>, and <code>timestamptz</code>\nranges, multiranges, and their arrays have statically rooted codecs. A custom\nrange or a range whose subtype is itself a range or multirange requires a\nclosed generic codec selected from the runtime catalogue. That case remains\navailable in a JIT deployment. NativeAOT installs an unsupported codec that\nfails explicitly when materialisation is attempted; applications can instead\nregister their own statically implemented codec.</p>\n<h2>Other BlueTusk packages</h2>\n<p>Only the provider core is NativeAOT-compatible. EF Core, extensions, Streams,\nSync, Live, the Control Plane and Continuous Graph are not. Check each package\nyour app uses before you publish with NativeAOT.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "protocol",
-    "summary": "PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte.",
-    "keywords": [
-      "docs",
-      "protocol",
-      "README"
-    ],
-    "order": 1146,
-    "title": "Protocol notes",
-    "sourcePath": "docs/protocol/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
-    "headings": [
-      {
-        "id": "protocol-notes",
-        "text": "Protocol notes",
-        "level": 1
-      },
-      {
-        "id": "incremental-messages-and-portals",
-        "text": "Incremental messages and portals",
-        "level": 2
-      }
-    ],
-    "wordCount": 203,
-    "readMinutes": 1,
-    "searchText": "Protocol notes PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte. `BlueTuskBackendMessageParser` deliberately accepts unknown identifiers and returns a zero-copy payload view. It rejects lengths below four and lengths above its configured maximum before waiting for or allocating the payload. Incremental messages and portals `BlueTuskProtocolConnection.ReadMessageHeader` and `ReadMessageHeaderAsync` separate frame validation from payload consumption. Callers can then drain the active payload in bounded chunks with `ReadMessagePayload` or `ReadMessagePayloadAsync`; another frame cannot be read until that payload is complete. This is the primitive used for large `DataRow` fields, so sequential consumers do not need to allocate a complete backend message. `BlueTuskSession.BeginPortal` and `BeginPreparedPortal` expose incremental portals. An unlimited portal uses PostgreSQL's unnamed portal and sends `Sync` in the initial write. A positive fetch size uses a generated named portal, sends `Execute` followed by `Flush`, resumes after `PortalSuspended`, and sends `Sync` only when the command completes or the portal is disposed. The asynchronous counterparts preserve the same protocol behavior. `BlueTuskPortalRow` enforces forward-only field access, can return a transport-backed field stream, and reuses one session-owned row/header buffer after the previous portal is disposed.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Protocol notes</h1>\n<p>PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte.</p>\n<p><code>BlueTuskBackendMessageParser</code> deliberately accepts unknown identifiers and returns a zero-copy payload view. It rejects lengths below four and lengths above its configured maximum before waiting for or allocating the payload.</p>\n<h2>Incremental messages and portals</h2>\n<p><code>BlueTuskProtocolConnection.ReadMessageHeader</code> and <code>ReadMessageHeaderAsync</code> separate frame validation from payload consumption. Callers can then drain the active payload in bounded chunks with <code>ReadMessagePayload</code> or <code>ReadMessagePayloadAsync</code>; another frame cannot be read until that payload is complete. This is the primitive used for large <code>DataRow</code> fields, so sequential consumers do not need to allocate a complete backend message.</p>\n<p><code>BlueTuskSession.BeginPortal</code> and <code>BeginPreparedPortal</code> expose incremental portals. An unlimited\nportal uses PostgreSQL’s unnamed portal and sends <code>Sync</code> in the initial write. A positive fetch\nsize uses a generated named portal, sends <code>Execute</code> followed by <code>Flush</code>, resumes after\n<code>PortalSuspended</code>, and sends <code>Sync</code> only when the command completes or the portal is disposed.\nThe asynchronous counterparts preserve the same protocol behavior. <code>BlueTuskPortalRow</code>\nenforces forward-only field access, can return a transport-backed field stream, and reuses one\nsession-owned row/header buffer after the previous portal is disposed.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "protocol-capture-format",
-    "summary": "BlueTusk protocol captures use the .btpc extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement.",
-    "keywords": [
-      "docs",
-      "protocol",
-      "capture",
-      "format"
-    ],
-    "order": 1147,
-    "title": "Protocol capture format",
-    "sourcePath": "docs/protocol/capture-format.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
-    "headings": [
-      {
-        "id": "protocol-capture-format",
-        "text": "Protocol capture format",
-        "level": 1
-      },
-      {
-        "id": "file-header",
-        "text": "File header",
-        "level": 2
-      },
-      {
-        "id": "record",
-        "text": "Record",
-        "level": 2
-      }
-    ],
-    "wordCount": 260,
-    "readMinutes": 2,
-    "searchText": "Protocol capture format BlueTusk protocol captures use the `.btpc` extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement. File header Offset Size Value 0 8 ASCII magic `BTPCAP\\r\\n` 8 2 Format version (`1`) 10 2 File-header length (`24`) 12 4 File attributes (zero in version 1) 16 8 Creation time as Unix milliseconds Record Each file-header is followed by zero or more records. Offset Size Value 0 1 Direction: frontend (`0`) or backend (`1`) 1 1 Attributes: redacted (`1`) and encrypted (`2`) 2 2 Record-header length (`16`) 4 8 Microseconds elapsed since capture start 12 4 Payload length 16 variable Captured payload bytes Readers reject unknown versions, unsupported attributes, invalid directions, truncated data, negative lengths, and payloads beyond a configurable limit before allocating the payload buffer. The default limit is 64 MiB. Capture producers must mark or remove authentication secrets, tokens, password messages, and other sensitive payloads. The inspector does not display payload bytes by default and never displays a record marked redacted.",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Protocol capture format</h1>\n<p>BlueTusk protocol captures use the <code>.btpc</code> extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement.</p>\n<h2>File header</h2>\n<table>\n<thead>\n<tr>\n<th class=\"align-right\">Offset</th>\n<th class=\"align-right\">Size</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td class=\"align-right\">0</td>\n<td class=\"align-right\">8</td>\n<td>ASCII magic <code>BTPCAP\\r\\n</code></td>\n</tr>\n<tr>\n<td class=\"align-right\">8</td>\n<td class=\"align-right\">2</td>\n<td>Format version (<code>1</code>)</td>\n</tr>\n<tr>\n<td class=\"align-right\">10</td>\n<td class=\"align-right\">2</td>\n<td>File-header length (<code>24</code>)</td>\n</tr>\n<tr>\n<td class=\"align-right\">12</td>\n<td class=\"align-right\">4</td>\n<td>File attributes (zero in version 1)</td>\n</tr>\n<tr>\n<td class=\"align-right\">16</td>\n<td class=\"align-right\">8</td>\n<td>Creation time as Unix milliseconds</td>\n</tr>\n</tbody>\n</table>\n<h2>Record</h2>\n<p>Each file-header is followed by zero or more records.</p>\n<table>\n<thead>\n<tr>\n<th class=\"align-right\">Offset</th>\n<th class=\"align-right\">Size</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td class=\"align-right\">0</td>\n<td class=\"align-right\">1</td>\n<td>Direction: frontend (<code>0</code>) or backend (<code>1</code>)</td>\n</tr>\n<tr>\n<td class=\"align-right\">1</td>\n<td class=\"align-right\">1</td>\n<td>Attributes: redacted (<code>1</code>) and encrypted (<code>2</code>)</td>\n</tr>\n<tr>\n<td class=\"align-right\">2</td>\n<td class=\"align-right\">2</td>\n<td>Record-header length (<code>16</code>)</td>\n</tr>\n<tr>\n<td class=\"align-right\">4</td>\n<td class=\"align-right\">8</td>\n<td>Microseconds elapsed since capture start</td>\n</tr>\n<tr>\n<td class=\"align-right\">12</td>\n<td class=\"align-right\">4</td>\n<td>Payload length</td>\n</tr>\n<tr>\n<td class=\"align-right\">16</td>\n<td class=\"align-right\">variable</td>\n<td>Captured payload bytes</td>\n</tr>\n</tbody>\n</table>\n<p>Readers reject unknown versions, unsupported attributes, invalid directions, truncated data, negative lengths, and payloads beyond a configurable limit before allocating the payload buffer. The default limit is 64 MiB.</p>\n<p>Capture producers must mark or remove authentication secrets, tokens, password messages, and other sensitive payloads. The inspector does not display payload bytes by default and never displays a record marked redacted.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet run --project tooling/BlueTusk.ProtocolInspector -- capture.btpc\ndotnet run --project tooling/BlueTusk.ProtocolInspector -- capture.btpc --hex\n",
-        "highlighted": "dotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.ProtocolInspector <span class=\"hljs-literal\">--</span> capture.btpc\ndotnet run <span class=\"hljs-literal\">--project</span> tooling/BlueTusk.ProtocolInspector <span class=\"hljs-literal\">--</span> capture.btpc <span class=\"hljs-literal\">--hex</span>\n",
-        "language": "powershell"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "replication-reference",
-    "summary": "BlueTusk.Replication exposes PostgreSQL's physical and logical streaming replication protocol directly. It uses a dedicated replication session and COPY BOTH; it does not borrow an ADO.NET pooled connection.",
-    "keywords": [
-      "docs",
-      "replication",
-      "reference"
-    ],
-    "order": 1164,
-    "title": "Replication",
-    "sourcePath": "docs/replication/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
-    "headings": [
-      {
-        "id": "replication",
-        "text": "Replication",
-        "level": 1
-      },
-      {
-        "id": "server-setup",
-        "text": "Server setup",
-        "level": 2
-      },
-      {
-        "id": "logical-replication",
-        "text": "Logical replication",
-        "level": 2
-      },
-      {
-        "id": "pgoutput-decoding",
-        "text": "pgoutput decoding",
-        "level": 2
-      },
-      {
-        "id": "feedback-and-durability",
-        "text": "Feedback and durability",
-        "level": 2
-      },
-      {
-        "id": "physical-replication",
-        "text": "Physical replication",
-        "level": 2
-      },
-      {
-        "id": "discovery-and-custom-plugins",
-        "text": "Discovery and custom plugins",
-        "level": 2
-      },
-      {
-        "id": "reconnect-and-resume",
-        "text": "Reconnect and resume",
-        "level": 2
-      }
-    ],
-    "wordCount": 1517,
-    "readMinutes": 7,
-    "searchText": "Replication `BlueTusk.Replication` exposes PostgreSQL's physical and logical streaming replication protocol directly. It uses a dedicated replication session and `COPY BOTH`; it does not borrow an ADO.NET pooled connection. Build one long-lived data source for the application configuration, then derive a fresh dedicated-session option snapshot for replication: The data source remains the configuration root, but it does not own the replication connection. The replication object owns one unpooled physical session and must be disposed independently. Its lifetime may be much longer than an ADO.NET command or pooled checkout. Configured credentials, application name, timeout, TLS mode, and channel binding are copied into the snapshot; ADO.NET codecs and runtime catalogue state are intentionally irrelevant to raw replication payloads. The stream is pull-based and does not maintain a background prefetch queue. At most the current `CopyData` payload and decoded message are owned by the consumer path; PostgreSQL/socket flow control supplies backpressure until the consumer requests the next element. Process or hand off each payload promptly, and put an application-owned bounded queue in front of slower durable work only when that queue's capacity and failure semantics are deliberate. The `BlueTusk.Diagnostics` meter records WAL-sender clock lag and byte-position lag for XLogData and keepalive messages. These are receive-side observations, not claims that a downstream consumer has applied a transaction. See [Diagnostics and observability](../observability.md) for metric names and dimensions. For a multi-host data source, select a configured endpoint explicitly: BlueTusk does not silently fail a replication stream over to another host. The application must establish that the replacement server and slot are safe for its persisted resume position. BlueTusk supports PostgreSQL 15 through 19 and provides: physical and logical replication connections; system identification, settings",
-    "blocks": [
-      {
-        "kind": "html",
-        "html": "<h1>Replication</h1>\n<p><code>BlueTusk.Replication</code> exposes PostgreSQL’s physical and logical streaming\nreplication protocol directly. It uses a dedicated replication session and\n<code>COPY BOTH</code>; it does not borrow an ADO.NET pooled connection.</p>\n<p>Build one long-lived data source for the application configuration, then derive\na fresh dedicated-session option snapshot for replication:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The data source remains the configuration root, but it does not own the\nreplication connection. The replication object owns one unpooled physical\nsession and must be disposed independently. Its lifetime may be much longer\nthan an ADO.NET command or pooled checkout. Configured credentials, application\nname, timeout, TLS mode, and channel binding are copied into the snapshot;\nADO.NET codecs and runtime catalogue state are intentionally irrelevant to raw\nreplication payloads.</p>\n<p>The stream is pull-based and does not maintain a background prefetch queue.\nAt most the current <code>CopyData</code> payload and decoded message are owned by the\nconsumer path; PostgreSQL/socket flow control supplies backpressure until the\nconsumer requests the next element. Process or hand off each payload promptly,\nand put an application-owned bounded queue in front of slower durable work only\nwhen that queue’s capacity and failure semantics are deliberate.</p>\n<p>The <code>BlueTusk.Diagnostics</code> meter records WAL-sender clock lag and byte-position\nlag for XLogData and keepalive messages. These are receive-side observations,\nnot claims that a downstream consumer has applied a transaction. See\n<a href=\"/documentation/operations/observability\">Diagnostics and observability</a> for metric names and\ndimensions.</p>\n<p>For a multi-host data source, select a configured endpoint explicitly:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var endpoint = new BlueTuskHostEndpoint(\"primary.example.test\", 5432);\nvar options = dataSource.CreateDedicatedSessionOptions(endpoint);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> endpoint = <span class=\"hljs-keyword\">new</span> BlueTuskHostEndpoint(<span class=\"hljs-string\">&quot;primary.example.test&quot;</span>, <span class=\"hljs-number\">5432</span>);\n<span class=\"hljs-keyword\">var</span> options = dataSource.CreateDedicatedSessionOptions(endpoint);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>BlueTusk does not silently fail a replication stream over to another host.\nThe application must establish that the replacement server and slot are safe\nfor its persisted resume position.</p>\n<p>BlueTusk supports PostgreSQL 15 through 19 and provides:</p>\n<ul>\n<li>physical and logical replication connections;</li>\n<li>system identification, settings, replication-slot discovery, and slot\nlifecycle commands;</li>\n<li>publication and publication-table discovery;</li>\n<li>WAL data, primary keepalives, standby status updates, and hot-standby\nfeedback;</li>\n<li>transaction streaming and two-phase startup options;</li>\n<li>raw payloads for any logical decoding output plugin; and</li>\n<li>complete <code>pgoutput</code> decoding in <code>BlueTusk.Replication.PgOutput</code>.</li>\n</ul>\n<p>The replication subsystem has passed its production-readiness gate: the live\nversion matrix, compatibility baselines, durability and feedback checks,\nfailure-recovery cases, allocation/backpressure benchmarks, cancellation stress,\nand scheduled endurance are all executable. The packages are published at\nstable 1.0.0. Later releases still require the exact immutable candidate and\nprotected release evidence.</p>\n<h2>Server setup</h2>\n<p>The server must admit a role with the <code>REPLICATION</code> attribute in <code>pg_hba.conf</code>.\nLogical replication also requires <code>wal_level = logical</code>; replication capacity\nis controlled by <code>max_wal_senders</code> and <code>max_replication_slots</code>.</p>\n<p>Use a dedicated least-privilege role in production. Keep credentials out of\nlogs and source control. BlueTusk verifies the server certificate and hostname\nby default; local environments without TLS must explicitly select\n<code>SSL Mode=Disable</code>.</p>\n<h2>Logical replication</h2>\n<p>Create the publication and slot once through deployment tooling or through the\nconnection:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var replication =\n    await BlueTuskLogicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n\nvar slot = await replication.CreateReplicationSlotAsync(\n    slotName: \"app_slot\",\n    outputPlugin: \"pgoutput\");\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n    <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n\n<span class=\"hljs-keyword\">var</span> slot = <span class=\"hljs-keyword\">await</span> replication.CreateReplicationSlotAsync(\n    slotName: <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n    outputPlugin: <span class=\"hljs-string\">&quot;pgoutput&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The convenience overload exactly configures pgoutput protocol version 1 for\none publication:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await foreach (var message in replication.StartReplicationAsync(\n    slotName: \"app_slot\",\n    publicationName: \"app_publication\",\n    cancellationToken))\n{\n    if (message is BlueTuskXLogData data)\n    {\n        // data.Data contains one output-plugin message.\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> message <span class=\"hljs-keyword\">in</span> replication.StartReplicationAsync(\n    slotName: <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n    publicationName: <span class=\"hljs-string\">&quot;app_publication&quot;</span>,\n    cancellationToken))\n{\n    <span class=\"hljs-keyword\">if</span> (message <span class=\"hljs-keyword\">is</span> BlueTuskXLogData data)\n    {\n        <span class=\"hljs-comment\">// data.Data contains one output-plugin message.</span>\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Use typed startup options for binary tuples, logical messages, large\nin-progress transactions, multiple publications, two-phase transactions, or\norigin filtering:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var stream = replication.StartReplicationAsync(\n    new BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = \"app_slot\",\n        PublicationNames = [\"app_publication\", \"audit_publication\"],\n        ProtocolVersion = 3,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = true,\n        Messages = true,\n    },\n    cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n        PublicationNames = [<span class=\"hljs-string\">&quot;app_publication&quot;</span>, <span class=\"hljs-string\">&quot;audit_publication&quot;</span>],\n        ProtocolVersion = <span class=\"hljs-number\">3</span>,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = <span class=\"hljs-literal\">true</span>,\n        Messages = <span class=\"hljs-literal\">true</span>,\n    },\n    cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The selected protocol features must be supported by the server. Protocol\nversion 2 adds streamed transactions, version 3 adds two-phase messages, and\nversion 4 adds parallel-stream abort metadata.</p>\n<h2>pgoutput decoding</h2>\n<p>Reference <code>BlueTusk.Replication.PgOutput</code> and apply the decoder extension:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var decoderOptions = new BlueTuskPgOutputDecoderOptions\n{\n    ProtocolVersion = 3,\n    StreamingMode = BlueTuskPgOutputStreamingMode.On,\n    TwoPhase = true,\n};\n\nawait foreach (var envelope in stream.DecodePgOutputAsync(\n    decoderOptions,\n    cancellationToken))\n{\n    switch (envelope.Message)\n    {\n        case BlueTuskPgOutputRelation relation:\n            // Cache relation.Columns by relation.RelationId.\n            break;\n        case BlueTuskPgOutputInsert insert:\n            // Tuple values retain null, unchanged-TOAST, text, or binary form.\n            break;\n        case BlueTuskPgOutputStreamStart streamStart:\n            // A segment of a large in-progress transaction has started.\n            break;\n        case BlueTuskPgOutputPrepare prepare:\n            // A two-phase transaction reached PREPARE TRANSACTION.\n            break;\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> decoderOptions = <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n{\n    ProtocolVersion = <span class=\"hljs-number\">3</span>,\n    StreamingMode = BlueTuskPgOutputStreamingMode.On,\n    TwoPhase = <span class=\"hljs-literal\">true</span>,\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> stream.DecodePgOutputAsync(\n    decoderOptions,\n    cancellationToken))\n{\n    <span class=\"hljs-keyword\">switch</span> (envelope.Message)\n    {\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputRelation relation:\n            <span class=\"hljs-comment\">// Cache relation.Columns by relation.RelationId.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputInsert insert:\n            <span class=\"hljs-comment\">// Tuple values retain null, unchanged-TOAST, text, or binary form.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputStreamStart streamStart:\n            <span class=\"hljs-comment\">// A segment of a large in-progress transaction has started.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputPrepare prepare:\n            <span class=\"hljs-comment\">// A two-phase transaction reached PREPARE TRANSACTION.</span>\n            <span class=\"hljs-keyword\">break</span>;\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>BlueTuskPgOutputEnvelope</code> retains the enclosing <code>BlueTuskXLogData</code>, including\nits WAL start, end, server end, and server clock. The decoder validates message\nlengths, flags, tuple markers, protocol-version capabilities, and stream\nsegment state.</p>\n<h2>Feedback and durability</h2>\n<p>BlueTusk automatically answers primary keepalives that request an immediate\nreply. Applications control acknowledged positions. For logical <code>pgoutput</code>,\ncheckpoint the transaction-end LSN from a terminal message, not\n<code>BlueTuskXLogData.WalEnd</code>: logical payload byte length is not a WAL byte count.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await ApplyAndCommitAsync(envelope.Message, cancellationToken);\n\nif (envelope.TryGetTransactionEndPosition(out var applied))\n{\n    await checkpoints.StoreAppliedPositionAsync(applied, cancellationToken);\n    await replication.SendStandbyStatusUpdateAsync(\n        new BlueTuskStandbyStatus(\n            Written: applied,\n            Flushed: applied,\n            Applied: applied),\n        cancellationToken);\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> ApplyAndCommitAsync(envelope.Message, cancellationToken);\n\n<span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n{\n    <span class=\"hljs-keyword\">await</span> checkpoints.StoreAppliedPositionAsync(applied, cancellationToken);\n    <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n        <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(\n            Written: applied,\n            Flushed: applied,\n            Applied: applied),\n        cancellationToken);\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p><code>TryGetTransactionEndPosition</code> recognizes commit, streamed commit, prepared,\ncommit-prepared, rollback-prepared, and streamed-prepare terminal messages.\nPersist a prepare position only when the consumer also durably retains the\nprepared transaction’s state.</p>\n<p>For physical replication, payload bytes correspond to WAL bytes, so\n<code>BlueTuskXLogData.WalEnd</code> is the receiver position:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var applied = wal.WalEnd;\nawait replication.SendStandbyStatusUpdateAsync(\n    new BlueTuskStandbyStatus(\n        Written: applied,\n        Flushed: applied,\n        Applied: applied),\n    cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> applied = wal.WalEnd;\n<span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(\n        Written: applied,\n        Flushed: applied,\n        Applied: applied),\n    cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Advance <code>Flushed</code> or <code>Applied</code> only after the corresponding data is durable.\nPostgreSQL can reclaim WAL based on slot progress; acknowledging data that can\nstill be lost breaks recovery guarantees. BlueTusk rejects feedback where\n<code>Applied &gt; Flushed &gt; Written</code> or where any position moves backwards, and it\nupdates its local status only after the wire write succeeds. Concurrent manual\nupdates and automatic keepalive replies are serialized. Physical standbys can\nalso call <code>SendHotStandbyFeedbackAsync</code> with their <code>xmin</code> horizons.</p>\n<h2>Physical replication</h2>\n<p>Identify the system and begin at a retained WAL position:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var replication =\n    await BlueTuskPhysicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\nvar identity = await replication.IdentifySystemAsync(cancellationToken);\n\nawait foreach (var message in replication.StartReplicationAsync(\n    identity.WalPosition,\n    cancellationToken: cancellationToken))\n{\n    switch (message)\n    {\n        case BlueTuskXLogData wal:\n            await PersistWalAsync(wal.Data, cancellationToken);\n            await replication.SendStandbyStatusUpdateAsync(\n                new BlueTuskStandbyStatus(wal.WalEnd, wal.WalEnd, wal.WalEnd),\n                cancellationToken);\n            break;\n        case BlueTuskPrimaryKeepalive keepalive:\n            Console.WriteLine($\"Primary WAL end: {keepalive.ServerWalEnd}\");\n            break;\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n    <span class=\"hljs-keyword\">await</span> BlueTuskPhysicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n<span class=\"hljs-keyword\">var</span> identity = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(cancellationToken);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> message <span class=\"hljs-keyword\">in</span> replication.StartReplicationAsync(\n    identity.WalPosition,\n    cancellationToken: cancellationToken))\n{\n    <span class=\"hljs-keyword\">switch</span> (message)\n    {\n        <span class=\"hljs-keyword\">case</span> BlueTuskXLogData wal:\n            <span class=\"hljs-keyword\">await</span> PersistWalAsync(wal.Data, cancellationToken);\n            <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n                <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(wal.WalEnd, wal.WalEnd, wal.WalEnd),\n                cancellationToken);\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPrimaryKeepalive keepalive:\n            Console.WriteLine(<span class=\"hljs-string\">$&quot;Primary WAL end: <span class=\"hljs-subst\">{keepalive.ServerWalEnd}</span>&quot;</span>);\n            <span class=\"hljs-keyword\">break</span>;\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>For a physical slot, prefer the retained restart position returned by\n<code>ReadReplicationSlotAsync</code> over an older caller-cached position.</p>\n<h2>Discovery and custom plugins</h2>\n<p><code>GetReplicationSlotsAsync</code> lists slot activity and progress.\n<code>GetPublicationsAsync</code> and <code>GetPublicationTablesAsync</code> expose publication\nownership, operations, columns, and row filters.</p>\n<p>For another logical decoding plugin, create the slot with its plugin name and\npass arbitrary plugin options:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var stream = replication.StartReplicationAsync(\n    new BlueTuskLogicalReplicationRequest\n    {\n        SlotName = \"audit_slot\",\n        PluginOptions = new Dictionary<string, string?>\n        {\n            [\"include-xids\"] = \"true\",\n        },\n    },\n    cancellationToken);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskLogicalReplicationRequest\n    {\n        SlotName = <span class=\"hljs-string\">&quot;audit_slot&quot;</span>,\n        PluginOptions = <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">string</span>?&gt;\n        {\n            [<span class=\"hljs-string\">&quot;include-xids&quot;</span>] = <span class=\"hljs-string\">&quot;true&quot;</span>,\n        },\n    },\n    cancellationToken);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Each <code>BlueTuskXLogData.Data</code> value is the plugin’s raw payload. BlueTusk does\nnot interpret custom formats.</p>\n<p>Cancellation or asynchronous enumerator disposal sends <code>CopyDone</code>, drains the\nserver back to <code>ReadyForQuery</code>, and releases the replication operation.\nForced connection disposal instead closes the transport to interrupt a pending\nread. The protocol layer retains its rented receive buffer until that read has\nunwound, so cancellation or teardown cannot return storage to the shared pool\nwhile an asynchronous continuation still references it. A deterministic unit\ntest and the live replication-disposal stress case enforce this ownership\ninvariant.</p>\n<h2>Reconnect and resume</h2>\n<p>Persist a <code>BlueTuskLogicalReplicationCheckpoint</code> outside the replication\nprocess. It binds the last durably applied transaction-end position to the\nPostgreSQL system identifier, database, persistent slot, and output plug-in.\nOn a transient disconnect, create a new dedicated replication connection from\nthe data source, validate that checkpoint, and request its applied position.\nDo not resume from the largest position merely received in memory.</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "var checkpoint = await checkpoints.LoadAsync(cancellationToken);\n\nwhile (!cancellationToken.IsCancellationRequested)\n{\n    try\n    {\n        await using var replication =\n            await BlueTuskLogicalReplicationConnection.OpenAsync(\n                dataSource.CreateDedicatedSessionOptions(),\n                cancellationToken);\n\n        await replication.ValidateResumeCheckpointAsync(\n            checkpoint,\n            cancellationToken);\n\n        var request = new BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = checkpoint.SlotName,\n            PublicationNames = [\"app_publication\"],\n            StartPosition = checkpoint.AppliedPosition,\n        };\n\n        await foreach (var envelope in replication\n            .StartReplicationAsync(request, cancellationToken)\n            .DecodePgOutputAsync(cancellationToken: cancellationToken))\n        {\n            await ApplyAndCommitAsync(envelope.Message, cancellationToken);\n            if (envelope.TryGetTransactionEndPosition(out var applied))\n            {\n                checkpoint = checkpoint with { AppliedPosition = applied };\n                await checkpoints.StoreAsync(checkpoint, cancellationToken);\n                await replication.SendStandbyStatusUpdateAsync(\n                    new BlueTuskStandbyStatus(applied, applied, applied),\n                    cancellationToken);\n            }\n        }\n    }\n    catch (Exception exception) when (\n        IsTransientReplicationFailure(exception) &&\n        !cancellationToken.IsCancellationRequested)\n    {\n        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);\n    }\n}\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> checkpoint = <span class=\"hljs-keyword\">await</span> checkpoints.LoadAsync(cancellationToken);\n\n<span class=\"hljs-keyword\">while</span> (!cancellationToken.IsCancellationRequested)\n{\n    <span class=\"hljs-keyword\">try</span>\n    {\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n            <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n                dataSource.CreateDedicatedSessionOptions(),\n                cancellationToken);\n\n        <span class=\"hljs-keyword\">await</span> replication.ValidateResumeCheckpointAsync(\n            checkpoint,\n            cancellationToken);\n\n        <span class=\"hljs-keyword\">var</span> request = <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = checkpoint.SlotName,\n            PublicationNames = [<span class=\"hljs-string\">&quot;app_publication&quot;</span>],\n            StartPosition = checkpoint.AppliedPosition,\n        };\n\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> replication\n            .StartReplicationAsync(request, cancellationToken)\n            .DecodePgOutputAsync(cancellationToken: cancellationToken))\n        {\n            <span class=\"hljs-keyword\">await</span> ApplyAndCommitAsync(envelope.Message, cancellationToken);\n            <span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n            {\n                checkpoint = checkpoint <span class=\"hljs-keyword\">with</span> { AppliedPosition = applied };\n                <span class=\"hljs-keyword\">await</span> checkpoints.StoreAsync(checkpoint, cancellationToken);\n                <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n                    <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(applied, applied, applied),\n                    cancellationToken);\n            }\n        }\n    }\n    <span class=\"hljs-keyword\">catch</span> (Exception exception) <span class=\"hljs-keyword\">when</span> (\n        IsTransientReplicationFailure(exception) &amp;&amp;\n        !cancellationToken.IsCancellationRequested)\n    {\n        <span class=\"hljs-keyword\">await</span> Task.Delay(TimeSpan.FromSeconds(<span class=\"hljs-number\">1</span>), cancellationToken);\n    }\n}\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>Validation rejects another cluster/database, a missing, temporary, active, or\nwrong-plug-in slot, lost/unreserved WAL, a checkpoint older than <code>restart_lsn</code>,\na server <code>confirmed_flush_lsn</code> ahead of the application checkpoint, and a\ncheckpoint ahead of the server. This implements PostgreSQL’s documented advice\nto compare <code>confirmed_flush_lsn</code> before <code>START_REPLICATION</code>, which otherwise\nstarts at the greater of the requested and confirmed positions. If validation\nfails, stop and repair from an application-specific snapshot rather than\nskipping data. Recreate the decoder after reconnect so relation and\nstreamed-transaction state cannot leak across sessions.</p>\n<p>The live version-matrix test uses a persistent slot over multiple independent\nsessions, rejects wrong-system, missing, active, and stale checkpoints, and\nverifies every transaction exactly once in the durable consumer log. Set\n<code>BLUETUSK_REPLICATION_DURABILITY_EPOCHS</code> to increase reconnect epochs for a\nbounded soak.</p>\n<p>The scheduled/manual PostgreSQL 19 endurance job runs 1,000 epochs (4,000\nreplicated rows) and the same test remains part of the ordinary PostgreSQL\n15–19 matrix at its fast default. The repository gate covers feedback ordering,\nwrong-system, missing, active, stale, and retained-WAL failures plus repeated\nconnection teardown/recreation. This closes the replication-specific\ndurability matrix; it does not by itself make the experimental provider a\nproduction-ready 1.0 release.</p>\n"
-      }
-    ]
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
+    "categoryLabel": "ADO.NET",
     "slug": "types-reference",
-    "summary": "BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selecte…",
-    "keywords": [
-      "docs",
-      "types",
-      "reference"
-    ],
-    "order": 1204,
     "title": "Core type mappings",
-    "sourcePath": "docs/types/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
+    "summary": "Look up type mappings and catalogue behavior.",
+    "order": 12,
     "headings": [
-      {
-        "id": "core-type-mappings",
-        "text": "Core type mappings",
-        "level": 1
-      },
       {
         "id": "numeric-values",
         "text": "Numeric values",
@@ -2305,59 +1355,962 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1714,
-    "readMinutes": 8,
-    "searchText": "Core type mappings BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selected PostgreSQL type has no binary output function. Inside an explicit transaction they request text fields up front, avoiding a failed Bind that would abort the transaction. PostgreSQL type OID Default CLR value Text Binary `bool` 16 `bool` yes yes `bytea` 17 `byte[]` yes yes `\"char\"` 18 `BlueTuskInternalChar` yes yes `name` 19 `string` yes yes `int8` 20 `long` yes yes `int2` 21 `short` yes yes `int4` 23 `int` yes yes `text` 25 `string` yes yes `oid` 26 `uint` yes yes `json` 114 `string` yes yes `xml` 142 `string` yes yes `float4` 700 `float` yes yes `float8` 701 `double` yes yes `bpchar` 1042 `string` yes yes `varchar` 1043 `string` yes yes `date` 1082 `DateOnly` yes yes `time` 1083 `TimeSpan` yes yes `timestamp` 1114 `DateTime` yes yes `timestamptz` 1184 `DateTimeOffset` yes yes `numeric` 1700 `BlueTuskNumeric` yes yes `uuid` 2950 `Guid` yes yes `jsonb` 3802 `string` yes yes Numeric values `BlueTuskNumeric` preserves PostgreSQL arbitrary precision as a `BigInteger` unscaled value and a scale up to 16,383. It also represents `NaN`, positive infinity, and negative infinity. `GetDecimal` and `GetFieldValue<decimal>` perform a checked conversion and fail when the value is special or outside `decimal`'s range. Use `BlueTuskParameter<BlueTuskNumeric>` to send values that cannot fit in `decimal`: Temporal values PostgreSQL `date` infinity maps to `DateOnly.MinValue` and `DateOnly.MaxValue`. `timestamp` infinity maps to `DateTime.MinValue` and `DateTime.MaxValue`; `timestamptz` uses the corresponding `DateTimeOffset` values and normalizes finite results to UTC. PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan`. `GetFieldValue<TimeOnly>` is available for values before 24:00. Binary temporal values preserve Postg",
+    "sourcePath": "docs/types/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
+    "keywords": [],
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Core type mappings</h1>\n<p>BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server’s text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selected PostgreSQL type has no binary output function. Inside an explicit transaction they request text fields up front, avoiding a failed Bind that would abort the transaction.</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th class=\"align-right\">OID</th>\n<th>Default CLR value</th>\n<th class=\"align-center\">Text</th>\n<th class=\"align-center\">Binary</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bool</code></td>\n<td class=\"align-right\">16</td>\n<td><code>bool</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>bytea</code></td>\n<td class=\"align-right\">17</td>\n<td><code>byte[]</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>&quot;char&quot;</code></td>\n<td class=\"align-right\">18</td>\n<td><code>BlueTuskInternalChar</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>name</code></td>\n<td class=\"align-right\">19</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>int8</code></td>\n<td class=\"align-right\">20</td>\n<td><code>long</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>int2</code></td>\n<td class=\"align-right\">21</td>\n<td><code>short</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>int4</code></td>\n<td class=\"align-right\">23</td>\n<td><code>int</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>text</code></td>\n<td class=\"align-right\">25</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>oid</code></td>\n<td class=\"align-right\">26</td>\n<td><code>uint</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>json</code></td>\n<td class=\"align-right\">114</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>xml</code></td>\n<td class=\"align-right\">142</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>float4</code></td>\n<td class=\"align-right\">700</td>\n<td><code>float</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>float8</code></td>\n<td class=\"align-right\">701</td>\n<td><code>double</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>bpchar</code></td>\n<td class=\"align-right\">1042</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>varchar</code></td>\n<td class=\"align-right\">1043</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>date</code></td>\n<td class=\"align-right\">1082</td>\n<td><code>DateOnly</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>time</code></td>\n<td class=\"align-right\">1083</td>\n<td><code>TimeSpan</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>timestamp</code></td>\n<td class=\"align-right\">1114</td>\n<td><code>DateTime</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>timestamptz</code></td>\n<td class=\"align-right\">1184</td>\n<td><code>DateTimeOffset</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>numeric</code></td>\n<td class=\"align-right\">1700</td>\n<td><code>BlueTuskNumeric</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>uuid</code></td>\n<td class=\"align-right\">2950</td>\n<td><code>Guid</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n<tr>\n<td><code>jsonb</code></td>\n<td class=\"align-right\">3802</td>\n<td><code>string</code></td>\n<td class=\"align-center\">yes</td>\n<td class=\"align-center\">yes</td>\n</tr>\n</tbody>\n</table>\n<h2>Numeric values</h2>\n<p><code>BlueTuskNumeric</code> preserves PostgreSQL arbitrary precision as a <code>BigInteger</code> unscaled value and a scale up to 16,383. It also represents <code>NaN</code>, positive infinity, and negative infinity. <code>GetDecimal</code> and <code>GetFieldValue&lt;decimal&gt;</code> perform a checked conversion and fail when the value is special or outside <code>decimal</code>’s range.</p>\n<p>Use <code>BlueTuskParameter&lt;BlueTuskNumeric&gt;</code> to send values that cannot fit in <code>decimal</code>:</p>\n"
+        "html": "<p>BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server’s text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selected PostgreSQL type has no binary output function. Inside an explicit transaction they request text fields up front, avoiding a failed Bind that would abort the transaction.</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th style=\"text-align:right\">OID</th>\n<th>Default CLR value</th>\n<th style=\"text-align:center\">Text</th>\n<th style=\"text-align:center\">Binary</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>bool</code></td>\n<td style=\"text-align:right\">16</td>\n<td><code>bool</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>bytea</code></td>\n<td style=\"text-align:right\">17</td>\n<td><code>byte[]</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>&quot;char&quot;</code></td>\n<td style=\"text-align:right\">18</td>\n<td><code>BlueTuskInternalChar</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>name</code></td>\n<td style=\"text-align:right\">19</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>int8</code></td>\n<td style=\"text-align:right\">20</td>\n<td><code>long</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>int2</code></td>\n<td style=\"text-align:right\">21</td>\n<td><code>short</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>int4</code></td>\n<td style=\"text-align:right\">23</td>\n<td><code>int</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>text</code></td>\n<td style=\"text-align:right\">25</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>oid</code></td>\n<td style=\"text-align:right\">26</td>\n<td><code>uint</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>json</code></td>\n<td style=\"text-align:right\">114</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>xml</code></td>\n<td style=\"text-align:right\">142</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>float4</code></td>\n<td style=\"text-align:right\">700</td>\n<td><code>float</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>float8</code></td>\n<td style=\"text-align:right\">701</td>\n<td><code>double</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>bpchar</code></td>\n<td style=\"text-align:right\">1042</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>varchar</code></td>\n<td style=\"text-align:right\">1043</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>date</code></td>\n<td style=\"text-align:right\">1082</td>\n<td><code>DateOnly</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>time</code></td>\n<td style=\"text-align:right\">1083</td>\n<td><code>TimeSpan</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>timestamp</code></td>\n<td style=\"text-align:right\">1114</td>\n<td><code>DateTime</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>timestamptz</code></td>\n<td style=\"text-align:right\">1184</td>\n<td><code>DateTimeOffset</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>numeric</code></td>\n<td style=\"text-align:right\">1700</td>\n<td><code>BlueTuskNumeric</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>uuid</code></td>\n<td style=\"text-align:right\">2950</td>\n<td><code>Guid</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n<tr>\n<td><code>jsonb</code></td>\n<td style=\"text-align:right\">3802</td>\n<td><code>string</code></td>\n<td style=\"text-align:center\">yes</td>\n<td style=\"text-align:center\">yes</td>\n</tr>\n</tbody>\n</table>\n"
       },
       {
-        "kind": "code",
-        "code": "var value = BlueTuskNumeric.Parse(\"123456789012345678901234567890.123456789\");\ncommand.Parameters.Add(new BlueTuskParameter<BlueTuskNumeric>(value));\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = BlueTuskNumeric.Parse(<span class=\"hljs-string\">&quot;123456789012345678901234567890.123456789&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;BlueTuskNumeric&gt;(<span class=\"hljs-keyword\">value</span>));\n",
-        "language": "csharp"
+        "kind": "heading",
+        "heading": {
+          "id": "numeric-values",
+          "text": "Numeric values",
+          "level": 2
+        }
       },
       {
         "kind": "html",
-        "html": "<h2>Temporal values</h2>\n<p>PostgreSQL <code>date</code> infinity maps to <code>DateOnly.MinValue</code> and <code>DateOnly.MaxValue</code>. <code>timestamp</code> infinity maps to <code>DateTime.MinValue</code> and <code>DateTime.MaxValue</code>; <code>timestamptz</code> uses the corresponding <code>DateTimeOffset</code> values and normalizes finite results to UTC.</p>\n<p>PostgreSQL <code>time</code> can represent <code>24:00:00</code>, so its default CLR type is <code>TimeSpan</code>. <code>GetFieldValue&lt;TimeOnly&gt;</code> is available for values before 24:00. Binary temporal values preserve PostgreSQL’s microsecond precision.</p>\n<p><code>BlueTuskInterval</code> represents PostgreSQL finite intervals and the positive/negative infinity values supported by PostgreSQL 17 and later. PostgreSQL 15–16 reject interval infinity at the server boundary.</p>\n<h2>Binary and streaming behavior</h2>\n<p>UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and <code>bytea</code> accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.</p>\n<p>The default data reader buffers complete result sets for random field access. A reader created with <code>CommandBehavior.SequentialAccess</code> instead uses an incremental portal and consumes fields directly from the transport: fields must be visited in ordinal order, binary <code>bytea</code> is exposed through <code>GetStream</code>, and text, JSON, and JSONB are decoded incrementally through <code>GetTextReader</code>. The default unlimited execution uses PostgreSQL’s unnamed portal and avoids suspension round trips; set <code>BlueTuskCommand.SequentialFetchSize</code> to a positive row count to use a generated named portal when server-side bounded fetches are preferable. Materializing a scalar value buffers only that field.</p>\n<p>An unregistered OID is returned as <code>BlueTuskUnknownValue</code>, preserving its format and raw bytes.</p>\n<h2>Catalogue-discovered structured types</h2>\n<p>Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while <code>MapEnum&lt;TEnum&gt;</code> and <code>MapComposite&lt;T&gt;</code> provide typed mappings for user-defined enums and composites.</p>\n<p>Applications that want compile-time composite member discovery can reference\n<code>BlueTusk.SourceGeneration</code> as an analyzer and annotate a top-level partial CLR type:</p>\n"
+        "html": "<p><code>BlueTuskNumeric</code> preserves PostgreSQL arbitrary precision as a <code>BigInteger</code> unscaled value and a scale up to 16,383. It also represents <code>NaN</code>, positive infinity, and negative infinity. <code>GetDecimal</code> and <code>GetFieldValue&lt;decimal&gt;</code> perform a checked conversion and fail when the value is special or outside <code>decimal</code>’s range.</p>\n<p>Use <code>BlueTuskParameter&lt;BlueTuskNumeric&gt;</code> to send values that cannot fit in <code>decimal</code>:</p>\n"
       },
       {
         "kind": "code",
-        "code": "<PackageReference Include=\"BlueTusk.SourceGeneration\"\n                  PrivateAssets=\"all\"\n                  OutputItemType=\"Analyzer\"\n                  ReferenceOutputAssembly=\"false\" />\n",
-        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PackageReference</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.SourceGeneration&quot;</span>\n                  <span class=\"hljs-attr\">PrivateAssets</span>=<span class=\"hljs-string\">&quot;all&quot;</span>\n                  <span class=\"hljs-attr\">OutputItemType</span>=<span class=\"hljs-string\">&quot;Analyzer&quot;</span>\n                  <span class=\"hljs-attr\">ReferenceOutputAssembly</span>=<span class=\"hljs-string\">&quot;false&quot;</span> /&gt;</span>\n",
+        "code": "var value = BlueTuskNumeric.Parse(\"123456789012345678901234567890.123456789\");\ncommand.Parameters.Add(new BlueTuskParameter<BlueTuskNumeric>(value));",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">value</span> = BlueTuskNumeric.Parse(<span class=\"hljs-string\">&quot;123456789012345678901234567890.123456789&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;BlueTuskNumeric&gt;(<span class=\"hljs-keyword\">value</span>));",
+        "language": "csharp"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "temporal-values",
+          "text": "Temporal values",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL <code>date</code> infinity maps to <code>DateOnly.MinValue</code> and <code>DateOnly.MaxValue</code>. <code>timestamp</code> infinity maps to <code>DateTime.MinValue</code> and <code>DateTime.MaxValue</code>; <code>timestamptz</code> uses the corresponding <code>DateTimeOffset</code> values and normalizes finite results to UTC.</p>\n<p>PostgreSQL <code>time</code> can represent <code>24:00:00</code>, so its default CLR type is <code>TimeSpan</code>. <code>GetFieldValue&lt;TimeOnly&gt;</code> is available for values before 24:00. Binary temporal values preserve PostgreSQL’s microsecond precision.</p>\n<p><code>BlueTuskInterval</code> represents PostgreSQL finite intervals and the positive/negative infinity values supported by PostgreSQL 17 and later. PostgreSQL 15–16 reject interval infinity at the server boundary.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "binary-and-streaming-behavior",
+          "text": "Binary and streaming behavior",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and <code>bytea</code> accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.</p>\n<p>The default data reader buffers complete result sets for random field access. A reader created with <code>CommandBehavior.SequentialAccess</code> instead uses an incremental portal and consumes fields directly from the transport: fields must be visited in ordinal order, binary <code>bytea</code> is exposed through <code>GetStream</code>, and text, JSON, and JSONB are decoded incrementally through <code>GetTextReader</code>. The default unlimited execution uses PostgreSQL’s unnamed portal and avoids suspension round trips; set <code>BlueTuskCommand.SequentialFetchSize</code> to a positive row count to use a generated named portal when server-side bounded fetches are preferable. Materializing a scalar value buffers only that field.</p>\n<p>An unregistered OID is returned as <code>BlueTuskUnknownValue</code>, preserving its format and raw bytes.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "catalogue-discovered-structured-types",
+          "text": "Catalogue-discovered structured types",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while <code>MapEnum&lt;TEnum&gt;</code> and <code>MapComposite&lt;T&gt;</code> provide typed mappings for user-defined enums and composites.</p>\n<p>Applications that want compile-time composite member discovery can reference\n<code>BlueTusk.SourceGeneration</code> as an analyzer and annotate a top-level partial CLR type:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "<PackageReference Include=\"BlueTusk.SourceGeneration\"\n                  PrivateAssets=\"all\"\n                  OutputItemType=\"Analyzer\"\n                  ReferenceOutputAssembly=\"false\" />",
+        "highlighted": "<span class=\"hljs-tag\">&lt;<span class=\"hljs-name\">PackageReference</span> <span class=\"hljs-attr\">Include</span>=<span class=\"hljs-string\">&quot;BlueTusk.SourceGeneration&quot;</span>\n                  <span class=\"hljs-attr\">PrivateAssets</span>=<span class=\"hljs-string\">&quot;all&quot;</span>\n                  <span class=\"hljs-attr\">OutputItemType</span>=<span class=\"hljs-string\">&quot;Analyzer&quot;</span>\n                  <span class=\"hljs-attr\">ReferenceOutputAssembly</span>=<span class=\"hljs-string\">&quot;false&quot;</span> /&gt;</span>",
         "language": "xml"
       },
       {
         "kind": "code",
-        "code": "using BlueTusk.TypeSystem;\n\n[BlueTuskComposite(\"app\", \"address\")]\npublic sealed partial record Address(int HouseNumber, string Street);\n\nAddress.RegisterCodec(dataSourceBuilder.Types);\n",
-        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.TypeSystem;\n\n[<span class=\"hljs-meta\">BlueTuskComposite(<span class=\"hljs-string\">&quot;app&quot;</span>, <span class=\"hljs-string\">&quot;address&quot;</span>)</span>]\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">partial</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">Address</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">int</span> HouseNumber, <span class=\"hljs-built_in\">string</span> Street</span>)</span>;\n\nAddress.RegisterCodec(dataSourceBuilder.Types);\n",
+        "code": "using BlueTusk.TypeSystem;\n\n[BlueTuskComposite(\"app\", \"address\")]\npublic sealed partial record Address(int HouseNumber, string Street);\n\nAddress.RegisterCodec(dataSourceBuilder.Types);",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.TypeSystem;\n\n[<span class=\"hljs-meta\">BlueTuskComposite(<span class=\"hljs-string\">&quot;app&quot;</span>, <span class=\"hljs-string\">&quot;address&quot;</span>)</span>]\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">public</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">partial</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">Address</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">int</span> HouseNumber, <span class=\"hljs-built_in\">string</span> Street</span>)</span>;\n\nAddress.RegisterCodec(dataSourceBuilder.Types);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The generator follows the runtime mapper’s snake-case and <code>[BlueTuskName]</code>\nconventions. It emits typed member getters and CLR construction, while data-source\ninitialization still resolves the PostgreSQL fields, OIDs, nested codecs, and array\ncodec from the live catalogue. The generated CLR members must exactly cover the\ncatalogue composite. <code>MapComposite&lt;T&gt;</code> remains the reflection-based fallback for\ntypes that do not opt in. See the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/src/BlueTusk.SourceGeneration/README.md\" target=\"_blank\" rel=\"noreferrer\">source-generator package guide</a>\nfor supported CLR shapes and registration details.</p>\n<p>Set <code>BlueTuskParameter.PostgreSqlTypeName</code> when a parameter—especially a null value—must select one of those catalogue-discovered types. Names are parsed using PostgreSQL identifier rules: unquoted identifiers fold to lowercase, quoted identifiers preserve case and may contain dots, and a trailing <code>[]</code> selects the discovered array type.</p>\n<p><code>BlueTuskRange&lt;T&gt;</code> keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with <code>BlueTuskRangeBound.Inclusive(value)</code> or <code>BlueTuskRangeBound.Exclusive(value)</code>, and use <code>BlueTuskRangeBound.Unbounded&lt;T&gt;()</code> for an infinite side:</p>\n"
+        "html": "<p>The generator follows the runtime mapper’s snake-case and <code>[BlueTuskName]</code>\nconventions. It emits typed member getters and CLR construction, while data-source\ninitialization still resolves the PostgreSQL fields, OIDs, nested codecs, and array\ncodec from the live catalogue. The generated CLR members must exactly cover the\ncatalogue composite. <code>MapComposite&lt;T&gt;</code> remains the reflection-based fallback for\ntypes that do not opt in. See the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/src/BlueTusk.SourceGeneration/README.md\">source-generator package guide</a>\nfor supported CLR shapes and registration details.</p>\n<p>Set <code>BlueTuskParameter.PostgreSqlTypeName</code> when a parameter—especially a null value—must select one of those catalogue-discovered types. Names are parsed using PostgreSQL identifier rules: unquoted identifiers fold to lowercase, quoted identifiers preserve case and may contain dots, and a trailing <code>[]</code> selects the discovered array type.</p>\n<p><code>BlueTuskRange&lt;T&gt;</code> keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with <code>BlueTuskRangeBound.Inclusive(value)</code> or <code>BlueTuskRangeBound.Exclusive(value)</code>, and use <code>BlueTuskRangeBound.Unbounded&lt;T&gt;()</code> for an infinite side:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var finite = new BlueTuskRange<int>(1, 10); // [1,10)\nvar upperBounded = new BlueTuskRange<int>(\n    BlueTuskRangeBound.Unbounded<int>(),\n    BlueTuskRangeBound.Inclusive(10));\nvar empty = BlueTuskRange.Empty<int>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> finite = <span class=\"hljs-keyword\">new</span> BlueTuskRange&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">1</span>, <span class=\"hljs-number\">10</span>); <span class=\"hljs-comment\">// [1,10)</span>\n<span class=\"hljs-keyword\">var</span> upperBounded = <span class=\"hljs-keyword\">new</span> BlueTuskRange&lt;<span class=\"hljs-built_in\">int</span>&gt;(\n    BlueTuskRangeBound.Unbounded&lt;<span class=\"hljs-built_in\">int</span>&gt;(),\n    BlueTuskRangeBound.Inclusive(<span class=\"hljs-number\">10</span>));\n<span class=\"hljs-keyword\">var</span> empty = BlueTuskRange.Empty&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
+        "code": "var finite = new BlueTuskRange<int>(1, 10); // [1,10)\nvar upperBounded = new BlueTuskRange<int>(\n    BlueTuskRangeBound.Unbounded<int>(),\n    BlueTuskRangeBound.Inclusive(10));\nvar empty = BlueTuskRange.Empty<int>();",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> finite = <span class=\"hljs-keyword\">new</span> BlueTuskRange&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">1</span>, <span class=\"hljs-number\">10</span>); <span class=\"hljs-comment\">// [1,10)</span>\n<span class=\"hljs-keyword\">var</span> upperBounded = <span class=\"hljs-keyword\">new</span> BlueTuskRange&lt;<span class=\"hljs-built_in\">int</span>&gt;(\n    BlueTuskRangeBound.Unbounded&lt;<span class=\"hljs-built_in\">int</span>&gt;(),\n    BlueTuskRangeBound.Inclusive(<span class=\"hljs-number\">10</span>));\n<span class=\"hljs-keyword\">var</span> empty = BlueTuskRange.Empty&lt;<span class=\"hljs-built_in\">int</span>&gt;();",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p><code>BlueTuskMultirange&lt;T&gt;</code> is an immutable ordered collection of <code>BlueTuskRange&lt;T&gt;</code> values. Range and multirange arrays are discovered and composed automatically, and all four forms participate in parameter type inference when the CLR mapping is unique.</p>\n<h2>Transaction catalogue values</h2>\n<p>PostgreSQL’s unsigned transaction identifiers have dedicated CLR values so their complete wire ranges are preserved:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>xid</code></td>\n<td><code>BlueTuskTransactionId</code></td>\n</tr>\n<tr>\n<td><code>cid</code></td>\n<td><code>BlueTuskCommandId</code></td>\n</tr>\n<tr>\n<td><code>xid8</code></td>\n<td><code>BlueTuskFullTransactionId</code></td>\n</tr>\n<tr>\n<td><code>pg_snapshot</code></td>\n<td><code>BlueTuskTransactionSnapshot</code></td>\n</tr>\n<tr>\n<td><code>txid_snapshot</code></td>\n<td><code>BlueTuskTransactionSnapshot</code></td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskTransactionSnapshot</code> validates PostgreSQL’s ordered half-open snapshot invariants and defensively copies the in-progress transaction IDs. Modern <code>pg_snapshot</code> is the default parameter inference target. The deprecated <code>txid_snapshot</code> remains readable and writable by specifying its PostgreSQL OID explicitly. Catalogue-discovered arrays of all five types are composed automatically.</p>\n<h2>Object identifiers and catalogue vectors</h2>\n<p>PostgreSQL 19’s unsigned 64-bit <code>oid8</code> maps to\n<code>BlueTuskObjectIdentifier64</code>, preserving the complete <code>0</code> through\n<code>UInt64.MaxValue</code> range in text and big-endian binary formats. Its array type\nis catalogue-composed like other built-ins. Earlier PostgreSQL releases do not\nadvertise this type, so the runtime catalogue does not register it there.</p>\n<p>The PostgreSQL <code>reg*</code> aliases use symbolic names in text and unsigned four-byte OIDs in binary. BlueTusk provides a distinct CLR wrapper for each alias so parameter inference remains unambiguous:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>regproc</code></td>\n<td><code>BlueTuskRegProc</code></td>\n</tr>\n<tr>\n<td><code>regprocedure</code></td>\n<td><code>BlueTuskRegProcedure</code></td>\n</tr>\n<tr>\n<td><code>regoper</code></td>\n<td><code>BlueTuskRegOper</code></td>\n</tr>\n<tr>\n<td><code>regoperator</code></td>\n<td><code>BlueTuskRegOperator</code></td>\n</tr>\n<tr>\n<td><code>regclass</code></td>\n<td><code>BlueTuskRegClass</code></td>\n</tr>\n<tr>\n<td><code>regtype</code></td>\n<td><code>BlueTuskRegType</code></td>\n</tr>\n<tr>\n<td><code>regconfig</code></td>\n<td><code>BlueTuskRegConfig</code></td>\n</tr>\n<tr>\n<td><code>regdictionary</code></td>\n<td><code>BlueTuskRegDictionary</code></td>\n</tr>\n<tr>\n<td><code>regnamespace</code></td>\n<td><code>BlueTuskRegNamespace</code></td>\n</tr>\n<tr>\n<td><code>regrole</code></td>\n<td><code>BlueTuskRegRole</code></td>\n</tr>\n<tr>\n<td><code>regcollation</code></td>\n<td><code>BlueTuskRegCollation</code></td>\n</tr>\n<tr>\n<td><code>regdatabase</code> (PostgreSQL 19+)</td>\n<td><code>BlueTuskRegDatabase</code></td>\n</tr>\n</tbody>\n</table>\n<p>Construct an alias from either form. The returned <code>Identifier</code> preserves whether a text result was symbolic or numeric:</p>\n"
+        "html": "<p><code>BlueTuskMultirange&lt;T&gt;</code> is an immutable ordered collection of <code>BlueTuskRange&lt;T&gt;</code> values. Range and multirange arrays are discovered and composed automatically, and all four forms participate in parameter type inference when the CLR mapping is unique.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "transaction-catalogue-values",
+          "text": "Transaction catalogue values",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL’s unsigned transaction identifiers have dedicated CLR values so their complete wire ranges are preserved:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>xid</code></td>\n<td><code>BlueTuskTransactionId</code></td>\n</tr>\n<tr>\n<td><code>cid</code></td>\n<td><code>BlueTuskCommandId</code></td>\n</tr>\n<tr>\n<td><code>xid8</code></td>\n<td><code>BlueTuskFullTransactionId</code></td>\n</tr>\n<tr>\n<td><code>pg_snapshot</code></td>\n<td><code>BlueTuskTransactionSnapshot</code></td>\n</tr>\n<tr>\n<td><code>txid_snapshot</code></td>\n<td><code>BlueTuskTransactionSnapshot</code></td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskTransactionSnapshot</code> validates PostgreSQL’s ordered half-open snapshot invariants and defensively copies the in-progress transaction IDs. Modern <code>pg_snapshot</code> is the default parameter inference target. The deprecated <code>txid_snapshot</code> remains readable and writable by specifying its PostgreSQL OID explicitly. Catalogue-discovered arrays of all five types are composed automatically.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "object-identifiers-and-catalogue-vectors",
+          "text": "Object identifiers and catalogue vectors",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL 19’s unsigned 64-bit <code>oid8</code> maps to\n<code>BlueTuskObjectIdentifier64</code>, preserving the complete <code>0</code> through\n<code>UInt64.MaxValue</code> range in text and big-endian binary formats. Its array type\nis catalogue-composed like other built-ins. Earlier PostgreSQL releases do not\nadvertise this type, so the runtime catalogue does not register it there.</p>\n<p>The PostgreSQL <code>reg*</code> aliases use symbolic names in text and unsigned four-byte OIDs in binary. BlueTusk provides a distinct CLR wrapper for each alias so parameter inference remains unambiguous:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>regproc</code></td>\n<td><code>BlueTuskRegProc</code></td>\n</tr>\n<tr>\n<td><code>regprocedure</code></td>\n<td><code>BlueTuskRegProcedure</code></td>\n</tr>\n<tr>\n<td><code>regoper</code></td>\n<td><code>BlueTuskRegOper</code></td>\n</tr>\n<tr>\n<td><code>regoperator</code></td>\n<td><code>BlueTuskRegOperator</code></td>\n</tr>\n<tr>\n<td><code>regclass</code></td>\n<td><code>BlueTuskRegClass</code></td>\n</tr>\n<tr>\n<td><code>regtype</code></td>\n<td><code>BlueTuskRegType</code></td>\n</tr>\n<tr>\n<td><code>regconfig</code></td>\n<td><code>BlueTuskRegConfig</code></td>\n</tr>\n<tr>\n<td><code>regdictionary</code></td>\n<td><code>BlueTuskRegDictionary</code></td>\n</tr>\n<tr>\n<td><code>regnamespace</code></td>\n<td><code>BlueTuskRegNamespace</code></td>\n</tr>\n<tr>\n<td><code>regrole</code></td>\n<td><code>BlueTuskRegRole</code></td>\n</tr>\n<tr>\n<td><code>regcollation</code></td>\n<td><code>BlueTuskRegCollation</code></td>\n</tr>\n<tr>\n<td><code>regdatabase</code> (PostgreSQL 19+)</td>\n<td><code>BlueTuskRegDatabase</code></td>\n</tr>\n</tbody>\n</table>\n<p>Construct an alias from either form. The returned <code>Identifier</code> preserves whether a text result was symbolic or numeric:</p>\n"
       },
       {
         "kind": "code",
-        "code": "var relationByName = new BlueTuskRegClass(\"public.orders\");\nvar relationByOid = new BlueTuskRegClass(16_384);\n",
-        "highlighted": "<span class=\"hljs-keyword\">var</span> relationByName = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-string\">&quot;public.orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> relationByOid = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-number\">16_384</span>);\n",
+        "code": "var relationByName = new BlueTuskRegClass(\"public.orders\");\nvar relationByOid = new BlueTuskRegClass(16_384);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> relationByName = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-string\">&quot;public.orders&quot;</span>);\n<span class=\"hljs-keyword\">var</span> relationByOid = <span class=\"hljs-keyword\">new</span> BlueTuskRegClass(<span class=\"hljs-number\">16_384</span>);",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>Symbolic values are sent as text so PostgreSQL resolves them using its normal namespace and search-path rules. Numeric values use binary. The same value-sensitive choice applies to catalogue-composed arrays.</p>\n<p>The built-in type coverage acceptance test queries <code>pg_catalog.pg_type</code> on\nevery supported server and requires a codec for every queryable base, range,\nand multirange type. This keeps new PostgreSQL built-ins visible as an\nexecutable compatibility failure rather than silently treating them as an\nunknown type. See PostgreSQL 19’s\n<a href=\"https://www.postgresql.org/docs/19/datatype-oid.html\" target=\"_blank\" rel=\"noreferrer\">object identifier type documentation</a>\nfor <code>oid8</code> and <code>regdatabase</code> semantics.</p>\n<p><code>int2vector</code> maps to the immutable <code>BlueTuskInt16Vector</code>; <code>oidvector</code> maps to <code>BlueTuskObjectIdentifierVector</code>. Their codecs enforce PostgreSQL’s one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.</p>\n<p>Runtime codecs that have the same value-dependent requirement can implement <code>IBlueTuskWriteFormatSelector</code>. Its <code>DefaultWriteFormat</code> also controls empty composed arrays, whose elements cannot provide a value-specific choice. Otherwise registered codec parameters continue to prefer binary.</p>\n<h2>JSONPath and text-like catalogue values</h2>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>&quot;char&quot;</code></td>\n<td><code>BlueTuskInternalChar</code></td>\n<td>One raw byte; distinct from SQL <code>char(n)</code></td>\n</tr>\n<tr>\n<td><code>refcursor</code></td>\n<td><code>BlueTuskRefCursor</code></td>\n<td>PostgreSQL portal name</td>\n</tr>\n<tr>\n<td><code>pg_node_tree</code></td>\n<td><code>BlueTuskNodeTree</code></td>\n<td>Opaque, decode-only expression tree</td>\n</tr>\n<tr>\n<td><code>jsonpath</code></td>\n<td><code>BlueTuskJsonPath</code></td>\n<td>SQL/JSON path expression</td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskInternalChar</code> preserves all 256 values. Its text codec implements PostgreSQL’s empty representation for zero, single-byte ASCII representation, and backslash-plus-octal representation for values with the high bit set.</p>\n<p><code>BlueTuskJsonPath</code> deliberately preserves the expression as text and lets PostgreSQL parse, validate, and normalize it. Its binary codec validates the PostgreSQL JSONPath wire-version byte. <code>refcursor</code> values and arrays use their own CLR type so they do not collide with ordinary <code>text</code> inference.</p>\n<p>PostgreSQL exposes <code>pg_node_tree</code> through system catalogues but rejects input values of that type. BlueTusk therefore decodes its text and binary forms into <code>BlueTuskNodeTree</code>, while attempts to encode one fail locally with <code>NotSupportedException</code>.</p>\n<h2>Text-only and opaque catalogue values</h2>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n<th>Behavior</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>aclitem</code></td>\n<td><code>BlueTuskAccessControlItem</code></td>\n<td>Text-only read/write; PostgreSQL validates ACL syntax</td>\n</tr>\n<tr>\n<td><code>gtsvector</code></td>\n<td><code>BlueTuskGistTextSearchVector</code></td>\n<td>Text-only, decode-only GiST signature</td>\n</tr>\n<tr>\n<td><code>pg_ndistinct</code></td>\n<td><code>BlueTuskNDistinctStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_dependencies</code></td>\n<td><code>BlueTuskDependencyStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_mcv_list</code></td>\n<td><code>BlueTuskMostCommonValueStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_brin_bloom_summary</code></td>\n<td><code>BlueTuskBrinBloomSummary</code></td>\n<td>Decode-only opaque BRIN summary</td>\n</tr>\n<tr>\n<td><code>pg_brin_minmax_multi_summary</code></td>\n<td><code>BlueTuskBrinMinMaxMultiSummary</code></td>\n<td>Decode-only opaque BRIN summary</td>\n</tr>\n</tbody>\n</table>\n<p><code>aclitem</code> has no binary input or output functions. Its codec and catalogue-composed arrays therefore always use text, including empty arrays. <code>gtsvector</code> likewise has no binary output and PostgreSQL rejects input values.</p>\n<p>The statistics and BRIN values preserve their exact field format and bytes through distinct immutable CLR types. Their internal representation is deliberately not interpreted: PostgreSQL owns that version-specific encoding and rejects client input even where a receive function appears in the catalogue. BlueTusk consequently exposes these values for lossless inspection and rejects attempts to encode them.</p>\n"
+        "html": "<p>Symbolic values are sent as text so PostgreSQL resolves them using its normal namespace and search-path rules. Numeric values use binary. The same value-sensitive choice applies to catalogue-composed arrays.</p>\n<p>The built-in type coverage acceptance test queries <code>pg_catalog.pg_type</code> on\nevery supported server and requires a codec for every queryable base, range,\nand multirange type. This keeps new PostgreSQL built-ins visible as an\nexecutable compatibility failure rather than silently treating them as an\nunknown type. See PostgreSQL 19’s\n<a href=\"https://www.postgresql.org/docs/19/datatype-oid.html\">object identifier type documentation</a>\nfor <code>oid8</code> and <code>regdatabase</code> semantics.</p>\n<p><code>int2vector</code> maps to the immutable <code>BlueTuskInt16Vector</code>; <code>oidvector</code> maps to <code>BlueTuskObjectIdentifierVector</code>. Their codecs enforce PostgreSQL’s one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.</p>\n<p>Runtime codecs that have the same value-dependent requirement can implement <code>IBlueTuskWriteFormatSelector</code>. Its <code>DefaultWriteFormat</code> also controls empty composed arrays, whose elements cannot provide a value-specific choice. Otherwise registered codec parameters continue to prefer binary.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "jsonpath-and-text-like-catalogue-values",
+          "text": "JSONPath and text-like catalogue values",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n<th>Notes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>&quot;char&quot;</code></td>\n<td><code>BlueTuskInternalChar</code></td>\n<td>One raw byte; distinct from SQL <code>char(n)</code></td>\n</tr>\n<tr>\n<td><code>refcursor</code></td>\n<td><code>BlueTuskRefCursor</code></td>\n<td>PostgreSQL portal name</td>\n</tr>\n<tr>\n<td><code>pg_node_tree</code></td>\n<td><code>BlueTuskNodeTree</code></td>\n<td>Opaque, decode-only expression tree</td>\n</tr>\n<tr>\n<td><code>jsonpath</code></td>\n<td><code>BlueTuskJsonPath</code></td>\n<td>SQL/JSON path expression</td>\n</tr>\n</tbody>\n</table>\n<p><code>BlueTuskInternalChar</code> preserves all 256 values. Its text codec implements PostgreSQL’s empty representation for zero, single-byte ASCII representation, and backslash-plus-octal representation for values with the high bit set.</p>\n<p><code>BlueTuskJsonPath</code> deliberately preserves the expression as text and lets PostgreSQL parse, validate, and normalize it. Its binary codec validates the PostgreSQL JSONPath wire-version byte. <code>refcursor</code> values and arrays use their own CLR type so they do not collide with ordinary <code>text</code> inference.</p>\n<p>PostgreSQL exposes <code>pg_node_tree</code> through system catalogues but rejects input values of that type. BlueTusk therefore decodes its text and binary forms into <code>BlueTuskNodeTree</code>, while attempts to encode one fail locally with <code>NotSupportedException</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "text-only-and-opaque-catalogue-values",
+          "text": "Text-only and opaque catalogue values",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>PostgreSQL type</th>\n<th>CLR value</th>\n<th>Behavior</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>aclitem</code></td>\n<td><code>BlueTuskAccessControlItem</code></td>\n<td>Text-only read/write; PostgreSQL validates ACL syntax</td>\n</tr>\n<tr>\n<td><code>gtsvector</code></td>\n<td><code>BlueTuskGistTextSearchVector</code></td>\n<td>Text-only, decode-only GiST signature</td>\n</tr>\n<tr>\n<td><code>pg_ndistinct</code></td>\n<td><code>BlueTuskNDistinctStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_dependencies</code></td>\n<td><code>BlueTuskDependencyStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_mcv_list</code></td>\n<td><code>BlueTuskMostCommonValueStatistics</code></td>\n<td>Decode-only opaque statistics payload</td>\n</tr>\n<tr>\n<td><code>pg_brin_bloom_summary</code></td>\n<td><code>BlueTuskBrinBloomSummary</code></td>\n<td>Decode-only opaque BRIN summary</td>\n</tr>\n<tr>\n<td><code>pg_brin_minmax_multi_summary</code></td>\n<td><code>BlueTuskBrinMinMaxMultiSummary</code></td>\n<td>Decode-only opaque BRIN summary</td>\n</tr>\n</tbody>\n</table>\n<p><code>aclitem</code> has no binary input or output functions. Its codec and catalogue-composed arrays therefore always use text, including empty arrays. <code>gtsvector</code> likewise has no binary output and PostgreSQL rejects input values.</p>\n<p>The statistics and BRIN values preserve their exact field format and bytes through distinct immutable CLR types. Their internal representation is deliberately not interpreted: PostgreSQL owns that version-specific encoding and rejects client input even where a receive function appears in the catalogue. BlueTusk consequently exposes these values for lossless inspection and rejects attempts to encode them.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "pipeline-mode",
+    "title": "PostgreSQL pipeline mode",
+    "summary": "Use pipeline mode within its transaction and cancellation boundaries.",
+    "order": 13,
+    "headings": [],
+    "sourcePath": "docs/pipeline-mode.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/pipeline-mode.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Client</code> supports PostgreSQL pipeline mode on PostgreSQL 14 and later. A pipeline sends multiple extended-query synchronization groups in one network flush, preserves result order, and avoids waiting for each group before sending the next one.</p>\n<p>This feature is independent of the .NET <code>System.IO.Pipelines</code> buffering library. BlueTusk implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport. A separate benchmark-backed evaluation retained the ArrayPool/Span/Memory transport; see <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md\">ADR 0005</a>.</p>\n<p>Each <code>BlueTuskPipelineGroup</code> ends with an explicit protocol <code>Sync</code>. A server error is attached to the affected group’s result after BlueTusk drains through that group’s <code>ReadyForQuery</code>. PostgreSQL can then execute the next already-sent group:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var session = await BlueTuskSession.OpenAsync(options);\n\nvar pipeline = await session.ExecutePipelineAsync(\n[\n    new BlueTuskPipelineGroup(\n    [\n        new BlueTuskBatchQuery(\"INSERT INTO app.items(value) VALUES (1)\", []),\n        new BlueTuskBatchQuery(\"INSERT INTO app.items(value) VALUES (2)\", []),\n    ]),\n    new BlueTuskPipelineGroup(\n    [\n        new BlueTuskBatchQuery(\"SELECT count(*) FROM app.items\", []),\n    ]),\n]);\n\nforeach (var group in pipeline.Groups)\n{\n    if (group.Error is { } error)\n    {\n        Console.Error.WriteLine($\"{error.SqlState}: {error.Message}\");\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> session = <span class=\"hljs-keyword\">await</span> BlueTuskSession.OpenAsync(options);\n\n<span class=\"hljs-keyword\">var</span> pipeline = <span class=\"hljs-keyword\">await</span> session.ExecutePipelineAsync(\n[\n    <span class=\"hljs-keyword\">new</span> BlueTuskPipelineGroup(\n    [\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;INSERT INTO app.items(value) VALUES (1)&quot;</span>, []),\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;INSERT INTO app.items(value) VALUES (2)&quot;</span>, []),\n    ]),\n    <span class=\"hljs-keyword\">new</span> BlueTuskPipelineGroup(\n    [\n        <span class=\"hljs-keyword\">new</span> BlueTuskBatchQuery(<span class=\"hljs-string\">&quot;SELECT count(*) FROM app.items&quot;</span>, []),\n    ]),\n]);\n\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> <span class=\"hljs-keyword\">group</span> <span class=\"hljs-keyword\">in</span> pipeline.Groups)\n{\n    <span class=\"hljs-keyword\">if</span> (<span class=\"hljs-keyword\">group</span>.Error <span class=\"hljs-keyword\">is</span> { } error)\n    {\n        Console.Error.WriteLine(<span class=\"hljs-string\">$&quot;<span class=\"hljs-subst\">{error.SqlState}</span>: <span class=\"hljs-subst\">{error.Message}</span>&quot;</span>);\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The synchronous <code>ExecutePipeline</code> method has the same ordered result and error contract. Query parameters use the same <code>BlueTuskExtendedQueryParameter</code> representation as other Client-layer extended-query APIs.</p>\n<p>Cancellation sends PostgreSQL <code>CancelRequest</code>, drains the active group and every already-sent group to their synchronization boundaries, and throws <code>OperationCanceledException</code> only after the session is safe to reuse. A connection that fails during a partial write or cannot recover to <code>ReadyForQuery</code> is closed instead of being reused.</p>\n<p><code>BlueTuskSession.Capabilities</code> and <code>BlueTuskConnection.ServerCapabilities</code> expose the authenticated server version and detected features. ADO.NET physical sessions probe PostgreSQL 19’s documented <code>information_schema.property_graphs</code> view before enabling <code>SupportsSqlPgq</code>; low-level normal SQL sessions can call <code>ProbeOptionalCapabilities</code> or its asynchronous counterpart explicitly. <code>SupportsOAuthBearer</code> becomes true only on a connection that actually completed native OAUTHBEARER negotiation. A version number alone is not treated as product support.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "multiplexing-compatibility",
+    "title": "Multiplexing compatibility",
+    "summary": "Choose which commands can share a physical session.",
+    "order": 14,
+    "headings": [
+      {
+        "id": "routing-matrix",
+        "text": "Routing matrix",
+        "level": 2
+      },
+      {
+        "id": "scheduler-and-failure-invariants",
+        "text": "Scheduler and failure invariants",
+        "level": 2
+      },
+      {
+        "id": "pgbouncer",
+        "text": "PgBouncer",
+        "level": 2
+      },
+      {
+        "id": "reproduce",
+        "text": "Reproduce",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/multiplexing-compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multiplexing-compatibility.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>BlueTusk multiplexing is an opt-in throughput path for independent,\nsession-neutral commands created directly from a <code>BlueTuskDataSource</code>. It does\nnot turn PostgreSQL sessions into logical connections and never moves an active\nsession-scoped operation between physical connections.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "routing-matrix",
+          "text": "Routing matrix",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>Automatic route</th>\n<th>Reason and evidence</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Independent text and parameterised commands</td>\n<td>Multiplexed</td>\n<td>A bounded FIFO scheduler writes at most the configured pipeline size, with one PostgreSQL <code>Sync</code> group per command.</td>\n</tr>\n<tr>\n<td>Explicit <code>BlueTuskConnection</code></td>\n<td>Affine</td>\n<td>The caller owns the logical/physical lease. <code>Require</code> fails before execution instead of silently falling back.</td>\n</tr>\n<tr>\n<td>Transactions and savepoints</td>\n<td>Affine</td>\n<td>Transaction state, failures, and savepoints belong to one backend.</td>\n</tr>\n<tr>\n<td>Explicitly prepared commands and SQL <code>PREPARE</code>/<code>EXECUTE</code>/<code>DEALLOCATE</code></td>\n<td>Affine</td>\n<td>Prepared statement identity belongs to a backend session.</td>\n</tr>\n<tr>\n<td>Sequential readers and cursors</td>\n<td>Affine</td>\n<td>A portal remains live until the reader completes or is disposed. <code>Require</code> fails closed.</td>\n</tr>\n<tr>\n<td>COPY import/export</td>\n<td>Affine</td>\n<td>COPY changes the protocol state until completion, cancellation, or abort recovery.</td>\n</tr>\n<tr>\n<td>Large objects and <code>lo_*</code>/legacy large-object routines</td>\n<td>Affine</td>\n<td>Descriptors and their owning transaction belong to one connection.</td>\n</tr>\n<tr>\n<td><code>LISTEN</code>/<code>UNLISTEN</code> and notification APIs</td>\n<td>Affine</td>\n<td>Listener registration and the notification pump own dedicated session state. <code>NOTIFY</code> is conservatively routed affine as well.</td>\n</tr>\n<tr>\n<td>Temporary objects and <code>pg_temp</code></td>\n<td>Affine</td>\n<td>Temporary schemas and objects belong to one backend.</td>\n</tr>\n<tr>\n<td>Session advisory locks</td>\n<td>Affine</td>\n<td>Lock ownership is the backend process. Transaction-scoped advisory-lock routines are conservatively affine too.</td>\n</tr>\n<tr>\n<td><code>SET</code>, <code>RESET</code>, <code>SHOW</code>, <code>set_config</code>, <code>current_setting</code>, <code>currval</code>, and <code>lastval</code></td>\n<td>Affine</td>\n<td>These mutate or observe session-local settings/sequence state.</td>\n</tr>\n<tr>\n<td><code>CALL</code>, <code>DO</code>, and unknown stateful user routines</td>\n<td>Affine by explicit policy</td>\n<td><code>CALL</code> and <code>DO</code> fail closed automatically. SQL text cannot prove an arbitrary function is pure; set <code>MultiplexingMode.Disable</code> for a known stateful routine.</td>\n</tr>\n<tr>\n<td>Replication</td>\n<td>Dedicated</td>\n<td>Replication owns an unpooled physical/logical <code>COPY BOTH</code> session and never enters the statement scheduler.</td>\n</tr>\n</tbody>\n</table>\n<p><code>MultiplexingMode.Auto</code> uses this routing table,\n<code>MultiplexingMode.Require</code> rejects every fallback, and\n<code>MultiplexingMode.Disable</code> deliberately obtains an affine lease. The classifier\nskips quoted strings, quoted identifiers, dollar-quoted bodies, line comments,\nand nested block comments before inspecting tokens. It remains conservative;\nit is not a SQL authorisation boundary.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "scheduler-and-failure-invariants",
+          "text": "Scheduler and failure invariants",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>The channel, pipeline group, worker count, commands per lease, and graceful\nshutdown duration are independently bounded.</li>\n<li>Accepted commands are serviced FIFO per lane. Multiple lanes increase\nconcurrency without allowing one lane to retain a pool lease beyond\n<code>MaxCommandsPerLease</code>.</li>\n<li>Cancellation while waiting for channel admission does not enter the queue.\nCancellation after admission completes that request and preserves the lane.</li>\n<li>Pool exhaustion remains cancellable. For pools of two or more sessions, the\nautomatic worker count consumes at most half the configured pool; a\none-session pool cannot reserve simultaneous affine capacity.</li>\n<li>Each command has its own protocol synchronization group. A server error,\ncaller cancellation, or command timeout is drained through <code>ReadyForQuery</code>\nbefore the next group completes.</li>\n<li>Disposal stops admission, drains accepted work up to <code>ShutdownTimeout</code>, then\naborts stuck physical transports and completes every remaining request.</li>\n<li>A touched lease is rolled back if needed and runs <code>DISCARD ALL</code> before reuse,\nclearing settings, temporary objects, listeners, advisory locks, and\nprepared statements.</li>\n</ul>\n<p>The process-wide <code>BlueTusk.Diagnostics</code> meter exposes pending/executing\nup/down counters, admission and outcome counters, queue-wait duration, pipeline\nsize, and forced-shutdown count. <code>GetMultiplexingStatistics()</code> remains the\nper-data-source point-in-time view.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "pgbouncer",
+          "text": "PgBouncer",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Live CI exercises bounded multiplexing through PgBouncer 1.24 in both session\nand transaction modes. Session-affine transactions, temporary objects, and\nexplicit preparation retain their separate acceptance tests. Transaction mode\nrequires PgBouncer protocol-level prepared-statement support when an\napplication explicitly prepares statements; BlueTusk does not emulate\nsession-affine state on top of transaction pooling.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "reproduce",
+          "text": "Reproduce",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use an isolated PostgreSQL 18 test database:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `\n  --configuration Release `\n  --filter FullyQualifiedName~BlueTuskMultiplexingIntegrationTests",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release `\n  <span class=\"hljs-literal\">--filter</span> FullyQualifiedName~BlueTuskMultiplexingIntegrationTests",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Start the repository PgBouncer fixtures and run their matrix:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "docker compose -f eng/compose/postgres.yml --profile compatibility-tests up -d --build --wait pgbouncer-session18 pgbouncer-transaction18\ndotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `\n  --configuration Release `\n  --filter FullyQualifiedName~PgBouncer",
+        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml <span class=\"hljs-literal\">--profile</span> compatibility<span class=\"hljs-literal\">-tests</span> up <span class=\"hljs-literal\">-d</span> <span class=\"hljs-literal\">--build</span> <span class=\"hljs-literal\">--wait</span> pgbouncer<span class=\"hljs-literal\">-session18</span> pgbouncer<span class=\"hljs-literal\">-transaction18</span>\ndotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release `\n  <span class=\"hljs-literal\">--filter</span> FullyQualifiedName~PgBouncer",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Compare multiplexed and ordinary pooling using the same parameterized\nworkload. Record throughput, allocation, checkout delay, and P95/P99 command\nlatency. Alternate runs against the same server and dataset. Use ordinary\npooling for commands that require session state or an open transaction.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "nativeaot",
+    "title": "NativeAOT and trimming",
+    "summary": "Prepare a trimmed or Native AOT .NET application.",
+    "order": 15,
+    "headings": [
+      {
+        "id": "composite-and-enum-mappings",
+        "text": "Composite and enum mappings",
+        "level": 2
+      },
+      {
+        "id": "array-boundary",
+        "text": "Array boundary",
+        "level": 2
+      },
+      {
+        "id": "range-boundary",
+        "text": "Range boundary",
+        "level": 2
+      },
+      {
+        "id": "integration-scope",
+        "text": "Integration scope",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/nativeaot.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/nativeaot.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>Publish your app with a runtime identifier and verify it against the\nPostgreSQL version you deploy:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet publish -c Release -r linux-x64 -p:PublishAot=true",
+        "highlighted": "dotnet publish -c Release -r linux-x64 -p:PublishAot=<span class=\"hljs-literal\">true</span>",
+        "language": "sh"
+      },
+      {
+        "kind": "html",
+        "html": "<p>For trimmed JIT output use <code>-p:PublishTrimmed=true</code> instead. Use\nsource-generated mappings when the native compiler needs static knowledge of\nPostgreSQL enum or composite values. Review trimming analyzer warnings and\nexercise all supported data paths in the published executable.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "composite-and-enum-mappings",
+          "text": "Composite and enum mappings",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Prefer the <code>BlueTusk.SourceGeneration</code> composite generator in NativeAOT\napplications. It produces direct member access and avoids reflection during\nnormal encoding and decoding:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "[BlueTuskComposite(\"app\", \"address\")]\ninternal sealed partial record Address(int HouseNumber, string Street);\n\nvar dataSource = new BlueTuskDataSourceBuilder(connectionString)\n    .ConfigureTypes(Address.RegisterCodec)\n    .Build();",
+        "highlighted": "[<span class=\"hljs-meta\">BlueTuskComposite(<span class=\"hljs-string\">&quot;app&quot;</span>, <span class=\"hljs-string\">&quot;address&quot;</span>)</span>]\n<span class=\"hljs-function\"><span class=\"hljs-keyword\">internal</span> <span class=\"hljs-keyword\">sealed</span> <span class=\"hljs-keyword\">partial</span> <span class=\"hljs-keyword\">record</span> <span class=\"hljs-title\">Address</span>(<span class=\"hljs-params\"><span class=\"hljs-built_in\">int</span> HouseNumber, <span class=\"hljs-built_in\">string</span> Street</span>)</span>;\n\n<span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString)\n    .ConfigureTypes(Address.RegisterCodec)\n    .Build();",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>MapComposite&lt;T&gt;</code> remains available for statically known public constructors,\nproperties, and fields. Its generic annotations preserve those members during\ntrimming. Source generation is still preferred because it gives compile-time\nmapping diagnostics and removes reflection from the hot path.</p>\n<p><code>MapEnum&lt;TEnum&gt;</code> preserves the enum fields needed by its label mapping.\nDynamically discovering a CLR type by name and then constructing a closed\ngeneric mapping is not supported in NativeAOT; register the concrete type\ndirectly in application code.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "array-boundary",
+          "text": "Array boundary",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>NativeAOT supports one-dimensional PostgreSQL arrays with the standard lower\nbound of 1. The provider creates these arrays through statically rooted generic\ncode.</p>\n<p>Multidimensional arrays and arrays with non-standard lower bounds require\nruntime array construction and are therefore supported only by JIT deployments.\nA NativeAOT application receives an explicit <code>NotSupportedException</code> instead\nof a silent shape change. JIT deployments retain ranks one through six and\nnon-standard lower bounds.</p>\n<p>Custom element codecs used by an array must derive from <code>BlueTuskCodec&lt;T&gt;</code> in a\nNativeAOT application. A codec that implements <code>IBlueTuskCodec</code> directly does\nnot provide a statically rooted array factory and is rejected with an\nactionable <code>NotSupportedException</code>. The direct implementation remains\nsupported in JIT deployments.</p>\n<p><code>DbDataReader.GetFieldValue&lt;T&gt;</code> returns a codec-native array without conversion.\nOne-dimensional conversions to <code>decimal[]</code>, <code>TimeOnly[]</code>, and <code>TimeSpan[]</code> are\nalso statically supported. An arbitrary conversion to an array type selected at\nruntime requires a JIT deployment.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "range-boundary",
+          "text": "Range boundary",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>The built-in <code>int4</code>, <code>int8</code>, <code>numeric</code>, <code>date</code>, <code>timestamp</code>, and <code>timestamptz</code>\nranges, multiranges, and their arrays have statically rooted codecs. A custom\nrange or a range whose subtype is itself a range or multirange requires a\nclosed generic codec selected from the runtime catalogue. That case remains\navailable in a JIT deployment. NativeAOT installs an unsupported codec that\nfails explicitly when materialisation is attempted; applications can instead\nregister their own statically implemented codec.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "integration-scope",
+          "text": "Integration scope",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>This guidance applies to the core data provider. Check trimming and NativeAOT\nsupport for each optional package you add, including EF Core integrations,\ntype codecs, and real-time hosts.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "replication",
+    "title": "Start PostgreSQL replication",
+    "summary": "Read WAL and pgoutput changes through low-level replication APIs.",
+    "order": 16,
+    "headings": [
+      {
+        "id": "choose-the-right-layer",
+        "text": "Choose the right layer",
+        "level": 2
+      },
+      {
+        "id": "1-configure-postgresql",
+        "text": "1. Configure PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "2-open-a-dedicated-session",
+        "text": "2. Open a dedicated session",
+        "level": 2
+      },
+      {
+        "id": "3-read-pgoutput",
+        "text": "3. Read pgoutput",
+        "level": 2
+      },
+      {
+        "id": "run-the-complete-example",
+        "text": "Run the complete example",
+        "level": 2
+      },
+      {
+        "id": "operate-it-safely",
+        "text": "Operate it safely",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/replication/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/README.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>Use <code>BlueTusk.Replication</code> when you need direct access to PostgreSQL’s logical\nor physical replication protocol. If your goal is an application change feed,\nstart with <a href=\"/documentation/real-time/streams\">Streams</a>; it adds transaction assembly,\nspooling, checkpoints, leases, and safe acknowledgement.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-the-right-layer",
+          "text": "Choose the right layer",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Need</th>\n<th>Start with</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Decode raw <code>pgoutput</code> messages</td>\n<td>This replication guide</td>\n</tr>\n<tr>\n<td>Receive complete committed transactions</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n</tr>\n<tr>\n<td>Copy those transactions to another system</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n</tr>\n<tr>\n<td>Keep browser clients updated</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n</tr>\n</tbody>\n</table>\n<p>Replication sessions are dedicated. They do not come from the normal ADO.NET\npool.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "1-configure-postgresql",
+          "text": "1. Configure PostgreSQL",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Set <code>wal_level = logical</code>, then create a publication and a replication role\nwith only the required rights:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "CREATE PUBLICATION app_changes FOR TABLE app.orders;",
+        "highlighted": "<span class=\"hljs-keyword\">CREATE</span> PUBLICATION app_changes <span class=\"hljs-keyword\">FOR</span> <span class=\"hljs-keyword\">TABLE</span> app.orders;",
+        "language": "sql"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Create the logical slot through controlled provisioning or the application\nbootstrap process. Give every consumer its own slot; two independent consumers\nmust not race over one checkpoint. Do not create a slot while migrations or\nother table creation run in the same database: PostgreSQL can create a slot that\nthen fails on every attempt to decode writes to the new tables. See\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber\">creating a slot while the schema changes</a>\nfor the symptoms and the recovery.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "2-open-a-dedicated-session",
+          "text": "2. Open a dedicated session",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Replication;\nusing BlueTusk.Replication.PgOutput;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n\nvar server = await replication.IdentifySystemAsync(cancellationToken);\nConsole.WriteLine($\"System={server.SystemIdentifier} WAL={server.WalPosition}\");",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Replication.PgOutput;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);\n\n<span class=\"hljs-keyword\">var</span> server = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(cancellationToken);\nConsole.WriteLine(<span class=\"hljs-string\">$&quot;System=<span class=\"hljs-subst\">{server.SystemIdentifier}</span> WAL=<span class=\"hljs-subst\">{server.WalPosition}</span>&quot;</span>);",
+        "language": "csharp"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "3-read-pgoutput",
+          "text": "3. Read pgoutput",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "var stream = replication.StartReplicationAsync(\n    slotName: \"orders_app\",\n    publicationName: \"app_changes\",\n    cancellationToken: cancellationToken);\n\nawait foreach (var envelope in stream.DecodePgOutputAsync(\n    cancellationToken: cancellationToken))\n{\n    await HandleMessageAsync(envelope.Message, cancellationToken);\n\n    if (envelope.TryGetTransactionEndPosition(out var applied))\n    {\n        // Send feedback only after the complete transaction and its checkpoint\n        // are durable in your system.\n        await replication.SendStandbyStatusUpdateAsync(\n            new BlueTuskStandbyStatus(applied, applied, applied),\n            cancellationToken);\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    slotName: <span class=\"hljs-string\">&quot;orders_app&quot;</span>,\n    publicationName: <span class=\"hljs-string\">&quot;app_changes&quot;</span>,\n    cancellationToken: cancellationToken);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> stream.DecodePgOutputAsync(\n    cancellationToken: cancellationToken))\n{\n    <span class=\"hljs-keyword\">await</span> HandleMessageAsync(envelope.Message, cancellationToken);\n\n    <span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n    {\n        <span class=\"hljs-comment\">// Send feedback only after the complete transaction and its checkpoint</span>\n        <span class=\"hljs-comment\">// are durable in your system.</span>\n        <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n            <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(applied, applied, applied),\n            cancellationToken);\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Never acknowledge a payload merely because it was received. The safe point is\nthe transaction-end LSN after the downstream effect and checkpoint are durable.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "run-the-complete-example",
+          "text": "Run the complete example",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "$env:BLUETUSK_CONNECTION_STRING = \"Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable\"\ndotnet run --project samples/BlueTusk.Samples.Replication -- orders_app app_changes",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Database=app;Username=replicator;Password=local-only;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\ndotnet run <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.Replication <span class=\"hljs-literal\">--</span> orders_app app_changes",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use TLS outside an isolated local environment.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "operate-it-safely",
+          "text": "Operate it safely",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<ul>\n<li>Alert on retained WAL and slot inactivity.</li>\n<li>Persist the source system identifier, database, slot, publication fingerprint,\nand last acknowledged transaction-end LSN together.</li>\n<li>Stop on a source-identity mismatch instead of silently continuing.</li>\n<li>Bound message size and reconnect delay.</li>\n<li>Drop unused slots deliberately; an abandoned slot can retain WAL indefinitely.</li>\n</ul>\n<p>The <a href=\"/documentation/provider/replication-reference\">replication reference</a> covers slot discovery, physical\nreplication, feedback timing, restart LSNs, custom output plug-ins, reconnect,\nand resume behavior.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "replication-reference",
+    "title": "Replication",
+    "summary": "Configure replication sessions, messages, and LSN feedback.",
+    "order": 17,
+    "headings": [
+      {
+        "id": "server-setup",
+        "text": "Server setup",
+        "level": 2
+      },
+      {
+        "id": "logical-replication",
+        "text": "Logical replication",
+        "level": 2
+      },
+      {
+        "id": "pgoutput-decoding",
+        "text": "pgoutput decoding",
+        "level": 2
+      },
+      {
+        "id": "feedback-and-durability",
+        "text": "Feedback and durability",
+        "level": 2
+      },
+      {
+        "id": "physical-replication",
+        "text": "Physical replication",
+        "level": 2
+      },
+      {
+        "id": "discovery-and-custom-plugins",
+        "text": "Discovery and custom plugins",
+        "level": 2
+      },
+      {
+        "id": "reconnect-and-resume",
+        "text": "Reconnect and resume",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/replication/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTusk.Replication</code> exposes PostgreSQL’s physical and logical streaming\nreplication protocol directly. It uses a dedicated replication session and\n<code>COPY BOTH</code>; it does not borrow an ADO.NET pooled connection.</p>\n<p>Build one long-lived data source for the application configuration, then derive\na fresh dedicated-session option snapshot for replication:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication = <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n    dataSource.CreateDedicatedSessionOptions(),\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The data source remains the configuration root, but it does not own the\nreplication connection. The replication object owns one unpooled physical\nsession and must be disposed independently. Its lifetime may be much longer\nthan an ADO.NET command or pooled checkout. Configured credentials, application\nname, timeout, TLS mode, and channel binding are copied into the snapshot;\nADO.NET codecs and runtime catalogue state are intentionally irrelevant to raw\nreplication payloads.</p>\n<p>The stream is pull-based and does not maintain a background prefetch queue.\nAt most the current <code>CopyData</code> payload and decoded message are owned by the\nconsumer path; PostgreSQL/socket flow control supplies backpressure until the\nconsumer requests the next element. Process or hand off each payload promptly,\nand put an application-owned bounded queue in front of slower durable work only\nwhen that queue’s capacity and failure semantics are deliberate.</p>\n<p>The <code>BlueTusk.Diagnostics</code> meter records WAL-sender clock lag and byte-position\nlag for XLogData and keepalive messages. These are receive-side observations,\nnot claims that a downstream consumer has applied a transaction. See\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md\">Diagnostics and observability</a> for metric names and\ndimensions.</p>\n<p>For a multi-host data source, select a configured endpoint explicitly:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var endpoint = new BlueTuskHostEndpoint(\"primary.example.test\", 5432);\nvar options = dataSource.CreateDedicatedSessionOptions(endpoint);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> endpoint = <span class=\"hljs-keyword\">new</span> BlueTuskHostEndpoint(<span class=\"hljs-string\">&quot;primary.example.test&quot;</span>, <span class=\"hljs-number\">5432</span>);\n<span class=\"hljs-keyword\">var</span> options = dataSource.CreateDedicatedSessionOptions(endpoint);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>BlueTusk does not silently fail a replication stream over to another host.\nThe application must establish that the replacement server and slot are safe\nfor its persisted resume position.</p>\n<p>BlueTusk supports PostgreSQL 15 through 19 and provides:</p>\n<ul>\n<li>physical and logical replication connections;</li>\n<li>system identification, settings, replication-slot discovery, and slot\nlifecycle commands;</li>\n<li>publication and publication-table discovery;</li>\n<li>WAL data, primary keepalives, standby status updates, and hot-standby\nfeedback;</li>\n<li>transaction streaming and two-phase startup options;</li>\n<li>raw payloads for any logical decoding output plugin; and</li>\n<li>complete <code>pgoutput</code> decoding in <code>BlueTusk.Replication.PgOutput</code>.</li>\n</ul>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "server-setup",
+          "text": "Server setup",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>The server must admit a role with the <code>REPLICATION</code> attribute in <code>pg_hba.conf</code>.\nLogical replication also requires <code>wal_level = logical</code>; replication capacity\nis controlled by <code>max_wal_senders</code> and <code>max_replication_slots</code>.</p>\n<p>Use a dedicated least-privilege role in production. Keep credentials out of\nlogs and source control. BlueTusk verifies the server certificate and hostname\nby default; local environments without TLS must explicitly select\n<code>SSL Mode=Disable</code>.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "logical-replication",
+          "text": "Logical replication",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Create the publication and slot once through deployment tooling or through the\nconnection:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var replication =\n    await BlueTuskLogicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n\nvar slot = await replication.CreateReplicationSlotAsync(\n    slotName: \"app_slot\",\n    outputPlugin: \"pgoutput\");",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n    <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n\n<span class=\"hljs-keyword\">var</span> slot = <span class=\"hljs-keyword\">await</span> replication.CreateReplicationSlotAsync(\n    slotName: <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n    outputPlugin: <span class=\"hljs-string\">&quot;pgoutput&quot;</span>);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The convenience overload exactly configures pgoutput protocol version 1 for\none publication:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await foreach (var message in replication.StartReplicationAsync(\n    slotName: \"app_slot\",\n    publicationName: \"app_publication\",\n    cancellationToken))\n{\n    if (message is BlueTuskXLogData data)\n    {\n        // data.Data contains one output-plugin message.\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> message <span class=\"hljs-keyword\">in</span> replication.StartReplicationAsync(\n    slotName: <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n    publicationName: <span class=\"hljs-string\">&quot;app_publication&quot;</span>,\n    cancellationToken))\n{\n    <span class=\"hljs-keyword\">if</span> (message <span class=\"hljs-keyword\">is</span> BlueTuskXLogData data)\n    {\n        <span class=\"hljs-comment\">// data.Data contains one output-plugin message.</span>\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Use typed startup options for binary tuples, logical messages, large\nin-progress transactions, multiple publications, two-phase transactions, or\norigin filtering:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var stream = replication.StartReplicationAsync(\n    new BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = \"app_slot\",\n        PublicationNames = [\"app_publication\", \"audit_publication\"],\n        ProtocolVersion = 3,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = true,\n        Messages = true,\n    },\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n    {\n        SlotName = <span class=\"hljs-string\">&quot;app_slot&quot;</span>,\n        PublicationNames = [<span class=\"hljs-string\">&quot;app_publication&quot;</span>, <span class=\"hljs-string\">&quot;audit_publication&quot;</span>],\n        ProtocolVersion = <span class=\"hljs-number\">3</span>,\n        StreamingMode = BlueTuskLogicalStreamingMode.On,\n        TwoPhase = <span class=\"hljs-literal\">true</span>,\n        Messages = <span class=\"hljs-literal\">true</span>,\n    },\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The selected protocol features must be supported by the server. Protocol\nversion 2 adds streamed transactions, version 3 adds two-phase messages, and\nversion 4 adds parallel-stream abort metadata.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "pgoutput-decoding",
+          "text": "pgoutput decoding",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Reference <code>BlueTusk.Replication.PgOutput</code> and apply the decoder extension:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var decoderOptions = new BlueTuskPgOutputDecoderOptions\n{\n    ProtocolVersion = 3,\n    StreamingMode = BlueTuskPgOutputStreamingMode.On,\n    TwoPhase = true,\n};\n\nawait foreach (var envelope in stream.DecodePgOutputAsync(\n    decoderOptions,\n    cancellationToken))\n{\n    switch (envelope.Message)\n    {\n        case BlueTuskPgOutputRelation relation:\n            // Cache relation.Columns by relation.RelationId.\n            break;\n        case BlueTuskPgOutputInsert insert:\n            // Tuple values retain null, unchanged-TOAST, text, or binary form.\n            break;\n        case BlueTuskPgOutputStreamStart streamStart:\n            // A segment of a large in-progress transaction has started.\n            break;\n        case BlueTuskPgOutputPrepare prepare:\n            // A two-phase transaction reached PREPARE TRANSACTION.\n            break;\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> decoderOptions = <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputDecoderOptions\n{\n    ProtocolVersion = <span class=\"hljs-number\">3</span>,\n    StreamingMode = BlueTuskPgOutputStreamingMode.On,\n    TwoPhase = <span class=\"hljs-literal\">true</span>,\n};\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> stream.DecodePgOutputAsync(\n    decoderOptions,\n    cancellationToken))\n{\n    <span class=\"hljs-keyword\">switch</span> (envelope.Message)\n    {\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputRelation relation:\n            <span class=\"hljs-comment\">// Cache relation.Columns by relation.RelationId.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputInsert insert:\n            <span class=\"hljs-comment\">// Tuple values retain null, unchanged-TOAST, text, or binary form.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputStreamStart streamStart:\n            <span class=\"hljs-comment\">// A segment of a large in-progress transaction has started.</span>\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPgOutputPrepare prepare:\n            <span class=\"hljs-comment\">// A two-phase transaction reached PREPARE TRANSACTION.</span>\n            <span class=\"hljs-keyword\">break</span>;\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>BlueTuskPgOutputEnvelope</code> retains the enclosing <code>BlueTuskXLogData</code>, including\nits WAL start, end, server end, and server clock. The decoder validates message\nlengths, flags, tuple markers, protocol-version capabilities, and stream\nsegment state.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "feedback-and-durability",
+          "text": "Feedback and durability",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>BlueTusk automatically answers primary keepalives that request an immediate\nreply. Applications control acknowledged positions. For logical <code>pgoutput</code>,\ncheckpoint the transaction-end LSN from a terminal message, not\n<code>BlueTuskXLogData.WalEnd</code>: logical payload byte length is not a WAL byte count.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await ApplyAndCommitAsync(envelope.Message, cancellationToken);\n\nif (envelope.TryGetTransactionEndPosition(out var applied))\n{\n    await checkpoints.StoreAppliedPositionAsync(applied, cancellationToken);\n    await replication.SendStandbyStatusUpdateAsync(\n        new BlueTuskStandbyStatus(\n            Written: applied,\n            Flushed: applied,\n            Applied: applied),\n        cancellationToken);\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> ApplyAndCommitAsync(envelope.Message, cancellationToken);\n\n<span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n{\n    <span class=\"hljs-keyword\">await</span> checkpoints.StoreAppliedPositionAsync(applied, cancellationToken);\n    <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n        <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(\n            Written: applied,\n            Flushed: applied,\n            Applied: applied),\n        cancellationToken);\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>TryGetTransactionEndPosition</code> recognizes commit, streamed commit, prepared,\ncommit-prepared, rollback-prepared, and streamed-prepare terminal messages.\nPersist a prepare position only when the consumer also durably retains the\nprepared transaction’s state.</p>\n<p>For physical replication, payload bytes correspond to WAL bytes, so\n<code>BlueTuskXLogData.WalEnd</code> is the receiver position:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var applied = wal.WalEnd;\nawait replication.SendStandbyStatusUpdateAsync(\n    new BlueTuskStandbyStatus(\n        Written: applied,\n        Flushed: applied,\n        Applied: applied),\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> applied = wal.WalEnd;\n<span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(\n        Written: applied,\n        Flushed: applied,\n        Applied: applied),\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Advance <code>Flushed</code> or <code>Applied</code> only after the corresponding data is durable.\nPostgreSQL can reclaim WAL based on slot progress; acknowledging data that can\nstill be lost breaks recovery guarantees. BlueTusk rejects feedback where\n<code>Applied &gt; Flushed &gt; Written</code> or where any position moves backwards, and it\nupdates its local status only after the wire write succeeds. Concurrent manual\nupdates and automatic keepalive replies are serialized. Physical standbys can\nalso call <code>SendHotStandbyFeedbackAsync</code> with their <code>xmin</code> horizons.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "physical-replication",
+          "text": "Physical replication",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Identify the system and begin at a retained WAL position:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var replication =\n    await BlueTuskPhysicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\nvar identity = await replication.IdentifySystemAsync(cancellationToken);\n\nawait foreach (var message in replication.StartReplicationAsync(\n    identity.WalPosition,\n    cancellationToken: cancellationToken))\n{\n    switch (message)\n    {\n        case BlueTuskXLogData wal:\n            await PersistWalAsync(wal.Data, cancellationToken);\n            await replication.SendStandbyStatusUpdateAsync(\n                new BlueTuskStandbyStatus(wal.WalEnd, wal.WalEnd, wal.WalEnd),\n                cancellationToken);\n            break;\n        case BlueTuskPrimaryKeepalive keepalive:\n            Console.WriteLine($\"Primary WAL end: {keepalive.ServerWalEnd}\");\n            break;\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n    <span class=\"hljs-keyword\">await</span> BlueTuskPhysicalReplicationConnection.OpenAsync(\n        dataSource.CreateDedicatedSessionOptions());\n<span class=\"hljs-keyword\">var</span> identity = <span class=\"hljs-keyword\">await</span> replication.IdentifySystemAsync(cancellationToken);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> message <span class=\"hljs-keyword\">in</span> replication.StartReplicationAsync(\n    identity.WalPosition,\n    cancellationToken: cancellationToken))\n{\n    <span class=\"hljs-keyword\">switch</span> (message)\n    {\n        <span class=\"hljs-keyword\">case</span> BlueTuskXLogData wal:\n            <span class=\"hljs-keyword\">await</span> PersistWalAsync(wal.Data, cancellationToken);\n            <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n                <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(wal.WalEnd, wal.WalEnd, wal.WalEnd),\n                cancellationToken);\n            <span class=\"hljs-keyword\">break</span>;\n        <span class=\"hljs-keyword\">case</span> BlueTuskPrimaryKeepalive keepalive:\n            Console.WriteLine(<span class=\"hljs-string\">$&quot;Primary WAL end: <span class=\"hljs-subst\">{keepalive.ServerWalEnd}</span>&quot;</span>);\n            <span class=\"hljs-keyword\">break</span>;\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>For a physical slot, prefer the retained restart position returned by\n<code>ReadReplicationSlotAsync</code> over an older caller-cached position.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "discovery-and-custom-plugins",
+          "text": "Discovery and custom plugins",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>GetReplicationSlotsAsync</code> lists slot activity and progress.\n<code>GetPublicationsAsync</code> and <code>GetPublicationTablesAsync</code> expose publication\nownership, operations, columns, and row filters.</p>\n<p>For another logical decoding plugin, create the slot with its plugin name and\npass arbitrary plugin options:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var stream = replication.StartReplicationAsync(\n    new BlueTuskLogicalReplicationRequest\n    {\n        SlotName = \"audit_slot\",\n        PluginOptions = new Dictionary<string, string?>\n        {\n            [\"include-xids\"] = \"true\",\n        },\n    },\n    cancellationToken);",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> stream = replication.StartReplicationAsync(\n    <span class=\"hljs-keyword\">new</span> BlueTuskLogicalReplicationRequest\n    {\n        SlotName = <span class=\"hljs-string\">&quot;audit_slot&quot;</span>,\n        PluginOptions = <span class=\"hljs-keyword\">new</span> Dictionary&lt;<span class=\"hljs-built_in\">string</span>, <span class=\"hljs-built_in\">string</span>?&gt;\n        {\n            [<span class=\"hljs-string\">&quot;include-xids&quot;</span>] = <span class=\"hljs-string\">&quot;true&quot;</span>,\n        },\n    },\n    cancellationToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Each <code>BlueTuskXLogData.Data</code> value is the plugin’s raw payload. BlueTusk does\nnot interpret custom formats.</p>\n<p>Cancellation or asynchronous enumerator disposal sends <code>CopyDone</code>, drains the\nserver back to <code>ReadyForQuery</code>, and releases the replication operation.\nForced connection disposal instead closes the transport to interrupt a pending\nread. The protocol layer retains its rented receive buffer until that read has\nunwound, so cancellation or teardown cannot return storage to the shared pool\nwhile an asynchronous continuation still references it. A deterministic unit\ntest and the live replication-disposal stress case enforce this ownership\ninvariant.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "reconnect-and-resume",
+          "text": "Reconnect and resume",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Persist a <code>BlueTuskLogicalReplicationCheckpoint</code> outside the replication\nprocess. It binds the last durably applied transaction-end position to the\nPostgreSQL system identifier, database, persistent slot, and output plug-in.\nOn a transient disconnect, create a new dedicated replication connection from\nthe data source, validate that checkpoint, and request its applied position.\nDo not resume from the largest position merely received in memory.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "var checkpoint = await checkpoints.LoadAsync(cancellationToken);\n\nwhile (!cancellationToken.IsCancellationRequested)\n{\n    try\n    {\n        await using var replication =\n            await BlueTuskLogicalReplicationConnection.OpenAsync(\n                dataSource.CreateDedicatedSessionOptions(),\n                cancellationToken);\n\n        await replication.ValidateResumeCheckpointAsync(\n            checkpoint,\n            cancellationToken);\n\n        var request = new BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = checkpoint.SlotName,\n            PublicationNames = [\"app_publication\"],\n            StartPosition = checkpoint.AppliedPosition,\n        };\n\n        await foreach (var envelope in replication\n            .StartReplicationAsync(request, cancellationToken)\n            .DecodePgOutputAsync(cancellationToken: cancellationToken))\n        {\n            await ApplyAndCommitAsync(envelope.Message, cancellationToken);\n            if (envelope.TryGetTransactionEndPosition(out var applied))\n            {\n                checkpoint = checkpoint with { AppliedPosition = applied };\n                await checkpoints.StoreAsync(checkpoint, cancellationToken);\n                await replication.SendStandbyStatusUpdateAsync(\n                    new BlueTuskStandbyStatus(applied, applied, applied),\n                    cancellationToken);\n            }\n        }\n    }\n    catch (Exception exception) when (\n        IsTransientReplicationFailure(exception) &&\n        !cancellationToken.IsCancellationRequested)\n    {\n        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);\n    }\n}",
+        "highlighted": "<span class=\"hljs-keyword\">var</span> checkpoint = <span class=\"hljs-keyword\">await</span> checkpoints.LoadAsync(cancellationToken);\n\n<span class=\"hljs-keyword\">while</span> (!cancellationToken.IsCancellationRequested)\n{\n    <span class=\"hljs-keyword\">try</span>\n    {\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> replication =\n            <span class=\"hljs-keyword\">await</span> BlueTuskLogicalReplicationConnection.OpenAsync(\n                dataSource.CreateDedicatedSessionOptions(),\n                cancellationToken);\n\n        <span class=\"hljs-keyword\">await</span> replication.ValidateResumeCheckpointAsync(\n            checkpoint,\n            cancellationToken);\n\n        <span class=\"hljs-keyword\">var</span> request = <span class=\"hljs-keyword\">new</span> BlueTuskPgOutputReplicationOptions\n        {\n            SlotName = checkpoint.SlotName,\n            PublicationNames = [<span class=\"hljs-string\">&quot;app_publication&quot;</span>],\n            StartPosition = checkpoint.AppliedPosition,\n        };\n\n        <span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> envelope <span class=\"hljs-keyword\">in</span> replication\n            .StartReplicationAsync(request, cancellationToken)\n            .DecodePgOutputAsync(cancellationToken: cancellationToken))\n        {\n            <span class=\"hljs-keyword\">await</span> ApplyAndCommitAsync(envelope.Message, cancellationToken);\n            <span class=\"hljs-keyword\">if</span> (envelope.TryGetTransactionEndPosition(<span class=\"hljs-keyword\">out</span> <span class=\"hljs-keyword\">var</span> applied))\n            {\n                checkpoint = checkpoint <span class=\"hljs-keyword\">with</span> { AppliedPosition = applied };\n                <span class=\"hljs-keyword\">await</span> checkpoints.StoreAsync(checkpoint, cancellationToken);\n                <span class=\"hljs-keyword\">await</span> replication.SendStandbyStatusUpdateAsync(\n                    <span class=\"hljs-keyword\">new</span> BlueTuskStandbyStatus(applied, applied, applied),\n                    cancellationToken);\n            }\n        }\n    }\n    <span class=\"hljs-keyword\">catch</span> (Exception exception) <span class=\"hljs-keyword\">when</span> (\n        IsTransientReplicationFailure(exception) &amp;&amp;\n        !cancellationToken.IsCancellationRequested)\n    {\n        <span class=\"hljs-keyword\">await</span> Task.Delay(TimeSpan.FromSeconds(<span class=\"hljs-number\">1</span>), cancellationToken);\n    }\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Validation rejects another cluster/database, a missing, temporary, active, or\nwrong-plug-in slot, lost/unreserved WAL, a checkpoint older than <code>restart_lsn</code>,\na server <code>confirmed_flush_lsn</code> ahead of the application checkpoint, and a\ncheckpoint ahead of the server. This implements PostgreSQL’s documented advice\nto compare <code>confirmed_flush_lsn</code> before <code>START_REPLICATION</code>, which otherwise\nstarts at the greater of the requested and confirmed positions. If validation\nfails, stop and repair from an application-specific snapshot rather than\nskipping data. Recreate the decoder after reconnect so relation and\nstreamed-transaction state cannot leak across sessions.</p>\n<p>The live version-matrix test uses a persistent slot over multiple independent\nsessions, rejects wrong-system, missing, active, and stale checkpoints, and\nverifies every transaction exactly once in the durable consumer log. Set\n<code>BLUETUSK_REPLICATION_DURABILITY_EPOCHS</code> to increase reconnect epochs for a\nbounded soak.</p>\n<p>The scheduled/manual PostgreSQL 19 endurance job runs 1,000 epochs (4,000\nreplicated rows) and the same test remains part of the ordinary PostgreSQL\n15–19 matrix at its fast default. The replication tests cover feedback ordering,\nwrong-system, missing, active, stale, and retained-WAL failures plus repeated\nconnection teardown/recreation. This closes the replication-specific\ndurability matrix; it does not by itself make the experimental provider a\napplication deployment.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "repack",
+    "title": "PostgreSQL 19 native REPACK",
+    "summary": "Run repack with the right PostgreSQL permissions and operational controls.",
+    "order": 18,
+    "headings": [
+      {
+        "id": "repack-one-table",
+        "text": "Repack one table",
+        "level": 2
+      },
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "monitor-progress",
+        "text": "Monitor progress",
+        "level": 2
+      },
+      {
+        "id": "production-checks",
+        "text": "Production checks",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/repack.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>PostgreSQL 19 adds the native <code>REPACK</code> statement for rewriting a table and\nreturning space occupied by dead rows to the operating system. This is the\nPostgreSQL command, not the separate <code>pg_repack</code> extension.</p>\n<p>BlueTusk 1.2 supports every documented PostgreSQL 19 form through\n<code>BlueTuskRepackRequest</code>, prevents unsupported combinations before sending SQL,\nand exposes live server progress from <code>pg_stat_progress_repack</code>.</p>\n<p>Use the native REPACK API only when the server reports support for the requested form. Check the PostgreSQL documentation for the version you deploy.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "repack-one-table",
+          "text": "Repack one table",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Open a dedicated connection. A repack owns that physical session until the\nserver completes or the operation is cancelled.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.Maintenance;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var connection = await dataSource.OpenConnectionAsync();\n\nif (connection.SupportsRepack is not true)\n{\n    throw new InvalidOperationException(\"PostgreSQL 19 or later is required.\");\n}\n\nawait connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(\"events\", \"app\") with\n    {\n        Concurrently = true,\n        Analyze = true,\n        CommandTimeoutSeconds = 0,\n    },\n    stoppingToken);",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.Maintenance;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">if</span> (connection.SupportsRepack <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">true</span>)\n{\n    <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;PostgreSQL 19 or later is required.&quot;</span>);\n}\n\n<span class=\"hljs-keyword\">await</span> connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(<span class=\"hljs-string\">&quot;events&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>) <span class=\"hljs-keyword\">with</span>\n    {\n        Concurrently = <span class=\"hljs-literal\">true</span>,\n        Analyze = <span class=\"hljs-literal\">true</span>,\n        CommandTimeoutSeconds = <span class=\"hljs-number\">0</span>,\n    },\n    stoppingToken);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>CommandTimeoutSeconds = 0</code> disables the client timeout, which is usually the\nright choice for scheduled maintenance. Cancellation still sends PostgreSQL’s\nnormal cancellation request and restores the connection to a usable protocol\nstate.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "choose-the-operation",
+          "text": "Choose the operation",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<table>\n<thead>\n<tr>\n<th>Goal</th>\n<th>Request</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Rewrite one table</td>\n<td><code>ForTable(&quot;events&quot;, &quot;app&quot;)</code></td>\n</tr>\n<tr>\n<td>Keep a supported table available</td>\n<td>Set <code>Concurrently = true</code></td>\n</tr>\n<tr>\n<td>Refresh all table statistics</td>\n<td>Set <code>Analyze = true</code></td>\n</tr>\n<tr>\n<td>Refresh selected column statistics</td>\n<td>Set <code>Analyze = true</code> and <code>AnalyzeColumns = [&quot;tenant_id&quot;]</code></td>\n</tr>\n<tr>\n<td>Physically order by the configured clustering index</td>\n<td>Set <code>UseIndex = true</code></td>\n</tr>\n<tr>\n<td>Choose and remember a clustering index</td>\n<td>Set <code>IndexName = &quot;events_created_at_idx&quot;</code></td>\n</tr>\n<tr>\n<td>Emit PostgreSQL information messages</td>\n<td>Set <code>Verbose = true</code></td>\n</tr>\n<tr>\n<td>Process all eligible relations in the database</td>\n<td><code>ForDatabase()</code></td>\n</tr>\n<tr>\n<td>Process all relations with a configured clustering index</td>\n<td><code>ForDatabase() with { UseIndex = true }</code></td>\n</tr>\n</tbody>\n</table>\n<p>Table, schema, index, and column names are quoted as PostgreSQL identifiers;\nthey are never concatenated as untrusted SQL fragments. BlueTusk sends\n<code>REPACK</code> over the simple protocol on a non-multiplexed connection because it is\nconnection-affine maintenance work.</p>\n<p>For a newly introduced PostgreSQL feature without a BlueTusk convenience API,\nuse a parameterized <code>BlueTuskCommand</code>. BlueTusk does not maintain an allow-list\nof SQL statements, so native PostgreSQL grammar remains available immediately.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "monitor-progress",
+          "text": "Monitor progress",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Poll from a second connection while the maintenance connection is busy:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var observer = await dataSource.OpenConnectionAsync();\n\nforeach (var operation in await observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        \"REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt\",\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent is { } percent ? percent / 100 : null,\n        operation.IndexRebuildCount);\n}",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> observer = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> operation <span class=\"hljs-keyword\">in</span> <span class=\"hljs-keyword\">await</span> observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        <span class=\"hljs-string\">&quot;REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt&quot;</span>,\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent <span class=\"hljs-keyword\">is</span> { } percent ? percent / <span class=\"hljs-number\">100</span> : <span class=\"hljs-literal\">null</span>,\n        operation.IndexRebuildCount);\n}",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The returned model includes the database and relation OIDs, command, phase,\nindex OID, tuple counters, heap-block counters, index rebuild count, and a\nbounded <code>HeapScanPercent</code> when PostgreSQL reports a block total. A completed\noperation disappears from the view, so store any history your operations team\nneeds outside PostgreSQL.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "production-checks",
+          "text": "Production checks",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>Before scheduling <code>REPACK</code>:</p>\n<ol>\n<li>Grant the execution role <code>MAINTAIN</code> on each target table.</li>\n<li>Budget free disk for a complete table and index copy. A sort can require up\nto roughly twice the table size plus its indexes.</li>\n<li>Use <code>CONCURRENTLY</code> only for a logged, non-partitioned user table with a\nprimary key or index-based replica identity.</li>\n<li>Reserve a <code>max_repack_replication_slots</code> slot and enough WAL capacity for a\nconcurrent run.</li>\n<li>Choose a quiet period. Concurrent mode shortens the final exclusive lock,\nbut it still needs one to swap relation files and catch-up work can extend it.</li>\n<li>Alert on a stalled phase, rapidly growing WAL or temporary storage, lock\nwaits, cancellation, and server errors.</li>\n<li>Verify table row counts and application health after completion.</li>\n</ol>\n<p>Database-wide and concurrent operations cannot run inside a transaction.\nPostgreSQL also rejects a partitioned-table repack inside a transaction. The\nBlueTusk request validator rejects transaction and option combinations it can\nprove invalid; relation-specific eligibility remains authoritative on the\nserver.</p>\n<p>The command’s full behavior and restrictions are defined by the PostgreSQL 19\n<a href=\"https://www.postgresql.org/docs/19/sql-repack.html\"><code>REPACK</code> documentation</a>,\nand the progress columns and phases are defined by\n<a href=\"https://www.postgresql.org/docs/19/progress-reporting.html#REPACK-PROGRESS-REPORTING\"><code>pg_stat_progress_repack</code></a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "ado-net-compatibility",
+    "title": "ADO.NET compatibility",
+    "summary": "Check supported ADO.NET contracts and migrate provider-neutral code.",
+    "order": 19,
+    "headings": [
+      {
+        "id": "host-registration",
+        "text": "Host registration",
+        "level": 2
+      },
+      {
+        "id": "migration-from-npgsql",
+        "text": "Migration from Npgsql",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/compatibility.md",
+    "keywords": [],
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<p>Use this table to choose provider-neutral APIs or migrate from another PostgreSQL provider.</p>\n<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>Support</th>\n<th>Contract</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Text commands</td>\n<td>Supported</td>\n<td><code>CommandType.Text</code>, named or positional parameters, sync/async execution and local transactions.</td>\n</tr>\n<tr>\n<td>Stored procedures and functions</td>\n<td>Supported through SQL text</td>\n<td>Use <code>CALL ...</code> for procedures and <code>SELECT ...</code> for functions. PostgreSQL <code>OUT</code> and <code>INOUT</code> values are read from returned result rows.</td>\n</tr>\n<tr>\n<td><code>CommandType.StoredProcedure</code></td>\n<td>Excluded</td>\n<td>Setting it throws <code>NotSupportedException</code>; BlueTusk does not invent a provider-specific routine-name convention.</td>\n</tr>\n<tr>\n<td>Parameter directions</td>\n<td><code>Input</code> supported</td>\n<td><code>Output</code>, <code>InputOutput</code> and <code>ReturnValue</code> throw <code>NotSupportedException</code>. Use PostgreSQL result rows for output values.</td>\n</tr>\n<tr>\n<td>Local transactions</td>\n<td>Supported</td>\n<td><code>BeginTransaction</code>, command enlistment, commit, rollback, savepoints and async equivalents.</td>\n</tr>\n<tr>\n<td><code>System.Transactions</code> ambient/distributed enlistment</td>\n<td>Excluded</td>\n<td>Ambient, distributed, and promotable enlistment are unsupported. Keep work inside an explicit <code>DbTransaction</code>.</td>\n</tr>\n<tr>\n<td><code>CommandBehavior.Default</code></td>\n<td>Supported</td>\n<td>All rows and result sets are buffered unless sequential access is selected.</td>\n</tr>\n<tr>\n<td><code>SingleRow</code></td>\n<td>Supported</td>\n<td>At most the first row is exposed.</td>\n</tr>\n<tr>\n<td><code>SingleResult</code></td>\n<td>Supported</td>\n<td><code>NextResult</code> returns false after the first result set.</td>\n</tr>\n<tr>\n<td><code>SequentialAccess</code></td>\n<td>Supported</td>\n<td>Uses the incremental portal reader; combine with <code>SingleRow</code>, <code>SingleResult</code> or <code>CloseConnection</code> as needed.</td>\n</tr>\n<tr>\n<td><code>CloseConnection</code></td>\n<td>Supported</td>\n<td>Closing or disposing the reader closes its logical connection.</td>\n</tr>\n<tr>\n<td><code>SchemaOnly</code> and <code>KeyInfo</code></td>\n<td>Excluded</td>\n<td>Both throw <code>NotSupportedException</code>; they are never silently ignored.</td>\n</tr>\n<tr>\n<td>Reader schema</td>\n<td>Supported</td>\n<td><code>GetColumnSchema</code>, <code>GetSchemaTable</code> and async equivalents expose names, ordinals, CLR/provider types and available origin metadata.</td>\n</tr>\n<tr>\n<td>Connection schema</td>\n<td>Supported</td>\n<td><code>MetaDataCollections</code>, <code>DataSourceInformation</code>, <code>DataTypes</code>, <code>Restrictions</code>, <code>ReservedWords</code>, <code>Databases</code>, <code>Schemas</code>, <code>Tables</code> and <code>Columns</code>. Live catalogue collections require an open connection.</td>\n</tr>\n<tr>\n<td>Dapper</td>\n<td>Supported</td>\n<td>Parameter binding, command execution and POCO materialisation are covered by live acceptance tests.</td>\n</tr>\n<tr>\n<td>Dependency injection</td>\n<td>Supported</td>\n<td><code>BlueTusk.Data.DependencyInjection</code> registers one shared <code>BlueTuskDataSource</code> as both its concrete type and <code>DbDataSource</code>.</td>\n</tr>\n<tr>\n<td>Readiness health check</td>\n<td>Supported</td>\n<td>The DI integration registers a <code>bluetusk</code> check tagged <code>bluetusk</code> and <code>ready</code>; it opens a connection and executes <code>SELECT 1</code>.</td>\n</tr>\n<tr>\n<td>PostgreSQL 19 native <code>REPACK</code></td>\n<td>Supported on PostgreSQL 19+</td>\n<td>Typed sync/async execution, every documented command shape, safe identifier quoting, non-multiplexed routing, cancellation, and <code>pg_stat_progress_repack</code> monitoring. Requires a BlueTusk build with REPACK support and the corresponding PostgreSQL capability.</td>\n</tr>\n</tbody>\n</table>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "host-registration",
+          "text": "Host registration",
+          "level": 2
+        }
+      },
+      {
+        "kind": "code",
+        "code": "services.AddDataSource(\n    configuration.GetConnectionString(\"PostgreSQL\")!,\n    builder => builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: \"postgresql\");",
+        "highlighted": "services.AddDataSource(\n    configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!,\n    builder =&gt; builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: <span class=\"hljs-string\">&quot;postgresql&quot;</span>);",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Resolve <code>BlueTuskDataSource</code> for provider-specific features or <code>DbDataSource</code>\nfor provider-neutral application code. Keep the registered data source\nlong-lived so it owns and reuses the physical pool.</p>\n"
+      },
+      {
+        "kind": "heading",
+        "heading": {
+          "id": "migration-from-npgsql",
+          "text": "Migration from Npgsql",
+          "level": 2
+        }
+      },
+      {
+        "kind": "html",
+        "html": "<p>For provider-neutral code, change the data-source registration and retain\n<code>DbConnection</code>, <code>DbCommand</code>, <code>DbDataReader</code>, Dapper and explicit\n<code>DbTransaction</code> usage. Replace provider-specific parameter types with\n<code>BlueTuskParameter</code>, <code>DbType</code>, <code>PostgreSqlTypeOid</code> or\n<code>PostgreSqlTypeName</code>.</p>\n<p>Rewrite <code>CommandType.StoredProcedure</code> calls as explicit PostgreSQL SQL:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "command.CommandType = CommandType.Text;\ncommand.CommandText = \"CALL app.rotate_keys(@tenant_id)\";",
+        "highlighted": "command.CommandType = CommandType.Text;\ncommand.CommandText = <span class=\"hljs-string\">&quot;CALL app.rotate_keys(@tenant_id)&quot;</span>;",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Read procedure/function output from the returned row rather than output\nparameters. Replace <code>TransactionScope</code> with an explicit local transaction.\nApplications that require ambient/distributed transactions, output parameters,\n<code>SchemaOnly</code> or <code>KeyInfo</code> must stay on a provider that implements those\ncontracts.</p>\n"
       }
     ]
   }

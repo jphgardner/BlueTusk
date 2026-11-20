@@ -4,7 +4,7 @@ namespace BlueTusk.Studio.Tests;
 
 public sealed class StudioAdmissionTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Replicas_share_global_and_scope_caps_and_release_rejected_scope_slots()
     {
         await using var firstDataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());
@@ -26,7 +26,7 @@ public sealed class StudioAdmissionTests
         Assert.Null(await first.TryAcquireAsync("tenant-a", TestContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Admission_rejects_missing_scope_before_opening_a_connection()
     {
         await using var dataSource = BlueTuskDataSource.Create(StudioQueryServiceTests.ConnectionString());

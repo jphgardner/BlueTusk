@@ -16,7 +16,13 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
 
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+        RegexOptions.CultureInvariant
+#if NET7_0_OR_GREATER
+        | RegexOptions.NonBacktracking
+#else
+        | RegexOptions.Compiled
+#endif
+        );
 
     private readonly DbDataSource _dataSource;
     private readonly string _controlSchema;
@@ -26,8 +32,8 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
         DbDataSource dataSource,
         string controlSchema = "bluetusk_control")
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         if (!SchemaPattern.IsMatch(controlSchema))
         {
             throw new ArgumentException(
@@ -242,7 +248,7 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
         ControlPlaneAuditRecord record,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         Validate(record);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -317,9 +323,9 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
             throw new ArgumentException("The operation ID cannot be empty.", nameof(record));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(record.ActorId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(record.Target);
-        ArgumentException.ThrowIfNullOrWhiteSpace(record.Reason);
+        BlueTuskGuard.NotNullOrWhiteSpace(record.ActorId);
+        BlueTuskGuard.NotNullOrWhiteSpace(record.Target);
+        BlueTuskGuard.NotNullOrWhiteSpace(record.Reason);
         if (!Enum.IsDefined(record.Kind) || !Enum.IsDefined(record.Status))
         {
             throw new ArgumentOutOfRangeException(nameof(record));

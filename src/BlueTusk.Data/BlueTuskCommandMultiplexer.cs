@@ -110,7 +110,9 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         return CompleteEnqueueAsync(writing, request);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<T> CompleteEnqueueAsync<T>(
         ValueTask writing,
         MultiplexedCommandRequest<T> request)
@@ -211,7 +213,9 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<LeaseExecutionResult> ExecuteLeaseAsync(
         BlueTuskConnection? connection,
         int workerIndex,
@@ -332,7 +336,9 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         return new LeaseExecutionResult(connection, processed);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask ExecuteSingleAsync(
         BlueTuskConnection connection,
         IMultiplexedCommandRequest request)
@@ -383,7 +389,9 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask ExecutePipelineAsync(
         BlueTuskConnection connection,
         PipelineWorkerBuffers buffers,
@@ -1088,7 +1096,7 @@ internal static class BlueTuskMultiplexingClassifier
 
     internal static bool IsSessionNeutral(string sql)
     {
-        ArgumentNullException.ThrowIfNull(sql);
+        BlueTuskGuard.NotNull(sql);
         return Classifications.GetValue(
             sql,
             static commandText => new Classification(Scan(commandText))).IsSessionNeutral;

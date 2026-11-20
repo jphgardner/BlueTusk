@@ -9,7 +9,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class OrdersLiveSampleTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task DeployedSampleBootstrapsRealWalSseReconnectProcessRestartAndControlledDdlRecoveryFromColocatedCheckpoint()
     {
         await using var db = await ProjectionDatabase.CreateAsync();
@@ -190,9 +190,15 @@ public sealed class OrdersLiveSampleTests
 
     private static Process Start(ProjectionDatabase db, string publication, string slot, int port, string apiKey, int version = 1, Guid? recoveryId = null, Action<string>? log = null)
     {
-        var projectRoot = FindRoot();
-        var executable = Path.Combine(projectRoot, "samples", "BlueTusk.Projections.Orders.Live", "bin", "Release", "net10.0", "BlueTusk.Projections.Orders.Live.dll");
-        var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        var executable = Environment.GetEnvironmentVariable("BLUETUSK_ORDERS_SAMPLE_DLL")
+            ?? Path.Combine(AppContext.BaseDirectory, "BlueTusk.Projections.Orders.Live.dll");
+        if (!File.Exists(executable))
+        {
+            throw new FileNotFoundException("The built Orders Live sample was not found.", executable);
+        }
+
+        var dotnet = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet";
+        var start = new ProcessStartInfo(dotnet) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         start.ArgumentList.Add(executable);
         start.Environment["BLUETUSK_SAMPLE_CONNECTION_STRING"] = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         start.Environment["BLUETUSK_SAMPLE_API_KEY"] = apiKey;
@@ -256,15 +262,6 @@ public sealed class OrdersLiveSampleTests
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await command.ExecuteNonQueryAsync(token);
-    }
-
-    private static string FindRoot()
-    {
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "BlueTusk.slnx"))) { return directory.FullName; }
-        }
-        throw new DirectoryNotFoundException("The repository root was not found.");
     }
 
     private sealed class SseConnection(HttpResponseMessage response, StreamReader reader) : IAsyncDisposable

@@ -13,10 +13,18 @@ namespace BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDependencies dependencies)
     : RelationalAnnotationProvider(dependencies)
 {
+#if BLUETUSK_EF6_OR_GREATER
     public override IEnumerable<IAnnotation> For(ITable table, bool designTime)
+#else
+    public override IEnumerable<IAnnotation> For(ITable table)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(table);
+        BlueTuskGuard.NotNull(table);
+#if BLUETUSK_EF6_OR_GREATER
         foreach (var annotation in base.For(table, designTime))
+#else
+        foreach (var annotation in base.For(table))
+#endif
         {
             yield return annotation;
         }
@@ -50,11 +58,19 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
         }
     }
 
+#if BLUETUSK_EF6_OR_GREATER
     public override IEnumerable<IAnnotation> For(ITableIndex index, bool designTime)
+#else
+    public override IEnumerable<IAnnotation> For(ITableIndex index)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(index);
+        BlueTuskGuard.NotNull(index);
 
+#if BLUETUSK_EF6_OR_GREATER
         foreach (var annotation in base.For(index, designTime))
+#else
+        foreach (var annotation in base.For(index))
+#endif
         {
             yield return annotation;
         }
@@ -87,10 +103,18 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
         }
     }
 
+#if BLUETUSK_EF6_OR_GREATER
     public override IEnumerable<IAnnotation> For(IColumn column, bool designTime)
+#else
+    public override IEnumerable<IAnnotation> For(IColumn column)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(column);
+        BlueTuskGuard.NotNull(column);
+#if BLUETUSK_EF6_OR_GREATER
         foreach (var annotation in base.For(column, designTime))
+#else
+        foreach (var annotation in base.For(column))
+#endif
         {
             yield return annotation;
         }
@@ -145,10 +169,18 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
         }
     }
 
+#if BLUETUSK_EF6_OR_GREATER
     public override IEnumerable<IAnnotation> For(ICheckConstraint constraint, bool designTime)
+#else
+    public override IEnumerable<IAnnotation> For(ICheckConstraint constraint)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(constraint);
+        BlueTuskGuard.NotNull(constraint);
+#if BLUETUSK_EF6_OR_GREATER
         foreach (var annotation in base.For(constraint, designTime))
+#else
+        foreach (var annotation in base.For(constraint))
+#endif
         {
             yield return annotation;
         }

@@ -20,10 +20,10 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
     public PostgreSqlEmbeddingCheckpointProvider(DbDataSource source, ISearchEmbeddingProvider provider, SearchEmbeddingCheckpointOptions? options = null,
         SearchDataSourceOwnership ownership = SearchDataSourceOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(source); ArgumentNullException.ThrowIfNull(provider);
+        BlueTuskGuard.NotNull(source); BlueTuskGuard.NotNull(provider);
         if (!Enum.IsDefined(ownership)) { throw new ArgumentOutOfRangeException(nameof(ownership)); }
         Options = options ?? new SearchEmbeddingCheckpointOptions();
-        ArgumentException.ThrowIfNullOrWhiteSpace(Options.Schema); ArgumentException.ThrowIfNullOrWhiteSpace(provider.ModelIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(Options.Schema); BlueTuskGuard.NotNullOrWhiteSpace(provider.ModelIdentity);
         if (Options.Schema.Contains('\0', StringComparison.Ordinal) || StrictUtf8.GetByteCount(Options.Schema) > 63 ||
             provider.ModelIdentity.Contains('\0', StringComparison.Ordinal) || StrictUtf8.GetByteCount(provider.ModelIdentity) > 256 ||
             Options.Dimensions is < 1 or > 4096 || Options.MaxModels is < 1 or > 10_000 || Options.MaxRecords is < 1 or > 1_000_000 ||
@@ -46,7 +46,7 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
 
     public async ValueTask<IReadOnlyList<ReadOnlyMemory<float>>> EmbedForScopeAsync(SearchScope scope, IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope); ArgumentNullException.ThrowIfNull(texts);
+        BlueTuskGuard.NotNull(scope); BlueTuskGuard.NotNull(texts);
         var count = texts.Count;
         if (count is < 1 || count > Options.MaxBatchTexts) { throw new ArgumentException("Embedding batch exceeds its text count budget.", nameof(texts)); }
         if (_provider.ModelIdentity != ModelIdentity) { throw new InvalidOperationException("The embedding model identity changed after checkpoint construction."); }
@@ -56,7 +56,7 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
         for (var i = 0; i < count; i++)
         {
             var text = texts[i];
-            ArgumentNullException.ThrowIfNull(text);
+            BlueTuskGuard.NotNull(text);
             var length = StrictUtf8.GetByteCount(text); bytes += length;
             if (length > Options.MaxTextBytes || bytes > Options.MaxBatchInputBytes) { throw new ArgumentException("Embedding batch exceeds its input byte budget.", nameof(texts)); }
             var encoded = StrictUtf8.GetBytes(text);
@@ -66,7 +66,7 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
         var owner = Guid.NewGuid();
         try
         {
-            var claim = await ClaimAsync(scope, inputs.Keys.Order(StringComparer.Ordinal).ToArray(), owner, cancellationToken).ConfigureAwait(false);
+            var claim = await ClaimAsync(scope, inputs.Keys.OrderBy(static value => value, StringComparer.Ordinal).ToArray(), owner, cancellationToken).ConfigureAwait(false);
             if (claim.Missing.Count != 0)
             {
                 using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -120,7 +120,7 @@ public sealed partial class PostgreSqlEmbeddingCheckpointProvider : IScopedSearc
     }
     private async ValueTask EnterAsync(CancellationToken cancellationToken, bool requireInitialized = true)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (requireInitialized && Volatile.Read(ref _initialized) == 0) { throw new InvalidOperationException("Initialize embedding checkpoints before use."); }
         if (!await _operations.WaitAsync(0, cancellationToken).ConfigureAwait(false)) { throw new SearchBackpressureException(); }
         if (Volatile.Read(ref _disposed) != 0) { _operations.Release(); throw new ObjectDisposedException(nameof(PostgreSqlEmbeddingCheckpointProvider)); }

@@ -200,9 +200,6 @@ example because a checkpoint write failed or the lease was lost.
 
 ## Find out why spooling is slow
 
-> **New in 1.1.0:** `bluetusk.streams.spool.operation.duration` is not in
-> 1.0.0 or 1.1.0-rc.1.
-
 When large transactions are slow, check the spool timing histogram. It measures
 three steps of finishing a spool file:
 

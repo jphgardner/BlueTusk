@@ -63,6 +63,8 @@ jobs:
       - name: Run bounded coverage-guided target
         shell: pwsh
         env:
+          # Hosted runners may use a CPU governor AFL++ treats as suboptimal.
+          AFL_SKIP_CPUFREQ: "1"
           REQUESTED_DURATION: ${{ inputs.duration_seconds }}
           EVENT_NAME: ${{ github.event_name }}
         run: |

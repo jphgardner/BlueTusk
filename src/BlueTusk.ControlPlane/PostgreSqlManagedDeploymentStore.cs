@@ -19,7 +19,13 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+        RegexOptions.CultureInvariant
+#if NET7_0_OR_GREATER
+        | RegexOptions.NonBacktracking
+#else
+        | RegexOptions.Compiled
+#endif
+        );
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private const string SelectColumns =
         "SELECT desired_document::text, document_format, state, observed_generation, " +
@@ -34,8 +40,8 @@ public sealed class PostgreSqlManagedDeploymentStore :
         DbDataSource dataSource,
         string controlSchema = "bluetusk_control")
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         if (!SchemaPattern.IsMatch(controlSchema))
         {
             throw new ArgumentException(
@@ -127,6 +133,14 @@ public sealed class PostgreSqlManagedDeploymentStore :
              ON {_schema}.managed_deployments (tenant_id, deployment_id)
              """,
             $"""
+             CREATE INDEX IF NOT EXISTS managed_deployments_ordinal_idx
+             ON {_schema}.managed_deployments (deployment_id COLLATE "C")
+             """,
+            $"""
+             CREATE INDEX IF NOT EXISTS managed_deployments_tenant_ordinal_idx
+             ON {_schema}.managed_deployments (tenant_id, deployment_id COLLATE "C")
+             """,
+            $"""
              CREATE TABLE IF NOT EXISTS {_schema}.managed_deployment_leases (
                  deployment_id text PRIMARY KEY,
                  owner text NULL,
@@ -204,13 +218,59 @@ public sealed class PostgreSqlManagedDeploymentStore :
         }
     }
 
+    public async ValueTask<ManagedDeploymentPage> QueryAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+    {
+        BlueTuskGuard.NotNull(query);
+        query.Validate();
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = SelectColumns + $" FROM {_schema}.managed_deployments WHERE TRUE";
+        if (query.AfterDeploymentId is not null)
+        {
+            command.CommandText += " AND deployment_id COLLATE \"C\" > @after COLLATE \"C\"";
+            AddParameter(command, "after", query.AfterDeploymentId);
+        }
+        if (query.DeploymentIdPrefix is not null)
+        {
+            command.CommandText += " AND deployment_id COLLATE \"C\" LIKE @prefix ESCAPE E'\\\\'";
+            AddParameter(command, "prefix", query.DeploymentIdPrefix.Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%");
+        }
+        AddFilter("tenant_id", "tenant", query.TenantId);
+        AddFilter("provider", "provider", query.Provider);
+        AddFilter("region", "region", query.Region);
+        AddFilter("state", "state", query.State?.ToString());
+        if (query.WorkloadKind is { } kind)
+        {
+            command.CommandText += " AND EXISTS (SELECT 1 FROM jsonb_array_elements(desired_document->'workloads') AS workload" +
+                " WHERE (workload->>'kind')::integer = @kind)";
+            AddParameter(command, "kind", (int)kind);
+        }
+        command.CommandText += " ORDER BY deployment_id COLLATE \"C\" LIMIT @limit";
+        AddParameter(command, "limit", query.PageSize + 1);
+        var page = new List<ManagedDeployment>(query.PageSize + 1);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) page.Add(ReadDeployment(reader));
+        var hasMore = page.Count > query.PageSize;
+        if (hasMore) page.RemoveAt(page.Count - 1);
+        return new ManagedDeploymentPage(page.AsReadOnly(), hasMore ? page[^1].Spec.DeploymentId : null);
+
+        void AddFilter(string column, string parameter, string? value)
+        {
+            if (value is null) return;
+            command.CommandText += $" AND {column} = @{parameter}";
+            AddParameter(command, parameter, value);
+        }
+    }
+
     public async ValueTask<ManagedDeployment> PutAsync(
         ManagedDeploymentSpec spec,
         long expectedGeneration,
         CancellationToken cancellationToken = default)
     {
         ManagedDeploymentValidation.Validate(spec);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedGeneration);
+        BlueTuskGuard.NotNegative(expectedGeneration);
 
         var document = JsonSerializer.Serialize(spec, JsonOptions);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
@@ -464,7 +524,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseInput(lease.DeploymentId, lease.Owner, duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -497,7 +557,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
         ManagedDeploymentLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var command = connection.CreateCommand();
@@ -605,7 +665,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static void ValidateStatus(ManagedDeploymentStatus status, long expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(status);
+        BlueTuskGuard.NotNull(status);
         if (expectedRevision < 0 ||
             status.Revision != checked(expectedRevision + 1) ||
             status.ObservedGeneration <= 0 ||
@@ -636,7 +696,7 @@ public sealed class PostgreSqlManagedDeploymentStore :
 
     private static void ValidateIdentifier(string value, int maximumLength, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > maximumLength)
         {
             throw new ArgumentException(

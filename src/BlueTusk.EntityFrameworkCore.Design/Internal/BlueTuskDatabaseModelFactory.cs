@@ -60,8 +60,8 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         string connectionString,
         DatabaseModelFactoryOptions options)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNullOrWhiteSpace(connectionString);
+        BlueTuskGuard.NotNull(options);
 
         using var connection = new BlueTuskConnection(connectionString);
         return Create(connection, options);
@@ -71,8 +71,8 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         DbConnection connection,
         DatabaseModelFactoryOptions options)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNull(options);
 
         var closeConnection = connection.State == ConnectionState.Closed;
         if (closeConnection)
@@ -443,7 +443,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
     private static PartitionKey ParsePartitionKey(string definition)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition);
         var openingParenthesis = definition.IndexOf('(');
         var closingParenthesis = definition.LastIndexOf(')');
         if (openingParenthesis <= 0 || closingParenthesis <= openingParenthesis)
@@ -1760,7 +1760,11 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         index[BlueTuskIndexAnnotations.Collations] = collations.ToArray();
         index[BlueTuskIndexAnnotations.NullSortOrders] = nullSortOrders.ToArray();
         index[BlueTuskIndexAnnotations.IncludeProperties] = includeColumns.ToArray();
+#if BLUETUSK_EF7_OR_GREATER
         index.IsDescending = descending.ToArray();
+#else
+        index[BlueTuskIndexAnnotations.Descending] = descending.ToArray();
+#endif
     }
 
     private static string QualifyCatalogueIdentifier(string schema, string name, string defaultSchema) =>

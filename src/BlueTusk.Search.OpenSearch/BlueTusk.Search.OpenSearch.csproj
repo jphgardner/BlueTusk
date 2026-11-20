@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
+    <BlueTuskLegacyDataSourcePublicApi>true</BlueTuskLegacyDataSourcePublicApi>
     <BlueTuskProductFamily>Search</BlueTuskProductFamily>
     <Description>Atomic versioned nested-chunk OpenSearch ingestion and authorized full-text/vector/hybrid retrieval.</Description>
     <PackageTags>opensearch;search;hybrid;vectors</PackageTags>
@@ -8,5 +10,9 @@
   <Import Project="..\..\eng\versions\Search.props" />
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Search\BlueTusk.Search.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
+    <PackageReference Include="System.Text.Json" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
   </ItemGroup>
 </Project>

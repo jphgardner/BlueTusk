@@ -28,21 +28,29 @@ public sealed class ContinuousGraphApiFreezeTests
                 item => item.GetProperty("path").GetString()!,
                 item => item.GetProperty("sha256").GetString()!,
                 StringComparer.Ordinal);
+        var additions = root.GetProperty("developmentAdditions").EnumerateArray()
+            .ToLookup(item => item.GetProperty("path").GetString()!,
+                item => item.GetProperty("memberPrefix").GetString()!, StringComparer.Ordinal);
         var discovered = Directory
-            .EnumerateFiles(
-                Path.Combine(repositoryRoot, "src"),
-                "PublicAPI.*.txt",
-                SearchOption.AllDirectories)
+            .EnumerateDirectories(Path.Combine(repositoryRoot, "src"))
+            .SelectMany(static project => Directory.EnumerateFiles(project, "PublicAPI.*.txt"))
             .Where(IsContinuousGraphApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
-            .Order(StringComparer.Ordinal)
+            .OrderBy(static path => path, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(discovered, registered.Keys.OrderBy(static path => path, StringComparer.Ordinal));
+        Assert.All(additions, addition => Assert.Contains(addition.Key, discovered));
         foreach (var path in discovered)
         {
             var baselinePath = Path.Combine(repositoryRoot, path);
             var contents = Normalize(File.ReadAllText(baselinePath));
+            foreach (var memberPrefix in additions[path])
+            {
+                var lines = contents.Split('\n');
+                Assert.Single(lines, line => line.StartsWith(memberPrefix, StringComparison.Ordinal));
+                contents = string.Join('\n', lines.Where(line => !line.StartsWith(memberPrefix, StringComparison.Ordinal)));
+            }
             var digest = Convert.ToHexString(
                     SHA256.HashData(Encoding.UTF8.GetBytes(contents)))
                 .ToLowerInvariant();

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "1.2.0",
+  "scope": "CorePackages",
+  "readinessWorkflow": "core-1.2-package-readiness.yml",
+  "families": ["Provider", "Streams", "Sync", "Live", "ControlPlane"],
+  "stablePostgreSqlMajors": [15, 16, 17, 18],
+  "usesProtectedPublication": true,
+  "approvalTrack": "CorePackages",
+  "requiredWorkflows": {
+    "build": "build.yml",
+    "runtime": "dotnet-compatibility.yml",
+    "security": "security.yml",
+    "fuzzing": "fuzzing.yml",
+    "performance": "core-performance-evidence.yml",
+    "streams": "streams-release-endurance.yml",
+    "sync": "sync-release-endurance.yml",
+    "liveControlPlane": "live-control-plane-release-endurance.yml"
+  },
+  "endurance": {
+    "postgresqlImage": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+    "streamsHours": 72,
+    "streamsMinimumTransactions": 100000,
+    "syncHours": 24,
+    "syncMinimumCycles": 100,
+    "liveControlPlaneHours": 24,
+    "liveControlPlaneMinimumCycles": 100000
+  }
+}

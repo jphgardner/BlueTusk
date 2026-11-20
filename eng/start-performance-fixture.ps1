@@ -79,10 +79,10 @@ try
     do
     {
         Start-Sleep -Seconds 1
-        & docker exec $postgres pg_isready -U postgres -d bluetusk_benchmark *> $null
+        # The initialization server only listens on the Unix socket.
+        & docker exec $postgres pg_isready -h 127.0.0.1 -U postgres -d bluetusk_benchmark *> $null
     } while ($LASTEXITCODE -ne 0 -and [DateTimeOffset]::UtcNow -lt $deadline)
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL fixture did not become ready.' }
-    Start-Sleep -Seconds 2
     $maxConnections = [int]((Invoke-Docker exec $postgres psql -U postgres -d bluetusk_benchmark -tAc 'show max_connections') | Select-Object -First 1).Trim()
     if ($maxConnections -lt [int]$plan.fixture.maxConnections) { throw "PostgreSQL started with max_connections=$maxConnections." }
     $identity = (Invoke-Docker inspect --format '{{.Id}}|{{.Config.Image}}|{{.Image}}' $postgres).Trim().Split('|')
@@ -164,7 +164,7 @@ try
         networkProfile = $networkProfileId
         containerImageDigests = @($images | Sort-Object -Unique -CaseSensitive)
         containers = $containers.ToArray()
-        topology = $(if ($CaptureProfile -eq 'linux-container-client') { 'Linux .NET client container on the fixture Docker network (proposal)' }
+        topology = $(if ($CaptureProfile -eq 'linux-container-client') { 'Linux .NET client container on the Windows host fixture network' }
             elseif ($insideContainer) { 'Linux runner container attached to the fixture Docker network' }
             else { 'host client process through a 127.0.0.1 published Docker port' }) +
             $(if ($null -ne $networkProfileId) { ' via Toxiproxy' } else { '' })

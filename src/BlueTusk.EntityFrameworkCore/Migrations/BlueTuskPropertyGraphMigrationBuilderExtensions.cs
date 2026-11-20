@@ -16,9 +16,9 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
         Action<BlueTuskPropertyGraphMigrationBuilder> configure,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskPropertyGraphMigrationBuilder(name, schema);
         configure(builder);
         return CreatePropertyGraph(migrationBuilder, builder.Build());
@@ -28,8 +28,8 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         BlueTuskPropertyGraphDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNull(definition);
         var operation = new CreatePropertyGraphOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<CreatePropertyGraphOperation>(operation);
@@ -48,8 +48,8 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropPropertyGraphOperation { Name = name, Schema = schema };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<DropPropertyGraphOperation>(operation);
@@ -62,9 +62,9 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
         string? schema = null,
         string? newSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new AlterPropertyGraphOperation
         {
             Name = name,

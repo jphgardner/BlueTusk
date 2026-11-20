@@ -22,16 +22,16 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
         ProjectionLease lease, IProjectionDefinition definition,
         ProjectionPublishedRetentionTargetOptions protectedRetention)
     {
-        ArgumentNullException.ThrowIfNull(protectedRetention);
+        BlueTuskGuard.NotNull(protectedRetention);
         return new StreamsProjectionConsumer(store, lease, definition, protectedRetention);
     }
 
     private StreamsProjectionConsumer(PostgreSqlProjectionStore store, ProjectionLease lease,
         IProjectionDefinition definition, ProjectionPublishedRetentionTargetOptions? protectedRetention)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(definition);
         if (definition.Identity != lease.Identity)
         {
             throw new ArgumentException("The Streams projection consumer requires its leased definition.", nameof(definition));
@@ -45,7 +45,7 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
 
     public ValueTask ResetSnapshotAsync(SnapshotReset reset, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         cancellationToken.ThrowIfCancellationRequested();
         if (reset.Epoch.Source != _lease.Identity.Source)
         {
@@ -73,7 +73,7 @@ public sealed class StreamsProjectionConsumer : IChangeStreamConsumer
 
     public async ValueTask ConsumeTransactionAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
+        BlueTuskGuard.NotNull(delivery);
         if (_protectedRetention is null)
         {
             _ = await _store.ApplyAsync(_lease, _definition, delivery.Transaction, cancellationToken).ConfigureAwait(false);

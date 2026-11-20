@@ -7,17 +7,17 @@ internal static class WorkflowDefinitionValidation
 {
     internal static (WorkflowDefinition Definition, byte[] Bytes, byte[] Fingerprint) Canonicalize(WorkflowDefinition definition, WorkflowOptions options)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         WorkflowOptions.Name(definition.Name, nameof(definition.Name));
         WorkflowOptions.Range(definition.Version, 1, int.MaxValue, nameof(definition.Version));
-        ArgumentNullException.ThrowIfNull(definition.Nodes);
+        BlueTuskGuard.NotNull(definition.Nodes);
         WorkflowOptions.Range(definition.Nodes.Count, 1, options.MaximumNodes, nameof(definition.Nodes));
         var nodes = new Dictionary<string, WorkflowNode>(StringComparer.Ordinal);
         foreach (var node in definition.Nodes)
         {
-            ArgumentNullException.ThrowIfNull(node);
+            BlueTuskGuard.NotNull(node);
             WorkflowOptions.Name(node.Id, nameof(node.Id), 100);
-            ArgumentNullException.ThrowIfNull(node.DependsOn);
+            BlueTuskGuard.NotNull(node.DependsOn);
             WorkflowOptions.Range(node.DependsOn.Count, 0, options.MaximumDependenciesPerNode, nameof(node.DependsOn));
             WorkflowOptions.Range(node.MaximumAttempts, 1, 100, nameof(node.MaximumAttempts));
             if (!Enum.IsDefined(node.Kind) || node.DependsOn.Distinct(StringComparer.Ordinal).Count() != node.DependsOn.Count)
@@ -64,7 +64,7 @@ internal static class WorkflowDefinitionValidation
                 throw new ArgumentException("A join requires dependencies.", nameof(definition));
             }
 
-            nodes.Add(node.Id, node with { DependsOn = node.DependsOn.Order(StringComparer.Ordinal).ToArray() });
+            nodes.Add(node.Id, node with { DependsOn = node.DependsOn.OrderBy(static value => value, StringComparer.Ordinal).ToArray() });
         }
 
         var visited = new HashSet<string>(StringComparer.Ordinal);

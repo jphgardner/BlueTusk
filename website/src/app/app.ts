@@ -1,159 +1,89 @@
-import { Component, ElementRef, HostListener, ViewChild, computed, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { SITE_SEARCH } from './content/catalog';
+import { searchGuides } from './content/documentation-navigation';
 import type { SearchRecord } from './content/models';
-
-interface NavigationItem {
-  label: string;
-  href: string;
-  description: string;
-  icon: string;
-}
 
 @Component({
   selector: 'app-root',
-  imports: [
-    RouterLink,
-    RouterLinkActive,
-    RouterOutlet,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-  ],
+  imports: [A11yModule, RouterLink, RouterLinkActive, RouterOutlet, MatButtonModule, MatIconModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
-  @ViewChild('searchTrigger') private searchTrigger?: ElementRef<HTMLButtonElement>;
-  @ViewChild('searchField') private searchField?: ElementRef<HTMLInputElement>;
-  @ViewChild('mobileNavTrigger') private mobileNavTrigger?: ElementRef<HTMLButtonElement>;
-  @ViewChild('mobileNavFirst') private mobileNavFirst?: ElementRef<HTMLAnchorElement>;
   protected readonly searchOpen = signal(false);
+  protected readonly mobileOpen = signal(false);
   protected readonly searchQuery = signal('');
   private readonly guideSearch = signal<readonly SearchRecord[]>([]);
-  protected readonly guideSearchUnavailable = signal(false);
-  protected readonly mobileNavOpen = signal(false);
+  protected readonly searchStatus = signal<'idle' | 'loading' | 'ready' | 'failed'>('idle');
 
-  protected readonly navItems: readonly NavigationItem[] = [
-    {
-      label: 'Platform',
-      href: '/platform',
-      description: 'See how the BlueTusk products work together.',
-      icon: 'hub',
-    },
-    {
-      label: 'Provider',
-      href: '/provider',
-      description: 'Connect .NET applications directly to PostgreSQL.',
-      icon: 'storage',
-    },
-    {
-      label: 'EF Core',
-      href: '/ef-core',
-      description: 'Use PostgreSQL through familiar EF Core workflows.',
-      icon: 'data_object',
-    },
-    {
-      label: 'Real Time',
-      href: '/real-time',
-      description: 'Move changes, sync data, and update users live.',
-      icon: 'stream',
-    },
-    {
-      label: 'Extensions',
-      href: '/extensions',
-      description: 'PostGIS, pgvector, TimescaleDB, and more.',
-      icon: 'extension',
-    },
-    {
-      label: 'Graph',
-      href: '/graph',
-      description: 'Query relationships and keep results up to date.',
-      icon: 'share',
-    },
-    {
-      label: 'Documentation',
-      href: '/documentation',
-      description: 'Find tutorials, guides, and production help.',
-      icon: 'menu_book',
-    },
+  protected readonly navItems = [
+    { label: 'Platform', href: '/platform' },
+    { label: 'Use cases', href: '/use-cases' },
+    { label: 'Learn', href: '/learn' },
+    { label: 'Documentation', href: '/documentation' },
+    { label: 'Community', href: '/community' },
   ];
 
-  protected readonly filteredSearchItems = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const sections = SITE_SEARCH.map((item) => ({ ...item, icon: 'web' }));
-    const guides = this.guideSearch().map((guide) => ({ ...guide, icon: 'description' }));
-    const all = [...sections, ...guides];
-    if (!query) return all.slice(0, 8);
-    return all
-      .map((item) => ({
-        item,
-        score:
-          (item.title.toLowerCase().includes(query) ? 10 : 0) +
-          (item.keywords.toLowerCase().includes(query) ? 5 : 0) +
-          (item.description.toLowerCase().includes(query) ? 3 : 0) +
-          (item.group.toLowerCase().includes(query) ? 1 : 0),
-      }))
-      .filter(({ score }) => score > 0)
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 10)
-      .map(({ item }) => item);
-  });
+  protected readonly results = computed(() =>
+    searchGuides([...SITE_SEARCH, ...this.guideSearch()], this.searchQuery()).slice(0, 12),
+  );
+
+  private readonly router = inject(Router);
+  protected readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects.split('#')[0]),
+    ),
+    { initialValue: this.router.url.split('#')[0] },
+  );
 
   protected openSearch(): void {
-    this.mobileNavOpen.set(false);
-    this.searchQuery.set('');
+    this.mobileOpen.set(false);
     this.searchOpen.set(true);
-    void import('../generated/guide-search.generated')
-      .then(({ GUIDE_SEARCH }) => {
+    if (this.searchStatus() === 'ready' || this.searchStatus() === 'loading') return;
+    this.searchStatus.set('loading');
+    void import('../generated/guide-search.generated').then(
+      ({ GUIDE_SEARCH }) => {
         this.guideSearch.set(GUIDE_SEARCH);
-        this.guideSearchUnavailable.set(false);
-      })
-      .catch(() => this.guideSearchUnavailable.set(true));
-    window.setTimeout(() => this.searchField?.nativeElement?.focus());
+        this.searchStatus.set('ready');
+      },
+      () => this.searchStatus.set('failed'),
+    );
   }
 
   protected closeSearch(): void {
-    const trigger =
-      this.searchTrigger?.nativeElement ??
-      document.querySelector<HTMLButtonElement>('[aria-label="Search BlueTusk"]');
     this.searchOpen.set(false);
-    window.requestAnimationFrame(() => window.requestAnimationFrame(() => trigger?.focus()));
   }
 
-  protected updateSearch(event: Event): void {
+  protected closeMobile(): void {
+    this.mobileOpen.set(false);
+  }
+
+  protected searchUpdate(event: Event): void {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
-  protected openMobileNav(): void {
-    this.mobileNavOpen.set(true);
-    window.setTimeout(() => this.mobileNavFirst?.nativeElement?.focus());
-  }
-
-  protected closeMobileNav(restoreFocus = true): void {
-    this.mobileNavOpen.set(false);
-    if (restoreFocus) {
-      window.requestAnimationFrame(() => this.mobileNavTrigger?.nativeElement?.focus());
-    }
-  }
-
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.searchOpen()) {
-      this.closeSearch();
-    } else if (this.mobileNavOpen()) {
-      this.closeMobileNav();
-    }
+  protected openResult(): void {
+    const first = this.results()[0];
+    if (!first) return;
+    this.closeSearch();
+    void this.router.navigateByUrl(first.route);
   }
 
   @HostListener('document:keydown', ['$event'])
-  protected onSearchShortcut(event: KeyboardEvent): void {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+  protected onShortcut(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      if (this.searchOpen()) this.closeSearch();
+      else if (this.mobileOpen()) this.closeMobile();
+    } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      this.openSearch();
+      if (!this.searchOpen()) this.openSearch();
     }
   }
 }

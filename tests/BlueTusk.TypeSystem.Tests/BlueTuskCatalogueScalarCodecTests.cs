@@ -5,6 +5,22 @@ namespace BlueTusk.TypeSystem.Tests;
 public sealed class BlueTuskCatalogueScalarCodecTests
 {
     [Fact]
+    public void Custom_object_identifier_types_round_trip_across_runtime_factory_implementations()
+    {
+        AssertAlias(
+            new BlueTuskObjectIdentifierCodec<CustomObjectIdentifier>(),
+            BlueTuskBuiltInTypes.RegClass,
+            new CustomObjectIdentifier(new BlueTuskObjectIdentifier(uint.MaxValue)),
+            new CustomObjectIdentifier(new BlueTuskObjectIdentifier("public.custom_alias")));
+    }
+
+    private readonly record struct CustomObjectIdentifier(BlueTuskObjectIdentifier Identifier)
+        : IBlueTuskObjectIdentifierValue<CustomObjectIdentifier>
+    {
+        public static CustomObjectIdentifier FromIdentifier(BlueTuskObjectIdentifier identifier) => new(identifier);
+    }
+
+    [Fact]
     public void Object_identifier_aliases_preserve_numeric_and_symbolic_forms()
     {
         AssertAlias(

@@ -35,6 +35,14 @@ if (Test-Path -LiteralPath $testRoot)
 }
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
 $sourceRoot = Join-Path $testRoot 'source-root'
+$manifestPath = Join-Path $sourceRoot 'eng/product-families.json'
+$null = New-Item -ItemType Directory -Path (Split-Path $manifestPath -Parent) -Force
+# Mirror the stable policy at the historical RC boundary in the fixture checkout.
+foreach ($family in @($train.families))
+{
+    $families.families.$family.publication.enabled = $false
+}
+$families | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 foreach ($family in @($train.families))
 {
     $definition = $families.families.$family
@@ -68,7 +76,9 @@ function Assert-Rejected
 {
     param(
         [Parameter(Mandatory)][string] $Name,
-        [Parameter(Mandatory)][scriptblock] $Action
+        [Parameter(Mandatory)][scriptblock] $Action,
+
+        [string] $ExpectedMessage
     )
 
     try
@@ -78,7 +88,8 @@ function Assert-Rejected
     }
     catch
     {
-        if ($_.Exception.Message -eq "Mutation '$Name' was unexpectedly accepted.")
+        if ($_.Exception.Message -eq "Mutation '$Name' was unexpectedly accepted." -or
+            ($ExpectedMessage -and -not $_.Exception.Message.Contains($ExpectedMessage, [StringComparison]::Ordinal)))
         {
             throw
         }
@@ -107,6 +118,19 @@ foreach ($family in @($train.families))
         -SourceRoot $sourceRoot `
         -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
+
+$armed = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+$armed.families.Provider.publication.enabled = $true
+$armed | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
+Assert-Rejected -Name 'armed-stable' -ExpectedMessage "Stable publication for 'Provider' must remain disabled" -Action {
+    $arguments = @{
+        Family = 'Provider'; Version = [string]$train.version; Commit = $commit; Tag = "provider-v$($train.version)"
+        GitEvidencePath = Join-Path $testRoot 'valid-Provider.json'
+        SourceRoot = $sourceRoot; PrereleaseTrainPath = $PrereleaseTrainPath
+    }
+    & $verifier @arguments *> $null
+}
+$families | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 
 $lastFamily = [string]@($train.families)[-1]
 $lastDefinition = $families.families.$lastFamily
@@ -180,4 +204,4 @@ Assert-Rejected -Name 'wrong-source-version' -Action {
 Write-Output (
     "Prerelease verifier accepted all $(@($train.families).Count) ordered families " +
     'and rejected wrong-main, missing-dependency, stable-tag, wrong-version, ' +
-    'and wrong-source-version mutations.')
+    'wrong-source-version, and armed-stable mutations.')

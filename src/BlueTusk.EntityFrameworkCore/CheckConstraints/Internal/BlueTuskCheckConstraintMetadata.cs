@@ -15,7 +15,7 @@ internal static class BlueTuskCheckConstraintMetadata
 
     public static string Serialize(IEnumerable<BlueTuskCheckConstraintDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         var normalized = definitions
             .OrderBy(definition => definition.Name, StringComparer.Ordinal)
             .ToArray();
@@ -25,7 +25,7 @@ internal static class BlueTuskCheckConstraintMetadata
 
     public static IReadOnlyList<BlueTuskCheckConstraintDefinition> Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskCheckConstraintDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The CHECK-constraint definition set is empty.", nameof(json));
         Validate(definitions);
@@ -46,9 +46,9 @@ internal static class BlueTuskCheckConstraintMetadata
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions)
         {
-            ArgumentNullException.ThrowIfNull(definition);
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.Sql);
+            BlueTuskGuard.NotNull(definition);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.Sql);
             if (!names.Add(definition.Name))
             {
                 throw new ArgumentException(

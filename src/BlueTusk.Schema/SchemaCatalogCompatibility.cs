@@ -21,7 +21,7 @@ public static class SchemaCatalogCompatibility
 {
     public static SchemaCatalogComparison Compare(SchemaCatalogSnapshot before, SchemaCatalogSnapshot after)
     {
-        ArgumentNullException.ThrowIfNull(before); ArgumentNullException.ThrowIfNull(after);
+        BlueTuskGuard.NotNull(before); BlueTuskGuard.NotNull(after);
         var changes = new List<SchemaCatalogChange>();
         void CompareMembers<T>(IReadOnlyList<T> oldValues, IReadOnlyList<T> newValues, Func<T, string> key,
             Func<T, SchemaRelationIdentity> identity, string category, Func<T, T, bool> equal,

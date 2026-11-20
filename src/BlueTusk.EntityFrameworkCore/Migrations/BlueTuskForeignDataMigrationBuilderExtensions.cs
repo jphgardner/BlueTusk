@@ -13,7 +13,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
             this MigrationBuilder migrationBuilder,
             BlueTuskForeignDataWrapperDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new CreateForeignDataWrapperOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
@@ -33,7 +33,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
             BlueTuskForeignDataWrapperDefinition oldDefinition,
             BlueTuskForeignDataWrapperDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new AlterForeignDataWrapperOperation
@@ -60,8 +60,8 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropForeignDataWrapperOperation
         {
             Name = name,
@@ -76,9 +76,9 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         string name,
         string newName)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameForeignDataWrapperOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<RenameForeignDataWrapperOperation>(operation);
@@ -88,7 +88,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         BlueTuskForeignServerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new CreateForeignServerOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
@@ -108,7 +108,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         BlueTuskForeignServerDefinition oldDefinition,
         BlueTuskForeignServerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new AlterForeignServerOperation
@@ -134,8 +134,8 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropForeignServerOperation
         {
             Name = name,
@@ -150,9 +150,9 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         string name,
         string newName)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameForeignServerOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
         return new OperationBuilder<RenameForeignServerOperation>(operation);
@@ -162,7 +162,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         BlueTuskUserMappingDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new CreateUserMappingOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
@@ -182,7 +182,7 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         BlueTuskUserMappingDefinition oldDefinition,
         BlueTuskUserMappingDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
         var operation = new AlterUserMappingOperation
@@ -209,11 +209,11 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         string serverName,
         string? userName = null)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverName);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(serverName);
         if (userName is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+            BlueTuskGuard.NotNullOrWhiteSpace(userName);
         }
 
         var operation = new DropUserMappingOperation

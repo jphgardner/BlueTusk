@@ -12,7 +12,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static BlueTuskSchemaProgramDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskSchemaProgramDefinitionSet.Empty : Deserialize(json);
     }
@@ -25,7 +25,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static BlueTuskSchemaProgramDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskSchemaProgramDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The schema-program definition set is empty.", nameof(json));
         Validate(definitions);
@@ -40,7 +40,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static T DeserializeDefinition<T>(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<T>(json, SerializerOptions)
             ?? throw new ArgumentException("The schema-program definition is empty.", nameof(json));
         ValidateDefinition(definition);
@@ -119,12 +119,12 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static void Validate(BlueTuskSchemaProgramDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Operators);
-        ArgumentNullException.ThrowIfNull(definitions.OperatorFamilies);
-        ArgumentNullException.ThrowIfNull(definitions.OperatorClasses);
-        ArgumentNullException.ThrowIfNull(definitions.Casts);
-        ArgumentNullException.ThrowIfNull(definitions.Aggregates);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Operators);
+        BlueTuskGuard.NotNull(definitions.OperatorFamilies);
+        BlueTuskGuard.NotNull(definitions.OperatorClasses);
+        BlueTuskGuard.NotNull(definitions.Casts);
+        BlueTuskGuard.NotNull(definitions.Aggregates);
         ValidateUnique(definitions.Operators, OperatorKey.Create, "operator");
         ValidateUnique(definitions.OperatorFamilies, OperatorFamilyKey.Create, "operator family");
         ValidateUnique(definitions.OperatorClasses, OperatorClassKey.Create, "operator class");
@@ -158,7 +158,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static void Validate(BlueTuskOperatorDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateOperatorName(new BlueTuskOperatorName(definition.Name, definition.Schema));
         ValidateOptionalFragment(definition.LeftType, nameof(definition.LeftType));
         ValidateFragment(definition.RightType, nameof(definition.RightType));
@@ -171,17 +171,17 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static void Validate(BlueTuskOperatorFamilyDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateNamedObject(definition.Name, definition.Schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.IndexMethod);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.IndexMethod);
         ValidateMembers(definition.Operators, definition.Functions);
     }
 
     public static void Validate(BlueTuskOperatorClassDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateNamedObject(definition.Name, definition.Schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.IndexMethod);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.IndexMethod);
         ValidateFragment(definition.DataType, nameof(definition.DataType));
         ValidateOptionalName(definition.Family);
         ValidateMembers(definition.Operators, definition.Functions);
@@ -195,14 +195,14 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static void Validate(BlueTuskCastDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateFragment(definition.SourceType, nameof(definition.SourceType));
         ValidateFragment(definition.TargetType, nameof(definition.TargetType));
         if (definition.Method == BlueTuskCastMethod.Function)
         {
-            ArgumentNullException.ThrowIfNull(definition.Function);
+            BlueTuskGuard.NotNull(definition.Function);
             ValidateName(definition.Function.Function);
-            ArgumentNullException.ThrowIfNull(definition.Function.ArgumentTypes);
+            BlueTuskGuard.NotNull(definition.Function.ArgumentTypes);
             foreach (var argument in definition.Function.ArgumentTypes)
             {
                 ValidateFragment(argument, nameof(definition.Function.ArgumentTypes));
@@ -217,7 +217,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     public static void Validate(BlueTuskAggregateDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         ValidateNamedObject(definition.Name, definition.Schema);
         ValidateSignature(definition.IdentityArgumentsSql);
         ValidateName(definition.TransitionFunction);
@@ -354,8 +354,8 @@ internal static partial class BlueTuskSchemaProgramMetadata
         IReadOnlyList<BlueTuskOperatorMemberDefinition> operators,
         IReadOnlyList<BlueTuskOperatorFunctionDefinition> functions)
     {
-        ArgumentNullException.ThrowIfNull(operators);
-        ArgumentNullException.ThrowIfNull(functions);
+        BlueTuskGuard.NotNull(operators);
+        BlueTuskGuard.NotNull(functions);
         ValidateUnique(operators, item => (item.StrategyNumber, item.LeftType, item.RightType), "operator member");
         ValidateUnique(functions, item => (item.SupportNumber, item.LeftType, item.RightType), "support function");
         foreach (var item in operators)
@@ -386,7 +386,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
             ValidateFragment(item.LeftType, nameof(item.LeftType));
             ValidateFragment(item.RightType, nameof(item.RightType));
             ValidateName(item.Function);
-            ArgumentNullException.ThrowIfNull(item.ArgumentTypes);
+            BlueTuskGuard.NotNull(item.ArgumentTypes);
             foreach (var argument in item.ArgumentTypes)
             {
                 ValidateFragment(argument, nameof(item.ArgumentTypes));
@@ -407,7 +407,7 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     private static void ValidateOperatorName(BlueTuskOperatorName value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         if (!OperatorRegex().IsMatch(value.Name) || value.Name is "=>" or "!=")
         {
             throw new ArgumentException($"'{value.Name}' is not a valid PostgreSQL operator symbol.");
@@ -423,18 +423,18 @@ internal static partial class BlueTuskSchemaProgramMetadata
             throw new ArgumentException($"'{value.Name}' is not a valid PostgreSQL operator symbol.");
         }
 
-        if (value.Schema is not null) ArgumentException.ThrowIfNullOrWhiteSpace(value.Schema);
+        if (value.Schema is not null) BlueTuskGuard.NotNullOrWhiteSpace(value.Schema);
     }
 
     private static void ValidateNamedObject(string name, string? schema)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        if (schema is not null) ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        if (schema is not null) BlueTuskGuard.NotNullOrWhiteSpace(schema);
     }
 
     private static void ValidateSignature(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         ValidateSafeFragment(value, nameof(value), allowEmpty: true);
     }
 
@@ -448,8 +448,8 @@ internal static partial class BlueTuskSchemaProgramMetadata
 
     private static void ValidateSafeFragment(string value, string parameterName, bool allowEmpty)
     {
-        ArgumentNullException.ThrowIfNull(value, parameterName);
-        if (!allowEmpty) ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNull(value, parameterName);
+        if (!allowEmpty) BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Contains(';') || value.Contains("--", StringComparison.Ordinal) ||
             value.Contains("/*", StringComparison.Ordinal) || value.Contains("*/", StringComparison.Ordinal) ||
             value.Contains('\0'))
@@ -472,8 +472,13 @@ internal static partial class BlueTuskSchemaProgramMetadata
         }
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[+\\-*/<>=~!@#%^&|`?]+$", RegexOptions.CultureInvariant)]
     private static partial Regex OperatorRegex();
+#else
+    private static readonly Regex _operatorRegex = new("^[+\\-*/<>=~!@#%^&|`?]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex OperatorRegex() => _operatorRegex;
+#endif
 
     internal readonly record struct OperatorKey(string? Schema, string Name, string? LeftType, string RightType)
     {

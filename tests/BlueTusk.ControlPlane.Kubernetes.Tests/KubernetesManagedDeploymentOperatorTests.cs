@@ -1,5 +1,9 @@
 using System.Net;
 using System.Text;
+#if !NET9_0_OR_GREATER
+using Lock = System.Object;
+#endif
+
 namespace BlueTusk.ControlPlane.Kubernetes.Tests;
 
 public sealed class KubernetesManagedDeploymentOperatorTests

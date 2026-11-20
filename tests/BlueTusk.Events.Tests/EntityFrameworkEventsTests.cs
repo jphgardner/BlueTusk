@@ -5,7 +5,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EntityFrameworkEventsTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExplicitEfTransactionRollsBackAndCommitsBusinessChangesWithOutbox()
     {
         await using var fixture = await EventDatabase.CreateAsync();

@@ -63,6 +63,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
 
       - name: Resolve release train
         id: release
@@ -149,14 +150,15 @@ jobs:
       - name: Verify formatting and documentation
         shell: pwsh
         run: |
-          dotnet format BlueTusk.slnx --no-restore --verify-no-changes
+          # The solution formatter loads one target framework, so it cannot determine if imports are unused across all targets.
+          dotnet format BlueTusk.slnx --no-restore --verify-no-changes --exclude-diagnostics IDE0005
           ./eng/verify-documentation.ps1
           ./eng/verify-supply-chain.ps1
 
       - name: Build and test
         run: |
           dotnet build BlueTusk.slnx --configuration Release --no-restore
-          dotnet test BlueTusk.slnx --configuration Release --no-build --no-restore
+          dotnet test BlueTusk.slnx --framework net10.0 --configuration Release --no-build --no-restore
 
       - name: Audit dependencies
         run: dotnet list BlueTusk.slnx package --vulnerable --include-transitive --no-restore
@@ -214,9 +216,18 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  publish-stable:
+  qualify-graph-engine:
     needs: verify-and-package
+    if: needs.verify-and-package.outputs.family == 'ContinuousGraph'
+    uses: ./.github/workflows/postgresql-graph-engine.yml
+
+  publish-stable:
+    needs: [verify-and-package, qualify-graph-engine]
     if: >-
+      !cancelled() &&
+      needs.verify-and-package.result == 'success' &&
+      (needs.verify-and-package.outputs.family != 'ContinuousGraph' ||
+        needs.qualify-graph-engine.result == 'success') &&
       needs.verify-and-package.outputs.is_tag == 'true' &&
       needs.verify-and-package.outputs.is_prerelease != 'true'
     runs-on: ubuntu-latest
@@ -233,13 +244,17 @@ jobs:
         shell: pwsh
         env:
           V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+          RELEASE_FAMILY: ${{ needs.verify-and-package.outputs.family }}
+          RELEASE_VERSION: ${{ needs.verify-and-package.outputs.version }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
             throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
           }
-          ./eng/verify-github-governance.ps1 `
-            -Mode Remote `
-            -Token $env:V1_GOVERNANCE_TOKEN
+          $arguments = @{ Mode = 'Remote'; Token = $env:V1_GOVERNANCE_TOKEN }
+          if ($env:RELEASE_VERSION -ceq '1.2.0' -and $env:RELEASE_FAMILY -cin @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')) {
+            $arguments.Scope = 'CorePackages'
+          }
+          ./eng/verify-github-governance.ps1 @arguments
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -290,8 +305,12 @@ jobs:
           done
 
   publish-prerelease:
-    needs: verify-and-package
+    needs: [verify-and-package, qualify-graph-engine]
     if: >-
+      !cancelled() &&
+      needs.verify-and-package.result == 'success' &&
+      (needs.verify-and-package.outputs.family != 'ContinuousGraph' ||
+        needs.qualify-graph-engine.result == 'success') &&
       needs.verify-and-package.outputs.is_tag == 'true' &&
       needs.verify-and-package.outputs.is_prerelease == 'true'
     runs-on: ubuntu-latest

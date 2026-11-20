@@ -26,8 +26,8 @@ public sealed class BlueTuskPropertyGraphBuilder
         Action<BlueTuskPropertyGraphVertexBuilder<TEntity>> configure)
         where TEntity : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(alias);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNullOrWhiteSpace(alias);
+        BlueTuskGuard.NotNull(configure);
         var state = AddElement<TEntity>(alias, BlueTuskGraphElementKind.Vertex);
         configure(new BlueTuskPropertyGraphVertexBuilder<TEntity>(state));
         return this;
@@ -38,8 +38,8 @@ public sealed class BlueTuskPropertyGraphBuilder
         Action<BlueTuskPropertyGraphEdgeBuilder<TEntity>> configure)
         where TEntity : class
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(alias);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNullOrWhiteSpace(alias);
+        BlueTuskGuard.NotNull(configure);
         var state = AddElement<TEntity>(alias, BlueTuskGraphElementKind.Edge);
         configure(new BlueTuskPropertyGraphEdgeBuilder<TEntity>(state));
         return this;
@@ -108,7 +108,7 @@ public sealed class BlueTuskPropertyGraphBuilder
 
         public void AddLabel(string label)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(label);
+            BlueTuskGuard.NotNullOrWhiteSpace(label);
             if (!_labels.Contains(label, StringComparer.Ordinal))
             {
                 _labels.Add(label);
@@ -313,7 +313,7 @@ public sealed class BlueTuskPropertyGraphVertexBuilder<TEntity>
     public BlueTuskPropertyGraphVertexBuilder<TEntity> HasKey(
         Expression<Func<TEntity, object?>> key)
     {
-        ArgumentNullException.ThrowIfNull(key);
+        BlueTuskGuard.NotNull(key);
         _state.SetKey(key);
         return this;
     }
@@ -321,7 +321,7 @@ public sealed class BlueTuskPropertyGraphVertexBuilder<TEntity>
     public BlueTuskPropertyGraphVertexBuilder<TEntity> Properties(
         Expression<Func<TEntity, object?>> properties)
     {
-        ArgumentNullException.ThrowIfNull(properties);
+        BlueTuskGuard.NotNull(properties);
         _state.SetProperties(properties);
         return this;
     }
@@ -347,7 +347,7 @@ public sealed class BlueTuskPropertyGraphEdgeBuilder<TEntity>
     public BlueTuskPropertyGraphEdgeBuilder<TEntity> HasKey(
         Expression<Func<TEntity, object?>> key)
     {
-        ArgumentNullException.ThrowIfNull(key);
+        BlueTuskGuard.NotNull(key);
         _state.SetKey(key);
         return this;
     }
@@ -355,7 +355,7 @@ public sealed class BlueTuskPropertyGraphEdgeBuilder<TEntity>
     public BlueTuskPropertyGraphEdgeBuilder<TEntity> Properties(
         Expression<Func<TEntity, object?>> properties)
     {
-        ArgumentNullException.ThrowIfNull(properties);
+        BlueTuskGuard.NotNull(properties);
         _state.SetProperties(properties);
         return this;
     }
@@ -366,8 +366,8 @@ public sealed class BlueTuskPropertyGraphEdgeBuilder<TEntity>
         string? vertexAlias = null)
         where TVertex : class
     {
-        ArgumentNullException.ThrowIfNull(edgeKey);
-        ArgumentNullException.ThrowIfNull(vertexKey);
+        BlueTuskGuard.NotNull(edgeKey);
+        BlueTuskGuard.NotNull(vertexKey);
         _state.SetSource(typeof(TVertex), vertexAlias, edgeKey, vertexKey);
         return this;
     }
@@ -378,8 +378,8 @@ public sealed class BlueTuskPropertyGraphEdgeBuilder<TEntity>
         string? vertexAlias = null)
         where TVertex : class
     {
-        ArgumentNullException.ThrowIfNull(edgeKey);
-        ArgumentNullException.ThrowIfNull(vertexKey);
+        BlueTuskGuard.NotNull(edgeKey);
+        BlueTuskGuard.NotNull(vertexKey);
         _state.SetDestination(typeof(TVertex), vertexAlias, edgeKey, vertexKey);
         return this;
     }

@@ -13,7 +13,7 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
         this MigrationBuilder builder,
         BlueTuskEventTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         BlueTuskEventTriggerMetadata.Validate(definition);
         var operation = new CreateEventTriggerOperation
         {
@@ -33,8 +33,8 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
         this MigrationBuilder builder,
         string name)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var operation = new DropEventTriggerOperation
         {
             Name = name,
@@ -49,9 +49,9 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
         string name,
         string newName)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(newName);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(newName);
         var operation = new RenameEventTriggerOperation { Name = name, NewName = newName };
         builder.Operations.Add(operation);
         return new OperationBuilder<RenameEventTriggerOperation>(operation);
@@ -63,8 +63,8 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
             string name,
             BlueTuskEventTriggerEnabledMode enabledMode)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (!Enum.IsDefined(enabledMode))
         {
             throw new ArgumentOutOfRangeException(nameof(enabledMode));

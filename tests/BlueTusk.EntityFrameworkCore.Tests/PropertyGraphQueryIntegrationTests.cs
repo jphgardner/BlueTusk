@@ -1,3 +1,6 @@
+using System.Data;
+using System.Data.Common;
+using System.Linq.Expressions;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
@@ -8,18 +11,22 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 
 public sealed class PropertyGraphQueryIntegrationTests
 {
-    [Fact]
-    public async Task Typed_graph_query_materializes_parameters_and_composes_with_relational_queries()
+    [Theory]
+    [InlineData(BlueTuskPropertyGraphBackend.Relational)]
+    [InlineData(BlueTuskPropertyGraphBackend.NativeSqlPgq)]
+    public async Task Typed_graph_query_materializes_parameters_and_composes_with_relational_queries(
+        BlueTuskPropertyGraphBackend backend)
     {
-        await using var context = CreateContext(GetConnectionString());
-        await context.Database.OpenConnectionAsync();
-        var connection = Assert.IsType<BlueTuskConnection>(context.Database.GetDbConnection());
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var context = CreateContext(connection, backend);
+        var native = backend == BlueTuskPropertyGraphBackend.NativeSqlPgq;
 
-        if (connection.SupportsSqlPgq is not true)
+        if (native && connection.SupportsSqlPgq is not true)
         {
-            var exception = Assert.Throws<BlueTuskGraphTranslationException>(
-                () => CreateGraphQuery(context, sourceId: 1));
-            Assert.Contains("require PostgreSQL 19", exception.Message, StringComparison.Ordinal);
+            var exception = await Assert.ThrowsAsync<BlueTuskGraphTranslationException>(
+                () => CreateGraphQuery(context, sourceId: 1).ToListAsync(TestContext.Current.CancellationToken));
+            Assert.Contains("does not support", exception.Message, StringComparison.Ordinal);
             return;
         }
 
@@ -37,6 +44,11 @@ public sealed class PropertyGraphQueryIntegrationTests
                 (1, 'Ada'), (2, 'Grace'), (3, 'Linus');
             INSERT INTO bluetusk_ef_graph_friendships VALUES
                 (10, 1, 2), (11, 1, 3), (12, 2, 3);
+            """);
+        if (native)
+        {
+            await ExecuteAsync(connection,
+            """
             CREATE TEMP PROPERTY GRAPH bluetusk_ef_graph
                 VERTEX TABLES (
                     bluetusk_ef_graph_people AS people
@@ -57,6 +69,7 @@ public sealed class PropertyGraphQueryIntegrationTests
                         from_id AS "FromPersonId",
                         to_id AS "ToPersonId"));
             """);
+        }
 
         try
         {
@@ -83,6 +96,34 @@ public sealed class PropertyGraphQueryIntegrationTests
 
             Assert.Equal(2, joined.Count);
             Assert.Equal(["Grace", "Linus"], joined.Select(item => item.Name));
+
+            // Exercise a warm graph command with different values, including
+            // two independently bound roots in the same EF command.
+            var rebound = await CreateGraphQuery(context, sourceId: 2)
+                .Where(result => result.TargetName == "Linus")
+                .OrderBy(result => result.TargetName)
+                .Take(1)
+                .ToListAsync();
+            Assert.Equal(12, Assert.Single(rebound).RelationshipId);
+
+            var composed = await CreateGraphQuery(context, sourceId: 1)
+                .Concat(CreateGraphQuery(context, sourceId: 2))
+                .Where(result => result.TargetName == "Linus")
+                .OrderBy(result => result.RelationshipId)
+                .Select(result => result.RelationshipId)
+                .ToListAsync();
+            Assert.Equal([11, 12], composed);
+
+            var sharedRoot = CreateGraphQuery(context, sourceId: 2);
+            Assert.Equal([12, 12], await sharedRoot.Concat(sharedRoot)
+                .Select(result => result.RelationshipId).ToListAsync());
+
+            long wideSource = 2;
+            await using var regularCommand = sharedRoot.CreateDbCommand();
+            await using var wideCommand = CreateGraphQuery(context, person => person.Id == wideSource).CreateDbCommand();
+            Assert.Equal(regularCommand.CommandText, wideCommand.CommandText);
+            Assert.Equal(DbType.Int32, Assert.Single(regularCommand.Parameters.Cast<DbParameter>()).DbType);
+            Assert.Equal(DbType.Int64, Assert.Single(wideCommand.Parameters.Cast<DbParameter>()).DbType);
 
             var trackedPerson = Assert.Single(
                 await context.PropertyGraph("bluetusk_ef_graph")
@@ -121,7 +162,7 @@ public sealed class PropertyGraphQueryIntegrationTests
                     .LabelsAnyOf("person")
                     .OutgoingPath<Friendship>("path", 1, 2)
                     .LabelsAnyOf("knows")
-                    .Vertex<Person>("target")
+                    .Vertex<Person>("target", person => person.Id == 3)
                     .LabelsAnyOf("person"))
                 .Select<PathEndpointResult>(projection => projection
                     .Property<Person, int>("source", person => person.Id, result => result.SourceId)
@@ -129,18 +170,76 @@ public sealed class PropertyGraphQueryIntegrationTests
                     .Property<Person, string>("target", person => person.Name, result => result.TargetName))
                 .OrderBy(result => result.TargetId)
                 .ToListAsync();
-            Assert.Equal([2, 3, 3], bounded.Select(static result => result.TargetId));
+            Assert.Equal([3, 3], bounded.Select(static result => result.TargetId));
+
+            if (!native)
+            {
+                await AssertOrderedBranchLimitsAsync(context, connection);
+            }
         }
         finally
         {
-            await ExecuteAsync(connection, "DROP PROPERTY GRAPH IF EXISTS bluetusk_ef_graph");
+            if (native)
+            {
+                await ExecuteAsync(connection, "DROP PROPERTY GRAPH IF EXISTS bluetusk_ef_graph");
+            }
         }
     }
 
+    private static async Task AssertOrderedBranchLimitsAsync(GraphContext context, BlueTuskConnection connection)
+    {
+        // Parallel edges, a self-loop, and a cycle make multiple walks sort
+        // to the same terminal value across the one- and two-hop branches.
+        await ExecuteAsync(connection,
+            "INSERT INTO bluetusk_ef_graph_friendships VALUES (13, 1, 2), (14, 2, 1), (15, 2, 2)");
+        const string referenceSql = """
+            SELECT to_id AS "TargetId" FROM pg_temp.bluetusk_ef_graph_friendships WHERE from_id = 1
+            UNION ALL
+            SELECT second.to_id AS "TargetId"
+            FROM pg_temp.bluetusk_ef_graph_friendships AS first
+            JOIN pg_temp.bluetusk_ef_graph_friendships AS second ON first.to_id = second.from_id
+            WHERE first.from_id = 1
+            """;
+        var expected = context.Database.SqlQueryRaw<TerminalResult>(referenceSql);
+        var actual = context.PropertyGraph("bluetusk_ef_graph")
+            .Match(pattern => pattern
+                .Vertex<Person>("source", person => person.Id == 1)
+                .LabelsAnyOf("person")
+                .OutgoingPath<Friendship>("path", 1, 2)
+                .LabelsAnyOf("knows")
+                .Vertex<Person>("target")
+                .LabelsAnyOf("person"))
+            .Select<TerminalResult>(projection => projection
+                .Property<Person, int>("target", person => person.Id, result => result.TargetId));
+
+        foreach (var count in new[] { 1, 3, 8 })
+        {
+            var first = actual.OrderBy(result => result.TargetId).Take(count);
+            await using var command = first.CreateDbCommand();
+            Assert.Equal(2, command.CommandText.Split("ORDER BY \"TargetId\" ASC LIMIT ", StringSplitOptions.None).Length - 1);
+            Assert.Equal(await expected.OrderBy(result => result.TargetId).Take(count)
+                .Select(result => result.TargetId).ToListAsync(),
+                (await first.ToListAsync()).Select(result => result.TargetId));
+            Assert.Equal(await expected.OrderByDescending(result => result.TargetId).Take(count)
+                .Select(result => result.TargetId).ToListAsync(),
+                (await actual.OrderByDescending(result => result.TargetId).Take(count).ToListAsync())
+                .Select(result => result.TargetId));
+        }
+
+        var filtered = actual.Where(result => result.TargetId > 2).OrderBy(result => result.TargetId).Take(1);
+        await using var filteredCommand = filtered.CreateDbCommand();
+        Assert.DoesNotContain("ORDER BY \"TargetId\" ASC LIMIT ", filteredCommand.CommandText, StringComparison.Ordinal);
+        Assert.Equal(3, Assert.Single(await filtered.ToListAsync()).TargetId);
+    }
+
     private static IQueryable<FriendResult> CreateGraphQuery(GraphContext context, int sourceId) =>
+        CreateGraphQuery(context, person => person.Id == sourceId);
+
+    private static IQueryable<FriendResult> CreateGraphQuery(
+        GraphContext context, Expression<Func<Person, bool>> sourcePredicate) =>
         context.PropertyGraph("bluetusk_ef_graph")
             .Match(pattern => pattern
-                .Vertex<Person>("source", person => person.Id == sourceId)
+                .Vertex<Person>("source", sourcePredicate)
                 .LabelsAnyOf("person")
                 .Outgoing<Friendship>("relationship")
                 .LabelsAnyOf("knows")
@@ -153,10 +252,10 @@ public sealed class PropertyGraphQueryIntegrationTests
                 .Property<Person, int>("target", person => person.Id, result => result.TargetId)
                 .Property<Person, string>("target", person => person.Name, result => result.TargetName));
 
-    private static GraphContext CreateContext(string connectionString)
+    private static GraphContext CreateContext(BlueTuskConnection connection, BlueTuskPropertyGraphBackend backend)
     {
         var options = new DbContextOptionsBuilder<GraphContext>()
-            .UseBlueTusk(connectionString)
+            .UseBlueTusk(connection, blueTuskOptionsAction: options => options.UseGraphCompatibility(backend))
             .Options;
         return new GraphContext(options);
     }
@@ -192,14 +291,14 @@ public sealed class PropertyGraphQueryIntegrationTests
         {
             modelBuilder.Entity<Person>(entity =>
             {
-                entity.ToTable("bluetusk_ef_graph_people");
+                entity.ToTable("bluetusk_ef_graph_people", "pg_temp");
                 entity.HasKey(person => person.Id);
                 entity.Property(person => person.Id).HasColumnName("id");
                 entity.Property(person => person.Name).HasColumnName("name");
             });
             modelBuilder.Entity<Friendship>(entity =>
             {
-                entity.ToTable("bluetusk_ef_graph_friendships");
+                entity.ToTable("bluetusk_ef_graph_friendships", "pg_temp");
                 entity.HasKey(friendship => friendship.Id);
                 entity.Property(friendship => friendship.Id).HasColumnName("id");
                 entity.Property(friendship => friendship.FromPersonId).HasColumnName("from_id");
@@ -266,5 +365,10 @@ public sealed class PropertyGraphQueryIntegrationTests
         public int TargetId { get; set; }
 
         public string TargetName { get; set; } = string.Empty;
+    }
+
+    private sealed class TerminalResult
+    {
+        public int TargetId { get; set; }
     }
 }

@@ -194,8 +194,8 @@ internal sealed class BlueTuskBufferedRows : IReadOnlyList<BlueTuskDataRow>
 
     internal BlueTuskBufferedRow GetRow(int index)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Count);
+        BlueTuskGuard.NotNegative(index);
+        BlueTuskGuard.NotGreaterThanOrEqual(index, Count);
         Complete();
         return CreateRow(
             _payload!,

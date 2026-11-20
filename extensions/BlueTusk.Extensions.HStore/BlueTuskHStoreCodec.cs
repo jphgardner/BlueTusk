@@ -10,7 +10,7 @@ public sealed class BlueTuskHStoreCodec : BlueTuskCodec<BlueTuskHStore>
 
     public static int GetBinarySize(BlueTuskHStore value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var size = sizeof(int);
         foreach (var pair in value)
         {
@@ -29,7 +29,7 @@ public sealed class BlueTuskHStoreCodec : BlueTuskCodec<BlueTuskHStore>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskHStore.Parse(reader.ReadRemainingUtf8());
@@ -79,8 +79,8 @@ public sealed class BlueTuskHStoreCodec : BlueTuskCodec<BlueTuskHStore>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());

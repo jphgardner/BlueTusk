@@ -12,7 +12,7 @@ You need:
 - a PostgreSQL 15, 16, 17 or 18 test server with `wal_level = logical`.
 
 The `bluetusk-postgres` Docker container from
-[step 1 of the 5-minute first app](../getting-started/quickstart.md#1-start-postgresql)
+[step 1 of the 5-minute first app](../getting-started/quickstart.md#1-prepare-a-database)
 already has `wal_level=logical`. On another server, check with
 `SHOW wal_level;`; changing it needs `ALTER SYSTEM SET wal_level = logical;` and
 a restart.

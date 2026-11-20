@@ -20,7 +20,7 @@ public sealed class BlueTuskLTreePlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Types.Register(LTreeTypeName.Schema, LTreeTypeName.Name, new BlueTuskLTreeCodec());
         context.Types.Register(LQueryTypeName.Schema, LQueryTypeName.Name, new BlueTuskLQueryCodec());
         context.Types.Register(

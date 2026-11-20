@@ -8,6 +8,7 @@ which versions are current.
 | Version | Status | Notes |
 | --- | --- | --- |
 | `1.1.0` | Next release. In release qualification; not published yet. | [Release notes](1.1.0.md) |
+| `1.1.0-rc.2` | Next public prerelease in preparation. | [Release process](../release-process.md#current-package-rc-train) |
 | `1.1.0-rc.1` | Release candidate, published 2026-08-29. Will be deprecated when 1.1.0 is published. | [Release record](1.1.0-rc.1.md) |
 | `1.0.0` | Stable, published 2026-08-23. Will be deprecated when 1.1.0 is published. | [Publication record](1.0.0-publication-record.md) |
 

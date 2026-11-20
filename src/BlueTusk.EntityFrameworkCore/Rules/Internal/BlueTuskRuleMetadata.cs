@@ -41,7 +41,7 @@ internal static class BlueTuskRuleMetadata
 
     public static IReadOnlyList<BlueTuskRuleDefinition> Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskRuleDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The rule definition set is empty.", nameof(json));
         var normalized = Normalize(definitions);
@@ -51,7 +51,7 @@ internal static class BlueTuskRuleMetadata
 
     public static BlueTuskRuleDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskRuleDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The rule definition is empty.", nameof(json));
         var normalized = Normalize(definition);
@@ -116,8 +116,8 @@ internal static class BlueTuskRuleMetadata
 
     public static void Validate(BlueTuskRuleDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
         if (!Enum.IsDefined(definition.Event) || !Enum.IsDefined(definition.EnabledMode))
         {
             throw new ArgumentException("The rule uses an unknown enum value.", nameof(definition));
@@ -125,14 +125,14 @@ internal static class BlueTuskRuleMetadata
 
         if (definition.CanonicalCreateSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.CanonicalCreateSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.CanonicalCreateSql);
             return;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.ActionSql);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.ActionSql);
         if (definition.ConditionSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.ConditionSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.ConditionSql);
         }
 
         if (definition.Event == BlueTuskRuleEvent.Select &&

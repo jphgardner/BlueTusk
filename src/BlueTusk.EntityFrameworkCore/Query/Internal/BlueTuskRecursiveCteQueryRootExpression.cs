@@ -29,6 +29,7 @@ internal sealed class BlueTuskRecursiveCteQueryRootExpression(
             Roots,
             UnionBehavior);
 
+#if BLUETUSK_EF7_OR_GREATER
     public override EntityQueryRootExpression UpdateEntityType(IEntityType entityType)
     {
         if (entityType.ClrType != EntityType.ClrType || entityType.Name != EntityType.Name)
@@ -43,6 +44,8 @@ internal sealed class BlueTuskRecursiveCteQueryRootExpression(
             Roots,
             UnionBehavior);
     }
+
+#endif
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {

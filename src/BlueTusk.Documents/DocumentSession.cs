@@ -3,6 +3,10 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using BlueTusk.Data;
+#if NET5_0
+using DbBatch = BlueTusk.Data.Compatibility.BlueTuskLegacyBatch;
+#endif
 
 namespace BlueTusk.Documents;
 
@@ -39,7 +43,7 @@ public sealed class DocumentSession : IDisposable
 
     public void Replace<T>(DocumentCollectionDefinition<T> collection, string id, T value, long expectedRevision)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+        BlueTuskGuard.NotNegativeOrZero(expectedRevision);
         Stage(Serialize(collection, id, value, expectedRevision));
     }
 
@@ -53,7 +57,7 @@ public sealed class DocumentSession : IDisposable
     public void Patch<T>(DocumentCollectionDefinition<T> collection, string id, long expectedRevision, IReadOnlyList<DocumentPatch> operations)
     {
         Validate(collection, id, expectedRevision);
-        ArgumentNullException.ThrowIfNull(operations);
+        BlueTuskGuard.NotNull(operations);
         if (operations.Count is 0 or > 128)
         {
             throw new ArgumentException("A patch requires between 1 and 128 operations.", nameof(operations));
@@ -63,7 +67,7 @@ public sealed class DocumentSession : IDisposable
         long bytes = 0;
         foreach (var patch in patches)
         {
-            ArgumentNullException.ThrowIfNull(patch);
+            BlueTuskGuard.NotNull(patch);
             bytes = checked(bytes + Encoding.UTF8.GetByteCount(patch.PathJson) + (patch.JsonValue is null ? 0 : Encoding.UTF8.GetByteCount(patch.JsonValue)));
         }
 
@@ -110,7 +114,11 @@ public sealed class DocumentSession : IDisposable
             var results = new List<DocumentWriteResult>(mutations.Length);
             foreach (var chunk in mutations.Chunk(_store.Options.CommandsPerBatch))
             {
+#if NET5_0
+                if (connection is BlueTuskConnection)
+#else
                 if (connection.CanCreateBatch)
+#endif
                 {
                     await ExecuteBatchAsync(connection, transaction, chunk, results, cancellationToken).ConfigureAwait(false);
                 }
@@ -158,7 +166,11 @@ public sealed class DocumentSession : IDisposable
 
     private async ValueTask ExecuteBatchAsync(DbConnection connection, DbTransaction transaction, Mutation[] chunk, List<DocumentWriteResult> results, CancellationToken cancellationToken)
     {
+#if NET5_0
+        await using DbBatch batch = ((BlueTuskConnection)connection).CreateBatch();
+#else
         await using var batch = connection.CreateBatch();
+#endif
         batch.Transaction = transaction;
         batch.Timeout = _store.Options.CommandTimeoutSeconds;
         using var parameterFactory = connection.CreateCommand();
@@ -169,7 +181,13 @@ public sealed class DocumentSession : IDisposable
             command.CommandText = prepared.Sql;
             foreach (var input in prepared.Parameters)
             {
+#if NET5_0 || NET8_0_OR_GREATER
                 var parameter = command.CanCreateParameter ? command.CreateParameter() : parameterFactory.CreateParameter();
+#else
+                var parameter = command is BlueTuskBatchCommand blueTuskCommand
+                    ? blueTuskCommand.CreateParameter()
+                    : parameterFactory.CreateParameter();
+#endif
                 parameter.ParameterName = input.Name;
                 parameter.DbType = input.Type;
                 parameter.Value = input.Value;
@@ -312,8 +330,8 @@ public sealed class DocumentSession : IDisposable
 
     private Mutation Serialize<T>(DocumentCollectionDefinition<T> collection, string id, T value, long? expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(collection);
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(collection);
+        BlueTuskGuard.NotNull(value);
         DocumentValidation.Key(id, nameof(id), 512);
         using var stream = new BoundedSerializationStream(_store.Options.MaxDocumentBytes);
         JsonSerializer.Serialize(stream, value, collection.JsonTypeInfo);
@@ -351,7 +369,7 @@ public sealed class DocumentSession : IDisposable
 
     private void AssertMutable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         _store.ThrowIfDisposed();
         if (_saving)
         {
@@ -361,9 +379,9 @@ public sealed class DocumentSession : IDisposable
 
     private static void Validate<T>(DocumentCollectionDefinition<T> collection, string id, long expectedRevision)
     {
-        ArgumentNullException.ThrowIfNull(collection);
+        BlueTuskGuard.NotNull(collection);
         DocumentValidation.Key(id, nameof(id), 512);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+        BlueTuskGuard.NotNegativeOrZero(expectedRevision);
     }
 
     private static DocumentWriteResult Result(Mutation mutation, long revision) =>

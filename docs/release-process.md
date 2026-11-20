@@ -23,15 +23,15 @@ approval remain the publication boundary.
 ## Current package RC train
 
 `eng/package-prerelease-train.json` defines the prepared immutable
-`1.2.0-rc.1` package train for all six historical families in dependency order.
+`1.1.0-rc.2` package train for all six historical families in dependency order.
 Its inclusion of Graph is prerelease packaging, not Graph stable qualification.
 This train is not public until the reviewed commit reaches `main` and the six
 exact RC tags publish successfully. RC packing uses version
 overrides and temporary npm artifact copies; it does not rewrite the stable
 family manifests. Every internal NuGet/npm dependency must resolve to the same
-exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected
+exact RC version. Exact `*-v1.1.0-rc.2` tags publish through the protected
 `package-prerelease` environment, and npm packages use the `rc` dist-tag,
-never `latest`. A correction is `rc.2`; an RC is never overwritten.
+never `latest`. A correction gets a new suffix; an RC is never overwritten.
 
 The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit
 `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm
@@ -40,7 +40,7 @@ packages passed public-availability and clean-consumer verification. The
 does not arm or authorize stable `1.1.0`.
 
 The separate `eng/prerelease-train.json` manifest places the production
-application source and image workflow on the prepared exact `1.2.0-rc.1`
+application source and image workflow on the prepared exact `1.1.0-rc.2`
 train. New image evidence must be generated after that train is public and from
 the reviewed commit; it cannot reuse the historical 1.0 or 1.1 image manifest.
 Earlier application observations remain historical evidence and are not
@@ -62,19 +62,17 @@ staging/production boundary are documented in the
 
 ## Candidate sequence
 
-The `1.2.0` stable track contains Provider, Streams, Sync, Live and Control
-Plane. Continuous Graph remains preview until a supported server supplies
-SQL/PGQ and the separate Graph qualification passes. PostgreSQL 19 GA alone
-cannot qualify Graph. The ten ecosystem additions have separate preview
-versions and [release qualification](ecosystem/release-qualification.md); none
-is armed for stable publication. The historical V1 aggregator is not a 1.2
-or expansion release verdict. The 1.2 core aggregator is still being migrated,
-so this sequence is a release plan, not permission to tag now.
+The `1.1.0` stable track contains Provider, Streams, Sync, Live and Control
+Plane. Portable Graph qualifies separately on PostgreSQL 15–18 without
+SQL/PGQ. Native SQL/PGQ remains a capability-based preview. The ecosystem
+families have separate [preview qualification](ecosystem/release-qualification.md).
+The historical V1 aggregator cannot approve this release. The Core aggregator
+is still being migrated.
 
 1. Finish code, documentation, API/format freezes, upgrades, package inspection,
    security audit, live matrices, and performance gates for the chosen track.
-2. Merge a reviewed final arming PR to `main` for the five core `1.2.0`
-   families in dependency order. Its resulting SHA must have no stable 1.2
+2. Merge a reviewed final arming PR to `main` for the five core `1.1.0`
+   families in dependency order. Its resulting SHA must have no stable 1.1
    tags or packages yet. The manifest-bound public RC remains separate evidence
    and cannot satisfy the stable gate. That reviewed `main` SHA is the immutable
    candidate.
@@ -86,15 +84,15 @@ so this sequence is a release plan, not permission to tag now.
    run to succeed. Dispatch `fuzzing.yml` at the same commit for its enforced
    minimum of one hour per target; every target must finish without a crash or
    hang finding.
-5. Dispatch `performance.yml` at that exact commit on the labelled reference
-   runner and retain its integrity-bound complete benchmark evidence.
+5. Collect the full Windows and Linux matrix for the exact commit with the
+   `core-performance-evidence.yml` pipeline. Keep raw samples and provenance.
 6. Complete `streams-release-endurance.yml`,
    `sync-release-endurance.yml`, and
    `live-control-plane-release-endurance.yml` at that commit. Their windows are
    72, 24 and 24 hours respectively. Graph's separate preview endurance cannot
    substitute for a core gate.
-7. Complete the external acceptance records and the migrated protected 1.2
-   core candidate aggregator at that exact commit. Its current
+7. Complete the external acceptance records and the protected 1.1 Core
+   candidate aggregator at that exact commit. Its current
    `eng/v1.1-candidate-readiness.json` contract is marked migration-in-progress
    and publication-disabled. The historical `v1-candidate-readiness.yml` does
    not satisfy this step.
@@ -103,8 +101,8 @@ so this sequence is a release plan, not permission to tag now.
    new commit and invalidates the evidence.
 9. Only after the preceding gates pass, create the exact core tags
    sequentially on the verified commit:
-   `provider-v1.2.0`, `streams-v1.2.0`, `sync-v1.2.0`,
-   `live-v1.2.0`, then `control-plane-v1.2.0`.
+   `provider-v1.1.0`, `streams-v1.1.0`, `sync-v1.1.0`,
+   `live-v1.1.0`, then `control-plane-v1.1.0`.
    After every tag, verify registry availability,
    hashes, provenance, installation, and dependency resolution before creating
    the next tag.
@@ -162,7 +160,7 @@ NuGet, symbol, and npm archive set; safe archive paths; MIT metadata; repository
 commit provenance; correct internal dependency versions; portable PDBs; and
 compiled npm distributions without install lifecycle scripts. Duplicate NuGet
 publication is a release failure, and npm publication uses registry provenance.
-Stable 1.2 core dependency order is Provider, Streams, Sync, Live, then
+stable 1.1 core dependency order is Provider, Streams, Sync, Live, then
 Control Plane. Graph and the expansion families retain separate gates.
 
 Every external GitHub Action reference is pinned to a full commit.

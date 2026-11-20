@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <BlueTuskEntityFrameworkTargetFrameworks Condition="'$(BlueTuskEntityFrameworkTargetFrameworks)' == ''">$(BlueTuskRuntimeTargetFrameworks)</BlueTuskEntityFrameworkTargetFrameworks>
+    <TargetFrameworks>$(BlueTuskEntityFrameworkTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\tooling\BlueTusk.Tool\BlueTusk.Tool.csproj" />
+  </ItemGroup>
+  <Import Project="..\..\eng\EntityFrameworkCore.props" />
+</Project>

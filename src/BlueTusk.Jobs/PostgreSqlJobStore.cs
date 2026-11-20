@@ -20,7 +20,7 @@ public sealed partial class PostgreSqlJobStore
 
     public PostgreSqlJobStore(BlueTuskDataSource dataSource, JobStoreOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         _options = options ?? new JobStoreOptions();
         _options.Validate();
         _dataSource = dataSource;
@@ -154,7 +154,7 @@ public sealed partial class PostgreSqlJobStore
     public ValueTask<Guid> EnqueueAsync(
         JobRequest request, BlueTuskTransaction transaction, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         var connection = transaction.Connection ?? throw new InvalidOperationException("A live transaction is required.");
         return EnqueueAsync(request, connection, transaction, cancellationToken);
     }
@@ -188,7 +188,7 @@ public sealed partial class PostgreSqlJobStore
         JobScope scope, string owner, int maximumCount, TimeSpan leaseDuration,
         IReadOnlyCollection<string>? jobTypes = null, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         JobValidation.Name(owner, nameof(owner));
         ValidateBatch(maximumCount);
         JobValidation.Duration(leaseDuration, nameof(leaseDuration), TimeSpan.FromDays(1));
@@ -346,7 +346,7 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Cancellation revokes the lease immediately. Workers observe revocation at their next heartbeat.</summary>
     public async ValueTask<bool> CancelAsync(JobScope scope, Guid id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null, $"""
             WITH changed AS (
@@ -367,7 +367,7 @@ public sealed partial class PostgreSqlJobStore
 
     public async ValueTask<JobSnapshot?> ReadAsync(JobScope scope, Guid id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null, $"""
             SELECT id, job_type, status, attempts, maximum_attempts, fencing_token, available_at, completed_at, last_failure_code
@@ -385,7 +385,7 @@ public sealed partial class PostgreSqlJobStore
 
     public async ValueTask<IReadOnlyList<JobAttempt>> ReadHistoryAsync(JobScope scope, Guid id, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = CreateCommand(connection, transaction: null, $"""
             SELECT attempt, fencing_token, started_at, finished_at, outcome, failure_code FROM {_history}
@@ -408,7 +408,7 @@ public sealed partial class PostgreSqlJobStore
     /// <summary>Bounded physical deletion. This also releases deduplication identities and cascades attempt history.</summary>
     public async ValueTask<int> PruneAsync(JobScope scope, TimeSpan retention, int maximumCount, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         JobValidation.Duration(retention, nameof(retention), TimeSpan.FromDays(36500), allowZero: true);
         ValidateBatch(maximumCount);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -427,8 +427,8 @@ public sealed partial class PostgreSqlJobStore
 
     private void ValidateRequest(JobRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Scope);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNull(request.Scope);
         JobValidation.Name(request.JobType, nameof(request.JobType));
         if (request.DeduplicationKey is not null)
         {
@@ -439,24 +439,24 @@ public sealed partial class PostgreSqlJobStore
             }
         }
 
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(request.Payload.Length, _options.MaximumPayloadBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(request.MaximumAttempts, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(request.MaximumAttempts, 10000);
+        BlueTuskGuard.NotGreaterThan(request.Payload.Length, _options.MaximumPayloadBytes);
+        BlueTuskGuard.NotLessThan(request.MaximumAttempts, 1);
+        BlueTuskGuard.NotGreaterThan(request.MaximumAttempts, 10000);
         JobValidation.Duration(request.Delay, nameof(request.Delay), TimeSpan.FromDays(365), allowZero: true);
     }
 
     private void ValidateBatch(int count)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(count, _options.MaximumClaimBatch);
+        BlueTuskGuard.NotLessThan(count, 1);
+        BlueTuskGuard.NotGreaterThan(count, _options.MaximumClaimBatch);
     }
 
     private static void ValidateLease(JobLease lease)
     {
-        ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(lease.Scope);
+        BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(lease.Scope);
         JobValidation.Name(lease.Owner, nameof(lease.Owner));
-        ArgumentOutOfRangeException.ThrowIfLessThan(lease.FencingToken, 1);
+        BlueTuskGuard.NotLessThan(lease.FencingToken, 1);
     }
 
     private static bool RecordFencing(bool result)

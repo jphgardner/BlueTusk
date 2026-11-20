@@ -2,7 +2,7 @@ namespace BlueTusk.Jobs.Tests;
 
 public sealed class JobHealthTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task BoundedInspectionReportsSaturationExpiryAndTenantIsolation()
     {
         await using var database = await JobDatabase.CreateAsync();

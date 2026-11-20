@@ -20,10 +20,10 @@ public sealed class DocumentStoreHealthCheck : IHealthCheck
     private readonly BoundedHealthProbe _probe;
     public DocumentStoreHealthCheck(DocumentStore store, string tenant, string collection, DocumentStoreHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
+        BlueTuskGuard.NotNull(store);
         // Apply the core identity contract without opening a database connection.
         using var session = store.OpenSession(tenant);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         if (collection.Contains('\0', StringComparison.Ordinal) || System.Text.Encoding.UTF8.GetByteCount(collection) > 256) { throw new ArgumentException("Collection exceeds its bounded identity contract.", nameof(collection)); }
         Options = options ?? new(); BoundedHealthProbe.Validate(Options.Timeout, Options.MaxConcurrentProbes);
         _probe = new("documents", Options.Timeout, Options.MaxConcurrentProbes, async cancellationToken =>
@@ -42,7 +42,7 @@ public static class DocumentStoreHealthCheckExtensions
     public static IHealthChecksBuilder AddBlueTuskDocuments(this IHealthChecksBuilder builder, string name, DocumentStore store,
         string tenant, string collection, DocumentStoreHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(builder); ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder); BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Length > 128 || name.Contains('\0', StringComparison.Ordinal)) { throw new ArgumentException("Health check name exceeds its bounded identity limit.", nameof(name)); }
         var check = new DocumentStoreHealthCheck(store, tenant, collection, options);
         return builder.Add(new HealthCheckRegistration(name, _ => check, HealthStatus.Unhealthy, ["ready"]));

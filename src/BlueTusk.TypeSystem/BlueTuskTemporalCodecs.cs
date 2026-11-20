@@ -18,7 +18,7 @@ public sealed class BlueTuskDateCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return reader.ReadRemainingUtf8() switch
@@ -48,7 +48,7 @@ public sealed class BlueTuskDateCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value == DateOnly.MaxValue
@@ -85,7 +85,7 @@ public sealed class BlueTuskTimeCodec : BlueTuskCodec<TimeSpan>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return ParseText(reader.ReadRemainingUtf8());
@@ -102,7 +102,7 @@ public sealed class BlueTuskTimeCodec : BlueTuskCodec<TimeSpan>
             throw new InvalidOperationException("PostgreSQL time is outside the range 00:00:00 through 24:00:00.");
         }
 
-        return TimeSpan.FromTicks(checked(microseconds * TimeSpan.TicksPerMicrosecond));
+        return TimeSpan.FromTicks(checked(microseconds * BlueTuskRuntime.TicksPerMicrosecond));
     }
 
     public override void WriteTyped(
@@ -111,13 +111,13 @@ public sealed class BlueTuskTimeCodec : BlueTuskCodec<TimeSpan>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (value < TimeSpan.Zero || value > TimeSpan.FromDays(1))
         {
             throw new ArgumentOutOfRangeException(nameof(value), "PostgreSQL time must be between 00:00:00 and 24:00:00.");
         }
 
-        var microseconds = value.Ticks / TimeSpan.TicksPerMicrosecond;
+        var microseconds = value.Ticks / BlueTuskRuntime.TicksPerMicrosecond;
         if (format == BlueTuskDataFormat.Binary)
         {
             writer.WriteInt64BigEndian(microseconds);
@@ -166,9 +166,9 @@ public sealed class BlueTuskTimestampCodec :
 {
     private static readonly DateTime Epoch = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
     private static readonly long MinimumMicroseconds =
-        (DateTime.MinValue.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond;
+        (DateTime.MinValue.Ticks - Epoch.Ticks) / BlueTuskRuntime.TicksPerMicrosecond;
     private static readonly long MaximumMicroseconds =
-        (DateTime.MaxValue.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond;
+        (DateTime.MaxValue.Ticks - Epoch.Ticks) / BlueTuskRuntime.TicksPerMicrosecond;
 
     IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
         BlueTuskTypeDescriptor subtype,
@@ -180,7 +180,7 @@ public sealed class BlueTuskTimestampCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return reader.ReadRemainingUtf8() switch
@@ -202,7 +202,7 @@ public sealed class BlueTuskTimestampCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value == DateTime.MaxValue
@@ -246,7 +246,7 @@ public sealed class BlueTuskTimestampCodec :
                 $"PostgreSQL {type.QualifiedName} binary value is outside the supported DateTime range.");
         }
 
-        return Epoch.AddTicks(microseconds * TimeSpan.TicksPerMicrosecond);
+        return Epoch.AddTicks(microseconds * BlueTuskRuntime.TicksPerMicrosecond);
     }
 
     internal static void WriteBinary(ref BlueTuskWriter writer, DateTime value) =>
@@ -254,7 +254,7 @@ public sealed class BlueTuskTimestampCodec :
             ? long.MaxValue
             : value == DateTime.MinValue
                 ? long.MinValue
-                : (value.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond);
+                : (value.Ticks - Epoch.Ticks) / BlueTuskRuntime.TicksPerMicrosecond);
 }
 
 public sealed class BlueTuskTimestampWithTimeZoneCodec :
@@ -271,7 +271,7 @@ public sealed class BlueTuskTimestampWithTimeZoneCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return reader.ReadRemainingUtf8() switch
@@ -296,7 +296,7 @@ public sealed class BlueTuskTimestampWithTimeZoneCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value == DateTimeOffset.MaxValue

@@ -24,8 +24,8 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrdered
     private int _disposed;
     public HttpEdgeRemoteTransport(HttpClient client, Uri endpoint, EdgeHttpTransportOptions? options = null, EdgeHttpClientOwnership ownership = EdgeHttpClientOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(client);
-        ArgumentNullException.ThrowIfNull(endpoint);
+        BlueTuskGuard.NotNull(client);
+        BlueTuskGuard.NotNull(endpoint);
         if (!endpoint.IsAbsoluteUri || endpoint.Scheme is not ("https" or "http") || endpoint.UserInfo.Length != 0 || endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
         { throw new ArgumentException("A trusted absolute HTTP(S) endpoint without credentials, query or fragment is required.", nameof(endpoint)); }
         Options = options ?? new EdgeHttpTransportOptions();
@@ -65,7 +65,7 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrdered
     }
     public async ValueTask<EdgeMutationOutcome> ApplyMutationAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         if (mutation.Payload.Length > Options.MaxRecordBytes) { throw new EdgeCapacityException("Mutation payload exceeds the transport byte limit."); }
         var bytes = await RequestAsync(HttpMethod.Post, "mutations" + Query(mutation.Scope), EdgeWireCodec.SerializeMutation(mutation), cancellationToken).ConfigureAwait(false);
         return EdgeWireCodec.DeserializeOutcome(bytes!, Options.MaxRecordBytes);
@@ -73,14 +73,14 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrdered
     /// <summary>Call only after the matching outcome has been committed to durable local storage. A lost confirmation response can be retried.</summary>
     public async ValueTask FinalizeMutationReceiptAsync(EdgeMutation mutation, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(mutation);
+        BlueTuskGuard.NotNull(mutation);
         if (mutation.Payload.Length > Options.MaxRecordBytes) { throw new EdgeCapacityException("Mutation payload exceeds the transport byte limit."); }
         _ = await RequestAsync(HttpMethod.Post, "mutations/confirm" + Query(mutation.Scope), EdgeWireCodec.SerializeMutation(mutation), cancellationToken).ConfigureAwait(false);
     }
     /// <summary>Advance only after every ordered outcome in the prefix was durably acknowledged and confirmed. A lost response can be retried.</summary>
     public async ValueTask AdvanceOrderedReceiptHorizonAsync(EdgeScope scope, Guid throughMutationId, int maxReceipts = 1000, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         if (!EdgeOrderedMutationId.TryParse(throughMutationId, out _, out var sequence) || sequence == 0) { throw new ArgumentException("An ordered mutation identity is required.", nameof(throughMutationId)); }
         if (maxReceipts is < 1 or > 10_000) { throw new ArgumentOutOfRangeException(nameof(maxReceipts)); }
         _ = await RequestAsync(HttpMethod.Post, "mutations/horizon" + Query(scope), EdgeWireCodec.SerializeOrderedReceiptHorizon(throughMutationId, maxReceipts), cancellationToken).ConfigureAwait(false);
@@ -91,7 +91,7 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrdered
     }
     private async ValueTask<byte[]?> RequestAsync(HttpMethod method, string path, byte[]? payload, CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(Options.RequestTimeout);
         using var request = new HttpRequestMessage(method, new Uri(_endpoint + "/" + path));
@@ -119,7 +119,7 @@ public sealed class HttpEdgeRemoteTransport : IEdgeRemoteTransport, IEdgeOrdered
     }
     private static string Query(EdgeScope scope)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         return "?tenant=" + Uri.EscapeDataString(scope.Tenant) + "&scope=" + Uri.EscapeDataString(scope.Id) + "&epoch=" + EdgeWireCodec.Number(scope.Epoch);
     }
 }

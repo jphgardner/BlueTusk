@@ -32,7 +32,7 @@ public sealed class PostgreSqlSyncDestination :
 
     public PostgreSqlSyncDestination(PostgreSqlSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _dataSource = options.DestinationDataSource;
@@ -61,7 +61,7 @@ public sealed class PostgreSqlSyncDestination :
     // and applies idempotently, so a retried attempt never duplicates work.
     bool ISyncRetryClassifier.IsTransient(SyncRetryContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         return PostgreSqlSyncRetryClassification.IsTransient(context.Exception);
     }
 
@@ -143,7 +143,7 @@ public sealed class PostgreSqlSyncDestination :
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -192,8 +192,8 @@ public sealed class PostgreSqlSyncDestination :
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(reset);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -232,8 +232,8 @@ public sealed class PostgreSqlSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
-        ArgumentNullException.ThrowIfNull(transform);
+        BlueTuskGuard.NotNull(start);
+        BlueTuskGuard.NotNull(transform);
         await ValidateSnapshotAsync(
             pipelineId,
             start.Epoch.Value,
@@ -245,7 +245,7 @@ public sealed class PostgreSqlSyncDestination :
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateContentLimits(batch.Mutations.Select(mutation => mutation.Content));
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -273,8 +273,8 @@ public sealed class PostgreSqlSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
-        ArgumentNullException.ThrowIfNull(transform);
+        BlueTuskGuard.NotNull(complete);
+        BlueTuskGuard.NotNull(transform);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(
@@ -302,7 +302,7 @@ public sealed class PostgreSqlSyncDestination :
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateContentLimits(batch.Mutations.Select(mutation => mutation.Content));
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -362,7 +362,7 @@ public sealed class PostgreSqlSyncDestination :
         SyncQuarantineRecord record,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        BlueTuskGuard.NotNull(record);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -395,7 +395,7 @@ public sealed class PostgreSqlSyncDestination :
         SyncQuarantineIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -422,10 +422,10 @@ public sealed class PostgreSqlSyncDestination :
         DateTimeOffset resolvedAt,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNullOrWhiteSpace(expectedTransformFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -511,9 +511,9 @@ public sealed class PostgreSqlSyncDestination :
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         ValidateContentLimits(batch.Mutations.Select(static mutation => mutation.Content));
         if (batch.Mutations.Any(static mutation =>
                 mutation.Kind is SyncMutationKind.DeleteCollection))
@@ -589,8 +589,8 @@ public sealed class PostgreSqlSyncDestination :
         CancellationToken cancellationToken = default)
     {
         EnsureDefaultReconciliation();
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -624,11 +624,11 @@ public sealed class PostgreSqlSyncDestination :
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         EnsureDefaultReconciliation();
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
-        ArgumentOutOfRangeException.ThrowIfNegative(partitionIndex);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(partitionIndex, partitionCount);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotLessThan(partitionCount, 1);
+        BlueTuskGuard.NotNegative(partitionIndex);
+        BlueTuskGuard.NotGreaterThanOrEqual(partitionIndex, partitionCount);
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -680,7 +680,7 @@ public sealed class PostgreSqlSyncDestination :
         CancellationToken cancellationToken = default)
     {
         EnsureDefaultReconciliation();
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         ValidateContentLimits(batch.Mutations
             .Where(static mutation => mutation.Document is not null)
             .Select(static mutation => mutation.Document!.Content));
@@ -761,9 +761,15 @@ public sealed class PostgreSqlSyncDestination :
             }
 
             sql.AppendLine();
+#if NET6_0_OR_GREATER
             sql.Append(
                 System.Globalization.CultureInfo.InvariantCulture,
                 $"(@pipeline, @collection, @upsert_key{index}, @partition{index}, @content_type{index}, @content{index}, @repair_id{index}, NULL, clock_timestamp())");
+#else
+            sql.Append(BlueTuskRuntime.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                $"(@pipeline, @collection, @upsert_key{index}, @partition{index}, @content_type{index}, @content{index}, @repair_id{index}, NULL, clock_timestamp())"));
+#endif
             var mutation = upserts[index];
             var document = mutation.Document!;
             AddParameter(upsert, $"upsert_key{index}", mutation.Key);
@@ -777,7 +783,7 @@ public sealed class PostgreSqlSyncDestination :
             AddParameter(
                 upsert,
                 $"repair_id{index}",
-                "repair:" + Convert.ToHexStringLower(
+                "repair:" + BlueTuskRuntime.ToHexStringLower(
                     System.Security.Cryptography.SHA256.HashData(document.Content.Span)));
         }
 

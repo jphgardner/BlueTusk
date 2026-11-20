@@ -2,16 +2,14 @@
 
 This pipeline produces `performance/performance-leadership-evidence.json` (schema 3). Core
 readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It
-measures the contract in
-[`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) **as
-written**. The contract is not relaxed anywhere in the pipeline.
+resolves the contract for the candidate from
+[`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json).
+The v1.2 resolver also applies the approved Provider topology.
 
-**Status:** pipeline implemented; evidence not yet producible. Provider capture works for the
-same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see
-the [proposal](../../eng/performance-cross-os-proposal.md)). The Streams, Sync, Live,
-Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these
-exist, a qualification run fails and the verifier reports the missing workloads. That is the
-intended outcome.
+**Status:** the reference host can run the v1.2 Provider and Control Plane
+matrices. Streams, Sync, Live and primary hot-path qualification harnesses are
+pending. Qualification fails at planning until all producers can capture the
+required measurements.
 Qualification planning reports every missing producer and fails before starting measurement
 jobs. Provider jobs are split by concurrency level, each with a separate raw input directory;
 assembly still requires every original workload key exactly once.
@@ -68,6 +66,15 @@ Each raw trial file repeats that identity. It adds `implementation` and `environ
 For a JVM or other non-.NET reference, the harness must say in `environment` how it measured
 allocation, CPU and GC. One trial is one independently restarted process. Within a workload,
 candidate and reference processes alternate order and never overlap.
+
+The Control Plane adapter exercises the Dashboard inventory endpoint against the
+same seeded PostgreSQL fixture for both implementations. Each process hosts the
+HTTP server and its clients, so allocation, CPU, memory and GC measurements
+include both. The producer measures every contract combination of inventory size
+and client count. It binds each trial to the candidate commit, the published
+1.0.0 reference, and the configured PostgreSQL image. Standalone capture defaults
+to diagnostics. The qualification workflow requires a clean checkout and the
+committed minimum trial count and measurement windows.
 
 ## Statistics
 
@@ -129,10 +136,10 @@ quantity. It is never relabelled as these bounds.
   - identical raw content in two trials, which catches copied captures;
   - a raw capture whose client OS, TLS state or network profile differs from its variant profile;
   - an unbound file in a raw directory.
-- **Cross-OS variants.** These resolve only through
-  [`eng/performance-variant-map.json`](../../eng/performance-variant-map.json). While
-  `crossOsProfile` is `unresolved`, the legs fail closed and the assembler reports the keys as
-  missing.
+- **Provider topology.** For v1.2, the exact-candidate resolver generates the
+  [approved variant map](../../eng/performance-cross-os-proposal.md). Windows measures
+  Windows and Linux clients. Linux measures a native Linux client. The versioned
+  contract retains TLS and constrained-network variants on both environments.
 - **Qualification assembly.** It requires both OS directories, exact contract coverage, a
   consistent independent check, environment manifests bound to the raw samples and the measured
   images, and the committed variant map.
@@ -144,7 +151,7 @@ quantity. It is never relabelled as these bounds.
 | same OS (`windows` on Windows, `linux` on Linux) | `native` | PostgreSQL `postgres:18-alpine@sha256:77f5…` with `max_connections=600` and 1 GiB `/dev/shm` |
 | `tls` | `tls` | Same, with `ssl=on` and a disposable CA; the client uses `VerifyFull` |
 | `constrained-network` | `constrained-network` | Same, behind `ghcr.io/shopify/toxiproxy:2.12.0@sha256:9378…`, profile `toxiproxy-constrained-v1` |
-| cross-OS | `unresolved` | Fails closed; see the proposal |
+| `linux` on Windows (v1.2) | `linux-container-client` | The pinned Linux .NET runtime image on the Windows host connects to the same pinned PostgreSQL fixture over the Docker network |
 
 `eng/start-performance-fixture.ps1` creates containers labelled `bluetusk.owner=<owner>` and
 `bluetusk.run=<run>`. `eng/stop-performance-fixture.ps1` removes only containers with both labels.
@@ -191,9 +198,14 @@ CPU and memory are recorded in each environment manifest.
 **Workflow.** Run `core-performance-evidence.yml` manually with:
 
 - `candidate_sha`;
-- confirmation `CAPTURE-1.1-PERFORMANCE-EVIDENCE`;
+- confirmation `CAPTURE-1.2-CORE-PERFORMANCE-EVIDENCE` for a 1.2 candidate;
 - `evidence_class`. `qualification` plans every leg. `diagnostic` may select families and skips
   legs that cannot run.
+
+The workflow resolves the release version at the exact candidate SHA. The
+effective plan and contract carry that release identity and preserve the
+committed workload and threshold definitions. The readiness verifier derives
+the same contract when it checks the evidence.
 
 The `assemble` job runs the verifier and pipeline self-tests into `verifier-self-tests.log`,
 assembles the evidence and runs the verifier. It uploads `artifacts/core-performance/`, which
@@ -201,7 +213,7 @@ contains `performance/` with the summaries, raw-sample manifests, check reports 
 Raw samples stay in the evidence store, because a full capture far exceeds the 2 GiB delivery
 limit for artifact capture.
 
-**Local producer.** After a qualification run on the host, run
+**Historical 1.1 local producer.** After a qualification run on the host, run
 `eng/build-core-local-performance-record.ps1`. It:
 
 - runs the unchanged verifier;

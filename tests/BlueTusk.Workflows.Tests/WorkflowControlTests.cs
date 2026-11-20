@@ -4,7 +4,7 @@ namespace BlueTusk.Workflows.Tests;
 
 public sealed class WorkflowControlTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task StartRollbackIsAtomicWithDispatchAndConcurrentDeduplication()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -32,7 +32,7 @@ public sealed class WorkflowControlTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => database.Store.StartAsync(database.Request("same") with { Input = new byte[] { 99 } }).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SignalsAreIdempotentBoundedAndTenantScoped()
     {
         await using var database = await WorkflowDatabase.CreateAsync(new WorkflowOptions { MaximumSignalsPerWorkflow = 1 });
@@ -51,7 +51,7 @@ public sealed class WorkflowControlTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => database.Store.SignalAsync(key, "approve", "second", ReadOnlyMemory<byte>.Empty).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CancellationCompensatesCompletedWorkAndStopsFutureNodes()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
@@ -87,7 +87,7 @@ public sealed class WorkflowControlTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task QuiescentMigrationPreservesCompletedContractsAndStartIdentity()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

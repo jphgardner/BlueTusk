@@ -98,7 +98,7 @@ public sealed class BlueTuskHStoreTests
         Assert.False(dataSource.Features.Contains("test.late-feature"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Hstore_plugin_executes_binary_array_and_operator_live_paths()
     {
         var connectionString = GetConnectionString();

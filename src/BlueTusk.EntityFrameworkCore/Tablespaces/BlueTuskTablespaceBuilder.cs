@@ -31,8 +31,8 @@ public sealed class BlueTuskTablespaceBuilder
     /// <summary>Sets a supported PostgreSQL tablespace option.</summary>
     public BlueTuskTablespaceBuilder HasOption(string name, string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         _options[name] = value;
         return this;
     }

@@ -105,7 +105,7 @@
       "parameters": "EdgeCount=1000&TopN=1000",
       "maximumMeanNanoseconds": 3540000,
       "maximumP95Nanoseconds": 3610000,
-      "reason": "Authoritative PostgreSQL GRAPH_TABLE query and materialisation of 999 results."
+      "reason": "Authoritative portable PostgreSQL graph query and materialisation of 1,000 results."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",

@@ -25,12 +25,12 @@ public sealed record S3SyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Client);
-        ArgumentException.ThrowIfNullOrWhiteSpace(BucketName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Prefix);
+        BlueTuskGuard.NotNull(Client);
+        BlueTuskGuard.NotNullOrWhiteSpace(BucketName);
+        BlueTuskGuard.NotNullOrWhiteSpace(Prefix);
         if (BucketName.Length is < 3 or > 63 ||
             BucketName.Any(character =>
-                !(char.IsAsciiLetterOrDigit(character) || character is '.' or '-')))
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '.' or '-')))
         {
             throw new ArgumentException("The S3 bucket name is invalid.", nameof(BucketName));
         }
@@ -45,9 +45,9 @@ public sealed record S3SyncOptions
                 nameof(Prefix));
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxMutationCount, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxMutationCount, 1_000_000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxParquetBytes, 1024);
+        BlueTuskGuard.NotLessThan(MaxMutationCount, 1);
+        BlueTuskGuard.NotGreaterThan(MaxMutationCount, 1_000_000);
+        BlueTuskGuard.NotLessThan(MaxParquetBytes, 1024);
         if (!string.IsNullOrWhiteSpace(KmsKeyId) &&
             ServerSideEncryption != ServerSideEncryptionMethod.AWSKMS)
         {

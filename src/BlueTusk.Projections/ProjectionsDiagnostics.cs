@@ -28,7 +28,7 @@ internal static class ProjectionsDiagnostics
     }
     internal static void Apply(long started, string outcome)
     {
-        try { ApplyDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, new KeyValuePair<string, object?>("outcome", outcome)); }
+        try { ApplyDuration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds, new KeyValuePair<string, object?>("outcome", outcome)); }
         catch (Exception exception) when (exception is not OutOfMemoryException) { }
     }
     internal static void LeaseFenced() => Add(Fenced, 1);

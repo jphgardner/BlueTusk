@@ -19,7 +19,7 @@ public sealed class SchemaDeploymentConsumer
 {
     public SchemaDeploymentConsumer(string name, IEnumerable<SchemaContractDependency> dependencies, bool rebuildOnChange = true)
     {
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNull(dependencies);
         var budget = new SchemaModelBudget(SchemaSnapshotLimits.Default);
         budget.Text(name, required: true);
         if (Encoding.UTF8.GetByteCount(name) > 128) { throw new ArgumentException("Consumer names are bounded to 128 UTF-8 bytes.", nameof(name)); }
@@ -83,7 +83,7 @@ public sealed class SchemaDeploymentPlan
             Append(step.DependsOn.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
             foreach (var dependency in step.DependsOn) { Append(dependency); }
         }
-        Fingerprint = Convert.ToHexStringLower(hash.GetHashAndReset());
+        Fingerprint = BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
     public string BeforeFingerprint { get; }
     public string AfterFingerprint { get; }
@@ -95,7 +95,7 @@ public sealed class SchemaDeploymentPlan
     public static SchemaDeploymentPlan Create(SchemaCatalogSnapshot before, SchemaCatalogSnapshot after,
         IEnumerable<SchemaDeploymentConsumer> consumers)
     {
-        ArgumentNullException.ThrowIfNull(before); ArgumentNullException.ThrowIfNull(after); ArgumentNullException.ThrowIfNull(consumers);
+        BlueTuskGuard.NotNull(before); BlueTuskGuard.NotNull(after); BlueTuskGuard.NotNull(consumers);
         long dependencies = 0;
         var budget = new SchemaModelBudget(SchemaSnapshotLimits.Default);
         var values = SchemaModelBudget.Materialize(consumers, 10_000, value =>
@@ -191,14 +191,14 @@ public sealed class SchemaDeploymentProgress
     internal SchemaDeploymentProgress(SchemaDeploymentPlan plan, ImmutableHashSet<string> completed)
     { Plan = plan; _completed = completed; }
     public SchemaDeploymentPlan Plan { get; }
-    public ReadOnlyCollection<string> CompletedSteps => Array.AsReadOnly(_completed.Order(StringComparer.Ordinal).ToArray());
+    public ReadOnlyCollection<string> CompletedSteps => Array.AsReadOnly(_completed.OrderBy(static value => value, StringComparer.Ordinal).ToArray());
     public bool IsComplete => _completed.Count == Plan.Steps.Count;
     public ReadOnlyCollection<SchemaDeploymentStep> ReadySteps => Array.AsReadOnly(Plan.Steps.Where(value =>
         !_completed.Contains(value.Id) && value.DependsOn.All(_completed.Contains)).ToArray());
 
     public SchemaDeploymentProgress CompleteStep(string stepId, string? observedFingerprint = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(stepId);
+        BlueTuskGuard.NotNullOrEmpty(stepId);
         if (!Plan.StepIndex.TryGetValue(stepId, out var step)) { throw new ArgumentException("Unknown deployment step.", nameof(stepId)); }
         var required = step.Phase switch
         {

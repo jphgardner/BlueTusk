@@ -1,4 +1,10 @@
 #nullable enable
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend.NativeSqlPgq = 0 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend.Relational = 1 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphDefinition.Backend.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphDefinition.Backend.init -> void
+BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder.UseGraphCompatibility(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskPropertyGraphBackend backend) -> BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder!
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection.Undirected = 2 -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression?
 BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgePattern.LabelExpression.init -> void
@@ -19,3 +25,45 @@ Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions
 static BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression.AnyOf(params string![]! labels) -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphLabelExpression!
 static Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions.GetCompleteDatabaseValues(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry! entry) -> Microsoft.EntityFrameworkCore.ChangeTracking.PropertyValues?
 static Microsoft.EntityFrameworkCore.BlueTuskEntityEntryExtensions.GetCompleteDatabaseValuesAsync(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry! entry, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.EntityFrameworkCore.ChangeTracking.PropertyValues?>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity.BlueTuskGraphIdentity(string! element, params object![]! key) -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity.Element.get -> string!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity.Key.get -> System.Collections.Generic.IReadOnlyList<object!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPath
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPath.Edges.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPath.Vertices.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.NeighborsAsync(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! start, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions? options = null, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity? afterEdge = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.ReachableAsync(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! start, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.RegisterEngineAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphQueryRoot.ShortestPathAsync(BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! start, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity! target, BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.BlueTuskGraphTraversalOptions() -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.EdgeAliases.get -> System.Collections.Generic.IReadOnlyList<string!>?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.EdgeAliases.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.Direction.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphEdgeDirection
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.Direction.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumBytes.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumBytes.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumDepth.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumDepth.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumEdges.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumEdges.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumFrontier.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumFrontier.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumResults.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.MaximumResults.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.UseServerEngine.get -> bool
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalOptions.UseServerEngine.init -> void
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.BudgetExhausted.get -> bool
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.BudgetReason.get -> string?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.EdgesExamined.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.NextEdge.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.Path.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphPath?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.PeakFrontier.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.Rows.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalRow!>!
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalResult.UsedServerEngine.get -> bool
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalRow
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalRow.Edge.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity?
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalRow.Hops.get -> int
+BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphTraversalRow.Vertex.get -> BlueTusk.EntityFrameworkCore.Graphs.BlueTuskGraphIdentity!

@@ -28,8 +28,8 @@ public sealed class BlueTuskRowLevelSecurityBuilder
         string? withCheckSql = null,
         params BlueTuskRowSecurityRoleDefinition[] roles)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(roles);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(roles);
         var policy = new BlueTuskRowSecurityPolicyDefinition(
             name,
             behavior,
@@ -51,7 +51,7 @@ public sealed class BlueTuskRowLevelSecurityBuilder
     /// <summary>Removes a named policy.</summary>
     public BlueTuskRowLevelSecurityBuilder HasNoPolicy(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         return Update(definition => definition with
         {
             Policies = definition.Policies
@@ -62,8 +62,8 @@ public sealed class BlueTuskRowLevelSecurityBuilder
 
     internal static void ValidateDefinition(BlueTuskRowLevelSecurityDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentNullException.ThrowIfNull(definition.Policies);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNull(definition.Policies);
         var duplicate = definition.Policies
             .GroupBy(policy => policy.Name, StringComparer.Ordinal)
             .FirstOrDefault(group => group.Count() > 1);
@@ -82,9 +82,9 @@ public sealed class BlueTuskRowLevelSecurityBuilder
 
     internal static void ValidatePolicy(BlueTuskRowSecurityPolicyDefinition policy)
     {
-        ArgumentNullException.ThrowIfNull(policy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(policy.Name);
-        ArgumentNullException.ThrowIfNull(policy.Roles);
+        BlueTuskGuard.NotNull(policy);
+        BlueTuskGuard.NotNullOrWhiteSpace(policy.Name);
+        BlueTuskGuard.NotNull(policy.Roles);
         if (!Enum.IsDefined(policy.Behavior))
         {
             throw new ArgumentOutOfRangeException(nameof(policy), policy.Behavior, "Unknown policy behavior.");
@@ -102,7 +102,7 @@ public sealed class BlueTuskRowLevelSecurityBuilder
 
         foreach (var role in policy.Roles)
         {
-            ArgumentNullException.ThrowIfNull(role);
+            BlueTuskGuard.NotNull(role);
             if (!Enum.IsDefined(role.Kind))
             {
                 throw new ArgumentOutOfRangeException(nameof(policy), role.Kind, "Unknown policy role kind.");
@@ -110,7 +110,7 @@ public sealed class BlueTuskRowLevelSecurityBuilder
 
             if (role.Kind == BlueTuskRowSecurityRoleKind.Named)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(role.Name);
+                BlueTuskGuard.NotNullOrWhiteSpace(role.Name);
             }
             else if (role.Name is not null)
             {
@@ -133,12 +133,12 @@ public sealed class BlueTuskRowLevelSecurityBuilder
 
         if (policy.UsingSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(policy.UsingSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(policy.UsingSql);
         }
 
         if (policy.WithCheckSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(policy.WithCheckSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(policy.WithCheckSql);
         }
     }
 

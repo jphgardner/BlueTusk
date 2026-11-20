@@ -29,11 +29,11 @@ public sealed class PostgreSqlConcurrentIndexDeployer
     public PostgreSqlConcurrentIndexDeployer(BlueTuskDataSource source,
         PostgreSqlSchemaDeploymentCoordinator coordinator, int maximumBuildSeconds = 3600)
     {
-        ArgumentNullException.ThrowIfNull(source); ArgumentNullException.ThrowIfNull(coordinator);
+        BlueTuskGuard.NotNull(source); BlueTuskGuard.NotNull(coordinator);
         if (!ReferenceEquals(source, coordinator.Source))
         { throw new ArgumentException("Index builds and their journal must use the same data source instance.", nameof(source)); }
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumBuildSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumBuildSeconds, 86400);
+        BlueTuskGuard.NotLessThan(maximumBuildSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(maximumBuildSeconds, 86400);
         _source = source; _coordinator = coordinator; _commandTimeout = maximumBuildSeconds;
     }
 
@@ -42,9 +42,9 @@ public sealed class PostgreSqlConcurrentIndexDeployer
         SchemaDeploymentLease lease, SchemaDeploymentDefinition definition, string stepId,
         SchemaDeploymentStepAttempt pending, TimeSpan leaseDuration, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(plan); ArgumentNullException.ThrowIfNull(lease);
-        ArgumentNullException.ThrowIfNull(definition); ArgumentNullException.ThrowIfNull(pending);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stepId);
+        BlueTuskGuard.NotNull(plan); BlueTuskGuard.NotNull(lease);
+        BlueTuskGuard.NotNull(definition); BlueTuskGuard.NotNull(pending);
+        BlueTuskGuard.NotNullOrWhiteSpace(stepId);
         if (definition.Plan.BeforeFingerprint != plan.BeforeFingerprint ||
             definition.Plan.AfterFingerprint != plan.AfterFingerprint ||
             !definition.ActionIndex.TryGetValue(stepId, out var action) ||
@@ -91,7 +91,7 @@ public sealed class PostgreSqlConcurrentIndexDeployer
             }
             if (!await _coordinator.RenewAsync(lease, definition, leaseDuration, stop.Token).ConfigureAwait(false))
             { throw new InvalidOperationException("The index deployment lost its database-clock lease."); }
-            evidence = Convert.ToHexStringLower(hash.GetHashAndReset());
+            evidence = BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
             await _coordinator.CompleteExternalStepAsync(lease, definition, stepId, pending.Attempt,
                 evidence, cancellationToken: stop.Token).ConfigureAwait(false);
         }

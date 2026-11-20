@@ -35,8 +35,19 @@ public sealed record BlueTuskGraphElementTableDefinition(
     BlueTuskGraphEndpointDefinition? Source,
     BlueTuskGraphEndpointDefinition? Destination);
 
-/// <summary>Describes a PostgreSQL 19 property graph in an EF model.</summary>
+/// <summary>Selects how an EF property graph is queried and migrated.</summary>
+public enum BlueTuskPropertyGraphBackend
+{
+    NativeSqlPgq,
+    Relational,
+}
+
+/// <summary>Describes a property graph over tables in an EF model.</summary>
 public sealed record BlueTuskPropertyGraphDefinition(
     string Name,
     string? Schema,
-    IReadOnlyList<BlueTuskGraphElementTableDefinition> ElementTables);
+    IReadOnlyList<BlueTuskGraphElementTableDefinition> ElementTables)
+{
+    /// <summary>The graph backend. Legacy definitions without a backend are native.</summary>
+    public BlueTuskPropertyGraphBackend Backend { get; init; } = BlueTuskPropertyGraphBackend.NativeSqlPgq;
+}

@@ -17,7 +17,7 @@ public sealed class BlueTuskPostGisPlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Types.Register(
             GeometryTypeName.Schema,
             GeometryTypeName.Name,

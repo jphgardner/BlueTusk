@@ -17,7 +17,7 @@ public sealed class KafkaSyncDestination :
 
     public KafkaSyncDestination(KafkaSyncOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _transport = options.TransportFactory?.Invoke(options) ??
@@ -35,7 +35,7 @@ public sealed class KafkaSyncDestination :
         SyncProvisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         var loaded = await _transport.LoadAsync(cancellationToken).ConfigureAwait(false);
         var newConfiguration = loaded.PipelineId is null;
         if (!newConfiguration &&
@@ -77,7 +77,7 @@ public sealed class KafkaSyncDestination :
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         var pipeline = RequirePipeline(pipelineId, reset.Epoch.Source);
         var epoch = reset.Epoch.Value.ToString("N");
         var checkpoint = $"snapshot:{epoch}:reset";
@@ -113,7 +113,7 @@ public sealed class KafkaSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         var pipeline = RequirePipeline(pipelineId, start.Epoch.Source, transform);
         var epoch = start.Epoch.Value.ToString("N");
         var checkpoint = $"snapshot:{epoch}:start";
@@ -143,7 +143,7 @@ public sealed class KafkaSyncDestination :
         SyncSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(
             batch.PipelineId,
             batch.SourceBatch.Epoch.Source,
@@ -187,7 +187,7 @@ public sealed class KafkaSyncDestination :
         SyncTransformVersion transform,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         var pipeline = RequirePipeline(pipelineId, complete.Epoch.Source, transform);
         var epoch = complete.Epoch.Value.ToString("N");
         var checkpoint = $"snapshot:{epoch}:complete";
@@ -217,7 +217,7 @@ public sealed class KafkaSyncDestination :
         SyncTransactionBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source);
         if (!string.Equals(
                 batch.Transform.Fingerprint,
@@ -242,9 +242,9 @@ public sealed class KafkaSyncDestination :
         string operationId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNullOrWhiteSpace(operationId);
+        BlueTuskGuard.NotGreaterThan(operationId.Length, 128);
         var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
         var duplicate = await PublishTransactionAsync(pipeline, batch, cancellationToken)
             .ConfigureAwait(false);
@@ -365,7 +365,7 @@ public sealed class KafkaSyncDestination :
         ChangeSourceIdentity source,
         SyncTransformVersion? transform = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         var pipeline = Volatile.Read(ref _pipeline) ??
             throw new InvalidOperationException(
                 "The Kafka destination must be provisioned before it can receive data.");
@@ -398,7 +398,7 @@ public sealed class KafkaSyncDestination :
             Append(hash, component);
         }
 
-        return "bt1-" + Convert.ToHexStringLower(hash.GetHashAndReset());
+        return "bt1-" + BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, string value)

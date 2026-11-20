@@ -1,5 +1,12 @@
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Streams.Storage.PostgreSql;
+#if NET5_0
+using DbBatch = BlueTusk.Data.Compatibility.BlueTuskLegacyBatch;
+#endif
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 namespace BlueTusk.Streams.Tests;
 
@@ -40,5 +47,16 @@ public sealed class PostgreSqlStorageValidationTests
 
         protected override DbConnection CreateDbConnection() =>
             throw new NotSupportedException();
+
+#if !NET7_0_OR_GREATER
+        protected override DbConnection OpenDbConnection() => throw new NotSupportedException();
+
+        protected override ValueTask<DbConnection> OpenDbConnectionAsync(CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        protected override DbCommand CreateDbCommand([AllowNull] string commandText) => throw new NotSupportedException();
+
+        protected override DbBatch CreateDbBatch() => throw new NotSupportedException();
+#endif
     }
 }

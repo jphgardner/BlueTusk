@@ -137,9 +137,9 @@ if ($RequiredDuration -ge $releaseDuration)
         $failures.Add('The release report has no candidate package/SBOM provenance.')
     }
     if ([string]$report.postgresqlImage -notmatch
-        '^postgres:19(?:\.0)?[^@\s]*@sha256:[0-9a-f]{64}$')
+        '^postgres:(15|16|17|18)(?:\.\d+)?-alpine@sha256:[0-9a-f]{64}$')
     {
-        $failures.Add('The release report has no digest-pinned PostgreSQL 19 GA image.')
+        $failures.Add('The release report has no digest-pinned portable PostgreSQL image.')
     }
 }
 
@@ -182,7 +182,7 @@ if (-not [string]::IsNullOrWhiteSpace($ExpectedPostgreSqlImage) -and
         $ExpectedPostgreSqlImage,
         [StringComparison]::Ordinal))
 {
-    $failures.Add('The PostgreSQL image does not match the expected GA digest.')
+    $failures.Add('The PostgreSQL image does not match the expected portable fixture digest.')
 }
 
 if ($null -eq $report.harness)
@@ -220,6 +220,9 @@ else
     }
     foreach ($counter in @(
             'authoritativeRepairs',
+            'authoritativeDeltas',
+            'scopedAuthorizations',
+            'authorizationRevocations',
             'processRestartRecoveries',
             'cancellationRecoveries',
             'disconnectRecoveries',
@@ -233,6 +236,11 @@ else
     if ($report.harness.cancellationCleanupVerified -ne $true)
     {
         $failures.Add('Cancellation cleanup and subsequent query recovery were not verified.')
+    }
+    if ($report.harness.rowLevelSecurityVerified -ne $true -or
+        [long]$report.harness.scopedAuthorizations -lt [long]$report.harness.authoritativeDeltas)
+    {
+        $failures.Add('Scoped reads did not verify subscriber authorization and PostgreSQL RLS.')
     }
     if ([long]$report.harness.replaySequenceErrors -ne 0 -or
         [long]$report.harness.incorrectlyOrderedResults -ne 0 -or

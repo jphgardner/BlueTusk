@@ -3,19 +3,18 @@ using System.Text;
 using System.Text.Json;
 using BlueTusk.Streams;
 using BlueTusk.Sync.Testing;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.OpenSearch.Tests;
 
 public sealed class OpenSearchSyncConformanceTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_OPENSEARCH_URL")]
     public async Task OpenSearch_passes_shared_destination_conformance()
     {
         var value = Environment.GetEnvironmentVariable("BLUETUSK_OPENSEARCH_URL");
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw SkipException.ForSkip("BLUETUSK_OPENSEARCH_URL is not configured.");
+            throw new InvalidOperationException("BLUETUSK_OPENSEARCH_URL is not configured.");
         }
 
         var endpoint = new Uri(value.EndsWith('/') ? value : value + '/', UriKind.Absolute);

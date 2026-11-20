@@ -43,10 +43,10 @@ public sealed record SyncRetryOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumAttempts, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumAttempts, 100);
-        ArgumentOutOfRangeException.ThrowIfLessThan(InitialDelay, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumDelay, InitialDelay);
+        BlueTuskGuard.NotLessThan(MaximumAttempts, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumAttempts, 100);
+        BlueTuskGuard.NotLessThan(InitialDelay, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThan(MaximumDelay, InitialDelay);
         if (!double.IsFinite(BackoffFactor) || BackoffFactor < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(BackoffFactor));
@@ -66,7 +66,12 @@ public sealed record SyncRetryOptions
             InitialDelay.TotalMilliseconds * Math.Pow(BackoffFactor, exponent));
         if (JitterRatio > 0 && milliseconds > 0)
         {
-            var jitter = 1 + ((Random.Shared.NextDouble() * 2 - 1) * JitterRatio);
+#if NET6_0_OR_GREATER
+            var random = Random.Shared.NextDouble();
+#else
+            var random = System.Security.Cryptography.RandomNumberGenerator.GetInt32(int.MaxValue) / (double)int.MaxValue;
+#endif
+            var jitter = 1 + ((random * 2 - 1) * JitterRatio);
             milliseconds = Math.Clamp(
                 milliseconds * jitter,
                 0,
@@ -151,7 +156,11 @@ internal sealed class SyncDeliveryRateLimiter
         }
 
         var delay = TimeSpan.FromSeconds(delayTicks / frequency);
+#if NET8_0_OR_GREATER
         await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
+#else
+        await _timeProvider.Delay(delay, cancellationToken).ConfigureAwait(false);
+#endif
         return delay;
     }
 

@@ -1,73 +1,93 @@
 using BlueTusk.Data;
+using Microsoft.EntityFrameworkCore;
 
-var connectionString = Environment.GetEnvironmentVariable(
-    "BLUETUSK_CONNECTION_STRING");
+var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_CONNECTION_STRING");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    Console.Error.WriteLine(
-        "Set BLUETUSK_CONNECTION_STRING to a PostgreSQL 19 database.");
+    Console.Error.WriteLine("Set BLUETUSK_CONNECTION_STRING to a PostgreSQL database.");
     return 1;
 }
 
-await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
-await using var connection = await dataSource.OpenConnectionAsync();
-if (connection.ServerCapabilities is not { SupportsSqlPgq: true } capabilities)
+await using var connection = new BlueTuskConnection(connectionString);
+await connection.OpenAsync();
+await using (var command = new BlueTuskCommand(
+    """
+    CREATE TEMP TABLE graph_people (id int PRIMARY KEY, name text NOT NULL);
+    CREATE TEMP TABLE graph_knows (
+        id int PRIMARY KEY,
+        source_id int NOT NULL REFERENCES graph_people (id),
+        destination_id int NOT NULL REFERENCES graph_people (id));
+    CREATE INDEX ON graph_knows (source_id);
+    CREATE INDEX ON graph_knows (destination_id);
+    INSERT INTO graph_people VALUES (1, 'Ada'), (2, 'Grace');
+    INSERT INTO graph_knows VALUES (1, 1, 2);
+    """, connection))
 {
-    Console.Error.WriteLine(
-        $"SQL/PGQ is unavailable on PostgreSQL {connection.ServerVersion}.");
-    return 2;
+    _ = await command.ExecuteNonQueryAsync();
 }
 
-Console.WriteLine($"PostgreSQL {capabilities.ServerVersion}: SQL/PGQ detected.");
-await ExecuteAsync(
-    "CREATE TEMP TABLE graph_people (id int4 PRIMARY KEY, name text NOT NULL)");
-await ExecuteAsync(
-    "CREATE TEMP TABLE graph_knows (" +
-    "id int4 PRIMARY KEY, " +
-    "source_id int4 REFERENCES graph_people(id), " +
-    "destination_id int4 REFERENCES graph_people(id))");
-await ExecuteAsync("INSERT INTO graph_people VALUES (1, 'Ada'), (2, 'Grace')");
-await ExecuteAsync("INSERT INTO graph_knows VALUES (1, 1, 2)");
-
-try
+var options = new DbContextOptionsBuilder<PeopleContext>().UseBlueTusk(connection).Options;
+await using var db = new PeopleContext(options);
+var sourceId = 1;
+var friends = await db.PropertyGraph("people")
+    .Match(pattern => pattern
+        .Vertex<Person>("source", person => person.Id == sourceId)
+        .Outgoing<Knows>("knows")
+        .Vertex<Person>("target"))
+    .Select<Friend>(projection => projection
+        .Property<Person, string>("source", person => person.Name, row => row.Source)
+        .Property<Person, string>("target", person => person.Name, row => row.Target))
+    .ToListAsync();
+foreach (var friend in friends)
 {
-    await ExecuteAsync(
-        """
-        CREATE TEMP PROPERTY GRAPH people_graph
-            VERTEX TABLES (graph_people LABEL person)
-            EDGE TABLES (
-                graph_knows
-                    SOURCE KEY (source_id) REFERENCES graph_people (id)
-                    DESTINATION KEY (destination_id) REFERENCES graph_people (id)
-                    LABEL knows)
-        """);
-
-    await using var command = new BlueTuskCommand(
-        """
-        SELECT source_name, destination_name
-        FROM GRAPH_TABLE (
-            people_graph
-            MATCH (source IS person)-[IS knows]->(destination IS person)
-            COLUMNS (
-                source.name AS source_name,
-                destination.name AS destination_name))
-        """,
-        connection);
-    await using var reader = await command.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
-    {
-        Console.WriteLine($"{reader.GetString(0)} knows {reader.GetString(1)}");
-    }
-}
-finally
-{
-    await ExecuteAsync("DROP PROPERTY GRAPH IF EXISTS people_graph");
+    Console.WriteLine($"{friend.Source} knows {friend.Target}");
 }
 
 return 0;
 
-async Task ExecuteAsync(string sql)
+internal sealed class PeopleContext(DbContextOptions<PeopleContext> options) : DbContext(options)
 {
-    await using var command = new BlueTuskCommand(sql, connection);
-    _ = await command.ExecuteNonQueryAsync();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Person>(entity =>
+        {
+            entity.ToTable("graph_people", "pg_temp");
+            entity.Property(person => person.Id).HasColumnName("id");
+            entity.Property(person => person.Name).HasColumnName("name");
+        });
+        modelBuilder.Entity<Knows>(entity =>
+        {
+            entity.ToTable("graph_knows", "pg_temp");
+            entity.Property(edge => edge.Id).HasColumnName("id");
+            entity.Property(edge => edge.SourceId).HasColumnName("source_id");
+            entity.Property(edge => edge.DestinationId).HasColumnName("destination_id");
+        });
+        modelBuilder.HasPropertyGraph("people", graph => graph
+            .Vertex<Person>("people", vertex => vertex.HasLabel("person")
+                .HasKey(person => person.Id)
+                .Properties(person => new { person.Id, person.Name }))
+            .Edge<Knows>("knows", edge => edge.HasLabel("knows")
+                .HasKey(relationship => relationship.Id)
+                .HasSource<Person>(relationship => relationship.SourceId, person => person.Id)
+                .HasDestination<Person>(relationship => relationship.DestinationId, person => person.Id)));
+    }
+}
+
+internal sealed class Person
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+internal sealed class Knows
+{
+    public int Id { get; set; }
+    public int SourceId { get; set; }
+    public int DestinationId { get; set; }
+}
+
+internal sealed class Friend
+{
+    public string Source { get; set; } = string.Empty;
+    public string Target { get; set; } = string.Empty;
 }

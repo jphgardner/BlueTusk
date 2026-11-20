@@ -70,23 +70,23 @@ internal sealed class PostgreSqlCatalogConsistencyAttestation : IDisposable
         DbConnection connection, DbTransaction transaction, SchemaCatalogCaptureOptions options,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(options.Relations);
-        ArgumentNullException.ThrowIfNull(options.Limits);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(options.Relations);
+        BlueTuskGuard.NotNull(options.Limits);
         if (connection.State != ConnectionState.Open || !ReferenceEquals(transaction.Connection, connection) ||
             transaction.IsolationLevel is not (IsolationLevel.RepeatableRead or IsolationLevel.Serializable))
         {
             throw new ArgumentException("Catalogue attestation requires a consistent caller-owned transaction.", nameof(transaction));
         }
         var timeout = options.Relations.CommandTimeoutSeconds;
-        ArgumentOutOfRangeException.ThrowIfLessThan(timeout, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout, 300);
+        BlueTuskGuard.NotLessThan(timeout, 1);
+        BlueTuskGuard.NotGreaterThan(timeout, 300);
         var maximumBytes = Math.Min(options.Relations.MaximumMetadataBytes, options.Limits.MaximumMetadataBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumBytes, 1024L * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(maximumBytes, 1);
+        BlueTuskGuard.NotGreaterThan(maximumBytes, 1024L * 1024 * 1024);
         var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(timeout));
         try
@@ -106,7 +106,7 @@ internal sealed class PostgreSqlCatalogConsistencyAttestation : IDisposable
     // detect committed changes which PostgreSQL's cache lookups already exposed.
     internal async ValueTask VerifyAsync()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_verified) { throw new InvalidOperationException("Catalogue attestation has already completed."); }
         await using var connection = await _dataSource.OpenConnectionAsync(CancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.RepeatableRead, CancellationToken).ConfigureAwait(false);

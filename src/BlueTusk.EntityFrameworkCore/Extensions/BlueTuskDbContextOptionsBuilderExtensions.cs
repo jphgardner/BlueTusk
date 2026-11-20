@@ -13,7 +13,7 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
         string? connectionString,
         Action<BlueTuskDbContextOptionsBuilder>? blueTuskOptionsAction = null)
     {
-        ArgumentNullException.ThrowIfNull(optionsBuilder);
+        BlueTuskGuard.NotNull(optionsBuilder);
 
         var extension = GetOrCreateExtension(optionsBuilder)
             .WithDataSource(null)
@@ -40,8 +40,8 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
         bool contextOwnsConnection = false,
         Action<BlueTuskDbContextOptionsBuilder>? blueTuskOptionsAction = null)
     {
-        ArgumentNullException.ThrowIfNull(optionsBuilder);
-        ArgumentNullException.ThrowIfNull(connection);
+        BlueTuskGuard.NotNull(optionsBuilder);
+        BlueTuskGuard.NotNull(connection);
 
         var extension = GetOrCreateExtension(optionsBuilder)
             .WithDataSource(null)
@@ -73,8 +73,8 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
         BlueTuskDataSource dataSource,
         Action<BlueTuskDbContextOptionsBuilder>? blueTuskOptionsAction = null)
     {
-        ArgumentNullException.ThrowIfNull(optionsBuilder);
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(optionsBuilder);
+        BlueTuskGuard.NotNull(dataSource);
 
         var extension = GetOrCreateExtension(optionsBuilder)
             .WithDataSource(dataSource)

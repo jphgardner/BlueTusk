@@ -28,7 +28,7 @@ public sealed class StreamsApiFreezeTests
             .EnumerateFiles(Path.Combine(repositoryRoot, "src"), "PublicAPI.Unshipped.txt", SearchOption.AllDirectories)
             .Where(path => Path.GetFileName(Path.GetDirectoryName(path)!).StartsWith("BlueTusk.Streams", StringComparison.Ordinal))
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
-            .Order(StringComparer.Ordinal)
+            .OrderBy(static path => path, StringComparer.Ordinal)
             .ToArray();
 
         // A reviewed 1.1.0 addition records the new file digest and its exact added signatures.
@@ -49,7 +49,7 @@ public sealed class StreamsApiFreezeTests
                 },
                 StringComparer.Ordinal);
 
-        Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(discovered, registered.Keys.OrderBy(static path => path, StringComparer.Ordinal));
         Assert.All(reviewedAdditions.Keys, path => Assert.Contains(path, discovered));
         foreach (var path in discovered)
         {

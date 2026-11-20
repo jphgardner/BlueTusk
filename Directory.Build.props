@@ -1,4 +1,5 @@
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)eng\TargetFrameworks.props" />
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -33,6 +34,7 @@
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)'))">
     <IsPackable>false</IsPackable>
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
     <NoWarn>$(NoWarn);xUnit1051</NoWarn>
   </PropertyGroup>
 

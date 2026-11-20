@@ -4,7 +4,6 @@ using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
 using StackExchange.Redis;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Redis.Tests;
 
@@ -13,7 +12,7 @@ public sealed class RedisSyncDestinationTests
     private static readonly ChangeSourceIdentity Source =
         new("redis-system", "redis-database", "redis-slot", "public:orders");
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_REDIS_CONNECTION_STRING")]
     public async Task Redis_atomically_materialises_checkpoints_snapshots_and_quarantine()
     {
         var connectionString = GetConnectionString();
@@ -236,7 +235,7 @@ public sealed class RedisSyncDestinationTests
         prefix + ":{" + Fingerprint(pipeline) + "}";
 
     private static string Fingerprint(string value) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
     private static async Task DeleteKeysAsync(ConnectionMultiplexer connection, string pattern)
     {
@@ -256,7 +255,7 @@ public sealed class RedisSyncDestinationTests
         var connectionString = Environment.GetEnvironmentVariable(
             "BLUETUSK_TEST_REDIS_CONNECTION_STRING");
         return string.IsNullOrWhiteSpace(connectionString)
-            ? throw SkipException.ForSkip(
+            ? throw new InvalidOperationException(
                 "BLUETUSK_TEST_REDIS_CONNECTION_STRING is not configured.")
             : connectionString;
     }

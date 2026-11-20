@@ -22,7 +22,7 @@ namespace BlueTusk.Edge.Tests;
 
 public sealed class EdgeHealthTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Scope_health_observes_committed_counters_replays_tombstones_pruning_and_epoch_isolation() => WithFixtureAsync(async fixture =>
     {
         var other = new EdgeScope("other", "orders", 1);
@@ -51,7 +51,7 @@ public sealed class EdgeHealthTests
         Assert.Equal(0, (await fixture.Store.ReadHealthAsync(next)).ReceiptBytes);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Capacity_health_uses_bounded_snapshot_observation_and_never_prunes_expired_state() => WithFixtureAsync(async fixture =>
     {
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxRecordsPerScope = 1, MaxSnapshotsPerScope = 1 });
@@ -67,7 +67,7 @@ public sealed class EdgeHealthTests
         Assert.Equal(3L, await fixture.ScalarAsync($"SELECT count(*) FROM {fixture.Schema}.snapshots"));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Host_health_deadline_saturation_and_cancellation_recover_after_a_real_database_lock() => WithFixtureAsync(async fixture =>
     {
         var check = new EdgeServerHealthCheck(fixture.Store, fixture.Scope, new EdgeServerHealthCheckOptions { Timeout = TimeSpan.FromMilliseconds(150) });
@@ -103,7 +103,7 @@ public sealed class EdgeHealthTests
         await second.RollbackAsync();
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Missing_scope_format_drift_and_disposal_emit_sanitized_health_and_status_only_metrics() => WithFixtureAsync(async fixture =>
     {
         var tags = new ConcurrentBag<KeyValuePair<string, object?>>();
@@ -128,7 +128,7 @@ public sealed class EdgeHealthTests
         Assert.All(tags, static tag => { Assert.Equal("status", tag.Key); Assert.Contains(tag.Value, new object[] { "healthy", "degraded", "unhealthy", "cancelled" }); });
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Timed_out_uncooperative_connection_open_keeps_admission_reserved_until_late_completion() => WithFixtureAsync(async fixture =>
     {
         await using var delayed = new DelayedSource(fixture.Source);
@@ -150,20 +150,20 @@ public sealed class EdgeHealthTests
         Assert.True(delayed.Opens >= 2);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Real_authorized_ASP_health_endpoint_reports_readiness_capacity_drift_and_recovery() => WithFixtureAsync(async fixture =>
     {
         await using var bounded = new PostgreSqlEdgeServerStore(fixture.Source, fixture.Store.Options with { MaxRecordsPerScope = 1 });
-        var builder = WebApplication.CreateSlimBuilder();
-        builder.Logging.ClearProviders(); builder.WebHost.UseKestrel().UseUrls("http://127.0.0.1:0");
-        builder.Services.AddAuthentication("Operator").AddScheme<AuthenticationSchemeOptions, OperatorAuthentication>("Operator", _ => { });
-        builder.Services.AddAuthorization(options => options.AddPolicy("operators", policy => policy.RequireAuthenticatedUser()));
-        builder.Services.AddHealthChecks().AddBlueTuskEdgeServer("edge-readiness", bounded, fixture.Scope);
-        await using var app = builder.Build();
-        app.UseAuthentication(); app.UseAuthorization();
-        app.MapHealthChecks("/ops/edge", new HealthCheckOptions { ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable } }).RequireAuthorization("operators");
-        await app.StartAsync();
-        using var http = new HttpClient { BaseAddress = new Uri(app.Urls.Single()) };
+        await using var app = await PortableHttpTestHost.StartAsync(services =>
+        {
+            services.AddAuthentication("Operator").AddScheme<AuthenticationSchemeOptions, OperatorAuthentication>("Operator", _ => { });
+            services.AddAuthorization(options => options.AddPolicy("operators", policy => policy.RequireAuthenticatedUser()));
+            services.AddHealthChecks().AddBlueTuskEdgeServer("edge-readiness", bounded, fixture.Scope);
+        }, endpoints => endpoints.MapHealthChecks("/ops/edge", new HealthCheckOptions
+        {
+            ResultStatusCodes = { [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable },
+        }).RequireAuthorization("operators"));
+        using var http = new HttpClient { BaseAddress = app.Address };
         using (var anonymous = await http.GetAsync("/ops/edge")) { Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode); }
         http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "operator-test");
         using (var healthy = await http.GetAsync("/ops/edge?tenant=untrusted")) { Assert.Equal(HttpStatusCode.OK, healthy.StatusCode); Assert.Equal("Healthy", await healthy.Content.ReadAsStringAsync()); }
@@ -177,7 +177,6 @@ public sealed class EdgeHealthTests
         var service = app.Services.GetRequiredService<HealthCheckService>();
         var stale = await service.CheckHealthAsync(); Assert.Equal(HealthStatus.Unhealthy, stale.Status);
         Assert.Equal(HealthStatus.Healthy, (await new EdgeServerHealthCheck(bounded, next).CheckHealthAsync(new HealthCheckContext())).Status);
-        await app.StopAsync();
     });
 
     private static async Task WithFixtureAsync(Func<Fixture, Task> test)
@@ -196,13 +195,13 @@ public sealed class EdgeHealthTests
         internal async Task ExecuteAsync(string sql) { await using var command = Source.CreateCommand(sql); _ = await command.ExecuteNonQueryAsync(); }
         internal async Task<object?> ScalarAsync(string sql) { await using var command = Source.CreateCommand(sql); return await command.ExecuteScalarAsync(); }
     }
-    private sealed class OperatorAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    private sealed class OperatorAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : PortableAuthenticationHandler(options, logger, encoder)
     {
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync() => Task.FromResult(Request.Headers.Authorization == "Bearer operator-test"
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync() => Task.FromResult(Request.Headers["Authorization"] == "Bearer operator-test"
             ? AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "operator")], Scheme.Name)), Scheme.Name))
             : AuthenticateResult.NoResult());
     }
-    private sealed class DelayedSource(BlueTuskDataSource source) : DbDataSource
+    private sealed class DelayedSource(BlueTuskDataSource source) : PortableFixtureDataSource
     {
         private int _opens;
         public override string ConnectionString => source.ConnectionString;

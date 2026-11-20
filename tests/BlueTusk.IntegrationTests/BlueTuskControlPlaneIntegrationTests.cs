@@ -11,6 +11,85 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskControlPlaneIntegrationTests
 {
     [Fact]
+    public async Task Deployment_inventory_pages_use_server_filters_an_indexed_cursor_and_literal_prefixes()
+    {
+        var schema = "bluetusk_fleet_pages_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            var store = new PostgreSqlManagedDeploymentStore(dataSource, schema);
+            await store.InitializeAsync();
+            await store.InitializeAsync();
+            var workload = new ManagedWorkloadSpec(ManagedWorkloadKind.Streams, "1.2.0", new(1, 500, 256 * 1024 * 1024, 1024 * 1024 * 1024),
+                [new("vault", "secret-must-not-escape")], new Dictionary<string, string> { ["private-setting"] = "private-value" });
+            var spec = new ManagedDeploymentSpec("placeholder", "tenant-a", "test", "eu-west", 1, false, true,
+                [workload], new Dictionary<string, string>());
+            for (var index = 0; index < 1_000; index++)
+            {
+                await store.PutAsync(spec with
+                {
+                    DeploymentId = "deployment-" + index.ToString("D6", System.Globalization.CultureInfo.InvariantCulture),
+                    TenantId = index % 2 == 0 ? "tenant-a" : "tenant-b",
+                }, 0);
+            }
+            var actual = new List<string>();
+            string? after = null;
+            do
+            {
+                var page = await store.QueryAsync(new ManagedDeploymentQuery
+                {
+                    PageSize = 17,
+                    AfterDeploymentId = after,
+                    TenantId = "tenant-a",
+                    DeploymentIdPrefix = "deployment-",
+                    State = ManagedDeploymentState.Pending,
+                    Provider = "test",
+                    Region = "eu-west",
+                    WorkloadKind = ManagedWorkloadKind.Streams,
+                });
+                Assert.InRange(page.Deployments.Count, 1, 17);
+                actual.AddRange(page.Deployments.Select(deployment => deployment.Spec.DeploymentId));
+                after = page.NextAfterDeploymentId;
+            } while (after is not null);
+            Assert.Equal(Enumerable.Range(0, 1_000).Where(index => index % 2 == 0)
+                .Select(index => "deployment-" + index.ToString("D6", System.Globalization.CultureInfo.InvariantCulture)), actual);
+            Assert.Empty((await store.QueryAsync(new ManagedDeploymentQuery { TenantId = "' OR TRUE --" })).Deployments);
+            Assert.Empty((await store.QueryAsync(new ManagedDeploymentQuery { WorkloadKind = ManagedWorkloadKind.Sync })).Deployments);
+            Assert.Empty((await store.QueryAsync(new ManagedDeploymentQuery { State = ManagedDeploymentState.Ready })).Deployments);
+            foreach (var id in new[] { "literal%_\\one", "literal%_\\two", "literal-other" })
+                await store.PutAsync(spec with { DeploymentId = id }, 0);
+            var literal = await store.QueryAsync(new ManagedDeploymentQuery { DeploymentIdPrefix = "literal%_\\", PageSize = 1 });
+            Assert.Equal("literal%_\\one", Assert.Single(literal.Deployments).Spec.DeploymentId);
+            literal = await store.QueryAsync(new ManagedDeploymentQuery
+            {
+                DeploymentIdPrefix = "literal%_\\",
+                PageSize = 1,
+                AfterDeploymentId = literal.NextAfterDeploymentId,
+            });
+            Assert.Equal("literal%_\\two", Assert.Single(literal.Deployments).Spec.DeploymentId);
+            Assert.Null(literal.NextAfterDeploymentId);
+            var query = new ManagedDeploymentFleetQueryService(store);
+            var projection = await query.GetDeploymentPageAsync(new ManagedDeploymentQuery { PageSize = 500 });
+            Assert.Equal(500, projection.Deployments.Count);
+            Assert.DoesNotContain("private-setting", System.Text.Json.JsonSerializer.Serialize(projection), StringComparison.Ordinal);
+            Assert.Equal("deployment-000999", (await query.GetDeploymentAsync("deployment-000999"))!.DeploymentId);
+            Assert.Null(await query.GetDeploymentAsync("missing"));
+
+            await ExecuteAsync(dataSource, $"ANALYZE \"{schema}\".managed_deployments");
+            await using var explain = dataSource.CreateCommand($"""
+                EXPLAIN (FORMAT JSON, ANALYZE, BUFFERS)
+                SELECT deployment_id FROM "{schema}".managed_deployments
+                WHERE deployment_id COLLATE "C" > 'deployment-000500'
+                ORDER BY deployment_id COLLATE "C" LIMIT 18
+                """);
+            var plan = await explain.ExecuteScalarAsync<string>();
+            Assert.Contains("managed_deployments_ordinal_idx", plan!, StringComparison.Ordinal);
+            Assert.DoesNotContain("Seq Scan", plan!, StringComparison.Ordinal);
+        }
+        finally { await DropSchemaAsync(dataSource, schema); }
+    }
+
+    [Fact]
     public async Task Control_plane_reads_operational_state_and_audit_rows_are_immutable()
     {
         var connectionString = GetConnectionString();

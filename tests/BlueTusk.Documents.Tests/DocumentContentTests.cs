@@ -3,7 +3,6 @@ using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text.Json;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Documents.Tests;
 
@@ -11,7 +10,7 @@ public sealed class DocumentContentTests
 {
     private static readonly DocumentCollectionDefinition<TestDocument> Collection = new("orders", TestJsonContext.Default.TestDocument, 2);
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Content_is_tenant_scoped_revision_checked_and_independent_of_json_queries() => WithStoreAsync(async (store, source, schema) =>
     {
         using (var write = store.OpenSession("alpha"))
@@ -43,7 +42,7 @@ public sealed class DocumentContentTests
         var content = (await store.LoadContentAsync("alpha", Collection, "one"))!;
         Assert.Equal(expected, content.Bytes.ToArray());
         Assert.Equal(revision, content.Revision);
-        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(expected)), content.Sha256);
+        Assert.Equal(BlueTuskRuntime.ToHexStringLower(SHA256.HashData(expected)), content.Sha256);
         Assert.Equal(expected, (await store.LoadContentAsync("beta", Collection, "one"))!.Bytes.ToArray());
         using var filter = JsonDocument.Parse("{\"count\":1}");
         Assert.Single((await store.ReadPageAsync("alpha", Collection, contains: filter.RootElement)).Items);
@@ -82,7 +81,7 @@ public sealed class DocumentContentTests
         _ = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => store.CollectUnusedContentPageAsync(1001).AsTask());
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Digest_collision_rejects_different_bytes_and_rolls_back_revision() => WithStoreAsync(async (store, source, schema) =>
     {
         using (var write = store.OpenSession("tenant"))
@@ -123,7 +122,7 @@ public sealed class DocumentContentTests
         Assert.Equal(1, (await store.CollectUnusedContentPageAsync(1)).DeletedCount);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Attachment_recovers_when_collection_deletes_an_unlinked_digest_first() => WithStoreAsync(async (store, source, schema) =>
     {
         using (var write = store.OpenSession("tenant"))
@@ -168,7 +167,7 @@ public sealed class DocumentContentTests
         Assert.Equal(1, await CountAsync(source, $"SELECT count(*) FROM \"{schema}\".content"));
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Reattaching_64KiB_content_advances_only_document_metadata() => WithStoreAsync(async (store, source, schema) =>
     {
         using (var write = store.OpenSession("tenant"))
@@ -195,7 +194,7 @@ public sealed class DocumentContentTests
         Assert.Equal(revision, (await store.LoadContentAsync("tenant", Collection, "one"))!.Revision);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Initialization_rejects_a_missing_content_foreign_key() => WithStoreAsync(async (store, source, schema) =>
     {
         await using var command = source.CreateCommand($"ALTER TABLE \"{schema}\".content_links DROP CONSTRAINT content_links_content_fk");
@@ -203,7 +202,7 @@ public sealed class DocumentContentTests
         _ = await Assert.ThrowsAsync<InvalidOperationException>(() => store.InitializeAsync().AsTask());
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Collection_cursor_crosses_linked_keys_without_unbounded_scans() => WithStoreAsync(async (store, source, schema) =>
     {
         var payloads = Enumerable.Range(0, 8)
@@ -254,7 +253,7 @@ public sealed class DocumentContentTests
         _ = await Assert.ThrowsAsync<ArgumentException>(() => store.CollectUnusedContentPageAsync(afterCursor: "bad").AsTask());
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Locked_key_is_skipped_then_revisited_on_the_next_sweep() => WithStoreAsync(async (store, source, schema) =>
     {
         var payloads = new[] { new byte[] { 0 }, new byte[] { 1 } }
@@ -292,7 +291,7 @@ public sealed class DocumentContentTests
         Assert.Equal(1, (await store.CollectUnusedContentPageAsync(1)).DeletedCount);
     });
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public Task Collection_cursor_supports_maximum_utf8_tenant_and_c_collation_order() => WithStoreAsync(async (store, _, _) =>
     {
         var unicodeTenant = string.Concat(Enumerable.Repeat("😀", 64)); // 256 UTF-8 bytes.
@@ -352,7 +351,7 @@ public sealed class DocumentContentTests
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
 
         await using var source = BlueTuskDataSource.Create(connectionString);

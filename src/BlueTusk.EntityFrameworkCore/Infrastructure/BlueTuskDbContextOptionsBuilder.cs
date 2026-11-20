@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -20,6 +21,23 @@ public sealed class BlueTuskDbContextOptionsBuilder
     public DbContextOptionsBuilder ContextOptionsBuilder => OptionsBuilder;
 
     /// <summary>
+    /// Selects the backend for property graphs in this context. The default uses ordinary PostgreSQL joins.
+    /// </summary>
+    public BlueTuskDbContextOptionsBuilder UseGraphCompatibility(BlueTuskPropertyGraphBackend backend)
+    {
+        if (!Enum.IsDefined(backend))
+        {
+            throw new ArgumentOutOfRangeException(nameof(backend));
+        }
+
+        var extension = OptionsBuilder.Options.FindExtension<BlueTuskOptionsExtension>()
+            ?? throw new InvalidOperationException("BlueTusk provider options have not been configured.");
+        ((IDbContextOptionsBuilderInfrastructure)OptionsBuilder).AddOrUpdateExtension(
+            extension.WithGraphBackend(backend));
+        return this;
+    }
+
+    /// <summary>
     /// Configures the existing database used to create or drop the target database.
     /// </summary>
     /// <remarks>
@@ -28,7 +46,7 @@ public sealed class BlueTuskDbContextOptionsBuilder
     /// </remarks>
     public BlueTuskDbContextOptionsBuilder UseAdminDatabase(string databaseName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseName);
         var extension = OptionsBuilder.Options.FindExtension<BlueTuskOptionsExtension>()
             ?? throw new InvalidOperationException("BlueTusk provider options have not been configured.");
         extension = extension.WithAdminDatabase(databaseName);

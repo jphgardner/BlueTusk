@@ -1,9 +1,16 @@
+#if BLUETUSK_EF7_OR_GREATER
 using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore.Storage;
+#if BLUETUSK_EF11_OR_GREATER
+using JsonTypeMapping = Microsoft.EntityFrameworkCore.Storage.StructuralJsonTypeMapping;
+#endif
+#if !BLUETUSK_EF10_OR_GREATER
+using JsonTypePlaceholder = System.Text.Json.JsonElement;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
@@ -58,3 +65,4 @@ internal sealed class BlueTuskStructuralJsonTypeMapping : JsonTypeMapping
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
         => new BlueTuskStructuralJsonTypeMapping(parameters);
 }
+#endif

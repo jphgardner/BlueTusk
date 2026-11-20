@@ -6,14 +6,13 @@ using BlueTusk.Sql.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sql.Tool.Tests;
 
 [Collection(SqlCatalogueValidationDefinition.Name)]
 public sealed class SqlCliTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Live_validation_produces_offline_build_receipt_and_rejects_source_or_snapshot_changes()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -41,7 +40,7 @@ public sealed class SqlCliTests
         Assert.DoesNotContain(Directory.EnumerateFiles(fixture.Directory), path => path.EndsWith(".tmp", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Catalogue_receipts_cover_enum_domain_and_routine_drift_without_relation_changes()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -83,7 +82,7 @@ public sealed class SqlCliTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Catalogue_receipt_validates_qualified_enum_and_domain_scalar_nullable_and_array_bindings()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -135,7 +134,7 @@ public sealed class SqlCliTests
         Assert.Equal(receipt, await File.ReadAllTextAsync(fixture.Receipt, token));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Concurrent_routine_change_during_query_description_rejects_catalogue_receipt()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -180,15 +179,15 @@ public sealed class SqlCliTests
         finally
         {
             await transaction.RollbackAsync(CancellationToken.None);
-            _ = await validation.WaitAsync(TimeSpan.FromSeconds(45), CancellationToken.None);
+            _ = await validation.WaitAsync(TimeSpan.FromSeconds(45), TimeProvider.System, CancellationToken.None);
         }
-        Assert.Equal(1, await validation.WaitAsync(TimeSpan.FromSeconds(45), token));
+        Assert.Equal(1, await validation.WaitAsync(TimeSpan.FromSeconds(45), TimeProvider.System, token));
         Assert.Equal("prior-receipt", await File.ReadAllTextAsync(fixture.Receipt, token));
         Assert.DoesNotContain("changed-private-body", error.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Directory.EnumerateFiles(fixture.Directory), path => path.EndsWith(".tmp", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Optional_receipts_only_emit_validation_metadata_for_the_exact_snapshot()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -210,7 +209,7 @@ public sealed class SqlCliTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Live_result_mismatch_drift_and_mutation_rejection_preserve_prior_receipt_and_business_state()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -237,7 +236,7 @@ public sealed class SqlCliTests
         Assert.DoesNotContain("private-marker", error.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Catalogue_capture_reuses_caller_read_only_transaction_without_committing_it()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -330,8 +329,7 @@ public sealed class SqlCliTests
         }
         internal static async Task<Fixture> CreateAsync()
         {
-            var settings = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } value
-                ? value : throw SkipException.ForSkip("A disposable PostgreSQL fixture is required.");
+            var settings = Environment.GetEnvironmentVariable(PostgreSqlFactAttribute.ConnectionStringVariable)!;
             var fixture = new Fixture(BlueTuskDataSource.Create(settings));
             await using var setup = fixture.DataSource.CreateCommand($"CREATE SCHEMA \"{fixture.Schema}\"; CREATE TABLE \"{fixture.Schema}\".items(id bigint NOT NULL); INSERT INTO \"{fixture.Schema}\".items VALUES(1)");
             _ = await setup.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);

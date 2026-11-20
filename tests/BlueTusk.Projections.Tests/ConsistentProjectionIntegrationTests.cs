@@ -8,7 +8,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ConsistentProjectionIntegrationTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task ExportedSnapshotPlusRealWalProjectsConcurrentTwoTableTransactionWithoutGap()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();

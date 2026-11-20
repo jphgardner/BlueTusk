@@ -29,8 +29,8 @@ internal static class BlueTuskCommandTextRewriter
         BlueTuskParameterCollection parameters,
         Dictionary<string, BlueTuskParameter>? namedParameterMap = null)
     {
-        ArgumentNullException.ThrowIfNull(sql);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(sql);
+        BlueTuskGuard.NotNull(parameters);
         // Keep the immutable SQL key alive with its bounded batch template. Large
         // EF command strings are recreated per SaveChanges, not interned by EF.
         if (sql.Length > MaximumValueCachedSqlLength && BatchTemplatesByValue.TryGetValue(sql, out var batchTemplate))
@@ -96,7 +96,7 @@ internal static class BlueTuskCommandTextRewriter
                     continue;
                 }
 
-                if (index + 1 < sql.Length && char.IsAsciiDigit(sql[index + 1]))
+                if (index + 1 < sql.Length && BlueTuskRuntime.IsAsciiDigit(sql[index + 1]))
                 {
                     if (rewritten is not null)
                     {
@@ -184,7 +184,7 @@ internal static class BlueTuskCommandTextRewriter
 
     internal static bool MightContainNamedParameters(string sql)
     {
-        ArgumentNullException.ThrowIfNull(sql);
+        BlueTuskGuard.NotNull(sql);
         for (var index = 0; index + 1 < sql.Length; index++)
         {
             var current = sql[index];
@@ -207,7 +207,7 @@ internal static class BlueTuskCommandTextRewriter
 
     public static bool CanUseExtendedProtocol(string sql)
     {
-        ArgumentNullException.ThrowIfNull(sql);
+        BlueTuskGuard.NotNull(sql);
         var sawStatementSeparator = false;
         for (var index = 0; index < sql.Length;)
         {
@@ -300,7 +300,7 @@ internal static class BlueTuskCommandTextRewriter
 
     internal static IReadOnlyList<string> SplitStatements(string sql)
     {
-        ArgumentNullException.ThrowIfNull(sql);
+        BlueTuskGuard.NotNull(sql);
         var statements = new List<string>();
         var start = 0;
         var hasToken = false;

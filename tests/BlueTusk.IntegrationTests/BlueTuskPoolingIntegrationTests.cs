@@ -5,6 +5,64 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskPoolingIntegrationTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Terminated_backend_is_replaced_after_a_command_failure(bool asynchronous, bool scalar)
+    {
+        await using var dataSource = CreateDataSource(maximumPoolSize: 1);
+        int terminatedBackend;
+        await using (var warmup = dataSource.CreateCommand("SELECT pg_backend_pid()::int4"))
+        {
+            terminatedBackend = await warmup.ExecuteScalarAsync<int>(CancellationToken.None);
+        }
+        await using var held = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using (var admin = CreateDataSource(pooling: false))
+        await using (var terminate = admin.CreateCommand($"SELECT pg_terminate_backend({terminatedBackend})"))
+        {
+            Assert.True(await terminate.ExecuteScalarAsync<bool>(CancellationToken.None));
+        }
+
+        await using (var failed = new BlueTuskCommand("SELECT 1::int4", held))
+        {
+            // A failure with an unknown server outcome is surfaced once, never replayed.
+            if (asynchronous)
+            {
+                if (scalar)
+                {
+                    await Assert.ThrowsAnyAsync<Exception>(() => failed.ExecuteScalarAsync(CancellationToken.None));
+                }
+                else
+                {
+                    await Assert.ThrowsAnyAsync<Exception>(() => failed.ExecuteNonQueryAsync(CancellationToken.None));
+                }
+            }
+            else if (scalar)
+            {
+                Assert.ThrowsAny<Exception>(() => failed.ExecuteScalar());
+            }
+            else
+            {
+                Assert.ThrowsAny<Exception>(() => failed.ExecuteNonQuery());
+            }
+        }
+        await held.CloseAsync();
+
+        for (var index = 0; index < 3; index++)
+        {
+            await using var next = dataSource.CreateCommand("SELECT pg_backend_pid()::int4");
+            var replacement = asynchronous
+                ? await next.ExecuteScalarAsync<int>(CancellationToken.None)
+                : (int)next.ExecuteScalar()!;
+            Assert.NotEqual(terminatedBackend, replacement);
+        }
+        Assert.Equal(2, dataSource.GetPoolStatistics().Opened);
+        Assert.Equal(1, dataSource.GetPoolStatistics().Discarded);
+        Assert.Equal(1, dataSource.GetPoolStatistics().Idle);
+    }
+
     [Fact]
     public async Task Sequential_connections_reuse_one_backend_and_report_it()
     {

@@ -9,7 +9,7 @@ public sealed class PostgreSqlRelaySyncQuarantineReplaySource : ISyncQuarantineR
 
     public PostgreSqlRelaySyncQuarantineReplaySource(PostgreSqlDurableChangeRelay relay)
     {
-        ArgumentNullException.ThrowIfNull(relay);
+        BlueTuskGuard.NotNull(relay);
         _relay = relay;
     }
 
@@ -17,7 +17,7 @@ public sealed class PostgreSqlRelaySyncQuarantineReplaySource : ISyncQuarantineR
         SyncQuarantineIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
+        BlueTuskGuard.NotNull(identity);
         var record = await _relay.ReadRetainedTransactionAsync(
             identity.Source,
             identity.CommitEndPosition,

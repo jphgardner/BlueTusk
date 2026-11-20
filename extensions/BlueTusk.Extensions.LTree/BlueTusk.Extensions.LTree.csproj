@@ -6,7 +6,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <PackageId>BlueTusk.Extensions.LTree</PackageId>
     <Description>Optional PostgreSQL ltree, lquery, and ltxtquery integration for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;ltree;lquery</PackageTags>

@@ -44,7 +44,7 @@ public sealed class BlueTuskNumericCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return ReadTyped(ref reader, format, type).ToDecimal();
@@ -65,6 +65,11 @@ public sealed class BlueTuskNumericCodec :
         var weight = reader.ReadInt16BigEndian();
         var sign = reader.ReadUInt16BigEndian();
         var displayScale = reader.ReadUInt16BigEndian();
+        if (displayScale > BlueTuskNumeric.MaximumScale)
+        {
+            throw new InvalidOperationException("PostgreSQL numeric binary display scale exceeds 16383.");
+        }
+
         if (digitCount < 0 || reader.Remaining != digitCount * sizeof(short))
         {
             throw new InvalidOperationException("PostgreSQL numeric binary digit count does not match its payload.");
@@ -148,12 +153,18 @@ public sealed class BlueTuskNumericCodec :
     {
         Span<int> bits = stackalloc int[4];
         _ = decimal.GetBits(value, bits);
+#if NET7_0_OR_GREATER
         var coefficient =
             (UInt128)(uint)bits[0] |
             ((UInt128)(uint)bits[1] << 32) |
             ((UInt128)(uint)bits[2] << 64);
         var currentScale = (byte)((uint)bits[3] >> 16);
         var maximumCoefficient = (UInt128.One << 96) - UInt128.One;
+#else
+        var coefficient = (BigInteger)(uint)bits[0] | ((BigInteger)(uint)bits[1] << 32) | ((BigInteger)(uint)bits[2] << 64);
+        var currentScale = (byte)((uint)bits[3] >> 16);
+        var maximumCoefficient = (BigInteger.One << 96) - BigInteger.One;
+#endif
         while (currentScale < targetScale)
         {
             coefficient = checked(coefficient * 10);
@@ -177,9 +188,15 @@ public sealed class BlueTuskNumericCodec :
         }
 
         return new decimal(
+#if NET7_0_OR_GREATER
             (int)(uint)coefficient,
             (int)(uint)(coefficient >> 32),
             (int)(uint)(coefficient >> 64),
+#else
+            (int)(uint)(coefficient & uint.MaxValue),
+            (int)(uint)((coefficient >> 32) & uint.MaxValue),
+            (int)(uint)((coefficient >> 64) & uint.MaxValue),
+#endif
             negative,
             targetScale);
     }
@@ -189,7 +206,7 @@ public sealed class BlueTuskNumericCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskNumeric.Parse(reader.ReadRemainingUtf8());
@@ -209,6 +226,11 @@ public sealed class BlueTuskNumericCodec :
         var weight = reader.ReadInt16BigEndian();
         var sign = reader.ReadUInt16BigEndian();
         var displayScale = reader.ReadUInt16BigEndian();
+        if (displayScale > BlueTuskNumeric.MaximumScale)
+        {
+            throw new InvalidOperationException("PostgreSQL numeric binary display scale exceeds 16383.");
+        }
+
         if (digitCount < 0 || reader.Remaining != digitCount * sizeof(short))
         {
             throw new InvalidOperationException("PostgreSQL numeric binary digit count does not match its payload.");
@@ -276,7 +298,7 @@ public sealed class BlueTuskNumericCodec :
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());

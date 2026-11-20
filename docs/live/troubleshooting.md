@@ -43,7 +43,7 @@ sends the same failures as a `HubException` with the message shown.
 | 405 | | A `GET` request, for example from the browser's `EventSource`. | Use `@bluetusk/live`, which sends `POST`. |
 | 413 | `ResourceExhausted` | The request is larger than `MaximumRequestBytes` (64 KiB). | Send fewer or shorter parameters, or raise the limit. |
 | 429 | `ResourceExhausted` | `QuotaExceeded`: the subscription already has `MaximumSubscribers` clients. | See [too many subscriptions](#too-many-subscriptions-or-clients). |
-| 409 | `FailedPrecondition` | `ResumeTokenExpired`, `ReplayUnavailable` or `ReplayLimitExceeded`. | The client drops its token and reconnects. See [resume tokens](#the-client-reloads-everything-after-a-reconnect). |
+| 409 | `FailedPrecondition` | `ResumeTokenExpired`, `ReplayUnavailable` or `ReplayLimitExceeded`. SSE also reports a signed token for a different subscription identity as 409. | The browser client drops its token and reconnects. See [resume tokens](#the-client-reloads-everything-after-a-reconnect). |
 | 503 | `Unavailable` | `NotStarted`: the resolver returned a subscription that was not started. | Call `StartAsync` before returning it. |
 | 500 | `Internal` | Your resolver or the database threw an unexpected exception. | Read the server log. |
 
@@ -147,11 +147,13 @@ a few missed events. This is expected when:
   HTTP 409;
 - more than `MaximumReplayEventsPerConnect` (1,024) events were missed:
   `ReplayLimitExceeded`, HTTP 409;
+- an authenticated SSE request reached a replica with a different subscription
+  identity and the token's signature was valid: HTTP 409;
 - the server restarted: the replay ends with a `ResultReset` whose reason is
   `ServerRestart`.
 
-The client then discards the token and reconnects for a full result. Nothing
-is lost.
+When it receives HTTP 409 with a token, the client clears that token and
+reconnects for the current authoritative result.
 
 ### The client stops with HTTP 400 after a server restart
 

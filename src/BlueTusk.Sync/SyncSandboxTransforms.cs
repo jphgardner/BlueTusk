@@ -78,7 +78,7 @@ public sealed class SyncSandboxInstruction
 
     private static string ValidatePath(string path)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        BlueTuskGuard.NotNullOrWhiteSpace(path);
         if (path.Length > 2048)
         {
             throw new ArgumentException("A sandbox path cannot exceed 2,048 characters.", nameof(path));
@@ -98,7 +98,7 @@ public sealed class SyncSandboxInstruction
 
     private static string NormalizeJson(string valueJson)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(valueJson);
+        BlueTuskGuard.NotNullOrWhiteSpace(valueJson);
         try
         {
             using var document = JsonDocument.Parse(
@@ -199,17 +199,17 @@ public sealed class SandboxedSyncTransformStage : ISyncTransformStage
 
     public SandboxedSyncTransformStage(SyncTransformSandboxOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.Version);
-        ArgumentNullException.ThrowIfNull(options.Instructions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumMutationsPerBatch);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumBatchBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumOperationsPerBatch);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumJsonDepth, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumJsonDepth, 256);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(options.MaximumExecutionTime, TimeSpan.Zero);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(options.Version);
+        BlueTuskGuard.NotNull(options.Instructions);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumMutationsPerBatch);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumBatchBytes);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumOperationsPerBatch);
+        BlueTuskGuard.NotLessThan(options.MaximumJsonDepth, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumJsonDepth, 256);
+        BlueTuskGuard.NotLessThanOrEqual(options.MaximumExecutionTime, TimeSpan.Zero);
         if (options.Instructions.Count == 0 || options.Instructions.Count > MaximumInstructionCount)
         {
             throw new ArgumentException(
@@ -245,8 +245,8 @@ public sealed class SandboxedSyncTransformStage : ISyncTransformStage
         IReadOnlyList<SyncMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(mutations);
         var budget = CreateBudget(mutations.Count);
         var transformed = new List<SyncMutation>(mutations.Count);
         foreach (var mutation in mutations)
@@ -286,8 +286,8 @@ public sealed class SandboxedSyncTransformStage : ISyncTransformStage
         IReadOnlyList<SyncSnapshotMutation> mutations,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNull(batch);
+        BlueTuskGuard.NotNull(mutations);
         var budget = CreateBudget(mutations.Count);
         var transformed = new List<SyncSnapshotMutation>(mutations.Count);
         foreach (var mutation in mutations)
@@ -683,7 +683,7 @@ public sealed class SandboxedSyncTransformStage : ISyncTransformStage
         public void Check(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (Stopwatch.GetElapsedTime(_started) > maximumExecutionTime)
+            if (BlueTuskRuntime.GetElapsedTime(_started) > maximumExecutionTime)
             {
                 throw new SyncPoisonRecordException(
                     $"Sandbox execution exceeded its {maximumExecutionTime} time budget.");

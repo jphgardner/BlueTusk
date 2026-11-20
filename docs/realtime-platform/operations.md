@@ -172,24 +172,3 @@ Minimum signals:
 
 Trace identifiers should connect source transaction identity to relay and
 destination operations without exposing row contents.
-
-## Release evidence
-
-The exact V1 gates require:
-
-- 72 continuous hours for Streams;
-- 24 continuous hours for Sync;
-- process death;
-- network interruption;
-- storage exhaustion;
-- credential rotation;
-- primary failover;
-- clock movement; and
-- PostgreSQL minor upgrade.
-
-Every report is bound to source commit, package hashes, runtime, operating
-system and image digests. A candidate code change invalidates and restarts the
-applicable run.
-
-See [Streams endurance](../streams/release-endurance.md) and
-[Sync endurance](../sync/release-endurance.md).

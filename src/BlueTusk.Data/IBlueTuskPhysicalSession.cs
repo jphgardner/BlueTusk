@@ -9,6 +9,8 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 {
     bool IsOpen { get; }
 
+    bool IsReusable => IsOpen;
+
     BlueTuskHostEndpoint Endpoint { get; }
 
     bool? IsPrimary { get; }
@@ -489,6 +491,8 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     public bool IsOpen => _session.IsOpen;
 
+    public bool IsReusable => _session.IsReusable;
+
     public BlueTuskHostEndpoint Endpoint => _endpoint;
 
     public bool? IsPrimary => _isPrimary;
@@ -505,12 +509,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         BlueTuskConnectionStringBuilder settings,
         BlueTuskClientConfiguration? clientConfiguration = null)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
         var endpoints = settings.HostEndpoints.ToArray();
         if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
-            Random.Shared.Shuffle(endpoints);
+            BlueTuskRuntime.Shuffle(endpoints);
         }
 
         var target = settings.TargetSessionAttributes;
@@ -597,12 +601,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        BlueTuskGuard.NotNull(settings);
         settings.Validate();
         var endpoints = settings.HostEndpoints.ToArray();
         if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
         {
-            Random.Shared.Shuffle(endpoints);
+            BlueTuskRuntime.Shuffle(endpoints);
         }
 
         var target = settings.TargetSessionAttributes;

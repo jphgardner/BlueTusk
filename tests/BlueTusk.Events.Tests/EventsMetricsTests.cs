@@ -2,7 +2,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventsMetricsTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task FaultyMetricObserverCannotUndoCallerOwnedAppendOrOwnedReplayCommit()
     {
         using var listener = new System.Diagnostics.Metrics.MeterListener

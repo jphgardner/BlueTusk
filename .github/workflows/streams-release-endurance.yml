@@ -3,6 +3,14 @@ name: Streams 72-hour release endurance
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: One-job Kubernetes runner label created by eng/runners/invoke-kubernetes-endurance.ps1
+        required: true
+        type: string
+      package_run_id:
+        description: Successful exact-candidate 1.2 Core package build run ID
+        required: true
+        type: string
       confirmation:
         description: Type RUN-STREAMS-72-HOUR-ENDURANCE to start the release gate
         required: true
@@ -10,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: streams-72-hour-release-endurance
@@ -18,8 +27,8 @@ concurrency:
 jobs:
   relay-endurance:
     name: Stable PostgreSQL core relay endurance
-    if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE'
-    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE' && startsWith(inputs.runner_label, 'bluetusk-kube-')
+    runs-on: [self-hosted, linux, x64, '${{ inputs.runner_label }}']
     timeout-minutes: 4500
 
     steps:
@@ -28,19 +37,16 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Build exact Streams candidate and provenance
+      - name: Verify canonical Core package evidence for this candidate
         shell: pwsh
-        run: |
-          ./eng/pack-product-family.ps1 `
-            -Family Streams `
-            -Candidate `
-            -Output 'artifacts/test-results/streams-relay-endurance/candidate-packages'
-          dotnet restore BlueTusk.slnx --locked-mode
-          ./eng/generate-sbom.ps1 `
-            -PackageDirectory 'artifacts/test-results/streams-relay-endurance/candidate-packages' `
-            -OutputDirectory 'artifacts/test-results/streams-relay-endurance/candidate-sbom' `
-            -Commit '${{ github.sha }}' `
-            -NoRestore
+        env:
+          GITHUB_TOKEN: '${{ github.token }}'
+          PACKAGE_RUN_ID: '${{ inputs.package_run_id }}'
+        run: >-
+          ./eng/receive-core-package-candidate.ps1
+          -BuildRunId $env:PACKAGE_RUN_ID
+          -ExpectedCommit $env:GITHUB_SHA
+          -EnduranceDirectory artifacts/test-results/streams-relay-endurance
 
       - name: Start digest-pinned PostgreSQL 18
         run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
@@ -75,7 +81,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: streams-relay-endurance-${{ github.run_id }}
+          name: streams-relay-endurance-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/test-results/streams-relay-endurance
           if-no-files-found: error
           retention-days: 90

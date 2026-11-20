@@ -9,6 +9,11 @@ using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.Live;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query;
+#if BLUETUSK_EF5
+using EntityQueryRootExpression = Microsoft.EntityFrameworkCore.Query.QueryRootExpression;
+#endif
 
 namespace BlueTusk.ContinuousGraph;
 
@@ -108,14 +113,21 @@ public sealed class PostgreSql19ContinuousGraphCapabilityProbe : IContinuousGrap
         DbContext context,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         var connection = context.Database.GetDbConnection();
         var openedHere = connection.State is not ConnectionState.Open;
         try
         {
             if (openedHere)
             {
-                await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (BlueTuskGraphTranslationException exception)
+                {
+                    throw new ContinuousGraphCapabilityException(exception.Message);
+                }
             }
 
             if (connection is not BlueTuskConnection { SupportsSqlPgq: true })
@@ -157,17 +169,17 @@ public sealed class ContinuousGraphQueryDefinition<TContext, TResult, TKey>
         Expression<Func<TResult, TKey>> keySelector,
         IEqualityComparer<TResult> rowComparer)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentException.ThrowIfNullOrWhiteSpace(graphName);
-        ArgumentNullException.ThrowIfNull(elementTableAliases);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(validationArguments);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
-        ArgumentNullException.ThrowIfNull(queryFactory);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentNullException.ThrowIfNull(rowComparer);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(graphName);
+        BlueTuskGuard.NotNull(elementTableAliases);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(validationArguments);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNull(queryFactory);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNull(rowComparer);
 
         var aliases = elementTableAliases.ToArray();
         if (aliases.Length == 0 || aliases.Any(string.IsNullOrWhiteSpace))
@@ -368,7 +380,7 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
 }
 
 /// <summary>Compiles registered typed SQL/PGQ queries into bounded authoritative Live plans.</summary>
-public static class ContinuousGraphQueryCompiler
+public static partial class ContinuousGraphQueryCompiler
 {
     public static async ValueTask<ContinuousGraphQueryPlan<TResult, TKey>>
         CompileAsync<TContext, TResult, TKey>(
@@ -380,29 +392,56 @@ public static class ContinuousGraphQueryCompiler
         where TResult : class
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(contextFactory);
-        ArgumentNullException.ThrowIfNull(definition);
-        capabilityProbe ??= new PostgreSql19ContinuousGraphCapabilityProbe();
-
+        BlueTuskGuard.NotNull(contextFactory);
+        BlueTuskGuard.NotNull(definition);
         await using var context =
-            await contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        await capabilityProbe.EnsureSupportedAsync(context, cancellationToken).ConfigureAwait(false);
+            await CreateContextAsync(contextFactory, cancellationToken).ConfigureAwait(false);
         var graph = FindGraph(context, definition);
+        if (capabilityProbe is null && graph.Backend == BlueTuskPropertyGraphBackend.NativeSqlPgq)
+        {
+            capabilityProbe = new PostgreSql19ContinuousGraphCapabilityProbe();
+        }
+
+        if (capabilityProbe is not null)
+        {
+            await capabilityProbe.EnsureSupportedAsync(context, cancellationToken).ConfigureAwait(false);
+        }
+
         var dependencies = ResolveDependencies(context, graph, definition.ElementTableAliases);
         var keyProperty = RequireDirectMember(definition.KeySelector.Body, "result key selector");
         var query = definition.QueryFactory(context, definition.ValidationArguments) ??
             throw new ContinuousGraphQueryRegistrationException(
                 $"Continuous graph query '{definition.Name}' returned null during registration.");
-        var capturedImpact = BlueTuskGraphQueryCapture.Consume(context);
         var shape = ContinuousGraphQueryShape.Validate(
+            context,
             query.Expression,
             keyProperty,
-            definition.MaximumResultCount);
+            definition.MaximumResultCount,
+            describe: true);
+        var capturedImpact = shape.Impact;
+        if (capturedImpact.Backend != graph.Backend ||
+            capturedImpact.GraphName != graph.Name ||
+            capturedImpact.GraphSchema != graph.Schema ||
+            capturedImpact.Elements.Any(element =>
+                !definition.ElementTableAliases.Contains(element.Alias, StringComparer.Ordinal) ||
+                !dependencies.Any(dependency => dependency.Schema == element.Schema && dependency.Table == element.Table)))
+        {
+            throw new ContinuousGraphQueryRegistrationException(
+                $"Continuous graph query '{definition.Name}' uses a graph or table outside its registered dependencies.");
+        }
 
-        string translatedSql;
+        if (graph.Backend == BlueTuskPropertyGraphBackend.NativeSqlPgq &&
+            capturedImpact.Elements.Any(element => graph.ElementTables.Any(candidate =>
+                candidate.Kind == element.Kind && candidate.Alias != element.Alias &&
+                candidate.Labels.Any(label => element.Labels.Contains(label.Name, StringComparer.Ordinal)))))
+        {
+            throw new ContinuousGraphQueryRegistrationException(
+                $"Native graph query '{definition.Name}' uses labels shared by multiple element tables.");
+        }
+
         try
         {
-            translatedSql = query.ToQueryString();
+            _ = query.ToQueryString();
         }
         catch (Exception exception)
         {
@@ -411,21 +450,14 @@ public static class ContinuousGraphQueryCompiler
                 exception);
         }
 
-        if (!translatedSql.Contains("GRAPH_TABLE", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ContinuousGraphQueryRegistrationException(
-                $"Continuous graph query '{definition.Name}' must translate through GRAPH_TABLE.");
-        }
-
-        var defaultSchema = graph.Schema ?? context.Model.GetDefaultSchema() ?? "public";
+        var defaultSchema = context.Model.GetDefaultSchema() ?? "public";
         var impactPatternElements = BuildImpactPatternElements(
             capturedImpact,
             definition.ElementTableAliases,
             defaultSchema);
         var impactProjections = BuildImpactProjections(capturedImpact);
-        var canonicalImpact = capturedImpact is null
-            ? "<uncaptured>"
-            : CreateImpactFingerprint(impactPatternElements);
+        var canonicalImpact = CreateImpactFingerprint(
+            [.. impactPatternElements, .. impactProjections, capturedImpact.Backend.ToString()]);
 
         var canonicalPlan = string.Join(
             '\n',
@@ -434,7 +466,7 @@ public static class ContinuousGraphQueryCompiler
             typeof(TKey).AssemblyQualifiedName,
             graph.Schema,
             graph.Name,
-            string.Join(',', definition.ElementTableAliases.Order(StringComparer.Ordinal)),
+            string.Join(',', definition.ElementTableAliases.OrderBy(static value => value, StringComparer.Ordinal)),
             string.Join(',', dependencies.Select(static dependency => dependency.ToString())),
             keyProperty,
             definition.MaximumResultCount.ToString(CultureInfo.InvariantCulture),
@@ -445,6 +477,27 @@ public static class ContinuousGraphQueryCompiler
             definition.Name,
             definition.Version,
             canonicalPlan);
+
+        IQueryable<TResult> CreateExecutionQuery(TContext executionContext, LiveQueryArguments arguments)
+        {
+            var executionQuery = definition.QueryFactory(executionContext, arguments) ??
+                throw new ContinuousGraphQueryRegistrationException(
+                    $"Continuous graph query '{definition.Name}' returned null during execution.");
+            var executionShape = ContinuousGraphQueryShape.Validate(
+                executionContext, executionQuery.Expression, keyProperty, definition.MaximumResultCount, describe: false);
+            if (!MatchesImpact(capturedImpact, executionShape.Impact) ||
+                executionShape.HasProjection != shape.HasProjection)
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    $"Continuous graph query '{definition.Name}' changed its registered graph mapping or projection.");
+            }
+
+            return executionQuery;
+        }
+        var singleKeyQuery = capturedImpact.Backend == BlueTuskPropertyGraphBackend.Relational
+            ? ContinuousGraphSingleKeyQuery<TContext, TResult, TKey>.TryCreate(
+                context, query, definition.KeySelector)
+            : null;
         var capabilities =
             LiveQueryCapabilities.TenantFilter |
             LiveQueryCapabilities.DeterministicOrdering |
@@ -470,18 +523,24 @@ public static class ContinuousGraphQueryCompiler
             async (execution, token) =>
             {
                 await using var executionContext =
-                    await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
-                var executionQuery =
-                    definition.QueryFactory(executionContext, execution.Arguments) ??
-                    throw new ContinuousGraphQueryRegistrationException(
-                        $"Continuous graph query '{definition.Name}' returned null during execution.");
+                    await CreateContextAsync(contextFactory, token).ConfigureAwait(false);
+                var executionQuery = CreateExecutionQuery(executionContext, execution.Arguments);
+                if (singleKeyQuery?.TryExecuteFull(executionContext, executionQuery) is { } compiled)
+                {
+                    var rows = new List<TResult>(definition.MaximumResultCount);
+                    await foreach (var row in compiled.WithCancellation(token).ConfigureAwait(false))
+                    {
+                        rows.Add(row);
+                    }
+                    return rows;
+                }
                 return await executionQuery.AsNoTracking().ToListAsync(token).ConfigureAwait(false);
             },
             definition.KeySelector.Compile(),
             definition.RowComparer);
 
         var automaticImpacts = TryBuildAutomaticImpacts(
-            capturedImpact,
+            shape.HasProjection ? null : capturedImpact,
             keyProperty,
             defaultSchema,
             out var keyProjection);
@@ -507,31 +566,68 @@ public static class ContinuousGraphQueryCompiler
             maintenanceCapabilities |=
                 ContinuousGraphMaintenanceCapabilities.AuthoritativeDelta |
                 ContinuousGraphMaintenanceCapabilities.TrustedCdcProjection;
+            async ValueTask<IReadOnlyList<TResult>> ExecuteEfScopeAsync(
+                TContext scopedContext, IQueryable<TResult> scopedQuery, IReadOnlyCollection<TKey> keys,
+                CancellationToken token)
+            {
+                if (keys.Count == 1 &&
+                    singleKeyQuery?.TryExecute(scopedContext, scopedQuery, keys.First()) is { } probe)
+                {
+                    var rows = new List<TResult>(2);
+                    await foreach (var row in probe.WithCancellation(token).ConfigureAwait(false))
+                    {
+                        rows.Add(row);
+                    }
+
+                    return rows;
+                }
+
+                return await ContinuousGraphKeyScope.Apply(scopedQuery, definition.KeySelector, keys)
+                    .AsNoTracking().ToListAsync(token).ConfigureAwait(false);
+            }
+
             automaticEvaluatorFactory = (projector, options) =>
-                new ContinuousGraphTieredEvaluator<TResult, TKey>(
+            {
+                ContinuousGraphPreparedScope<TResult, TKey>? boundScope = null;
+                var scopeUnsupported = false;
+                return new ContinuousGraphTieredEvaluator<TResult, TKey>(
                     fingerprint,
                     automaticImpacts,
                     async (keys, execution, token) =>
                     {
-                        await using var scopedContext =
-                            await contextFactory.CreateDbContextAsync(token)
+                        if (keys.Count == 1 && !scopeUnsupported && singleKeyQuery is not null &&
+                            options.ScopedConnection is { } scope && System.Transactions.Transaction.Current is null)
+                        {
+                            if (boundScope is null)
+                            {
+                                await using var bindingContext =
+                                    await CreateContextAsync(contextFactory, token).ConfigureAwait(false);
+                                var bindingQuery = CreateExecutionQuery(bindingContext, execution.Arguments);
+                                boundScope = singleKeyQuery.TryBindScope(bindingContext, bindingQuery, keyProperty);
+                                if (boundScope is null)
+                                {
+                                    scopeUnsupported = true;
+                                    return await ExecuteEfScopeAsync(bindingContext, bindingQuery, keys, token)
+                                        .ConfigureAwait(false);
+                                }
+                            }
+
+                            // The binding context has released its lease, including when
+                            // both authorizers share a pool with only one connection.
+                            return await boundScope.ExecuteAsync(scope, execution, keys.First(), token)
                                 .ConfigureAwait(false);
-                        var scopedQuery = definition.QueryFactory(
-                            scopedContext,
-                            execution.Arguments) ??
-                            throw new ContinuousGraphQueryRegistrationException(
-                                $"Continuous graph query '{definition.Name}' returned null during scoped execution.");
-                        return await ContinuousGraphKeyScope.Apply(
-                                scopedQuery,
-                                definition.KeySelector,
-                                keys)
-                            .AsNoTracking()
-                            .ToListAsync(token)
-                            .ConfigureAwait(false);
+                        }
+
+                        await using var scopedContext =
+                            await CreateContextAsync(contextFactory, token)
+                                .ConfigureAwait(false);
+                        var scopedQuery = CreateExecutionQuery(scopedContext, execution.Arguments);
+                        return await ExecuteEfScopeAsync(scopedContext, scopedQuery, keys, token).ConfigureAwait(false);
                     },
                     options.MaximumAffectedKeys,
                     livePlan.KeyComparer,
                     projector);
+            };
         }
 
         return new ContinuousGraphQueryPlan<TResult, TKey>(
@@ -564,11 +660,66 @@ public static class ContinuousGraphQueryCompiler
                 $"{element.Direction?.ToString() ?? "vertex"}:" +
                 $"{element.MinimumHops}..{element.MaximumHops}:" +
                 $"{element.Schema ?? capturedImpact.GraphSchema ?? defaultSchema}:" +
-                $"{element.Table}:{string.Join(',', element.KeyColumns)}";
+                $"{element.Table}:{string.Join(',', element.KeyColumns)}:" +
+                $"{EndpointDescription(element.Source)}:{EndpointDescription(element.Destination)}";
         }
 
         return elements;
     }
+
+    private static string EndpointDescription(BlueTuskGraphEndpointDefinition? endpoint) =>
+        endpoint is null ? "" : $"{endpoint.VertexTableAlias}:" +
+            $"{string.Join(',', endpoint.EdgeKeyColumns)}:{string.Join(',', endpoint.VertexKeyColumns)}";
+
+    private static bool MatchesImpact(BlueTuskGraphQueryImpactPlan expected, BlueTuskGraphQueryImpactPlan actual)
+    {
+        if (ReferenceEquals(expected, actual))
+        {
+            return true;
+        }
+
+        if (expected.Backend != actual.Backend || expected.GraphName != actual.GraphName ||
+            expected.GraphSchema != actual.GraphSchema || expected.Elements.Count != actual.Elements.Count ||
+            !expected.Projections.SequenceEqual(actual.Projections))
+        {
+            return false;
+        }
+
+        for (var index = 0; index < expected.Elements.Count; index++)
+        {
+            var left = expected.Elements[index];
+            var right = actual.Elements[index];
+            if (left.Variable != right.Variable || left.Alias != right.Alias || left.Kind != right.Kind ||
+                left.Table != right.Table || left.Schema != right.Schema || left.Direction != right.Direction ||
+                left.MinimumHops != right.MinimumHops || left.MaximumHops != right.MaximumHops ||
+                left.SourceVariable != right.SourceVariable || left.DestinationVariable != right.DestinationVariable ||
+                !left.KeyColumns.SequenceEqual(right.KeyColumns, StringComparer.Ordinal) ||
+                !left.Labels.SequenceEqual(right.Labels, StringComparer.Ordinal) ||
+                !MatchesEndpoint(left.Source, right.Source) || !MatchesEndpoint(left.Destination, right.Destination))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static ValueTask<TContext> CreateContextAsync<TContext>(IDbContextFactory<TContext> factory, CancellationToken cancellationToken)
+        where TContext : DbContext
+    {
+#if NET6_0_OR_GREATER
+        return new ValueTask<TContext>(factory.CreateDbContextAsync(cancellationToken));
+#else
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ValueTask<TContext>(factory.CreateDbContext());
+#endif
+    }
+
+    private static bool MatchesEndpoint(BlueTuskGraphEndpointDefinition? left, BlueTuskGraphEndpointDefinition? right) =>
+        ReferenceEquals(left, right) ||
+        (left is not null && right is not null && left.VertexTableAlias == right.VertexTableAlias &&
+            left.EdgeKeyColumns.SequenceEqual(right.EdgeKeyColumns, StringComparer.Ordinal) &&
+            left.VertexKeyColumns.SequenceEqual(right.VertexKeyColumns, StringComparer.Ordinal));
 
     private static string CreateFingerprint(
         string name,
@@ -616,9 +767,9 @@ public static class ContinuousGraphQueryCompiler
                 written += elementBytes;
             }
 
-            Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
+            Span<byte> hash = stackalloc byte[256 / 8];
             SHA256.HashData(bytes.AsSpan(0, written), hash);
-            return Convert.ToHexStringLower(hash);
+            return BlueTuskRuntime.ToHexStringLower(hash);
         }
         finally
         {
@@ -801,7 +952,7 @@ public static class ContinuousGraphQueryCompiler
             }
 
             dependencies.Add(new LiveTableDependency(
-                element.Schema ?? graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
+                element.Schema ?? context.Model.GetDefaultSchema() ?? "public",
                 element.Table));
         }
 
@@ -825,42 +976,163 @@ public static class ContinuousGraphQueryCompiler
                 $"A continuous graph {role} must be a direct result property access.");
     }
 
-    private sealed record QueryShape(bool HasPredicate, string CanonicalExpression);
+    private sealed record QueryShape(
+        bool HasPredicate,
+        bool HasProjection,
+        string CanonicalExpression,
+        BlueTuskGraphQueryImpactPlan Impact);
 
     private sealed class ContinuousGraphQueryShape : ExpressionVisitor
     {
+        private readonly DbContext _context;
         private readonly string _keyProperty;
         private readonly int _maximumResultCount;
-        private readonly HashSet<string> _orderProperties = new(StringComparer.Ordinal);
         private bool _hasPredicate;
         private bool _hasTake;
+        private bool _hasProjection;
+        private BlueTuskGraphQueryImpactPlan? _impact;
 
-        private ContinuousGraphQueryShape(string keyProperty, int maximumResultCount)
+        private ContinuousGraphQueryShape(DbContext context, string keyProperty, int maximumResultCount)
         {
+            _context = context;
             _keyProperty = keyProperty;
             _maximumResultCount = maximumResultCount;
         }
 
         public static QueryShape Validate(
+            DbContext context,
             Expression expression,
             string keyProperty,
-            int maximumResultCount)
+            int maximumResultCount,
+            bool describe)
         {
-            var validator = new ContinuousGraphQueryShape(keyProperty, maximumResultCount);
+            var validator = new ContinuousGraphQueryShape(context, keyProperty, maximumResultCount);
             validator.Visit(expression);
-            if (!validator._hasTake)
+            while (expression is MethodCallExpression noTracking &&
+                   noTracking.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                   noTracking.Method.Name == nameof(EntityFrameworkQueryableExtensions.AsNoTracking))
             {
-                throw new ContinuousGraphQueryRegistrationException(
-                    "A continuous graph query must contain one bounded Take operation.");
+                expression = noTracking.Arguments[0];
             }
 
-            if (!validator._orderProperties.Contains(validator._keyProperty))
+            if (expression is not MethodCallExpression take ||
+                take.Method.DeclaringType != typeof(Queryable) || take.Method.Name != nameof(Queryable.Take))
+            {
+                throw new ContinuousGraphQueryRegistrationException("A continuous graph query must end in one bounded Take.");
+            }
+
+            if (!OrdersByKey(take.Arguments[0], validator._keyProperty))
             {
                 throw new ContinuousGraphQueryRegistrationException(
                     $"A continuous graph query must have deterministic ordering that includes result key '{keyProperty}'.");
             }
 
-            return new QueryShape(validator._hasPredicate, expression.ToString());
+            return new QueryShape(validator._hasPredicate, validator._hasProjection,
+                describe ? BlueTuskGraphQueryCapture.Describe(expression) : string.Empty,
+                validator._impact ?? throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query must originate from a typed property-graph query root."));
+        }
+
+        private static bool OrdersByKey(Expression expression, string keyProperty)
+        {
+            var includesKey = false;
+            while (expression is MethodCallExpression call)
+            {
+                if (call.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                    call.Method.Name == nameof(EntityFrameworkQueryableExtensions.AsNoTracking))
+                {
+                    expression = call.Arguments[0];
+                    continue;
+                }
+
+                if (call.Method.DeclaringType != typeof(Queryable))
+                {
+                    return false;
+                }
+
+                switch (call.Method.Name)
+                {
+                    case nameof(Queryable.OrderBy):
+                    case nameof(Queryable.OrderByDescending):
+                        return includesKey || RequireDirectMember(Unquote(call.Arguments[1]).Body, "ordering selector") == keyProperty;
+                    case nameof(Queryable.ThenBy):
+                    case nameof(Queryable.ThenByDescending):
+                        includesKey |= RequireDirectMember(Unquote(call.Arguments[1]).Body, "ordering selector") == keyProperty;
+                        break;
+                    case nameof(Queryable.Where):
+                        break;
+                    default:
+                        return false;
+                }
+
+                expression = call.Arguments[0];
+            }
+
+            return false;
+        }
+
+        protected override Expression VisitExtension(Expression node)
+        {
+            if (node is not QueryRootExpression)
+            {
+                return base.VisitExtension(node);
+            }
+
+            if (_impact is not null || BlueTuskGraphQueryCapture.Find(_context, node) is not { } impact)
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query must use exactly one typed graph root and no untracked query sources.");
+            }
+
+            if (node is EntityQueryRootExpression entityRoot &&
+                (HasQueryFilter(entityRoot.EntityType.GetRootType()) ||
+                 entityRoot.EntityType.GetNavigations().Any(navigation => navigation.IsEagerLoaded) ||
+                 entityRoot.EntityType.GetSkipNavigations().Any(navigation => navigation.IsEagerLoaded)))
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "Use a graph projection DTO when the EF result entity has query filters or auto-included navigations.");
+            }
+
+            _impact = impact;
+            return node;
+        }
+
+        private static bool HasQueryFilter(IEntityType root)
+        {
+#if BLUETUSK_EF10_OR_GREATER
+            return root.GetDeclaredQueryFilters().Count != 0;
+#else
+            return root.GetQueryFilter() is not null;
+#endif
+        }
+
+        protected override Expression VisitMember(MemberExpression node)
+        {
+            if (typeof(IQueryable).IsAssignableFrom(node.Type))
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query cannot use a captured query source.");
+            }
+
+            if (node.Expression is not null && _context.Model.FindEntityType(node.Expression.Type) is { } entity &&
+                (entity.FindNavigation(node.Member) is not null || entity.FindSkipNavigation(node.Member) is not null))
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query cannot read an untracked navigation.");
+            }
+
+            return base.VisitMember(node);
+        }
+
+        protected override Expression VisitConstant(ConstantExpression node)
+        {
+            if (node.Value is IQueryable)
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query cannot use a constant query source.");
+            }
+
+            return node;
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
@@ -876,9 +1148,7 @@ public static class ContinuousGraphQueryCompiler
                     case nameof(Queryable.OrderByDescending):
                     case nameof(Queryable.ThenBy):
                     case nameof(Queryable.ThenByDescending):
-                        _orderProperties.Add(RequireDirectMember(
-                            Unquote(node.Arguments[1]).Body,
-                            "ordering selector"));
+                        _ = RequireDirectMember(Unquote(node.Arguments[1]).Body, "ordering selector");
                         break;
                     case nameof(Queryable.Take):
                         if (_hasTake)
@@ -897,6 +1167,7 @@ public static class ContinuousGraphQueryCompiler
 
                         break;
                     case nameof(Queryable.Select):
+                        _hasProjection = true;
                         break;
                     default:
                         throw new ContinuousGraphQueryRegistrationException(
@@ -908,6 +1179,12 @@ public static class ContinuousGraphQueryCompiler
             {
                 throw new ContinuousGraphQueryRegistrationException(
                     $"EF query method '{node.Method.Name}' is not supported by the Continuous Graph preview.");
+            }
+            else if (typeof(IQueryable).IsAssignableFrom(node.Type) &&
+                     node.Method.DeclaringType != typeof(EntityFrameworkQueryableExtensions))
+            {
+                throw new ContinuousGraphQueryRegistrationException(
+                    "A Continuous Graph query cannot introduce a source through a method call.");
             }
 
             return base.VisitMethodCall(node);
@@ -927,9 +1204,14 @@ public static class ContinuousGraphQueryCompiler
 
         private static int EvaluateTake(Expression expression)
         {
+            if (expression is ConstantExpression { Value: int limit })
+            {
+                return limit;
+            }
+
             try
             {
-                return Expression.Lambda<Func<int>>(expression).Compile().Invoke();
+                return Expression.Lambda<Func<int>>(expression).Compile(preferInterpretation: true).Invoke();
             }
             catch (Exception exception) when (
                 exception is ArgumentException or InvalidOperationException)

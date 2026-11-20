@@ -8,17 +8,25 @@ namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
 internal sealed class BlueTuskModificationCommandBatchFactory(
     ModificationCommandBatchFactoryDependencies dependencies,
-    IDbContextOptions options,
-    IInterceptors interceptors) : IModificationCommandBatchFactory
+    IDbContextOptions options
+#if BLUETUSK_EF7_OR_GREATER
+    , IInterceptors interceptors
+#endif
+) : IModificationCommandBatchFactory
 {
     private readonly int _maxBatchSize = RelationalOptionsExtension.Extract(options).MaxBatchSize ?? 42;
+#if BLUETUSK_EF7_OR_GREATER
     private readonly bool _useCommandCounts = dependencies.UpdateSqlGenerator is BlueTuskUpdateSqlGenerator &&
         interceptors.Aggregate<IDbCommandInterceptor>() is null;
 
     public ModificationCommandBatch Create()
         => new BlueTuskModificationCommandBatch(dependencies, _maxBatchSize, _useCommandCounts);
+#else
+    public ModificationCommandBatch Create() => new BlueTuskModificationCommandBatch(dependencies, _maxBatchSize);
+#endif
 }
 
+#if BLUETUSK_EF7_OR_GREATER
 internal sealed class BlueTuskModificationCommandBatch(
     ModificationCommandBatchFactoryDependencies dependencies, int maxBatchSize, bool useCommandCounts)
     : AffectedCountModificationCommandBatch(dependencies, maxBatchSize)
@@ -94,3 +102,12 @@ internal sealed class BlueTuskModificationCommandBatch(
         return commandIndex;
     }
 }
+#else
+internal sealed class BlueTuskModificationCommandBatch(ModificationCommandBatchFactoryDependencies dependencies, int maxBatchSize)
+    : AffectedCountModificationCommandBatch(dependencies)
+{
+    protected override bool CanAddCommand(IReadOnlyModificationCommand command) => ModificationCommands.Count < maxBatchSize;
+
+    protected override bool IsCommandTextValid() => GetCommandText().Length <= 64 * 1024;
+}
+#endif

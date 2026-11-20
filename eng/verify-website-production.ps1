@@ -111,7 +111,7 @@ if (-not $securityContact.Contains('Contact: https://', [StringComparison]::Ordi
 $applicationTemplate = Get-Content -LiteralPath (
     Join-Path $websiteRoot 'src/app/app.html') -Raw
 if (-not $applicationTemplate.Contains(
-        '<img src="/bluetusk-mark.png" width="36" height="36" alt="" />',
+        '<img src="/bluetusk-mark.png" width="32" height="32" alt="" />',
         [StringComparison]::Ordinal))
 {
     throw 'The persistent navigation must use the bounded logo asset with explicit dimensions.'
@@ -120,31 +120,32 @@ if (-not $applicationTemplate.Contains(
 $homeTemplate = Get-Content -LiteralPath (
     Join-Path $websiteRoot 'src/app/home/home.html') -Raw
 
-# The hero image must declare its intrinsic size (read from the PNG header) so its layout is reserved.
-$architectureImage = [System.IO.File]::ReadAllBytes(
-    (Join-Path $websiteRoot 'public/bluetusk-architecture.png'))
-if ($architectureImage.Length -lt 24 -or
-    [System.Text.Encoding]::ASCII.GetString($architectureImage, 12, 4) -cne 'IHDR')
+# Read the dimensions of the lossy WebP hero image from its VP8 key frame.
+$heroImage = [System.IO.File]::ReadAllBytes(
+    (Join-Path $websiteRoot 'public/platform-layers.webp'))
+if ($heroImage.Length -lt 30 -or
+    [System.Text.Encoding]::ASCII.GetString($heroImage, 0, 4) -cne 'RIFF' -or
+    [System.Text.Encoding]::ASCII.GetString($heroImage, 8, 8) -cne 'WEBPVP8 ' -or
+    $heroImage[23] -ne 0x9d -or $heroImage[24] -ne 0x01 -or $heroImage[25] -ne 0x2a)
 {
-    throw 'The architecture image must be a PNG.'
+    throw 'The homepage hero must be a lossy WebP image with a VP8 key frame.'
 }
-$architectureWidth = ([int]$architectureImage[16] -shl 24) -bor ([int]$architectureImage[17] -shl 16) -bor
-    ([int]$architectureImage[18] -shl 8) -bor [int]$architectureImage[19]
-$architectureHeight = ([int]$architectureImage[20] -shl 24) -bor ([int]$architectureImage[21] -shl 16) -bor
-    ([int]$architectureImage[22] -shl 8) -bor [int]$architectureImage[23]
+$heroWidth = [int]$heroImage[26] -bor (([int]$heroImage[27] -band 0x3f) -shl 8)
+$heroHeight = [int]$heroImage[28] -bor (([int]$heroImage[29] -band 0x3f) -shl 8)
+$heroTag = [regex]::Match($homeTemplate, '<img\b[^>]*\bsrc="/platform-layers\.webp"[^>]*>').Value
 foreach ($requiredImageAttribute in @(
-        "width=`"$architectureWidth`"",
-        "height=`"$architectureHeight`"",
-        'loading="eager"',
-        'fetchpriority="high"',
-        'decoding="async"'))
+        "width=`"$heroWidth`"",
+        "height=`"$heroHeight`"",
+        'fetchpriority="high"'))
 {
-    if (-not $homeTemplate.Contains(
-            $requiredImageAttribute,
-            [StringComparison]::Ordinal))
+    if (-not $heroTag.Contains($requiredImageAttribute, [StringComparison]::Ordinal))
     {
-        throw "The architecture image is missing '$requiredImageAttribute'."
+        throw "The homepage hero image is missing '$requiredImageAttribute'."
     }
+}
+if ($heroTag.Contains('loading="lazy"', [StringComparison]::Ordinal))
+{
+    throw 'The homepage hero image must load eagerly.'
 }
 
 Write-Output (

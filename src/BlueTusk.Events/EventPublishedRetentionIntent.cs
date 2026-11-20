@@ -28,8 +28,8 @@ public sealed partial class PostgreSqlEventStore
         EventStreamKey stream, string consumerGroup, Guid targetIncarnation, EventPublishedSourceIdentity source,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNull(source);
         EventValidation.Key(consumerGroup, nameof(consumerGroup));
         if (targetIncarnation == Guid.Empty) { throw new ArgumentException("A nonempty target incarnation is required.", nameof(targetIncarnation)); }
         ValidatePublishedSource(source);
@@ -142,13 +142,13 @@ public sealed partial class PostgreSqlEventStore
         long expectedPreviousThrough = 0, int maximumSegments = 64,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        ArgumentNullException.ThrowIfNull(archive);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(throughSequence);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedPreviousThrough);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumSegments);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumSegments, 256);
+        BlueTuskGuard.NotNull(stream);
+        BlueTuskGuard.NotNull(archive);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNegativeOrZero(throughSequence);
+        BlueTuskGuard.NotNegative(expectedPreviousThrough);
+        BlueTuskGuard.NotNegativeOrZero(maximumSegments);
+        BlueTuskGuard.NotGreaterThan(maximumSegments, 256);
         ValidatePublishedSource(source);
         if (throughSequence <= expectedPreviousThrough)
         {
@@ -305,7 +305,7 @@ public sealed partial class PostgreSqlEventStore
             ("revision", membershipRevision)).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new EventPublishedRetentionIntent(epoch, stream, checked(previousThrough + 1), throughSequence,
-            Convert.ToHexStringLower(digest), source, membershipRevision);
+            BlueTuskRuntime.ToHexStringLower(digest), source, membershipRevision);
     }
 
     private static void ValidatePublishedSource(EventPublishedSourceIdentity source)

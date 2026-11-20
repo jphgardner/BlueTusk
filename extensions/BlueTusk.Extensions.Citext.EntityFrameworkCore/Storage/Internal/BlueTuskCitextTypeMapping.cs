@@ -52,24 +52,26 @@ internal sealed class BlueTuskCitextTypeMapping : RelationalTypeMapping
 internal sealed class BlueTuskCitextArrayTypeMapping : RelationalTypeMapping
 {
     private readonly string _postgreSqlTypeName;
+    private readonly RelationalTypeMapping _arrayElementMapping;
 
     public BlueTuskCitextArrayTypeMapping(string schema, RelationalTypeMapping elementMapping)
         : this(
             CreateParameters(schema, elementMapping),
-            $"{BlueTuskSqlIdentifier.Delimit("citext", schema)}[]")
+            $"{BlueTuskSqlIdentifier.Delimit("citext", schema)}[]", elementMapping)
     {
     }
 
     private BlueTuskCitextArrayTypeMapping(
         RelationalTypeMappingParameters parameters,
-        string postgreSqlTypeName)
+        string postgreSqlTypeName, RelationalTypeMapping elementMapping)
         : base(parameters)
     {
         _postgreSqlTypeName = postgreSqlTypeName;
+        _arrayElementMapping = elementMapping;
     }
 
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) =>
-        new BlueTuskCitextArrayTypeMapping(parameters, _postgreSqlTypeName);
+        new BlueTuskCitextArrayTypeMapping(parameters, _postgreSqlTypeName, _arrayElementMapping);
 
     protected override void ConfigureParameter(DbParameter parameter)
     {
@@ -91,7 +93,11 @@ internal sealed class BlueTuskCitextArrayTypeMapping : RelationalTypeMapping
                 builder.Append(',');
             }
 
+#if BLUETUSK_EF8_OR_GREATER
             builder.Append(((RelationalTypeMapping)ElementTypeMapping!).GenerateSqlLiteral(values[index]));
+#else
+            builder.Append(_arrayElementMapping.GenerateSqlLiteral(values[index]));
+#endif
         }
 
         return builder.Append("]::").Append(StoreType).ToString();
@@ -109,8 +115,11 @@ internal sealed class BlueTuskCitextArrayTypeMapping : RelationalTypeMapping
             new CoreTypeMappingParameters(
                 typeof(BlueTuskCitext[]),
                 comparer: comparer,
-                keyComparer: comparer,
-                elementMapping: elementMapping),
+                keyComparer: comparer
+#if NET8_0_OR_GREATER
+                , elementMapping: elementMapping
+#endif
+            ),
             $"{BlueTuskSqlIdentifier.Delimit("citext", schema)}[]",
             StoreTypePostfix.None,
             System.Data.DbType.Object);

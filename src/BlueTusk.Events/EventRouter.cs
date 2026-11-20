@@ -16,8 +16,8 @@ public sealed class EventRouterBuilder
 
     public EventRouterBuilder Register<T>(EventContract<T> contract, TypedEventTransactionHandler<T> handler)
     {
-        ArgumentNullException.ThrowIfNull(contract);
-        ArgumentNullException.ThrowIfNull(handler);
+        BlueTuskGuard.NotNull(contract);
+        BlueTuskGuard.NotNull(handler);
         if (_handlers.Count >= 4096)
         {
             throw new InvalidOperationException("An event router supports at most 4096 registered wire contracts.");
@@ -53,7 +53,7 @@ public sealed class EventRouter
     public ValueTask HandleAsync(StoredEvent value, DbConnection connection, DbTransaction transaction,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         EventValidation.Transaction(connection, transaction);
         cancellationToken.ThrowIfCancellationRequested();
         return _handlers.TryGetValue((value.EventType, value.Version), out var handler)

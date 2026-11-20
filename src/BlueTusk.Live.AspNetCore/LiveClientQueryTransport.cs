@@ -14,9 +14,9 @@ public sealed class LiveClientQueryGrant
         LiveClientQueryPolicy policy,
         LiveSecurityScope securityScope)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(policy);
-        ArgumentNullException.ThrowIfNull(securityScope);
+        BlueTuskGuard.NotNull(dataSource);
+        BlueTuskGuard.NotNull(policy);
+        BlueTuskGuard.NotNull(securityScope);
         DataSource = dataSource;
         Policy = policy;
         SecurityScope = securityScope;
@@ -61,10 +61,10 @@ public sealed class LiveClientQueryTransportResolver : ILiveTransportSubscriptio
         LiveSharedSubscriptionRegistry registry,
         LiveSharedSubscriptionOptions? subscriptionOptions = null)
     {
-        ArgumentNullException.ThrowIfNull(authorizer);
-        ArgumentNullException.ThrowIfNull(invalidationLog);
-        ArgumentNullException.ThrowIfNull(replayStore);
-        ArgumentNullException.ThrowIfNull(registry);
+        BlueTuskGuard.NotNull(authorizer);
+        BlueTuskGuard.NotNull(invalidationLog);
+        BlueTuskGuard.NotNull(replayStore);
+        BlueTuskGuard.NotNull(registry);
         _authorizer = authorizer;
         _invalidationLog = invalidationLog;
         _replayStore = replayStore;
@@ -78,8 +78,8 @@ public sealed class LiveClientQueryTransportResolver : ILiveTransportSubscriptio
         ClaimsPrincipal principal,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(query);
-        ArgumentNullException.ThrowIfNull(principal);
+        BlueTuskGuard.NotNullOrWhiteSpace(query);
+        BlueTuskGuard.NotNull(principal);
         ClientQueryEnvelope envelope;
         try
         {

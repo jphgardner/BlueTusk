@@ -26,16 +26,16 @@ public sealed class SearchIngestionJobs
 
     public SearchIngestionJobs(PostgreSqlJobStore jobs, PostgreSqlSearchStore search, SearchIngestionJobOptions options)
     {
-        ArgumentNullException.ThrowIfNull(jobs);
-        ArgumentNullException.ThrowIfNull(search);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(jobs);
+        BlueTuskGuard.NotNull(search);
+        BlueTuskGuard.NotNull(options);
         ValidateName(options.Queue);
         ValidateName(options.JobType);
         ValidateName(options.IndexContract);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxPayloadBytes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaxPayloadBytes, 64 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumAttempts, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.MaximumAttempts, 10_000);
+        BlueTuskGuard.NotLessThan(options.MaxPayloadBytes, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaxPayloadBytes, 64 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(options.MaximumAttempts, 1);
+        BlueTuskGuard.NotGreaterThan(options.MaximumAttempts, 10_000);
         _jobs = jobs;
         _search = search;
         Options = options;
@@ -58,7 +58,7 @@ public sealed class SearchIngestionJobs
 
     public JobHandlerRegistry RegisterHandlers(JobHandlerRegistry registry)
     {
-        ArgumentNullException.ThrowIfNull(registry);
+        BlueTuskGuard.NotNull(registry);
         return registry.Register(Options.JobType, SearchJobJsonContext.Default.SearchJobPayload,
             (payload, context, cancellationToken) => ExecuteAsync(payload, context.Lease ?? throw new InvalidOperationException("A leased Jobs execution context is required."), cancellationToken));
     }
@@ -66,7 +66,7 @@ public sealed class SearchIngestionJobs
     /// <summary>Executes an already claimed lease. The worker completes/retries it separately; replay is version-idempotent.</summary>
     public async ValueTask ProcessLeaseAsync(JobLease lease, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         if (lease.Payload.Length > Options.MaxPayloadBytes) { throw new JobHandlerException("search_payload_limit", retryable: false); }
         SearchJobPayload? payload;
         try { payload = JsonSerializer.Deserialize(lease.Payload.Span, SearchJobJsonContext.Default.SearchJobPayload); }
@@ -110,7 +110,7 @@ public sealed class SearchIngestionJobs
 
     private JobRequest UpsertRequest(SearchDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        BlueTuskGuard.NotNull(document);
         if (Encoding.UTF8.GetByteCount(document.Content) > _search.Options.MaxDocumentBytes ||
             Encoding.UTF8.GetByteCount(document.Title) > _search.Options.MaxTitleBytes)
         {
@@ -147,7 +147,7 @@ public sealed class SearchIngestionJobs
 
     private static void ValidateName(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > 200 || value.Contains('\0', StringComparison.Ordinal)) { throw new ArgumentException("Job name/contract exceeds its bounded identity limit.", nameof(value)); }
     }
 

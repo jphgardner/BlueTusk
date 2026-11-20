@@ -78,7 +78,7 @@ public ref struct BlueTuskReader
 
     public ReadOnlySpan<byte> ReadBytes(int count)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        BlueTuskGuard.NotNegative(count);
 
         EnsureRemaining(count);
         var value = _buffer.Slice(_offset, count);

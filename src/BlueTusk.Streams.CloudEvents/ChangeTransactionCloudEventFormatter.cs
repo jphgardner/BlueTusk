@@ -25,10 +25,10 @@ public sealed record ChangeTransactionCloudEventOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(EventType);
-        ArgumentException.ThrowIfNullOrWhiteSpace(DataContentType);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumEventBytes);
-        ArgumentNullException.ThrowIfNull(Envelope);
+        BlueTuskGuard.NotNullOrWhiteSpace(EventType);
+        BlueTuskGuard.NotNullOrWhiteSpace(DataContentType);
+        BlueTuskGuard.NotNegativeOrZero(MaximumEventBytes);
+        BlueTuskGuard.NotNull(Envelope);
     }
 }
 
@@ -57,7 +57,7 @@ public sealed class ChangeTransactionCloudEventFormatter
 
     public ChangeTransactionCloudEventMetadata Describe(ChangeTransaction transaction)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         var position = transaction.CommitEndPosition.Value.ToString("X16", CultureInfo.InvariantCulture);
         return new ChangeTransactionCloudEventMetadata(
             "1.0",
@@ -78,8 +78,8 @@ public sealed class ChangeTransactionCloudEventFormatter
         Stream destination,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(destination);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(destination);
         if (!destination.CanWrite)
         {
             throw new ArgumentException("The CloudEvents destination stream must be writable.", nameof(destination));

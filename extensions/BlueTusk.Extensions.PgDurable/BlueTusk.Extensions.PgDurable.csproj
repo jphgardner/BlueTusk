@@ -6,7 +6,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <IsPackable>false</IsPackable>
     <PackageId>BlueTusk.Extensions.PgDurable</PackageId>
     <Description>Preview-only PostgreSQL pg_durable integration; excluded from BlueTusk V1 publication.</Description>

@@ -6,7 +6,7 @@ public sealed class BlueTuskNameAttribute : Attribute
 {
     public BlueTuskNameAttribute(string name)
     {
-        ArgumentNullException.ThrowIfNull(name);
+        BlueTuskGuard.NotNull(name);
         Name = name;
     }
 

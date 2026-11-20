@@ -1,0 +1,135 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: __RUNNER_NAME__
+  namespace: bluetusk-endurance-runners
+  labels:
+    app.kubernetes.io/name: bluetusk-actions
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: __TIME_LIMIT__
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bluetusk-actions
+    spec:
+      hostUsers: false
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        fsGroup: 1001
+      volumes:
+        - name: tools
+          emptyDir: {sizeLimit: 500Mi}
+        - name: workspace
+          emptyDir: {sizeLimit: 20Gi}
+        - name: daemon-socket
+          emptyDir: {sizeLimit: 16Mi}
+        - name: daemon-data
+          emptyDir: {sizeLimit: 32Gi}
+      initContainers:
+        - name: tools
+          image: mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:a82c44c2efe00953d66a37e90d307c4cfbd1e974b16e3b2a2fc665331946c9af
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              mkdir -p /tools/powershell /tools/powershell-runtime/shared /tools/bin /tools/plugins
+              source="$(dirname "$(readlink -f "$(command -v pwsh)")")"
+              cp -R "$source/." /tools/powershell/
+              dotnet_root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+              cp "$dotnet_root/dotnet" /tools/powershell-runtime/
+              cp -R "$dotnet_root/host" /tools/powershell-runtime/
+              cp -R "$dotnet_root/shared/Microsoft.NETCore.App" /tools/powershell-runtime/shared/
+              pwsh_dll="$(find /tools/powershell -type f -name pwsh.dll)"
+              test -f "$pwsh_dll"
+              printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
+              chmod 0755 /tools/bin/pwsh
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}
+          resources:
+            requests: {cpu: '150m', memory: '64Mi', ephemeral-storage: '250Mi'}
+            limits: {cpu: '1', memory: '384Mi', ephemeral-storage: '450Mi'}
+          volumeMounts:
+            - {name: tools, mountPath: /tools}
+        - name: docker
+          image: docker@sha256:9d337aaf171682751be04d67c15d880d6a95c6fd44cb8e12043f605012e5e654
+          restartPolicy: Always
+          command: [sh, -ec]
+          args:
+            - |
+              awk '$1==0 && $2!=0 { mapped=1 } END { exit !mapped }' /proc/self/uid_map
+              sed -i 's|http://|https://|' /etc/apk/repositories
+              apk add --no-cache 'crun=1.31-r0'
+              install -m 0755 "$(command -v docker)" /tools/bin/docker
+              for directory in /usr/local/libexec/docker/cli-plugins /usr/local/lib/docker/cli-plugins /usr/libexec/docker/cli-plugins /usr/lib/docker/cli-plugins; do
+                if test -x "$directory/docker-compose"; then
+                  install -m 0755 "$directory/docker-compose" /tools/plugins/docker-compose
+                  break
+                fi
+              done
+              test -x /tools/plugins/docker-compose
+              printf '%s\n' '{"default-runtime":"pod-cgroup","runtimes":{"pod-cgroup":{"path":"/usr/bin/crun","runtimeArgs":["--cgroup-manager=disabled"]}}}' > /tmp/daemon.json
+              exec dockerd --config-file=/tmp/daemon.json --host=unix:///daemon/docker.sock --group=1001 --data-root=/var/lib/docker --storage-driver=vfs
+          securityContext:
+            privileged: true
+          startupProbe:
+            exec:
+              command: [docker, -H, 'unix:///daemon/docker.sock', info]
+            periodSeconds: 3
+            failureThreshold: 60
+          resources:
+            requests: {cpu: '1', memory: '2Gi', ephemeral-storage: '8Gi'}
+            limits: {cpu: '6', memory: '12Gi', ephemeral-storage: '34Gi'}
+          volumeMounts:
+            - {name: tools, mountPath: /tools}
+            - {name: daemon-data, mountPath: /var/lib/docker}
+            - {name: daemon-socket, mountPath: /daemon}
+            - {name: workspace, mountPath: /home/runner/_work}
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner@sha256:4037925f16bd0626196684aff1853dabd242675c82efe08f0a2d376694738d19
+          command: [/bin/bash, -ec]
+          args:
+            - |
+              export PATH="/tools/bin:$PATH"
+              export DOCKER_CONFIG="$(mktemp -d)"
+              printf '%s\n' '{"cliPluginsExtraDirs":["/tools/plugins"]}' > "$DOCKER_CONFIG/config.json"
+              docker info --format '{{.ServerVersion}}'
+              pwsh -NoProfile -NonInteractive -Command '
+                if (-not (Get-Command ConvertFrom-Json).Parameters.ContainsKey("DateKind")) {
+                  throw "Core evidence requires a PowerShell runtime that preserves JSON timestamps as strings."
+                }
+                $PSVersionTable.PSVersion.ToString()
+              '
+              jit="$RUNNER_JIT_CONFIG"
+              unset RUNNER_JIT_CONFIG
+              exec /home/runner/run.sh --jitconfig "$jit"
+          env:
+            - {name: DOTNET_INSTALL_DIR, value: /home/runner/_work/.dotnet}
+            - {name: DOCKER_HOST, value: 'unix:///daemon/docker.sock'}
+            - name: RUNNER_JIT_CONFIG
+              valueFrom:
+                secretKeyRef: {name: __RUNNER_NAME__, key: config}
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}
+          resources:
+            requests: {cpu: '1', memory: '1Gi', ephemeral-storage: '3Gi'}
+            limits: {cpu: '6', memory: '12Gi', ephemeral-storage: '24Gi'}
+          volumeMounts:
+            - {name: tools, mountPath: /tools, readOnly: true}
+            - {name: daemon-socket, mountPath: /daemon}
+            - {name: workspace, mountPath: /home/runner/_work}

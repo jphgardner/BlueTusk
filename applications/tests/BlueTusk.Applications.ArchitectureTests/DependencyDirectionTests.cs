@@ -1,10 +1,12 @@
 using System.Reflection;
-using BlueTusk.FraudInvestigation.Application;
-using BlueTusk.FraudInvestigation.Domain;
 using BlueTusk.OrderOperations.Application;
 using BlueTusk.OrderOperations.Domain;
+#if !BLUETUSK_CORE_PACKAGES_ONLY
+using BlueTusk.FraudInvestigation.Application;
+using BlueTusk.FraudInvestigation.Domain;
 using BlueTusk.ServiceTopology.Application;
 using BlueTusk.ServiceTopology.Domain;
+#endif
 using Xunit;
 
 namespace BlueTusk.Applications.ArchitectureTests;
@@ -13,16 +15,20 @@ public sealed class DependencyDirectionTests
 {
     public static TheoryData<Assembly> DomainAssemblies => new()
     {
-        typeof(Account).Assembly,
         typeof(FulfilmentOrder).Assembly,
+#if !BLUETUSK_CORE_PACKAGES_ONLY
+        typeof(Account).Assembly,
         typeof(ServiceNode).Assembly,
+#endif
     };
 
     public static TheoryData<Assembly> ApplicationAssemblies => new()
     {
-        typeof(FraudService).Assembly,
         typeof(OrderService).Assembly,
+#if !BLUETUSK_CORE_PACKAGES_ONLY
+        typeof(FraudService).Assembly,
         typeof(TopologyService).Assembly,
+#endif
     };
 
     [Theory]

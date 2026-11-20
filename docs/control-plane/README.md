@@ -35,9 +35,7 @@ BlueTusk ships the handler for managed-deployment actions. For every other
 action you write the handler, so nothing runs that you did not wire up. See
 [Enable operator actions](operations.md).
 
-**New in 1.1.0:** fleet operations on managed deployments, the
-`/bluetusk/deployments` pages and `/api/v1/fleet`, and the
-`BlueTusk.ControlPlane.Kubernetes` package.
+Use the `/bluetusk/deployments` pages and `/api/v1/fleet` to manage a fleet. The `BlueTusk.ControlPlane.Kubernetes` package reconciles deployments declared as Kubernetes resources.
 
 ## Use it when
 
@@ -57,7 +55,7 @@ BlueTusk state, and it has no query editor.
 | --- | --- |
 | `BlueTusk.ControlPlane` | Inventory services, the operation executor, the PostgreSQL audit store and the managed-deployment controller |
 | `BlueTusk.Dashboard` | `MapBlueTuskDashboard`: the HTML pages and the JSON API |
-| `BlueTusk.ControlPlane.Kubernetes` | **New in 1.1.0.** Reconciles `BlueTuskDeployment` custom resources; ships the CRD and RBAC manifests |
+| `BlueTusk.ControlPlane.Kubernetes` | Reconciles `BlueTuskDeployment` custom resources; ships the CRD and RBAC manifests |
 
 ```powershell
 dotnet add package BlueTusk.Dashboard
@@ -92,10 +90,8 @@ The [quick start](quickstart.md) turns this into a complete, runnable app.
 
 ## Status
 
-The Control Plane is a Core family. It ships on the same version line as the
-provider, Streams, Sync and Live. `1.0.0` is the current stable release and
-`1.1.0-rc.1` is the current release candidate. `1.1.0` is not published yet.
-The Continuous Graph pages depend on the Graph family, which is in preview.
+Install the matching Control Plane and Dashboard packages. Graph views and
+operations also use the Continuous Graph adapter.
 
 ## Next steps
 

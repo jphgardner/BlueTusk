@@ -5,7 +5,7 @@ public sealed record BlueTuskCitext
 {
     public BlueTuskCitext(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         Value = value;
     }
 

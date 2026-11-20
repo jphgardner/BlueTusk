@@ -21,6 +21,20 @@ by disabling durable flushing. Missing metric series are not treated as proof
 of success. See the [spool timing boundaries](../../docs/streams/hosting-observability.md#investigating-slow-transaction-spooling)
 before interpreting these panels as end-to-end transaction latency.
 
+During a rollout or backend interruption, compare **Provider pool waiters and
+leases** with **Provider queue latency** and **Provider session discards and
+resets**. A short increase in discards can accompany successful recovery.
+If waiters and checkout latency remain elevated, correlate with connection
+errors and PostgreSQL availability before changing pool size or wait timeout.
+Confirm recovery with a successful checkout and query from the application.
+
+Use **Live resume token outcomes** with **Live clients and fan-out** and gateway
+SSE request rates. A sustained rise in rejected or expired tokens with
+falling active clients warrants checking token key rotation, replay
+retention and the application's reconnect logs. Browser retry delays are
+observed at the client or gateway. Keep tenant IDs, resume tokens, connection
+strings and query text out of metric labels.
+
 Set `BLUETUSK_TRACES_ENDPOINT` to the TLS endpoint of the organisation's trace
 backend before starting the Collector. Keep ports 4317, 4318, 8889 and 13133 on
 an internal observability network or protect them with the platform's

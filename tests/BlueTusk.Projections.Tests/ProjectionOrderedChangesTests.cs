@@ -4,7 +4,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionOrderedChangesTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task SameTransactionInsertThenDeleteAndRepeatedUpdateUseFinalSourceImageAndOneAggregateDelta()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

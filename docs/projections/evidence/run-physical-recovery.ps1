@@ -109,7 +109,7 @@ try {
     $env:BLUETUSK_RECOVERY_IMAGE = $image
     Push-Location $root
     try {
-        & dotnet test tests/BlueTusk.Projections.PhysicalRecoveryTests/BlueTusk.Projections.PhysicalRecoveryTests.csproj -c Release -nr:false --logger 'console;verbosity=normal' --logger 'trx;LogFileName=physical-promotion-pg18.trx' --results-directory $artifactDirectory
+        & dotnet test tests/BlueTusk.Projections.PhysicalRecoveryTests/BlueTusk.Projections.PhysicalRecoveryTests.csproj --framework net10.0 -c Release -nr:false --logger 'console;verbosity=normal' --logger 'trx;LogFileName=physical-promotion-pg18.trx' --results-directory $artifactDirectory
         if ($LASTEXITCODE -ne 0) { throw 'Physical promotion recovery test failed.' }
         Write-Host "Physical recovery JSON/TRX retained in $artifactDirectory"
     } finally { Pop-Location }

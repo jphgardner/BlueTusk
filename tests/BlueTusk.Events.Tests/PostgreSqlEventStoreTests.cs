@@ -2,13 +2,12 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Events.Tests;
 
 public sealed class PostgreSqlEventStoreTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task BusinessWriteAndOutboxRollBackTogetherAndDoNotConsumeSequence()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -29,7 +28,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(1, committed.Sequence);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task StableIdentityRetriesDeduplicateAndContentConflictsAreRejected()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -50,7 +49,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Single(await fixture.AppendAsync(new EventStreamKey("other-tenant", "orders"), [first]));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SameStreamConcurrentAppendsSerializeWhileIndependentStreamsContinue()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -74,7 +73,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal([1L, 2L], (await fixture.Store.ReadAsync(stream)).Select(static value => value.Sequence));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ManyConcurrentWritersProduceContiguousStreamOrderingAndTenantIsolation()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -88,7 +87,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Empty(await fixture.Store.ReadAsync(new EventStreamKey("tenant", "other")));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ConcurrentRetryOfSameIdentityPublishesOneEvent()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -101,7 +100,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Single(await fixture.Store.ReadAsync(stream));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task InboxRollbackAndConcurrentDuplicateDeliveryAreAtomicWithBusinessEffects()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -128,7 +127,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(1, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ReplayPersistsCheckpointAcrossOwnersAndDoesNotRepeatInboxEffects()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -158,7 +157,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(5, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task FailedReplayRollsBackAllEffectsAndCheckpointThenCanRetry()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -180,7 +179,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExpiryDuringHandlingFencesCheckpointAndRollsBackEffects()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -200,7 +199,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(0, await fixture.Store.ReadCheckpointAsync("consumer", stream));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task BoundedPayloadReadAndBatchLimitsAreEnforcedWithoutOffsetLoss()
     {
         await using var fixture = await EventDatabase.CreateAsync(new PostgreSqlEventsOptions
@@ -222,7 +221,7 @@ public sealed class PostgreSqlEventStoreTests
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await fixture.Store.ReadAsync(stream, 0, 4, 9));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CancellationRollsBackReplayEffectsAndLeavesLeaseUsable()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -242,7 +241,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(1, (await fixture.Store.ReplayAsync(lease, fixture.HandleAsync)).HandledCount);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task IndependentTenantReplayCheckpointsAndInboxesCannotSuppressEachOther()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -259,7 +258,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(2, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task InboxDetectsReusedIdentityWithChangedPayload()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -284,7 +283,7 @@ public sealed class PostgreSqlEventStoreTests
         Assert.Equal(1, await fixture.EffectCountAsync());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TypedVersionRouterDispatchesHistoricalContractsAndUnknownVersionRollsBack()
     {
         await using var fixture = await EventDatabase.CreateAsync();
@@ -351,7 +350,7 @@ internal sealed class EventDatabase : IAsyncDisposable
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
 
         var options = new PostgreSqlEventsOptions

@@ -21,6 +21,30 @@ public sealed class PropertyGraphMetadataTests
         "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests";
 
     [Fact]
+    public void Graph_backend_is_cached_per_options_and_only_native_models_emit_graph_DDL()
+    {
+        using var native = CreateContext<QuotedGraphContext>();
+        using var portable = CreateContext<QuotedGraphContext>(BlueTuskPropertyGraphBackend.Relational);
+
+        Assert.Equal(BlueTuskPropertyGraphBackend.NativeSqlPgq, Assert.Single(native.Model.GetPropertyGraphs()).Backend);
+        Assert.Equal(BlueTuskPropertyGraphBackend.Relational, Assert.Single(portable.Model.GetPropertyGraphs()).Backend);
+        var portableSql = portable.Database.GenerateCreateScript();
+        Assert.Contains("CREATE TABLE", portableSql, StringComparison.Ordinal);
+        Assert.DoesNotContain("PROPERTY GRAPH", portableSql, StringComparison.Ordinal);
+        Assert.Contains("CREATE PROPERTY GRAPH", native.Database.GenerateCreateScript(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Legacy_snapshot_without_a_backend_retains_native_semantics()
+    {
+        var snapshot = new ModelBuilder();
+        snapshot.HasPropertyGraphs("""
+            [{"name":"legacy","schema":"public","elementTables":[]}]
+            """);
+        Assert.Equal(BlueTuskPropertyGraphBackend.NativeSqlPgq, Assert.Single(snapshot.Model.GetPropertyGraphs()).Backend);
+    }
+
+    [Fact]
     public void Model_builder_records_typed_graph_metadata_and_generates_guarded_quoted_DDL()
     {
         using var context = CreateContext<QuotedGraphContext>();
@@ -192,11 +216,12 @@ public sealed class PropertyGraphMetadataTests
         Assert.Equal(["Id"], edge.Destination?.VertexKeyColumns);
     }
 
-    private static TContext CreateContext<TContext>()
+    private static TContext CreateContext<TContext>(
+        BlueTuskPropertyGraphBackend backend = BlueTuskPropertyGraphBackend.NativeSqlPgq)
         where TContext : DbContext
     {
         var options = new DbContextOptionsBuilder<TContext>()
-            .UseBlueTusk(ConnectionString)
+            .UseBlueTusk(ConnectionString, options => options.UseGraphCompatibility(backend))
             .Options;
         return (TContext)Activator.CreateInstance(typeof(TContext), options)!;
     }

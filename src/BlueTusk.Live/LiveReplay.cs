@@ -24,13 +24,13 @@ public sealed class LiveReplayEvent
         string contentType,
         byte[] ownedPayload)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequence);
+        BlueTuskGuard.NotNegativeOrZero(sequence);
         if (!Enum.IsDefined(kind))
         {
             throw new ArgumentOutOfRangeException(nameof(kind));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+        BlueTuskGuard.NotNullOrWhiteSpace(contentType);
         Sequence = sequence;
         Kind = kind;
         ContentType = contentType;
@@ -54,7 +54,7 @@ public sealed class LiveReplayEvent
         string contentType,
         byte[] payload)
     {
-        ArgumentNullException.ThrowIfNull(payload);
+        BlueTuskGuard.NotNull(payload);
         return new LiveReplayEvent(sequence, kind, contentType, payload);
     }
 
@@ -66,7 +66,7 @@ public sealed class LiveReplayEvent
         ReadOnlySpan<byte> integrityHash)
     {
         var restored = new LiveReplayEvent(sequence, kind, contentType, payload);
-        if (integrityHash.Length != SHA256.HashSizeInBytes ||
+        if (integrityHash.Length != 32 ||
             !CryptographicOperations.FixedTimeEquals(restored._integrityHash, integrityHash))
         {
             throw new ArgumentException("The stored Live replay payload does not match its integrity hash.", nameof(integrityHash));
@@ -93,8 +93,8 @@ public sealed class LiveReplayAppendRequest
         long expectedLastSequence,
         LiveReplayEvent[] events)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedLastSequence);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNegative(expectedLastSequence);
         if (events.Length == 0)
         {
             throw new ArgumentException("A Live replay append requires at least one event.", nameof(events));
@@ -127,13 +127,13 @@ public sealed class LiveReplayAppendRequest
         long expectedLastSequence,
         LiveReplayEvent[] events)
     {
-        ArgumentNullException.ThrowIfNull(events);
+        BlueTuskGuard.NotNull(events);
         return new LiveReplayAppendRequest(identity, expectedLastSequence, events);
     }
 
     private static LiveReplayEvent[] MaterializeEvents(IEnumerable<LiveReplayEvent> events)
     {
-        ArgumentNullException.ThrowIfNull(events);
+        BlueTuskGuard.NotNull(events);
         return events.ToArray();
     }
 }
@@ -181,8 +181,8 @@ public sealed class LiveReplayReadResult
             throw new ArgumentOutOfRangeException(nameof(status));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegative(firstAvailableSequence);
-        ArgumentOutOfRangeException.ThrowIfNegative(lastSequence);
+        BlueTuskGuard.NotNegative(firstAvailableSequence);
+        BlueTuskGuard.NotNegative(lastSequence);
         if (firstAvailableSequence > checked(lastSequence + 1))
         {
             throw new ArgumentException("The first available replay sequence cannot exceed the last sequence plus one.");
@@ -208,7 +208,7 @@ public sealed class LiveReplayReadResult
         long lastSequence,
         LiveReplayEvent[] events)
     {
-        ArgumentNullException.ThrowIfNull(events);
+        BlueTuskGuard.NotNull(events);
         return new LiveReplayReadResult(status, firstAvailableSequence, lastSequence, events);
     }
 }
@@ -241,7 +241,7 @@ public static class LiveReplayJsonSerializer
         JsonSerializerOptions? options = null)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(liveEvent);
+        BlueTuskGuard.NotNull(liveEvent);
         return LiveReplayEvent.CreateOwned(
             liveEvent.Sequence,
             liveEvent.Kind,
@@ -251,7 +251,7 @@ public static class LiveReplayJsonSerializer
 
     public static bool VerifyIntegrity(LiveReplayEvent replayEvent)
     {
-        ArgumentNullException.ThrowIfNull(replayEvent);
+        BlueTuskGuard.NotNull(replayEvent);
         var computed = SHA256.HashData(replayEvent.Payload.Span);
         return CryptographicOperations.FixedTimeEquals(computed, replayEvent.IntegrityHash.Span);
     }

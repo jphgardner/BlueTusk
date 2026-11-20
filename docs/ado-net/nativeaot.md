@@ -1,39 +1,16 @@
 # NativeAOT and trimming
 
-This page helps you publish a trimmed or NativeAOT application that uses
-`BlueTusk.Data`, and lists the few features that need a JIT runtime.
+Publish your app with a runtime identifier and verify it against the
+PostgreSQL version you deploy:
 
-## What is supported
+~~~sh
+dotnet publish -c Release -r linux-x64 -p:PublishAot=true
+~~~
 
-The provider core supports full trimming and NativeAOT. That covers
-`BlueTusk.Data` and the packages it depends on: `BlueTusk.Client`,
-`BlueTusk.Protocol`, `BlueTusk.Transport`, `BlueTusk.Security`,
-`BlueTusk.TypeSystem`, `BlueTusk.Diagnostics` and
-`BlueTusk.Extensions.Abstractions`. Connection strings, SCRAM authentication,
-data sources, commands, built-in types and one-dimensional arrays all work.
-
-Every build of the provider is published and run as a trimmed app and as a
-NativeAOT app on Windows x64 and Linux x64. Those smoke apps do not contact a
-server, so test your own app against PostgreSQL after publishing.
-
-## Set up your project
-
-Turn on NativeAOT and add the composite source generator:
-
-```xml
-<PropertyGroup>
-  <PublishAot>true</PublishAot>
-</PropertyGroup>
-```
-
-```powershell
-dotnet add package BlueTusk.Data
-dotnet add package BlueTusk.SourceGeneration
-```
-
-`PublishAot` also turns on the trimming and AOT analyzers at build time, so
-unsupported patterns show up as build warnings.
-
+For trimmed JIT output use `-p:PublishTrimmed=true` instead. Use
+source-generated mappings when the native compiler needs static knowledge of
+PostgreSQL enum or composite values. Review trimming analyzer warnings and
+exercise all supported data paths in the published executable.
 ## Composite and enum mappings
 
 Prefer the `BlueTusk.SourceGeneration` composite generator in NativeAOT
@@ -41,20 +18,13 @@ applications. It produces direct member access and avoids reflection during
 normal encoding and decoding:
 
 ```csharp
-using BlueTusk.Data;
-using BlueTusk.TypeSystem;
-
-var builder = new BlueTuskDataSourceBuilder(connectionString);
-Address.RegisterCodec(builder.Types);
-await using var dataSource = builder.Build();
-
 [BlueTuskComposite("app", "address")]
 internal sealed partial record Address(int HouseNumber, string Street);
-```
 
-The generator adds a static `RegisterCodec` method to every `partial` type
-marked with `[BlueTuskComposite]`. Members match composite fields by snake_case
-name (`HouseNumber` matches `house_number`).
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .ConfigureTypes(Address.RegisterCodec)
+    .Build();
+```
 
 `MapComposite<T>` remains available for statically known public constructors,
 properties, and fields. Its generic annotations preserve those members during
@@ -99,8 +69,8 @@ available in a JIT deployment. NativeAOT installs an unsupported codec that
 fails explicitly when materialisation is attempted; applications can instead
 register their own statically implemented codec.
 
-## Other BlueTusk packages
+## Integration scope
 
-Only the provider core is NativeAOT-compatible. EF Core, extensions, Streams,
-Sync, Live, the Control Plane and Continuous Graph are not. Check each package
-your app uses before you publish with NativeAOT.
+This guidance applies to the core data provider. Check trimming and NativeAOT
+support for each optional package you add, including EF Core integrations,
+type codecs, and real-time hosts.

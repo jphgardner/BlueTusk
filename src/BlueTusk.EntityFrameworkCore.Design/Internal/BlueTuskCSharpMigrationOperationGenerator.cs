@@ -33,8 +33,8 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
         MigrationOperation operation,
         IndentedStringBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(operation);
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(operation);
+        BlueTuskGuard.NotNull(builder);
 
         switch (operation)
         {
@@ -945,7 +945,7 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
         BlueTuskPropertyGraphDefinition definition,
         IndentedStringBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         builder
             .Append(".CreatePropertyGraph(")
             .Append(Dependencies.CSharpHelper.Literal(definition.Name))
@@ -1062,9 +1062,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                 $"Property-graph edge must configure {method} before it can be scaffolded.");
         }
         builder
-            .Append('.')
+            .Append(".")
             .Append(method)
-            .Append('(')
+            .Append("(")
             .Append(Dependencies.CSharpHelper.Literal(endpoint.VertexTableAlias))
             .Append(", ");
         AppendStringCollection(endpoint.EdgeKeyColumns, builder);
@@ -1088,14 +1088,14 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
         IReadOnlyList<string> values,
         IndentedStringBuilder builder)
     {
-        builder.Append('[');
+        builder.Append("[");
         AppendStringArguments(values, builder);
-        builder.Append(']');
+        builder.Append("]");
     }
 
     private void GenerateSchemaProgram(string method, string definition, IndentedStringBuilder builder)
     {
-        builder.Append(".").Append(method).Append('(')
+        builder.Append(".").Append(method).Append("(")
             .Append(Dependencies.CSharpHelper.Literal(definition))
             .AppendLine(");");
     }
@@ -1106,7 +1106,7 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
         string definition,
         IndentedStringBuilder builder)
     {
-        builder.Append(".").Append(method).Append('(')
+        builder.Append(".").Append(method).Append("(")
             .Append(Dependencies.CSharpHelper.Literal(oldDefinition))
             .Append(", ")
             .Append(Dependencies.CSharpHelper.Literal(definition))

@@ -44,8 +44,8 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
         string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(limit, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(limit, 500);
+        BlueTuskGuard.NotLessThan(limit, 1);
+        BlueTuskGuard.NotGreaterThan(limit, 500);
         if (continuationToken is { Length: > 4096 })
         {
             throw new ArgumentOutOfRangeException(nameof(continuationToken));
@@ -77,8 +77,8 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
         IReadOnlyList<string> finalizers,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(resource);
-        ArgumentNullException.ThrowIfNull(finalizers);
+        BlueTuskGuard.NotNull(resource);
+        BlueTuskGuard.NotNull(finalizers);
         if (finalizers.Count > 32 || finalizers.Any(static value =>
                 string.IsNullOrWhiteSpace(value) || value.Length > 253))
         {
@@ -118,8 +118,8 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
         KubernetesManagedDeploymentStatus status,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(resource);
-        ArgumentNullException.ThrowIfNull(status);
+        BlueTuskGuard.NotNull(resource);
+        BlueTuskGuard.NotNull(status);
         using var content = JsonPatch(writer =>
         {
             WritePatchValue(writer, "test", "/metadata/resourceVersion", resource.ResourceVersion);
@@ -156,10 +156,10 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
     private static KubernetesManagedDeploymentResource ToResource(
         KubernetesResourceDocument document)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(document.Metadata.Namespace);
-        ArgumentException.ThrowIfNullOrWhiteSpace(document.Metadata.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(document.Metadata.Uid);
-        ArgumentException.ThrowIfNullOrWhiteSpace(document.Metadata.ResourceVersion);
+        BlueTuskGuard.NotNullOrWhiteSpace(document.Metadata.Namespace);
+        BlueTuskGuard.NotNullOrWhiteSpace(document.Metadata.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(document.Metadata.Uid);
+        BlueTuskGuard.NotNullOrWhiteSpace(document.Metadata.ResourceVersion);
         if (document.Metadata.Generation <= 0)
         {
             throw new JsonException("Kubernetes custom-resource generation must be positive.");
@@ -246,9 +246,9 @@ public sealed class KubernetesApiManagedDeploymentClient : IKubernetesManagedDep
 
     private static void ValidatePathToken(string value, int maximumLength, string parameter)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameter);
         if (value.Length > maximumLength || value.Any(static character =>
-                !(char.IsAsciiLetterOrDigit(character) || character is '-' or '.' or '_')))
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '-' or '.' or '_')))
         {
             throw new ArgumentException("Kubernetes path identity is invalid.", parameter);
         }

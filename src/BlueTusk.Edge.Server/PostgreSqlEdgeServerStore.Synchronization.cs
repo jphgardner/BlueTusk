@@ -78,7 +78,7 @@ public sealed partial class PostgreSqlEdgeServerStore
 
     public async ValueTask<EdgeChangeBatch?> ReadChangesAsync(EdgeScope scope, long afterPosition, int maxRecords = 512, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(afterPosition);
+        BlueTuskGuard.NotNegative(afterPosition);
         ValidateBatch(maxRecords);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -110,9 +110,9 @@ public sealed partial class PostgreSqlEdgeServerStore
     /// <summary>Administrative retention floor. Lagging clients must resnapshot; mutation receipts and record tombstones are retained.</summary>
     public async ValueTask<int> PruneChangesAsync(EdgeScope scope, long throughPosition, int maximumCount = 1000, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(throughPosition);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumCount, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumCount, 10_000);
+        BlueTuskGuard.NotNegative(throughPosition);
+        BlueTuskGuard.NotLessThan(maximumCount, 1);
+        BlueTuskGuard.NotGreaterThan(maximumCount, 10_000);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         var state = await LockScopeAsync(connection, transaction, scope, cancellationToken).ConfigureAwait(false);

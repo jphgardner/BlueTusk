@@ -26,10 +26,13 @@ dotnet restore BlueTusk.slnx
 dotnet format BlueTusk.slnx --verify-no-changes --no-restore
 ./eng/verify-documentation.ps1
 dotnet build BlueTusk.slnx -c Release --no-restore
-dotnet test BlueTusk.slnx -c Release --no-build --no-restore
+dotnet test BlueTusk.slnx -c Release --no-build --no-restore --framework net10.0
 ./eng/verify-allocation-budgets.ps1
 dotnet pack BlueTusk.slnx -c Release --no-build --no-restore --output artifacts/packages
 ```
+
+Use the [.NET runtime compatibility matrix](dotnet-compatibility.md) to
+exercise packaged products on each target from .NET 5 through .NET 11.
 
 Provider-core trimming and NativeAOT are separate publish gates because an
 ordinary build does not run the linker or native compiler. On Windows x64:
@@ -57,7 +60,7 @@ nondeterministic.
 
 Each live PostgreSQL-version matrix entry has its own CI runner. When reproducing
 the complete matrix on one development machine, run `dotnet test BlueTusk.slnx`
-with `--maxcpucount:1` for each connection string. CI applies the same
+with `--framework net10.0 --maxcpucount:1` for each connection string. CI applies the same
 project-serial setting inside each server runner. Multiple simultaneous copies
 of the full EF relational specification suite can exhaust host memory and turn
 database setup into misleading timeout failures.
@@ -200,7 +203,8 @@ dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~GSSAPI_K
 The fixed realm password, KDC database, service keytab, and ticket cache are
 test-only ephemeral infrastructure. They must not be copied into a deployment.
 
-Cloud identity adapter tests are deterministic by default. Optional
+The [cloud identity adapter suite](../../tests/BlueTusk.Identity.CompatibilityTests/BlueTusk.Identity.CompatibilityTests.csproj)
+tests token signing and configuration across runtime versions. Optional
 external-account acceptance uses the default AWS, Azure, or Google SDK identity
 chain and one complete connection string per provider:
 

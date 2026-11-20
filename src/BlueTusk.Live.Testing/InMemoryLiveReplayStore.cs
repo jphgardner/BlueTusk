@@ -14,7 +14,7 @@ public sealed class InMemoryLiveReplayStore : ILiveReplayStore
         TimeProvider? timeProvider = null)
     {
         _retention = retention ?? TimeSpan.FromMinutes(30);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(_retention, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(_retention, TimeSpan.Zero);
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -22,7 +22,7 @@ public sealed class InMemoryLiveReplayStore : ILiveReplayStore
         LiveReplayAppendRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_gate)
         {
@@ -56,9 +56,9 @@ public sealed class InMemoryLiveReplayStore : ILiveReplayStore
         int maximumEvents,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNegative(afterSequence);
+        BlueTuskGuard.NotNegativeOrZero(maximumEvents);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_gate)
         {

@@ -22,11 +22,11 @@ public sealed class ManagedDeploymentController
         TimeSpan? leaseDuration = null,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(leases);
-        ArgumentNullException.ThrowIfNull(quotas);
-        ArgumentNullException.ThrowIfNull(providers);
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNull(leases);
+        BlueTuskGuard.NotNull(quotas);
+        BlueTuskGuard.NotNull(providers);
+        BlueTuskGuard.NotNullOrWhiteSpace(owner);
         if (owner.Length > 512)
         {
             throw new ArgumentException("Lease owner cannot exceed 512 characters.", nameof(owner));
@@ -208,7 +208,7 @@ public sealed class ManagedDeploymentController
         CancellationToken cancellationToken = default)
     {
         ValidateDeploymentId(deploymentId);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedGeneration);
+        BlueTuskGuard.NotNegativeOrZero(expectedGeneration);
         using var telemetry = ControlPlaneDiagnostics.StartOperation("delete");
 
         var lease = await _leases.TryAcquireAsync(
@@ -391,7 +391,7 @@ public sealed class ManagedDeploymentController
         string desiredFingerprint,
         ManagedDeploymentPlan plan)
     {
-        ArgumentNullException.ThrowIfNull(plan);
+        BlueTuskGuard.NotNull(plan);
         if (!string.Equals(plan.DeploymentId, spec.DeploymentId, StringComparison.Ordinal) ||
             plan.Generation != spec.Generation ||
             !string.Equals(plan.DesiredFingerprint, desiredFingerprint, StringComparison.Ordinal))
@@ -401,8 +401,8 @@ public sealed class ManagedDeploymentController
                 "Provider plan identity does not match desired state.");
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(plan.PlanFingerprint);
-        ArgumentNullException.ThrowIfNull(plan.Actions);
+        BlueTuskGuard.NotNullOrWhiteSpace(plan.PlanFingerprint);
+        BlueTuskGuard.NotNull(plan.Actions);
         if (plan.PlanFingerprint.Length > 256 || plan.Actions.Count > 1024)
         {
             throw new ManagedDeploymentValidationException(
@@ -412,7 +412,7 @@ public sealed class ManagedDeploymentController
 
         foreach (var action in plan.Actions)
         {
-            ArgumentNullException.ThrowIfNull(action);
+            BlueTuskGuard.NotNull(action);
             if (string.IsNullOrWhiteSpace(action.Kind) ||
                 string.IsNullOrWhiteSpace(action.Resource) ||
                 string.IsNullOrWhiteSpace(action.Summary) ||
@@ -431,9 +431,9 @@ public sealed class ManagedDeploymentController
         ManagedDeploymentPlan plan,
         ManagedProviderResult result)
     {
-        ArgumentNullException.ThrowIfNull(result);
-        ArgumentException.ThrowIfNullOrWhiteSpace(result.ProviderResourceId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(result.AppliedPlanFingerprint);
+        BlueTuskGuard.NotNull(result);
+        BlueTuskGuard.NotNullOrWhiteSpace(result.ProviderResourceId);
+        BlueTuskGuard.NotNullOrWhiteSpace(result.AppliedPlanFingerprint);
         if (result.ProviderResourceId.Length > 2048 ||
             !string.Equals(
                 result.AppliedPlanFingerprint,
@@ -466,7 +466,7 @@ public sealed class ManagedDeploymentController
 
     private static void ValidateDeploymentId(string deploymentId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(deploymentId);
+        BlueTuskGuard.NotNullOrWhiteSpace(deploymentId);
         if (deploymentId.Length > 128)
         {
             throw new ArgumentException(
@@ -548,7 +548,11 @@ public sealed class ManagedDeploymentController
             {
                 while (true)
                 {
+#if NET8_0_OR_GREATER
                     await Task.Delay(interval, timeProvider, _linked.Token).ConfigureAwait(false);
+#else
+                    await timeProvider.Delay(interval, _linked.Token).ConfigureAwait(false);
+#endif
                     _lease = await _store.RenewAsync(
                         _lease,
                         _duration,

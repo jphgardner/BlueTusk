@@ -20,10 +20,10 @@ public sealed record PostgreSqlSyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(DestinationDataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ControlSchema);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxTransactionBytes);
+        BlueTuskGuard.NotNull(DestinationDataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(ControlSchema);
+        BlueTuskGuard.NotNegativeOrZero(MaxDocumentBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxTransactionBytes);
         if (MaxDocumentBytes > MaxTransactionBytes)
         {
             throw new ArgumentException(

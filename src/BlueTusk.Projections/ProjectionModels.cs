@@ -1,6 +1,10 @@
 using System.Data.Common;
+using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
+#if NET5_0
+using DbBatch = BlueTusk.Data.Compatibility.BlueTuskLegacyBatch;
+#endif
 
 namespace BlueTusk.Projections;
 
@@ -9,9 +13,9 @@ public sealed record ProjectionIdentity
     public ProjectionIdentity(string name, int version, string definitionFingerprint, ChangeSourceIdentity source)
     {
         ProjectionValidation.Key(name, nameof(name));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
+        BlueTuskGuard.NotNegativeOrZero(version);
         ProjectionValidation.Key(definitionFingerprint, nameof(definitionFingerprint));
-        ArgumentNullException.ThrowIfNull(source);
+        BlueTuskGuard.NotNull(source);
         Name = name;
         Version = version;
         DefinitionFingerprint = definitionFingerprint;
@@ -126,30 +130,30 @@ public sealed class PostgreSqlProjectionsOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumResetBatchRows);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumResetBatchRows, 65_536);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Schema);
-        if (Schema.Length > 63 || Schema.Any(static character => !char.IsAsciiLetterOrDigit(character) && character != '_') ||
-            !char.IsAsciiLetter(Schema[0]) && Schema[0] != '_')
+        BlueTuskGuard.NotNegativeOrZero(MaximumResetBatchRows);
+        BlueTuskGuard.NotGreaterThan(MaximumResetBatchRows, 65_536);
+        BlueTuskGuard.NotNullOrWhiteSpace(Schema);
+        if (Schema.Length > 63 || Schema.Any(static character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_') ||
+            !BlueTuskRuntime.IsAsciiLetter(Schema[0]) && Schema[0] != '_')
         {
             throw new ArgumentException("Schema must be a 1 to 63 character ASCII PostgreSQL identifier.", nameof(Schema));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumChangesPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumTransactionBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSnapshotBatchRows);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumDocumentBytes, 16_777_216);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependenciesPerDocument);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependencyPageSize);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumDependencyPageSize, 65_536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumInvalidationsPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumWriteOperationsPerTransaction);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumWriteBatchSize);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumWriteBatchSize, 65_536);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumWriteBatchBytes, MaximumDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumWriteBatchBytes, 67_108_864);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegativeOrZero(MaximumChangesPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaximumTransactionBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaximumSnapshotBatchRows);
+        BlueTuskGuard.NotNegativeOrZero(MaximumDocumentBytes);
+        BlueTuskGuard.NotGreaterThan(MaximumDocumentBytes, 16_777_216);
+        BlueTuskGuard.NotNegativeOrZero(MaximumDependenciesPerDocument);
+        BlueTuskGuard.NotNegativeOrZero(MaximumDependencyPageSize);
+        BlueTuskGuard.NotGreaterThan(MaximumDependencyPageSize, 65_536);
+        BlueTuskGuard.NotNegativeOrZero(MaximumInvalidationsPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaximumWriteOperationsPerTransaction);
+        BlueTuskGuard.NotNegativeOrZero(MaximumWriteBatchSize);
+        BlueTuskGuard.NotGreaterThan(MaximumWriteBatchSize, 65_536);
+        BlueTuskGuard.NotLessThan(MaximumWriteBatchBytes, MaximumDocumentBytes);
+        BlueTuskGuard.NotGreaterThan(MaximumWriteBatchBytes, 67_108_864);
+        BlueTuskGuard.NotNegativeOrZero(CommandTimeoutSeconds);
     }
 }
 
@@ -157,7 +161,7 @@ internal static class ProjectionValidation
 {
     internal static void Key(string value, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Length > 200 || value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("Projection keys must contain 1 to 200 characters and no NUL characters.", parameterName);
@@ -195,12 +199,21 @@ internal static class ProjectionSql
         IReadOnlyList<(string Sql, (string Name, object Value)[] Parameters)> statements,
         params (string Name, object Value)[] shared)
     {
+#if NET5_0
+        if (connection is not BlueTuskConnection blueTuskConnection)
+        {
+            return null;
+        }
+
+        DbBatch batch = blueTuskConnection.CreateBatch();
+#else
         if (!connection.CanCreateBatch)
         {
             return null;
         }
 
         var batch = connection.CreateBatch();
+#endif
         try
         {
             batch.Transaction = transaction;
@@ -208,7 +221,12 @@ internal static class ProjectionSql
             foreach (var (sql, parameters) in statements)
             {
                 var command = batch.CreateBatchCommand();
-                if (!command.CanCreateParameter)
+#if NET5_0 || NET8_0_OR_GREATER
+                var parameterSource = command;
+#else
+                var parameterSource = command as BlueTuskBatchCommand;
+#endif
+                if (parameterSource?.CanCreateParameter != true)
                 {
                     batch.Dispose();
                     return null;
@@ -217,7 +235,7 @@ internal static class ProjectionSql
                 command.CommandText = sql;
                 foreach (var entry in shared.Concat(parameters))
                 {
-                    var parameter = command.CreateParameter();
+                    var parameter = parameterSource.CreateParameter();
                     parameter.ParameterName = entry.Name;
                     parameter.Value = entry.Value;
                     command.Parameters.Add(parameter);

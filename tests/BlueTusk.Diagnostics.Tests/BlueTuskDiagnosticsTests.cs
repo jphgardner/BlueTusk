@@ -217,7 +217,7 @@ public sealed class BlueTuskDiagnosticsTests
             new InvalidOperationException("slow-exception-secret-must-not-escape"));
 
         var written = Assert.Single(listener.Events, item => item.EventId == 1);
-        var payload = string.Join('|', written.Payload ?? []);
+        var payload = string.Join('|', written.Payload?.ToArray() ?? []);
         Assert.Contains("SELECT", payload, StringComparison.Ordinal);
         Assert.Contains("app", payload, StringComparison.Ordinal);
         Assert.Contains("checkout", payload, StringComparison.Ordinal);

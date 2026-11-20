@@ -7,6 +7,9 @@ using BlueTusk.Sql;
 using BlueTusk.Sql.SourceGeneration;
 using BlueTusk.TypeSystem;
 using static BlueTusk.Sql.SourceGeneration.SqlContractModel;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 return await SqlCli.RunAsync(args, Console.Out, Console.Error);
 
@@ -21,8 +24,8 @@ internal static class SqlCli
         {
             if (arguments.Length == 0 || arguments[0] is "help" or "--help")
             {
-                await output.WriteLineAsync("bluetusk-sql validate --schema app.bluetusk-schema.json|app.bluetusk-catalog.json --schemas app --output app.bluetusk-sql.xml --query orders.sql [--query other.sql]\n" +
-                    "Reads BLUETUSK_SQL_CONNECTION_STRING. Exit 2 = schema drift; 1 = invalid query/operation. Add snapshot and validation files as compiler AdditionalFiles.").ConfigureAwait(false);
+                await output.WriteLineAsync(("bluetusk-sql validate --schema app.bluetusk-schema.json|app.bluetusk-catalog.json --schemas app --output app.bluetusk-sql.xml --query orders.sql [--query other.sql]\n" +
+                    "Reads BLUETUSK_SQL_CONNECTION_STRING. Exit 2 = schema drift; 1 = invalid query/operation. Add snapshot and validation files as compiler AdditionalFiles.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                 return 0;
             }
             if (arguments[0] != "validate" || arguments.Length > 2009 || arguments.Any(argument => argument.Length > 4096))
@@ -94,7 +97,7 @@ internal static class SqlCli
                     (await new PostgreSqlSchemaCapture(dataSource, captureOptions).CaptureInTransactionAsync(connectionScope, transaction, token).ConfigureAwait(false)).Fingerprint;
                 if (currentFingerprint != baselineFingerprint)
                 {
-                    await error.WriteLineAsync("SQL validation rejected schema drift.").ConfigureAwait(false);
+                    await error.WriteLineAsync(("SQL validation rejected schema drift.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                     return 2;
                 }
                 foreach (var query in queries)
@@ -138,7 +141,7 @@ internal static class SqlCli
                 await transaction.CommitAsync(token).ConfigureAwait(false);
                 var receipt = SqlValidationDocument.Write(currentFingerprint, DocumentFingerprint(snapshotText), queries);
                 await WriteAsync(options["--output"], StrictUtf8.GetBytes(receipt), token).ConfigureAwait(false);
-                await output.WriteLineAsync($"Validated {queries.Count} queries against schema {currentFingerprint}.").ConfigureAwait(false);
+                await output.WriteLineAsync(($"Validated {queries.Count} queries against schema {currentFingerprint}.").AsMemory(), CancellationToken.None).ConfigureAwait(false);
                 return 0;
             }
             finally { if (ownedDataSource is not null) { await ownedDataSource.DisposeAsync().ConfigureAwait(false); } }
@@ -152,7 +155,7 @@ internal static class SqlCli
                 IOException => "artifact file operation failed",
                 _ => "invalid contract, schema or database operation",
             };
-            await error.WriteLineAsync("SQL validation failed: " + category + ".").ConfigureAwait(false);
+            await error.WriteLineAsync(("SQL validation failed: " + category + ".").AsMemory(), CancellationToken.None).ConfigureAwait(false);
             return 1;
         }
     }

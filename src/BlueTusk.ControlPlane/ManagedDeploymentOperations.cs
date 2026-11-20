@@ -35,7 +35,7 @@ public sealed class ManagedDeploymentControlPlaneOperationHandler : IControlPlan
         ControlPlaneOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         if (request.Kind is not (ControlPlaneOperationKind.PauseDeployment or
             ControlPlaneOperationKind.ResumeDeployment or
             ControlPlaneOperationKind.ReconcileDeployment or
@@ -112,7 +112,7 @@ public sealed class ManagedDeploymentControlPlaneOperationHandler : IControlPlan
 
     private static string ParseTarget(string target)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(target);
+        BlueTuskGuard.NotNullOrWhiteSpace(target);
         if (!target.StartsWith(TargetPrefix, StringComparison.Ordinal) ||
             target.Length == TargetPrefix.Length ||
             target.Length > TargetPrefix.Length + 128)

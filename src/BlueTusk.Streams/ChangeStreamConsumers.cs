@@ -26,8 +26,8 @@ public readonly record struct SnapshotRowId(
         ChangeTable table,
         IEnumerable<ChangeColumnValue> keyValues)
     {
-        ArgumentNullException.ThrowIfNull(table);
-        ArgumentNullException.ThrowIfNull(keyValues);
+        BlueTuskGuard.NotNull(table);
+        BlueTuskGuard.NotNull(keyValues);
         var tableIdentity = $"{table.Schema}.{table.Name}";
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Span<byte> length = stackalloc byte[sizeof(int)];
@@ -42,7 +42,7 @@ public readonly record struct SnapshotRowId(
         return new SnapshotRowId(
             epoch.Value,
             tableIdentity,
-            Convert.ToHexStringLower(hash.GetHashAndReset()));
+            BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset()));
     }
 }
 
@@ -59,9 +59,9 @@ public sealed class ChangeSnapshotBatch
         IEnumerable<ChangeSnapshotRow> rows,
         bool isLastForTable)
     {
-        ArgumentNullException.ThrowIfNull(table);
-        ArgumentNullException.ThrowIfNull(rows);
-        ArgumentOutOfRangeException.ThrowIfNegative(sequence);
+        BlueTuskGuard.NotNull(table);
+        BlueTuskGuard.NotNull(rows);
+        BlueTuskGuard.NotNegative(sequence);
         Epoch = epoch;
         Table = table;
         Sequence = sequence;

@@ -98,7 +98,9 @@ public sealed class BlueTuskTransaction : DbTransaction
         _ => throw new ArgumentOutOfRangeException(nameof(isolationLevel), isolationLevel, "Unknown isolation level."),
     };
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask CompleteValueTaskAsync(
         string sql,
         CancellationToken cancellationToken)

@@ -15,13 +15,13 @@
             ]
           },
           {
-            "workflowFile": "performance.yml",
+            "workflowFile": "core-performance-evidence.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
           },
           {
-            "workflowFile": "v1-candidate-readiness.yml",
+            "workflowFile": "core-1.2-package-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -84,13 +84,13 @@
             ]
           },
           {
-            "workflowFile": "performance.yml",
+            "workflowFile": "core-performance-evidence.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
           },
           {
-            "workflowFile": "v1-candidate-readiness.yml",
+            "workflowFile": "core-1.2-package-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -133,13 +133,13 @@
             ]
           },
           {
-            "workflowFile": "performance.yml",
+            "workflowFile": "core-performance-evidence.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
           },
           {
-            "workflowFile": "v1-candidate-readiness.yml",
+            "workflowFile": "core-1.2-package-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -178,7 +178,7 @@
             ]
           },
           {
-            "workflowFile": "performance.yml",
+            "workflowFile": "core-performance-evidence.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -190,7 +190,7 @@
             ]
           },
           {
-            "workflowFile": "v1-candidate-readiness.yml",
+            "workflowFile": "core-1.2-package-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -234,7 +234,7 @@
             ]
           },
           {
-            "workflowFile": "performance.yml",
+            "workflowFile": "core-performance-evidence.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -246,7 +246,7 @@
             ]
           },
           {
-            "workflowFile": "v1-candidate-readiness.yml",
+            "workflowFile": "core-1.2-package-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]
@@ -313,7 +313,7 @@
       "versionFile": "eng/versions/Events.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "events",
         "requiredWorkflowEvidence": [
           {
@@ -356,7 +356,7 @@
       "versionFile": "eng/versions/Jobs.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "jobs",
         "requiredWorkflowEvidence": [
           {
@@ -397,7 +397,7 @@
       "versionFile": "eng/versions/Documents.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "documents",
         "requiredWorkflowEvidence": [
           {
@@ -442,7 +442,7 @@
       "versionFile": "eng/versions/Schema.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "schema",
         "requiredWorkflowEvidence": [
           {
@@ -483,7 +483,7 @@
       "versionFile": "eng/versions/Projections.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "projections",
         "requiredWorkflowEvidence": [
           {
@@ -527,7 +527,7 @@
       "versionFile": "eng/versions/Search.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "search",
         "requiredWorkflowEvidence": [
           {
@@ -572,7 +572,7 @@
       "versionFile": "eng/versions/Sql.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "sql",
         "requiredWorkflowEvidence": [
           {
@@ -615,7 +615,7 @@
       "versionFile": "eng/versions/Studio.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "studio",
         "requiredWorkflowEvidence": [
           {
@@ -662,7 +662,7 @@
       "versionFile": "eng/versions/Edge.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "edge",
         "requiredWorkflowEvidence": [
           {
@@ -711,7 +711,7 @@
       "versionFile": "eng/versions/Workflows.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "workflows",
         "requiredWorkflowEvidence": [
           {

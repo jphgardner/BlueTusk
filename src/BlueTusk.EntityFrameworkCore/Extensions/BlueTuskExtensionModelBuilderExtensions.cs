@@ -14,7 +14,7 @@ public static class BlueTuskExtensionModelBuilderExtensions
         string name,
         Action<BlueTuskExtensionBuilder>? buildAction = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskExtensionBuilder(name);
         buildAction?.Invoke(builder);
         return HasExtension(modelBuilder, builder.Build());
@@ -25,7 +25,7 @@ public static class BlueTuskExtensionModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskExtensionDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskExtensionMetadata.Validate(definition);
         definition = BlueTuskExtensionMetadata.Normalize(definition);
         var definitions = BlueTuskExtensionMetadata.Get(modelBuilder.Model);
@@ -39,8 +39,8 @@ public static class BlueTuskExtensionModelBuilderExtensions
     /// <summary>Removes a PostgreSQL extension installation from the model.</summary>
     public static ModelBuilder HasNoExtension(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskExtensionMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskExtensionDefinitionSet(
             definitions.Extensions
@@ -51,7 +51,7 @@ public static class BlueTuskExtensionModelBuilderExtensions
     /// <summary>Reads provider-owned PostgreSQL extension definitions from an EF model.</summary>
     public static BlueTuskExtensionDefinitionSet GetExtensions(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskExtensionMetadata.Get(model);
     }
 
@@ -60,7 +60,7 @@ public static class BlueTuskExtensionModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskExtensionMetadata.Deserialize(serializedDefinitions));
     }
 

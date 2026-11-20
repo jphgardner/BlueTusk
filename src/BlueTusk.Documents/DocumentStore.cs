@@ -15,7 +15,7 @@ public sealed partial class DocumentStore : IAsyncDisposable
 
     public DocumentStore(DbDataSource dataSource, DocumentStoreOptions? options = null, DocumentDataSourceOwnership ownership = DocumentDataSourceOwnership.Borrowed)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         if (!Enum.IsDefined(ownership))
         {
             throw new ArgumentOutOfRangeException(nameof(ownership));
@@ -193,7 +193,7 @@ public sealed partial class DocumentStore : IAsyncDisposable
     public async ValueTask<DocumentMigrationPage> MigratePageAsync<T>(string tenant, DocumentCollectionDefinition<T> targetCollection, DocumentMigration<T> migration, int pageSize = 100, string? afterId = null, CancellationToken cancellationToken = default)
     {
         ValidateKey(tenant, targetCollection, afterId ?? "_");
-        ArgumentNullException.ThrowIfNull(migration);
+        BlueTuskGuard.NotNull(migration);
         if (migration.ToVersion != targetCollection.SchemaVersion)
         {
             throw new ArgumentException("The migration target version must match the target collection.", nameof(migration));
@@ -259,7 +259,7 @@ public sealed partial class DocumentStore : IAsyncDisposable
     /// <summary>Creates a declared index transactionally; schedule for deployment because PostgreSQL blocks writes during creation.</summary>
     public async ValueTask EnsureIndexAsync(DocumentIndexDefinition definition, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         var quotedName = DocumentValidation.Identifier(definition.Name);
         var filter = definition.Collection is null ? string.Empty : " WHERE collection = " + DocumentValidation.Literal(definition.Collection);
         var expression = definition.Kind is DocumentIndexKind.JsonContainment
@@ -346,7 +346,7 @@ public sealed partial class DocumentStore : IAsyncDisposable
         return command;
     }
 
-    internal void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    internal void ThrowIfDisposed() => BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
 
     internal static void AddParameter(DbCommand command, string name, object? value, DbType type = DbType.String)
     {
@@ -359,7 +359,7 @@ public sealed partial class DocumentStore : IAsyncDisposable
 
     private static void ValidateKey<T>(string tenant, DocumentCollectionDefinition<T> collection, string id)
     {
-        ArgumentNullException.ThrowIfNull(collection);
+        BlueTuskGuard.NotNull(collection);
         DocumentValidation.Key(tenant, nameof(tenant), 256);
         DocumentValidation.Key(id, nameof(id), 512);
     }

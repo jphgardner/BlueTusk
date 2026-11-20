@@ -4,7 +4,6 @@ using BlueTusk.Live.DependencyInjection;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
-using Xunit.Sdk;
 
 namespace BlueTusk.Live.Tests;
 
@@ -13,11 +12,11 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
     private static readonly ChangeSourceIdentity Source =
         new("live-system", "live-database", "live-slot", "public:orders");
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Store_deduplicates_transaction_dependencies_and_serves_cursor_ranges()
     {
         var schema = "bluetusk_live_test_" + Guid.NewGuid().ToString("N");
-        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
         var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
         {
             ControlDataSource = dataSource,
@@ -74,11 +73,11 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         Assert.True(observer.Nacked);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Replay_store_is_sequence_fenced_idempotent_and_expiry_aware()
     {
         var schema = "bluetusk_live_replay_" + Guid.NewGuid().ToString("N");
-        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
         var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
         {
             ControlDataSource = dataSource,
@@ -135,11 +134,11 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Store_migrates_v1_metadata_and_rejects_future_schema_versions()
     {
         var schema = "bluetusk_live_upgrade_" + Guid.NewGuid().ToString("N");
-        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
         try
         {
             await using (var connection = await dataSource.OpenConnectionAsync())
@@ -233,14 +232,6 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
             "tenant:a",
             "policy:v1",
             50);
-
-    private static string GetConnectionString()
-    {
-        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
-        return string.IsNullOrWhiteSpace(connectionString)
-            ? throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.")
-            : connectionString;
-    }
 
     private static async ValueTask<int> ReadSchemaVersionAsync(
         DbDataSource dataSource,

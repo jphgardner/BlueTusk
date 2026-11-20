@@ -9,7 +9,7 @@ public sealed class BlueTuskVectorCodec : BlueTuskCodec<BlueTuskVector>
 
     public static int GetBinarySize(BlueTuskVector value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         return checked(HeaderSize + (value.Count * sizeof(float)));
     }
 
@@ -18,7 +18,7 @@ public sealed class BlueTuskVectorCodec : BlueTuskCodec<BlueTuskVector>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             return BlueTuskVector.Parse(reader.ReadRemainingUtf8());
@@ -73,8 +73,8 @@ public sealed class BlueTuskVectorCodec : BlueTuskCodec<BlueTuskVector>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(type);
         if (format == BlueTuskDataFormat.Text)
         {
             writer.WriteUtf8(value.ToString());

@@ -1,5 +1,8 @@
 # Runtime release readiness
 
+For current release criteria, see the [Core and Graph release tracks](releases/release-tracks.md).
+The V1 review below records the requirements and evidence of that release.
+
 BlueTusk records production-readiness decisions as executable subsystem gates,
 not as synonyms for package version. The 2026-08-07 V1 hardening review closes
 the implementation gates for the ADO.NET provider, EF Core and design tooling,

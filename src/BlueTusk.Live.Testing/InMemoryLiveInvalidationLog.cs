@@ -9,8 +9,8 @@ public sealed class InMemoryLiveInvalidationLog : ILiveInvalidationLog
         string databaseIdentity,
         IEnumerable<LiveTableDependency> dependencies)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(dependencies);
         var distinct = dependencies.Distinct().ToArray();
         lock (_gate)
         {
@@ -26,7 +26,7 @@ public sealed class InMemoryLiveInvalidationLog : ILiveInvalidationLog
         string databaseIdentity,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         cancellationToken.ThrowIfCancellationRequested();
         lock (_gate)
         {
@@ -44,8 +44,8 @@ public sealed class InMemoryLiveInvalidationLog : ILiveInvalidationLog
         LiveInvalidationCursor throughInclusive,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(dependencies);
         cancellationToken.ThrowIfCancellationRequested();
         if (throughInclusive < afterExclusive)
         {
@@ -66,7 +66,7 @@ public sealed class InMemoryLiveInvalidationLog : ILiveInvalidationLog
 
             if (throughInclusive > state.Cursor)
             {
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(
+                BlueTuskGuard.NotGreaterThan(
                     throughInclusive.Value,
                     state.Cursor.Value,
                     nameof(throughInclusive));

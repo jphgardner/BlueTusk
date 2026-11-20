@@ -1,13 +1,12 @@
 using System.Data.Common;
 using System.Text.Json;
 using BlueTusk.Data;
-using Xunit.Sdk;
 
 namespace BlueTusk.Studio.Tests;
 
 public sealed class StudioQueryServiceTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Resolved_database_role_enforces_RLS_and_privileges_beyond_schema_visibility()
     {
         await using var admin = BlueTuskDataSource.Create(ConnectionString());
@@ -51,7 +50,7 @@ public sealed class StudioQueryServiceTests
             _ = await drop.ExecuteNonQueryAsync();
         }
     }
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Queries_are_bounded_and_preserve_exact_numbers_and_nulls()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -66,7 +65,7 @@ public sealed class StudioQueryServiceTests
         Assert.Equal(JsonValueKind.Null, rows[0][2].ValueKind);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Rejects_transaction_escape_and_database_write_CTEs()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -93,7 +92,7 @@ public sealed class StudioQueryServiceTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Explain_returns_plan_without_executing_sleep()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -105,7 +104,7 @@ public sealed class StudioQueryServiceTests
         Assert.Contains("Plan", json.RootElement.GetProperty("rows")[0][0].GetString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Overload_is_rejected_without_queuing_and_capacity_recovers()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -116,7 +115,7 @@ public sealed class StudioQueryServiceTests
         Assert.Equal(1, (await service.ExecuteAsync(scope, new("SELECT 3"), TestContext.Current.CancellationToken)).Rows);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Oversized_replies_fail_and_do_not_poison_connection_pool()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -128,7 +127,7 @@ public sealed class StudioQueryServiceTests
         Assert.Equal(1, (await service.ExecuteAsync(scope, new("SELECT 1"), TestContext.Current.CancellationToken)).Rows);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Encoded_bytea_and_excessive_column_metadata_are_rejected()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -142,7 +141,7 @@ public sealed class StudioQueryServiceTests
             new(wide), TestContext.Current.CancellationToken).AsTask());
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Schema_discovery_shares_nonqueued_query_capacity_and_bounds_serialized_bytes()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -197,5 +196,5 @@ public sealed class StudioQueryServiceTests
 
     internal static StudioOptions Options() => new() { ReadPolicy = "studio-read", QueryPolicy = "studio-query" };
     internal static string ConnectionString() => Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING") is { Length: > 0 } connection
-        ? connection : throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is required for live PostgreSQL evidence.");
+        ? connection : throw new InvalidOperationException("BLUETUSK_TEST_CONNECTION_STRING is required for live PostgreSQL evidence.");
 }

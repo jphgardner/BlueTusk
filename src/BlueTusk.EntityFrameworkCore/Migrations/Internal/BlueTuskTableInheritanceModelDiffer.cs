@@ -92,7 +92,7 @@ internal static class BlueTuskTableInheritanceModelDiffer
 
         if (!canModifyInPlace)
         {
-            foreach (var parent in sourceParents.Reverse())
+            foreach (var parent in sourceParents.AsEnumerable().Reverse())
             {
                 before.Add(CreateRemove(sourceKey, parent.Source));
             }

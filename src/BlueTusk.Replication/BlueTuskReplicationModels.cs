@@ -135,8 +135,8 @@ public sealed record BlueTuskPgOutputReplicationOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(SlotName);
-        ArgumentNullException.ThrowIfNull(PublicationNames);
+        BlueTuskGuard.NotNullOrWhiteSpace(SlotName);
+        BlueTuskGuard.NotNull(PublicationNames);
         if (PublicationNames.Count == 0)
         {
             throw new ArgumentException(
@@ -146,11 +146,11 @@ public sealed record BlueTuskPgOutputReplicationOptions
 
         foreach (var publicationName in PublicationNames)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(publicationName);
+            BlueTuskGuard.NotNullOrWhiteSpace(publicationName);
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(ProtocolVersion, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(ProtocolVersion, 4);
+        BlueTuskGuard.NotLessThan(ProtocolVersion, 1);
+        BlueTuskGuard.NotGreaterThan(ProtocolVersion, 4);
         if (!Enum.IsDefined(StreamingMode))
         {
             throw new ArgumentOutOfRangeException(nameof(StreamingMode));

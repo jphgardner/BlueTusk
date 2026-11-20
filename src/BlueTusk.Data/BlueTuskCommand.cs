@@ -71,7 +71,7 @@ public sealed class BlueTuskCommand : DbCommand
         get => _commandTimeout;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            BlueTuskGuard.NotNegative(value);
             _commandTimeout = value;
         }
     }
@@ -97,7 +97,7 @@ public sealed class BlueTuskCommand : DbCommand
         get => _sequentialFetchSize;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            BlueTuskGuard.NotNegative(value);
             _sequentialFetchSize = value;
         }
     }
@@ -284,6 +284,8 @@ public sealed class BlueTuskCommand : DbCommand
 
     internal bool WillStreamReader(CommandBehavior behavior) => ShouldUseStreamingReader(ValidateCommandBehavior(behavior));
 
+    internal bool BufferResults { get; set; }
+
     private bool ShouldUseStreamingReader(CommandBehavior behavior)
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
@@ -291,7 +293,7 @@ public sealed class BlueTuskCommand : DbCommand
             return true;
         }
 
-        if (_connection is { BufferDataReaders: true } ||
+        if (BufferResults || _connection is { BufferDataReaders: true } ||
             ExecutionMode == BlueTuskCommandExecutionMode.Simple ||
             string.IsNullOrWhiteSpace(CommandText) ||
             !BlueTuskCommandTextRewriter.CanUseExtendedProtocol(CommandText))
@@ -433,7 +435,9 @@ public sealed class BlueTuskCommand : DbCommand
         CancellationToken cancellationToken) =>
         ExecuteStreamingDataReaderValueTaskAsync(behavior, cancellationToken).AsTask();
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<DbDataReader> ExecuteStreamingDataReaderValueTaskAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
@@ -858,7 +862,9 @@ public sealed class BlueTuskCommand : DbCommand
             ? ExecuteMultiplexedScalarAsync<T>(cancellationToken)
             : ExecuteScalarCoreAsync<T>(cancellationToken);
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
@@ -1113,7 +1119,9 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(
         Action<BlueTuskConnection>? startTelemetry,
         CancellationToken cancellationToken,
@@ -2090,7 +2098,9 @@ public sealed class BlueTuskCommand : DbCommand
         return connection.Session.ExecuteBatch(queries);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteStatementBatchAsync(
         BlueTuskConnection connection, string? beginStatement, CancellationToken cancellationToken)
     {
@@ -2194,7 +2204,7 @@ public sealed class BlueTuskCommand : DbCommand
             ReturnParameterStorage();
             _encodedParameters = ArrayPool<BlueTuskExtendedQueryParameter>.Shared.Rent(count);
             _parameterBuffers = ArrayPool<byte[]?>.Shared.Rent(count);
-            Array.Clear(_parameterBuffers);
+            Array.Clear(_parameterBuffers, 0, _parameterBuffers.Length);
         }
 
         var encoded = (_encodedParameterList ??= new EncodedParameterList());
@@ -2361,7 +2371,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         public void Start(TimeSpan dueTime)
         {
-            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
+            BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed), this);
             Volatile.Write(
                 ref _dueTimestamp,
                 checked(

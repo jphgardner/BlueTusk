@@ -1,11 +1,12 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $EvidencePath,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit
+    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
+    [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-test-evidence.psm1')
 Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 $payload = Read-CoreEvidenceJson $EvidencePath
-Get-CoreTestShardReport $EvidencePath $ExpectedCommit 'SyncConnectors' $payload.environmentId
+Get-CoreTestShardReport $EvidencePath $ExpectedCommit 'SyncConnectors' $payload.environmentId -CoreReleaseVersion $CoreReleaseVersion

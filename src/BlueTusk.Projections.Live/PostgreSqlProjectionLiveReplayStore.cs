@@ -36,22 +36,22 @@ public sealed class PostgreSqlProjectionLiveReplayStore
 
     public PostgreSqlProjectionLiveReplayStore(DbDataSource dataSource, PostgreSqlProjectionLiveReplayOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(dataSource);
+        BlueTuskGuard.NotNull(dataSource);
         _options = options ?? new();
-        ArgumentException.ThrowIfNullOrWhiteSpace(_options.Schema);
-        if (_options.Schema.Length > 63 || _options.Schema.Any(static c => !char.IsAsciiLetterOrDigit(c) && c != '_') || (!char.IsAsciiLetter(_options.Schema[0]) && _options.Schema[0] != '_'))
+        BlueTuskGuard.NotNullOrWhiteSpace(_options.Schema);
+        if (_options.Schema.Length > 63 || _options.Schema.Any(static c => !BlueTuskRuntime.IsAsciiLetterOrDigit(c) && c != '_') || (!BlueTuskRuntime.IsAsciiLetter(_options.Schema[0]) && _options.Schema[0] != '_'))
         { throw new ArgumentException("Schema must be a 1..63 ASCII PostgreSQL identifier.", nameof(options)); }
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumAppendEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumAppendEvents, 65536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumEventBytes, 16_777_216);
-        ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaximumBatchBytes, _options.MaximumEventBytes);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumBatchBytes, 67_108_864);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaximumReadEvents);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaximumReadEvents, 65536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.PruneBatchRows);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.PruneBatchRows, 65536);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.CommandTimeoutSeconds);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumAppendEvents);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumAppendEvents, 65536);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumEventBytes, 16_777_216);
+        BlueTuskGuard.NotLessThan(_options.MaximumBatchBytes, _options.MaximumEventBytes);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumBatchBytes, 67_108_864);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaximumReadEvents);
+        BlueTuskGuard.NotGreaterThan(_options.MaximumReadEvents, 65536);
+        BlueTuskGuard.NotNegativeOrZero(_options.PruneBatchRows);
+        BlueTuskGuard.NotGreaterThan(_options.PruneBatchRows, 65536);
+        BlueTuskGuard.NotNegativeOrZero(_options.CommandTimeoutSeconds);
         if (_options.RetentionWindow < TimeSpan.FromMilliseconds(1) || _options.RetentionWindow > TimeSpan.FromDays(365)) { throw new ArgumentOutOfRangeException(nameof(options)); }
         _dataSource = dataSource; _schema = '"' + _options.Schema + '"';
     }
@@ -83,7 +83,7 @@ public sealed class PostgreSqlProjectionLiveReplayStore
 
     public async ValueTask<ProjectionLivePublisher?> AcquireAsync(LiveSubscriptionIdentity identity, string ownerId, TimeSpan duration, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity); ValidateOwner(ownerId); ValidateDuration(duration);
+        BlueTuskGuard.NotNull(identity); ValidateOwner(ownerId); ValidateDuration(duration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await ExecuteAsync(connection, transaction, $"INSERT INTO {_schema}.projection_live_replay(identity_fingerprint) VALUES(@identity) ON CONFLICT DO NOTHING", cancellationToken, ("identity", identity.Fingerprint)).ConfigureAwait(false);
@@ -118,7 +118,7 @@ public sealed class PostgreSqlProjectionLiveReplayStore
 
     internal async ValueTask<LiveReplayAppendResult> AppendAsync(ProjectionLivePublisherLease lease, LiveReplayAppendRequest request, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNull(request);
         if (request.Identity != lease.Identity) { throw new ArgumentException("A publisher cannot append another subscription identity.", nameof(request)); }
         if (request.Events.Count > _options.MaximumAppendEvents) { throw new ProjectionBoundExceededException("Live replay append event count exceeded."); }
         long bytes = 0;
@@ -170,8 +170,8 @@ public sealed class PostgreSqlProjectionLiveReplayStore
 
     public async ValueTask<LiveReplayReadResult> ReadAsync(LiveSubscriptionIdentity identity, long afterSequence, int maximumEvents, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(identity); ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents); ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumEvents, _options.MaximumReadEvents);
+        BlueTuskGuard.NotNull(identity); BlueTuskGuard.NotNegative(afterSequence);
+        BlueTuskGuard.NotNegativeOrZero(maximumEvents); BlueTuskGuard.NotGreaterThan(maximumEvents, _options.MaximumReadEvents);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, $"""
             WITH h AS(SELECT first_available_sequence,last_sequence FROM {_schema}.projection_live_replay WHERE identity_fingerprint=@identity),
@@ -242,7 +242,7 @@ public sealed class PostgreSqlProjectionLiveReplayStore
     private async ValueTask<int> ExecuteAsync(DbConnection connection, DbTransaction? transaction, string sql, CancellationToken token, params (string Name, object Value)[] parameters)
     { await using var command = Command(connection, transaction, sql, parameters); return await command.ExecuteNonQueryAsync(token).ConfigureAwait(false); }
     private static void ValidateOwner(string owner)
-    { ArgumentException.ThrowIfNullOrWhiteSpace(owner); if (owner.Length > 200 || owner.Contains('\0')) { throw new ArgumentException("Invalid Live owner identity.", nameof(owner)); } }
+    { BlueTuskGuard.NotNullOrWhiteSpace(owner); if (owner.Length > 200 || owner.Contains('\0')) { throw new ArgumentException("Invalid Live owner identity.", nameof(owner)); } }
     private static void ValidateDuration(TimeSpan duration)
     { if (duration < TimeSpan.FromMilliseconds(1) || duration > TimeSpan.FromHours(24)) { throw new ArgumentOutOfRangeException(nameof(duration)); } }
     private static string SerializeIdentities(List<string> identities)
@@ -270,13 +270,13 @@ public sealed class ProjectionLivePublisher : ILiveReplayStore, IAsyncDisposable
     public ProjectionLivePublisherLease Lease { get; }
     public async ValueTask EnsureActiveAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        var renew = Stopwatch.GetElapsedTime(Interlocked.Read(ref _renewed)) >= _duration / 3;
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
+        var renew = BlueTuskRuntime.GetElapsedTime(Interlocked.Read(ref _renewed)) >= _duration / 3;
         await _store.EnsureActiveAsync(Lease, renew ? _duration : null, cancellationToken).ConfigureAwait(false);
         if (renew) { Interlocked.Exchange(ref _renewed, Stopwatch.GetTimestamp()); }
     }
     public ValueTask<LiveReplayAppendResult> AppendAsync(LiveReplayAppendRequest request, CancellationToken cancellationToken = default)
-    { ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this); return _store.AppendAsync(Lease, request, cancellationToken); }
+    { BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this); return _store.AppendAsync(Lease, request, cancellationToken); }
     public ValueTask<LiveReplayReadResult> ReadAsync(LiveSubscriptionIdentity identity, long afterSequence, int maximumEvents, CancellationToken cancellationToken = default)
     { if (identity != Lease.Identity) { throw new ArgumentException("The publisher is bound to another authorized subscription.", nameof(identity)); } return _store.ReadAsync(identity, afterSequence, maximumEvents, cancellationToken); }
     public ValueTask<int> PruneAsync(CancellationToken cancellationToken = default) => _store.PruneAsync(cancellationToken);

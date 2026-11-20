@@ -1,0 +1,69 @@
+name: Portable Graph performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA to measure
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portable-graph-qualification
+  cancel-in-progress: false
+
+jobs:
+  graph-performance:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows, linux]
+    runs-on: [self-hosted, "${{ matrix.os }}", x64, bluetusk-benchmark]
+    timeout-minutes: 480
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify the candidate and fixture
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          if ($env:CANDIDATE_SHA -cnotmatch '^[0-9a-f]{40}$' -or
+              (git rev-parse HEAD).Trim() -cne $env:CANDIDATE_SHA) {
+            throw 'Supply the full SHA of the checked-out candidate.'
+          }
+          ./eng/verify-performance-leadership-contract.ps1
+          $image = (Get-Content eng/release-tracks.json -Raw | ConvertFrom-Json).graph.portablePostgreSqlImage
+          $compose = docker compose -f eng/compose/postgres.yml config --format json | ConvertFrom-Json
+          if ($compose.services.postgres18.image -cne $image) {
+            throw 'The portable Graph fixture does not match its pinned release-track image.'
+          }
+          "BLUETUSK_PORTABLE_GRAPH_IMAGE=$image" | Add-Content -LiteralPath $env:GITHUB_ENV
+      - name: Start pinned PostgreSQL
+        run: docker compose -f eng/compose/postgres.yml up -d --wait postgres18
+      - name: Capture and verify portable Graph benchmarks
+        shell: pwsh
+        env:
+          BLUETUSK_BENCHMARK_CONNECTION_STRING: Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable # ggignore
+          CAPTURE_OS: ${{ matrix.os }}
+        run: |
+          $capture = Join-Path $PWD "artifacts/portable-graph-performance/$env:CAPTURE_OS"
+          ./eng/run-portable-graph-performance.ps1 -OutputDirectory $capture -Platform $env:CAPTURE_OS -ServerEnvironment 'Pinned PostgreSQL container on the benchmark runner'
+      - name: Retain the reports and execution plans
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: portable-graph-performance-${{ matrix.os }}-${{ inputs.candidate_sha }}-${{ github.run_id }}
+          path: artifacts/portable-graph-performance/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres18

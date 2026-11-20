@@ -43,10 +43,10 @@ public class BlueTuskExclusionConstraintBuilder
         Action<BlueTuskExclusionElementBuilder>? configure = null,
         string? operatorSchema = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
+        BlueTuskGuard.NotNullOrWhiteSpace(propertyName);
         _ = _entityType.FindProperty(propertyName)
             ?? throw new ArgumentException(
-                $"Property '{propertyName}' is not mapped by entity '{_entityType.DisplayName()}'.",
+                $"Property '{propertyName}' is not mapped by entity '{_entityType.Name}'.",
                 nameof(propertyName));
         return AddElement(propertyName, isColumn: true, @operator, configure, operatorSchema);
     }
@@ -62,13 +62,13 @@ public class BlueTuskExclusionConstraintBuilder
     /// <summary>Adds mapped properties to the backing index's INCLUDE list.</summary>
     public BlueTuskExclusionConstraintBuilder IncludeProperties(params string[] propertyNames)
     {
-        ArgumentNullException.ThrowIfNull(propertyNames);
+        BlueTuskGuard.NotNull(propertyNames);
         foreach (var propertyName in propertyNames)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
+            BlueTuskGuard.NotNullOrWhiteSpace(propertyName);
             _ = _entityType.FindProperty(propertyName)
                 ?? throw new ArgumentException(
-                    $"Property '{propertyName}' is not mapped by entity '{_entityType.DisplayName()}'.",
+                    $"Property '{propertyName}' is not mapped by entity '{_entityType.Name}'.",
                     nameof(propertyNames));
             _includedProperties.Add(propertyName);
         }
@@ -246,7 +246,7 @@ public sealed class BlueTuskExclusionConstraintBuilder<TEntity> : BlueTuskExclus
         Action<BlueTuskExclusionElementBuilder>? configure = null,
         string? operatorSchema = null)
     {
-        ArgumentNullException.ThrowIfNull(property);
+        BlueTuskGuard.NotNull(property);
         Expression body = property.Body;
         while (body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } unary)
         {

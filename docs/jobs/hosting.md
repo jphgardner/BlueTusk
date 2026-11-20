@@ -119,25 +119,3 @@ Run the repeatable local suite with `eng/jobs-hosting-compatibility.ps1`. It kee
 per-version TRX files and rejects skipped tests. PostgreSQL roles are disposable
 test fixtures; the suite requires an administrator solely to create/grant/drop
 the uniquely owned role and terminate its sessions.
-
-## Local verification evidence
-
-The six tests passed with zero skips on PostgreSQL 15.19, 16.15, 17.11 and 18.6
-(24 passes). They cover saturated observations and generated JSON; fixed meter
-names and status labels; read-only RLS tenant separation, denied writes and
-redacted permission failures; Jobs and Workflows table-lock deadlines and
-overlapping probes; caller cancellation and gate recovery; explicit signal-wait
-age policy; per-host typed DI/source ownership and registration bounds; and the
-owned credential/session-drain rehearsal. The final Release build reported zero
-warnings and errors. Raw per-version TRX paths and source hashes are retained in
-[postgresql-hosting-15-18-tests.json](performance-reports/postgresql-hosting-15-18-tests.json).
-
-The updated Windows x64 executable was published with zero observed warnings
-and passed on all four versions. It exercises keyed DI registration,
-`HealthCheckService`, generated readiness JSON, typed Jobs/workflow handlers,
-fenced effects, source/worker restart, signals, timers, compensation and replay.
-Executable and listed source hashes are retained in
-[native-hosting-pg15-18.json](performance-reports/native-hosting-pg15-18.json).
-These source bindings do not cover all transitive provider dependencies or an
-immutable release candidate. Linux, failover and the shared operator/release
-qualification gates remain separate work.

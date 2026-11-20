@@ -5,7 +5,24 @@ namespace BlueTusk.ControlPlane;
 
 public sealed record ControlPlaneOverview(
     DateTimeOffset ObservedAt,
-    IReadOnlyList<ControlPlaneSourceSnapshot> Sources);
+    IReadOnlyList<ControlPlaneSourceSnapshot> Sources)
+{
+    public IReadOnlyList<ControlPlaneInstanceStatus> Instances { get; init; } = [];
+}
+
+public enum ControlPlaneInstanceAvailability
+{
+    Current,
+    Stale,
+    Unavailable,
+}
+
+public sealed record ControlPlaneInstanceStatus(
+    string InstanceName,
+    ControlPlaneInstanceAvailability Availability,
+    DateTimeOffset AttemptedAt,
+    DateTimeOffset? LastSuccessfulObservationAt,
+    string? DiagnosticCode);
 
 public sealed record ControlPlaneSourceSnapshot(
     string SourceKey,
@@ -22,7 +39,12 @@ public sealed record ControlPlaneSourceSnapshot(
     ControlPlaneRelaySnapshot Relay,
     IReadOnlyList<ControlPlaneConsumerGroupSnapshot> ConsumerGroups,
     IReadOnlyList<ControlPlaneSnapshotRunSnapshot> SnapshotRuns,
-    IReadOnlyList<ControlPlaneCheckpointSnapshot> Checkpoints);
+    IReadOnlyList<ControlPlaneCheckpointSnapshot> Checkpoints)
+{
+    public DateTimeOffset? ObservedAt { get; init; }
+
+    public bool IsStale { get; init; }
+}
 
 public sealed record ControlPlaneSlotSnapshot(
     bool SourceReachable,
@@ -77,7 +99,13 @@ public sealed record ControlPlanePostgreSqlSource
 {
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+        RegexOptions.CultureInvariant
+#if NET7_0_OR_GREATER
+        | RegexOptions.NonBacktracking
+#else
+        | RegexOptions.Compiled
+#endif
+        );
 
     public ControlPlanePostgreSqlSource(
         string instanceName,
@@ -85,10 +113,10 @@ public sealed record ControlPlanePostgreSqlSource
         DbDataSource controlDataSource,
         string controlSchema = "bluetusk_streams")
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
-        ArgumentNullException.ThrowIfNull(sourceDataSource);
-        ArgumentNullException.ThrowIfNull(controlDataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(controlSchema);
+        BlueTuskGuard.NotNullOrWhiteSpace(instanceName);
+        BlueTuskGuard.NotNull(sourceDataSource);
+        BlueTuskGuard.NotNull(controlDataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(controlSchema);
         if (!SchemaPattern.IsMatch(controlSchema))
         {
             throw new ArgumentException(

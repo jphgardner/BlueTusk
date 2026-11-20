@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
     <BlueTuskProductFamily>Events</BlueTuskProductFamily>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <Import Project="..\..\eng\versions\Events.props" />
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <ProjectReference Include="..\..\src\BlueTusk.Events\BlueTusk.Events.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Events.EntityFrameworkCore\BlueTusk.Events.EntityFrameworkCore.csproj" />
@@ -15,5 +18,10 @@
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
     <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="BlueTusk.Tests.Shared" />
+    <Compile Include="..\Shared\RequiredEnvironmentFactAttribute.cs" Link="RequiredEnvironmentFactAttribute.cs" />
+    <Using Include="BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource" Alias="DbDataSource" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))" />
   </ItemGroup>
 </Project>

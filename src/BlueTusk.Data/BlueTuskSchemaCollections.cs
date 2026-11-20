@@ -27,8 +27,8 @@ internal static class BlueTuskSchemaCollections
         string collectionName,
         string?[]? restrictions)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collectionName);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collectionName);
         var definition = GetDefinition(collectionName);
         ValidateRestrictions(definition, restrictions);
         return definition.Name switch
@@ -111,8 +111,8 @@ internal static class BlueTuskSchemaCollections
         string?[]? restrictions,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collectionName);
+        BlueTuskGuard.NotNull(connection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collectionName);
         cancellationToken.ThrowIfCancellationRequested();
         var definition = GetDefinition(collectionName);
         ValidateRestrictions(definition, restrictions);

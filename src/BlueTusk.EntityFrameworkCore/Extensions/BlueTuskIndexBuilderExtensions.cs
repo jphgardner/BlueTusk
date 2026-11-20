@@ -27,7 +27,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// <summary>Configures the PostgreSQL index access method, including extension-provided methods.</summary>
     public static IndexBuilder UseIndexMethod(this IndexBuilder indexBuilder, string method)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         ValidateQualifiedIdentifier(method, nameof(method), allowQualified: false);
         indexBuilder.Metadata.SetAnnotation(BlueTuskIndexAnnotations.Method, method);
         return indexBuilder;
@@ -48,7 +48,7 @@ public static partial class BlueTuskIndexBuilderExtensions
         this IndexBuilder indexBuilder,
         params string?[] operatorClasses)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         ValidatePerKeyValues(indexBuilder, operatorClasses, nameof(operatorClasses), ValidateOptionalQualifiedIdentifier);
         indexBuilder.Metadata.SetAnnotation(
             BlueTuskIndexAnnotations.OperatorClasses,
@@ -71,7 +71,7 @@ public static partial class BlueTuskIndexBuilderExtensions
         this IndexBuilder indexBuilder,
         params string?[] collations)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         ValidatePerKeyValues(indexBuilder, collations, nameof(collations), ValidateOptionalQualifiedIdentifier);
         indexBuilder.Metadata.SetAnnotation(
             BlueTuskIndexAnnotations.Collations,
@@ -94,8 +94,8 @@ public static partial class BlueTuskIndexBuilderExtensions
         this IndexBuilder indexBuilder,
         params BlueTuskIndexNullSortOrder[] sortOrders)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
-        ArgumentNullException.ThrowIfNull(sortOrders);
+        BlueTuskGuard.NotNull(indexBuilder);
+        BlueTuskGuard.NotNull(sortOrders);
         if (sortOrders.Length > indexBuilder.Metadata.Properties.Count)
         {
             throw new ArgumentException("Null sort-order count cannot exceed the index key count.", nameof(sortOrders));
@@ -129,8 +129,8 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// <summary>Adds non-key properties to the PostgreSQL index's <c>INCLUDE</c> list.</summary>
     public static IndexBuilder IncludeProperties(this IndexBuilder indexBuilder, params string[] propertyNames)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
-        ArgumentNullException.ThrowIfNull(propertyNames);
+        BlueTuskGuard.NotNull(indexBuilder);
+        BlueTuskGuard.NotNull(propertyNames);
         var validated = propertyNames.Select(
             name => indexBuilder.Metadata.DeclaringEntityType.FindProperty(name)
                 ?? throw new ArgumentException(
@@ -159,8 +159,8 @@ public static partial class BlueTuskIndexBuilderExtensions
         Expression<Func<TEntity, object?>> properties)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
-        ArgumentNullException.ThrowIfNull(properties);
+        BlueTuskGuard.NotNull(indexBuilder);
+        BlueTuskGuard.NotNull(properties);
         IncludeProperties((IndexBuilder)indexBuilder, GetPropertyNames(properties));
         return indexBuilder;
     }
@@ -171,9 +171,9 @@ public static partial class BlueTuskIndexBuilderExtensions
         string name,
         string value)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNull(indexBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (!StorageParameterNamePattern.IsMatch(name))
         {
             throw new ArgumentException("Storage parameter names must be unquoted PostgreSQL identifiers.", nameof(name));
@@ -211,7 +211,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// <summary>Configures the B-tree, GiST, SP-GiST, or BRIN index fill factor.</summary>
     public static IndexBuilder HasFillFactor(this IndexBuilder indexBuilder, int fillFactor)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         if (fillFactor is < 10 or > 100)
         {
             throw new ArgumentOutOfRangeException(nameof(fillFactor), fillFactor, "Fill factor must be between 10 and 100.");
@@ -233,7 +233,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// <summary>Creates and drops the index with PostgreSQL's <c>CONCURRENTLY</c> option.</summary>
     public static IndexBuilder IsConcurrent(this IndexBuilder indexBuilder, bool concurrent = true)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         indexBuilder.Metadata.SetAnnotation(BlueTuskIndexAnnotations.IsConcurrent, concurrent);
         return indexBuilder;
     }
@@ -251,7 +251,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// <summary>Controls whether a unique index treats null values as distinct. PostgreSQL 15 or newer is required.</summary>
     public static IndexBuilder HasNullsDistinct(this IndexBuilder indexBuilder, bool distinct = true)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
+        BlueTuskGuard.NotNull(indexBuilder);
         indexBuilder.Metadata.SetAnnotation(BlueTuskIndexAnnotations.NullsDistinct, distinct);
         return indexBuilder;
     }
@@ -274,8 +274,8 @@ public static partial class BlueTuskIndexBuilderExtensions
         this IndexBuilder indexBuilder,
         params string?[] expressions)
     {
-        ArgumentNullException.ThrowIfNull(indexBuilder);
-        ArgumentNullException.ThrowIfNull(expressions);
+        BlueTuskGuard.NotNull(indexBuilder);
+        BlueTuskGuard.NotNull(expressions);
         if (expressions.Length > indexBuilder.Metadata.Properties.Count)
         {
             throw new ArgumentException("Expression count cannot exceed the index key count.", nameof(expressions));
@@ -338,7 +338,7 @@ public static partial class BlueTuskIndexBuilderExtensions
         string parameterName,
         Action<string?, string> validate)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(values);
         if (values.Length > indexBuilder.Metadata.Properties.Count)
         {
             throw new ArgumentException("Configured value count cannot exceed the index key count.", parameterName);
@@ -360,7 +360,7 @@ public static partial class BlueTuskIndexBuilderExtensions
 
     private static void ValidateQualifiedIdentifier(string value, string parameterName, bool allowQualified)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         var parts = value.Split('.');
         if (parts.Any(string.IsNullOrWhiteSpace) || parts.Length > (allowQualified ? 2 : 1))
         {
@@ -368,9 +368,19 @@ public static partial class BlueTuskIndexBuilderExtensions
         }
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant)]
     private static partial Regex StorageParameterNameRegex();
+#else
+    private static readonly Regex _storageParameterNameRegex = new("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex StorageParameterNameRegex() => _storageParameterNameRegex;
+#endif
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant)]
     private static partial Regex StorageParameterValueRegex();
+#else
+    private static readonly Regex _storageParameterValueRegex = new("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex StorageParameterValueRegex() => _storageParameterValueRegex;
+#endif
 }

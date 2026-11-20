@@ -19,7 +19,7 @@ public sealed partial class PostgreSqlSearchStore
     /// <summary>Reads the immutable format contract and an indexed bounded scope seam; it does not fetch text, ACLs, vectors or query payloads.</summary>
     public async ValueTask<SearchStoreHealthSnapshot> ReadHealthAsync(SearchScope scope, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, null, $"""
             WITH bounded_queries AS MATERIALIZED(

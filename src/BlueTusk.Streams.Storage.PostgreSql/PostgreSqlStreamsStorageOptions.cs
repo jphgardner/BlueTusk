@@ -42,17 +42,17 @@ public sealed record PostgreSqlStreamsStorageOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(ControlDataSource);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ControlSchema);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRelayStorageBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxEnvelopeBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(ResumeRetentionWindow, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThan(RemovedConsumerGroupRetentionWindow, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegative(MinimumRetainedTransactions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(RetentionDeleteBatchSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCompactionBatches);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(MaxAcknowledgementAge, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxWalLagBytes);
+        BlueTuskGuard.NotNull(ControlDataSource);
+        BlueTuskGuard.NotNullOrWhiteSpace(ControlSchema);
+        BlueTuskGuard.NotNegativeOrZero(MaxRelayStorageBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxEnvelopeBytes);
+        BlueTuskGuard.NotLessThan(ResumeRetentionWindow, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThan(RemovedConsumerGroupRetentionWindow, TimeSpan.Zero);
+        BlueTuskGuard.NotNegative(MinimumRetainedTransactions);
+        BlueTuskGuard.NotNegativeOrZero(RetentionDeleteBatchSize);
+        BlueTuskGuard.NotNegativeOrZero(MaxCompactionBatches);
+        BlueTuskGuard.NotLessThanOrEqual(MaxAcknowledgementAge, TimeSpan.Zero);
+        BlueTuskGuard.NotNegativeOrZero(MaxWalLagBytes);
         if (ControlSchema.Contains('\0') || Encoding.UTF8.GetByteCount(ControlSchema) > 63)
         {
             throw new ArgumentException(
@@ -62,7 +62,7 @@ public sealed record PostgreSqlStreamsStorageOptions
 
         if (EnvelopeProtection is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(EnvelopeProtection.CurrentProtectorId);
+            BlueTuskGuard.NotNullOrWhiteSpace(EnvelopeProtection.CurrentProtectorId);
             if (Encoding.UTF8.GetByteCount(EnvelopeProtection.CurrentProtectorId) > 200)
             {
                 throw new ArgumentException(
@@ -80,8 +80,8 @@ public sealed record PostgreSqlPublishedTable(string Schema, string Table)
 {
     public PostgreSqlPublishedTable Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(Schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(Table);
+        BlueTuskGuard.NotNullOrWhiteSpace(Schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(Table);
         return this;
     }
 }
@@ -92,12 +92,12 @@ public static class PostgreSqlRelayPublicationValidator
         PostgreSqlStreamsStorageOptions options,
         IEnumerable<PostgreSqlPublishedTable> publishedTables)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(publishedTables);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(publishedTables);
         options.Validate();
         foreach (var table in publishedTables)
         {
-            ArgumentNullException.ThrowIfNull(table);
+            BlueTuskGuard.NotNull(table);
             table.Validate();
             if (string.Equals(table.Schema, options.ControlSchema, StringComparison.Ordinal))
             {

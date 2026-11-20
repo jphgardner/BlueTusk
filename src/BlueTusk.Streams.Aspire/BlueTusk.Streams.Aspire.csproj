@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
     <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
     <Description>Aspire application-model integration for BlueTusk Streams workers.</Description>
     <PackageTags>postgresql;cdc;logical-replication;aspire;hosting</PackageTags>
@@ -10,5 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
+    <!-- Security floor for Aspire's transitive MessagePack runtime (GHSA-qhrr-8q5h-9q3h). -->
+    <PackageReference Include="MessagePack" />
   </ItemGroup>
 </Project>

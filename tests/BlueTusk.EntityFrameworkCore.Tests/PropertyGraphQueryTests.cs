@@ -37,7 +37,7 @@ public sealed class PropertyGraphQueryTests
         Assert.Contains("\"source\".\"Id\" AS \"SourceId\"", sql, StringComparison.Ordinal);
         Assert.Contains("\"relationship\".\"Id\" AS \"RelationshipId\"", sql, StringComparison.Ordinal);
         Assert.Contains("__bluetusk_filter_0", sql, StringComparison.Ordinal);
-        Assert.Contains("@p0", sql, StringComparison.Ordinal);
+        Assert.Contains("\"__bluetusk_filter_0\" = @", sql, StringComparison.Ordinal);
         Assert.Contains("WHERE", sql, StringComparison.Ordinal);
         Assert.Contains("ORDER BY", sql, StringComparison.Ordinal);
         Assert.Contains("LIMIT", sql, StringComparison.Ordinal);
@@ -90,6 +90,21 @@ public sealed class PropertyGraphQueryTests
     }
 
     [Fact]
+    public void Graph_query_rejects_a_prebuilt_model_for_a_different_backend()
+    {
+        using var native = CreateContext();
+        using var portable = new GraphContext(new DbContextOptionsBuilder<GraphContext>()
+            .UseBlueTusk(ConnectionString).UseModel(native.Model).Options);
+
+        var exception = Assert.Throws<BlueTuskGraphTranslationException>(() =>
+            portable.PropertyGraph("social", "graphs")
+                .Match(pattern => pattern.Vertex<Person>("source"))
+                .Select<FriendResult>(projection => projection
+                    .Property<Person, int>("source", person => person.Id, row => row.SourceId)));
+        Assert.Contains("does not match its configured graph compatibility", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Bounded_path_expands_to_fixed_graph_table_branches()
     {
         using var context = CreateContext();
@@ -106,8 +121,7 @@ public sealed class PropertyGraphQueryTests
 
         Assert.Equal(3, CountOccurrences(sql, "GRAPH_TABLE"));
         Assert.Equal(2, CountOccurrences(sql, "UNION ALL"));
-        Assert.Contains("__bluetusk_path_edge_3", sql, StringComparison.Ordinal);
-        Assert.Contains("__bluetusk_path_vertex_2", sql, StringComparison.Ordinal);
+        Assert.Equal(6, CountOccurrences(sql, "IS \"knows\""));
     }
 
     [Fact]
@@ -213,7 +227,7 @@ public sealed class PropertyGraphQueryTests
     private static GraphContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<GraphContext>()
-            .UseBlueTusk(ConnectionString)
+            .UseBlueTusk(ConnectionString, options => options.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq))
             .Options;
         return new GraphContext(options);
     }
@@ -221,7 +235,7 @@ public sealed class PropertyGraphQueryTests
     private static MultiLabelGraphContext CreateMultiLabelContext()
     {
         var options = new DbContextOptionsBuilder<MultiLabelGraphContext>()
-            .UseBlueTusk(ConnectionString)
+            .UseBlueTusk(ConnectionString, options => options.UseGraphCompatibility(BlueTuskPropertyGraphBackend.NativeSqlPgq))
             .Options;
         return new MultiLabelGraphContext(options);
     }

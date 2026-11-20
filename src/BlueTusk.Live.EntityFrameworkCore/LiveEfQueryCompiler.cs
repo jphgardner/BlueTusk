@@ -17,8 +17,8 @@ public sealed record LiveEfTenantBinding
 {
     public LiveEfTenantBinding(string entityProperty, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(entityProperty);
-        ArgumentException.ThrowIfNullOrWhiteSpace(parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(entityProperty);
+        BlueTuskGuard.NotNullOrWhiteSpace(parameterName);
         EntityProperty = entityProperty;
         ParameterName = parameterName;
     }
@@ -48,15 +48,15 @@ public sealed class LiveEfQueryDefinition<TContext, TEntity, TKey>
         LiveEfTenantIsolationMode tenantIsolationMode,
         LiveEfTenantBinding? tenantBinding = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(validationArguments);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
-        ArgumentNullException.ThrowIfNull(queryFactory);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentNullException.ThrowIfNull(rowComparer);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(validationArguments);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNull(queryFactory);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNull(rowComparer);
         if (!Enum.IsDefined(tenantIsolationMode))
         {
             throw new ArgumentOutOfRangeException(nameof(tenantIsolationMode));
@@ -123,9 +123,9 @@ public static partial class LiveEfQueryCompiler
         where TEntity : class
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(contextFactory);
-        ArgumentNullException.ThrowIfNull(definition);
-        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        BlueTuskGuard.NotNull(contextFactory);
+        BlueTuskGuard.NotNull(definition);
+        await using var context = await LiveEfVersionCompatibility.OpenContextAsync(contextFactory, cancellationToken).ConfigureAwait(false);
         var entityType = context.Model.FindEntityType(typeof(TEntity)) ??
             throw new LiveEfQueryRegistrationException(
                 $"Entity '{typeof(TEntity)}' is not part of the supplied EF model.");
@@ -203,7 +203,7 @@ public static partial class LiveEfQueryCompiler
             definition.MaximumResultCount,
             async (execution, token) =>
             {
-                await using var executionContext = await contextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
+                await using var executionContext = await LiveEfVersionCompatibility.OpenContextAsync(contextFactory, token).ConfigureAwait(false);
                 var executionQuery = definition.QueryFactory(executionContext, execution.Arguments) ??
                     throw new LiveEfQueryRegistrationException(
                         $"Live query '{definition.Name}' returned null during execution.");
@@ -424,7 +424,7 @@ public static partial class LiveEfQueryCompiler
                 case LiveEfTenantIsolationMode.DatabaseRowLevelSecurity:
                     return;
                 case LiveEfTenantIsolationMode.EfGlobalQueryFilter:
-                    if (entityType.GetDeclaredQueryFilters().Count == 0)
+                    if (!LiveEfVersionCompatibility.HasDeclaredQueryFilter(entityType))
                     {
                         throw new LiveEfQueryRegistrationException(
                             $"Entity '{entityType.DisplayName()}' does not have the required EF global query filter.");

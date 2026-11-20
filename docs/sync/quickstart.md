@@ -10,7 +10,7 @@ You need:
 
 - the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0);
 - a PostgreSQL 15, 16, 17 or 18 test server started with `wal_level=logical`.
-  Step 1 of the [first-app quick start](../getting-started/quickstart.md#1-start-postgresql)
+  Step 1 of the [first-app quick start](../getting-started/quickstart.md#1-prepare-a-database)
   starts one in Docker as `bluetusk-postgres`.
 
 ## 1. Create the source database

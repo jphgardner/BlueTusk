@@ -34,8 +34,8 @@ public sealed record LiveAspNetCoreOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(ResumeTokenLifetime, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumRequestBytes);
+        BlueTuskGuard.NotLessThanOrEqual(ResumeTokenLifetime, TimeSpan.Zero);
+        BlueTuskGuard.NotNegativeOrZero(MaximumRequestBytes);
     }
 }
 
@@ -74,8 +74,8 @@ public static class BlueTuskLiveAspNetCoreServiceCollectionExtensions
         LiveResumeTokenProtector tokenProtector,
         LiveAspNetCoreOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(tokenProtector);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNull(tokenProtector);
         options ??= new LiveAspNetCoreOptions();
         options.Validate();
         services.TryAddSingleton(tokenProtector);
@@ -158,11 +158,11 @@ public static class LiveTransportSession
         LiveAspNetCoreOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Query);
-        ArgumentNullException.ThrowIfNull(principal);
-        ArgumentNullException.ThrowIfNull(resolver);
-        ArgumentNullException.ThrowIfNull(tokenProtector);
+        BlueTuskGuard.NotNull(request);
+        BlueTuskGuard.NotNullOrWhiteSpace(request.Query);
+        BlueTuskGuard.NotNull(principal);
+        BlueTuskGuard.NotNull(resolver);
+        BlueTuskGuard.NotNull(tokenProtector);
         if (principal.Identity?.IsAuthenticated != true)
         {
             throw new LiveTransportAuthorizationException("An authenticated principal is required for a Live subscription.");
@@ -180,7 +180,7 @@ public static class LiveTransportSession
             request.Parameters,
             principal,
             cancellationToken).ConfigureAwait(false);
-        ArgumentNullException.ThrowIfNull(subscription);
+        BlueTuskGuard.NotNull(subscription);
         var result = string.IsNullOrWhiteSpace(request.ResumeToken)
             ? await subscription.ConnectAsync(0, cancellationToken).ConfigureAwait(false)
             : await subscription.ConnectWithTokenAsync(

@@ -67,24 +67,11 @@ the deployment gap; it does not provide a transactional source-DDL history ledge
 online migrations. Endpoint routing, split-brain prevention, recovery authorization, signing-key
 distribution, failover slots, physical backup/PITR and broad crash/endurance campaigns remain required.
 
-## Reproducible physical promotion evidence
+## Verify physical promotion
 
-Run `./docs/projections/evidence/run-physical-recovery.ps1` on a host with Docker and .NET 10.
-It creates fresh labelled PostgreSQL 18 primary/standby volumes, private network and localhost ports
-55618/55619, takes a physical base backup, verifies synchronous streaming, then invokes the dedicated
-`BlueTusk.Projections.PhysicalRecoveryTests` fixture project. Missing fixture configuration fails;
-the project has no conditional skip/no-op and is separate from the ordinary `.Tests` database gate.
-Cleanup verifies both owner and fixture labels before removing the exact containers/volumes/network.
-It never changes the existing compatibility databases. Optional port parameters select unused ports.
-The image is pinned to `postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873`.
-The runner discovers the Docker executable and probes ports using .NET sockets on Windows/Linux,
-restores previous process environment values, and writes each run to a unique ignored
-`artifacts/projections-recovery/<fixture>/` directory. `-OutputDirectory <path>` directs CI artifact
-collection explicitly; normal campaigns do not overwrite the retained example evidence below.
-
-The retained [JSON](evidence/physical-promotion-pg18.json) and
-[TRX](evidence/physical-promotion-pg18.trx) report actual hard-stop primary failure, standby promotion
-from timeline 1 to 2, preserved acknowledged application/outbox/inbox/checkpoint/Live commits,
-stale owner rejection, exact replay recovery, default timeline admission failure, fresh-snapshot
-recovery and a second controlled-DDL rebuild. This is one small deterministic local recovery rehearsal;
-it is not production qualification, an HA routing service, a restoration/PITR campaign or a load test.
+Fence the old primary, promote an eligible standby, and reconnect through
+the deployment’s normal endpoint. Check that a previously applied event
+does not create a duplicate row and that a stale lease cannot publish
+progress. Compare the projection with its source from the last durable
+checkpoint before resuming traffic. Restore or rebuild from the source if
+a checkpoint refers to data that was lost during failover.

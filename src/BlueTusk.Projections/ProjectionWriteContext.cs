@@ -55,7 +55,7 @@ public sealed class ProjectionWriteContext
         CancellationToken cancellationToken = default)
     {
         EnsureActive();
-        ArgumentNullException.ThrowIfNull(documents);
+        BlueTuskGuard.NotNull(documents);
         if (documents.Count == 0 || documents.Count > _options.MaximumWriteBatchSize)
         {
             throw BoundExceeded("The document write batch must be nonempty and within its configured count bound.");
@@ -65,9 +65,9 @@ public sealed class ProjectionWriteContext
         var keys = new HashSet<(string Tenant, string Key)>();
         foreach (var document in documents)
         {
-            ArgumentNullException.ThrowIfNull(document);
+            BlueTuskGuard.NotNull(document);
             ValidateDocument(document.TenantId, document.Key, document.Payload);
-            ArgumentNullException.ThrowIfNull(document.Dependencies);
+            BlueTuskGuard.NotNull(document.Dependencies);
             if (!keys.Add((document.TenantId, document.Key)))
             {
                 throw new ArgumentException("A bulk write cannot repeat a tenant/document key.", nameof(documents));
@@ -82,7 +82,7 @@ public sealed class ProjectionWriteContext
             var dependencies = new HashSet<ProjectionDependency>();
             foreach (var dependency in document.Dependencies)
             {
-                ArgumentNullException.ThrowIfNull(dependency);
+                BlueTuskGuard.NotNull(dependency);
                 if (!dependencies.Add(dependency))
                 {
                     throw new ArgumentException("Dependencies must be unique within each document.", nameof(documents));
@@ -146,7 +146,7 @@ public sealed class ProjectionWriteContext
     public ValueTask UpsertJsonAsync<T>(string tenantId, string key, T value, JsonTypeInfo<T> jsonTypeInfo,
         IReadOnlyList<ProjectionDependency> dependencies, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+        BlueTuskGuard.NotNull(jsonTypeInfo);
         return UpsertAsync(tenantId, key, JsonSerializer.SerializeToUtf8Bytes(value, jsonTypeInfo), dependencies, cancellationToken);
     }
 
@@ -154,7 +154,7 @@ public sealed class ProjectionWriteContext
         IReadOnlyList<ProjectionDependency> dependencies, CancellationToken cancellationToken = default)
     {
         ValidateDocument(tenantId, key, payload);
-        ArgumentNullException.ThrowIfNull(dependencies);
+        BlueTuskGuard.NotNull(dependencies);
         if (dependencies.Count > _options.MaximumDependenciesPerDocument)
         {
             throw BoundExceeded("The document exceeds the configured dependency count.");
@@ -163,7 +163,7 @@ public sealed class ProjectionWriteContext
         var unique = new HashSet<ProjectionDependency>();
         foreach (var dependency in dependencies)
         {
-            ArgumentNullException.ThrowIfNull(dependency);
+            BlueTuskGuard.NotNull(dependency);
             if (!unique.Add(dependency))
             {
                 throw new ArgumentException("A document's dependencies must be unique.", nameof(dependencies));
@@ -220,9 +220,9 @@ public sealed class ProjectionWriteContext
     {
         EnsureActive();
         ProjectionValidation.Key(tenantId, nameof(tenantId));
-        ArgumentNullException.ThrowIfNull(dependency);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumDocuments);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDocuments, _options.MaximumDependencyPageSize);
+        BlueTuskGuard.NotNull(dependency);
+        BlueTuskGuard.NotNegativeOrZero(maximumDocuments);
+        BlueTuskGuard.NotGreaterThan(maximumDocuments, _options.MaximumDependencyPageSize);
         if (afterDocumentKey is not null)
         {
             ProjectionValidation.Key(afterDocumentKey, nameof(afterDocumentKey));
@@ -279,14 +279,14 @@ public sealed class ProjectionWriteContext
     public async ValueTask UpsertSourcesAsync(IReadOnlyList<ProjectionSourceWrite> sources, CancellationToken cancellationToken = default)
     {
         EnsureActive();
-        ArgumentNullException.ThrowIfNull(sources);
+        BlueTuskGuard.NotNull(sources);
         ValidateSourceBatchCount(sources.Count);
         var keys = new HashSet<(string Tenant, ProjectionDependency Key)>();
         long bytes = 0;
         foreach (var source in sources)
         {
-            ArgumentNullException.ThrowIfNull(source);
-            ArgumentNullException.ThrowIfNull(source.SourceKey);
+            BlueTuskGuard.NotNull(source);
+            BlueTuskGuard.NotNull(source.SourceKey);
             ValidateDocument(source.TenantId, source.SourceKey.KeyId, source.Payload);
             if (!keys.Add((source.TenantId, source.SourceKey))) { throw new ArgumentException("Source keys must be unique within a bulk batch.", nameof(sources)); }
             bytes += source.Payload.Length;
@@ -321,13 +321,13 @@ public sealed class ProjectionWriteContext
     public async ValueTask DeleteSourcesAsync(IReadOnlyList<ProjectionSourceDelete> sources, CancellationToken cancellationToken = default)
     {
         EnsureActive();
-        ArgumentNullException.ThrowIfNull(sources);
+        BlueTuskGuard.NotNull(sources);
         ValidateSourceBatchCount(sources.Count);
         var keys = new HashSet<(string Tenant, ProjectionDependency Key)>();
         foreach (var source in sources)
         {
-            ArgumentNullException.ThrowIfNull(source);
-            ArgumentNullException.ThrowIfNull(source.SourceKey);
+            BlueTuskGuard.NotNull(source);
+            BlueTuskGuard.NotNull(source.SourceKey);
             ValidateKey(source.TenantId, source.SourceKey.KeyId);
             if (!keys.Add((source.TenantId, source.SourceKey))) { throw new ArgumentException("Source keys must be unique within a bulk batch.", nameof(sources)); }
             CountWrite(0);
@@ -368,7 +368,7 @@ public sealed class ProjectionWriteContext
     public async ValueTask UpsertSourceAsync(string tenantId, ProjectionDependency sourceKey, ReadOnlyMemory<byte> payload,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceKey);
+        BlueTuskGuard.NotNull(sourceKey);
         ValidateDocument(tenantId, sourceKey.KeyId, payload);
         CountWrite(payload.Length);
         await ExecuteAsync($"""
@@ -384,7 +384,7 @@ public sealed class ProjectionWriteContext
     {
         EnsureActive();
         ProjectionValidation.Key(tenantId, nameof(tenantId));
-        ArgumentNullException.ThrowIfNull(sourceKey);
+        BlueTuskGuard.NotNull(sourceKey);
         CountWrite(0);
         await ExecuteAsync($"""
             DELETE FROM {_schema}.source_rows WHERE projection = @projection AND version = @version AND tenant_id = @tenant AND table_id = @table AND key_id = @key
@@ -401,7 +401,7 @@ public sealed class ProjectionWriteContext
     {
         EnsureActive();
         ProjectionValidation.Key(tenantId, nameof(tenantId));
-        ArgumentNullException.ThrowIfNull(sourceKey);
+        BlueTuskGuard.NotNull(sourceKey);
         if (_sources is not null && _sources.TryGetValue((tenantId, sourceKey.TableId, sourceKey.KeyId), out var remembered))
         {
             // Each call returns a private array, exactly like a repeated database read.

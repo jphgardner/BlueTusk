@@ -5,7 +5,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionResetRecoveryTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task LargeUnpublishedResetHasDurablePhaseExactEpochBoundedDeletesAndFencedCrossInstanceRecovery()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

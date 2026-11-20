@@ -2,6 +2,43 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'core-candidate-evidence.psm1')
 
+function Get-CoreTestSourceFingerprint
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
+        [string] $RepositoryRoot = (Split-Path $PSScriptRoot -Parent)
+    )
+
+    $root = (Resolve-Path -LiteralPath $RepositoryRoot).Path
+    $head = (& git -C $root rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit)
+    {
+        throw 'Test capture checkout does not match its exact source commit.'
+    }
+    $status = @(& git -C $root status --porcelain)
+    if ($LASTEXITCODE -ne 0) { throw 'Test capture could not determine source cleanliness.' }
+    [string[]] $paths = @(& git -C $root -c core.quotepath=false ls-files --cached --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) { throw 'Test capture could not enumerate source inputs.' }
+    [Array]::Sort($paths, [StringComparer]::Ordinal)
+    $records = @(
+        foreach ($relativePath in $paths)
+        {
+            $file = Resolve-CoreEvidenceFile $root $relativePath -AllowEmpty
+            [pscustomobject]@{
+                path = $relativePath
+                sha256 = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+        }
+    )
+    return [pscustomobject]@{
+        schemaVersion = 1
+        sourceCommit = $head
+        worktreeClean = $status.Count -eq 0
+        files = $records
+    }
+}
+
 function Get-CoreTestPlan
 {
     param([ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
@@ -198,7 +235,8 @@ function Get-CoreTrxSummary
 function Get-CoreTestShardReport
 {
     param([string] $EvidencePath, [string] $ExpectedCommit, [ValidateSet('Regression', 'Compatibility', 'SyncConnectors')][string] $Kind,
-        [string] $EnvironmentId, [int] $PostgreSqlMajor = 0)
+        [string] $EnvironmentId, [int] $PostgreSqlMajor = 0,
+        [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0')
     $root = Split-Path (Resolve-Path -LiteralPath $EvidencePath).Path -Parent
     $name = if ($Kind -eq 'SyncConnectors') { 'sync-connector-validation.json' } else { 'core-test-shard.json' }
     $path = Resolve-CoreEvidenceFile $root $name
@@ -209,7 +247,7 @@ function Get-CoreTestShardReport
     if ($Kind -eq 'SyncConnectors') { $properties += 'toolSourceCommit' }
     Assert-CoreTestProperties $shard $properties 'Core test shard'
     if (($shard.schemaVersion -isnot [int] -and $shard.schemaVersion -isnot [long]) -or $shard.schemaVersion -ne 1 -or
-        $shard.scope -cne 'Core' -or $shard.releaseVersion -cne '1.1.0' -or $ExpectedCommit -cnotmatch '^[0-9a-f]{40}$' -or
+        $shard.scope -cne 'Core' -or $shard.releaseVersion -cne $CoreReleaseVersion -or $ExpectedCommit -cnotmatch '^[0-9a-f]{40}$' -or
         $shard.sourceCommit -cne $ExpectedCommit -or $shard.sourceTreeDirty -isnot [bool] -or $shard.sourceTreeDirty -ne $false -or
         $shard.kind -cne $Kind -or $shard.environmentId -cne $EnvironmentId -or $shard.projects -isnot [array])
     { throw 'Core test shard scope, exact commit, clean source or environment identity is invalid.' }
@@ -275,7 +313,7 @@ function Get-CoreTestShardReport
         $null = Get-CoreTestArtifact $root $row.log "${prefix}tests/$($project.name)/test.log"
         $assemblyPath = Get-CoreTestArtifact $root $row.assembly "${prefix}tests/$($project.name)/$($project.name).dll"
         $productVersion = Get-CoreTestAssemblyVersion $assemblyPath
-        if ($productVersion -cne "1.1.0+$ExpectedCommit")
+        if ($productVersion -cne "$CoreReleaseVersion+$ExpectedCommit")
         { throw "The retained test assembly identifies '$productVersion', not the exact 1.1 candidate commit." }
         $summary = Get-CoreTrxSummary $trx $discovery $project.name
         if ($row.discovered -ne $summary.Discovered -or $row.passed -ne $summary.Passed)
@@ -290,7 +328,8 @@ function Get-CoreTestShardReport
 
 function Get-CoreTestManifestReport
 {
-    param([string] $EvidencePath, [string] $ExpectedCommit, [ValidateSet('Regression', 'Compatibility')][string] $Kind)
+    param([string] $EvidencePath, [string] $ExpectedCommit, [ValidateSet('Regression', 'Compatibility')][string] $Kind,
+        [ValidateSet('1.1.0', '1.2.0')][string] $CoreReleaseVersion = '1.1.0')
     $root = Split-Path (Resolve-Path -LiteralPath $EvidencePath).Path -Parent
     $expectedName = "core-$($Kind.ToLowerInvariant())-manifest.json"
     $path = Resolve-CoreEvidenceFile $root $expectedName
@@ -298,7 +337,7 @@ function Get-CoreTestManifestReport
     $manifest = Read-CoreEvidenceJson $path
     Assert-CoreTestProperties $manifest @('schemaVersion', 'scope', 'releaseVersion', 'sourceCommit', 'kind', 'shards') 'Core test manifest'
     if (($manifest.schemaVersion -isnot [int] -and $manifest.schemaVersion -isnot [long]) -or $manifest.schemaVersion -ne 1 -or
-        $manifest.scope -cne 'Core' -or $manifest.releaseVersion -cne '1.1.0' -or $manifest.sourceCommit -cne $ExpectedCommit -or
+        $manifest.scope -cne 'Core' -or $manifest.releaseVersion -cne $CoreReleaseVersion -or $manifest.sourceCommit -cne $ExpectedCommit -or
         $manifest.kind -cne $Kind -or $manifest.shards -isnot [array]) { throw 'Core test manifest identity is invalid.' }
     $ids = if ($Kind -eq 'Regression') { @('linux-x64', 'windows-x64') } else { @(15, 16, 17, 18 | ForEach-Object { "postgresql-$_" }) }
     if ($manifest.shards.Count -ne $ids.Count) { throw 'Core test manifest must retain its complete OS or database matrix.' }
@@ -311,12 +350,12 @@ function Get-CoreTestManifestReport
         $shardPath = Get-CoreTestArtifact $root $rows[0].manifest "runs/$id/core-test-shard.json"
         $environment = if ($Kind -eq 'Regression') { $id } else { 'linux-x64' }
         $major = if ($Kind -eq 'Regression') { 0 } else { [int]$id.Substring('postgresql-'.Length) }
-        $report = Get-CoreTestShardReport $shardPath $ExpectedCommit $Kind $environment $major
+        $report = Get-CoreTestShardReport $shardPath $ExpectedCommit $Kind $environment $major -CoreReleaseVersion $CoreReleaseVersion
         $passed += $report.Passed
     }
     return [pscustomobject]@{ Kind = $Kind; SourceCommit = $ExpectedCommit; ShardCount = $ids.Count; Passed = $passed;
         RawTestPayloadsValidated = $true; RemoteIdentityValidated = $false; ReleaseApproved = $false }
 }
 
-Export-ModuleMember -Function Get-CoreTestPlan, Get-CoreTrxSummary, New-CoreTestArtifact, Get-CoreTestAssemblyVersion,
+Export-ModuleMember -Function Get-CoreTestSourceFingerprint, Get-CoreTestPlan, Get-CoreTrxSummary, New-CoreTestArtifact, Get-CoreTestAssemblyVersion,
     Get-CoreTestShardReport, Get-CoreTestManifestReport

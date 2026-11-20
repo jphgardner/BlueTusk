@@ -11,8 +11,8 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         string databaseIdentity,
         ILiveInvalidationSink sink)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
-        ArgumentNullException.ThrowIfNull(sink);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNull(sink);
         _databaseIdentity = databaseIdentity;
         _sink = sink;
     }
@@ -21,7 +21,7 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         SnapshotReset reset,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(reset);
+        BlueTuskGuard.NotNull(reset);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }
@@ -30,7 +30,7 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         SnapshotStart start,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(start);
+        BlueTuskGuard.NotNull(start);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }
@@ -39,7 +39,7 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         ChangeSnapshotBatch batch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }
@@ -48,7 +48,7 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         SnapshotComplete complete,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(complete);
+        BlueTuskGuard.NotNull(complete);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.CompletedTask;
     }
@@ -57,7 +57,7 @@ public sealed class LiveInvalidationConsumer : IChangeStreamConsumer
         ChangeTransactionDelivery delivery,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(delivery);
+        BlueTuskGuard.NotNull(delivery);
         try
         {
             _ = await _sink.AppendAsync(

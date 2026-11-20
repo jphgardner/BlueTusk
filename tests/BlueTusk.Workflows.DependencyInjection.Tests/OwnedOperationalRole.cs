@@ -7,10 +7,17 @@ namespace BlueTusk.Workflows.DependencyInjection.Tests;
 internal sealed class OwnedOperationalRole : IAsyncDisposable
 {
     private readonly WorkflowDatabase _database;
-    private string _password = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+    private string _password = CreatePassword();
     private BlueTuskDataSource? _source;
     private int _providerCalls;
     private bool _created;
+
+    private static string CreatePassword()
+    {
+        Span<byte> bytes = stackalloc byte[32];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToHexString(bytes);
+    }
 
     private OwnedOperationalRole(WorkflowDatabase database) { _database = database; }
     internal string Name { get; } = "bt_job_ops_" + Guid.NewGuid().ToString("N");
@@ -58,7 +65,7 @@ internal sealed class OwnedOperationalRole : IAsyncDisposable
 
     internal async Task RotateAsync()
     {
-        string replacement = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        string replacement = CreatePassword();
         await SetPasswordAsync(replacement);
         Volatile.Write(ref _password, replacement);
         await Source.ClearPoolAsync();

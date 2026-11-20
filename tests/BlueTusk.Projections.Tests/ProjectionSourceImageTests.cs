@@ -12,7 +12,7 @@ public sealed class ProjectionSourceImageTests
 {
     private static readonly ProjectionDependency Key = new("public.image", "k1");
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task SourceReadsMatchTheTransactionWithoutRepeatedRoundTripsUntilRawAccess()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -67,7 +67,7 @@ public sealed class ProjectionSourceImageTests
         Assert.Equal(200UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task FailedStatementDiscardsTheImageSoAbortedTransactionsStillFailReads()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();
@@ -90,7 +90,7 @@ public sealed class ProjectionSourceImageTests
         Assert.Equal(100UL, (await fixture.Store.ReadStateAsync(lease.Identity)).Checkpoint.Value);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task FencedCheckpointRollsBackPipelinedPublicationAndProjectionWrites()
     {
         await using var fixture = await ProjectionDatabase.CreateAsync();

@@ -30,7 +30,7 @@ public sealed record NatsSyncOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(JetStream);
+        BlueTuskGuard.NotNull(JetStream);
         ValidateStreamName(StreamName);
         ValidateSubjectPrefix(SubjectPrefix);
         if (MaxAge < TimeSpan.FromSeconds(1))
@@ -38,18 +38,18 @@ public sealed record NatsSyncOptions
             throw new ArgumentOutOfRangeException(nameof(MaxAge));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxMessageBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan((long)MaxMessageBytes, MaxBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaxBytes);
+        BlueTuskGuard.NotLessThan(MaxMessageBytes, 1024);
+        BlueTuskGuard.NotGreaterThan((long)MaxMessageBytes, MaxBytes);
         if (DuplicateWindow < TimeSpan.FromSeconds(1) || DuplicateWindow > MaxAge)
         {
             throw new ArgumentOutOfRangeException(nameof(DuplicateWindow));
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(Replicas, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(Replicas, 5);
-        ArgumentOutOfRangeException.ThrowIfLessThan(PublishRetryAttempts, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(PublishRetryAttempts, 20);
+        BlueTuskGuard.NotLessThan(Replicas, 1);
+        BlueTuskGuard.NotGreaterThan(Replicas, 5);
+        BlueTuskGuard.NotLessThan(PublishRetryAttempts, 1);
+        BlueTuskGuard.NotGreaterThan(PublishRetryAttempts, 20);
         if (PublishRetryDelay < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(PublishRetryDelay));
@@ -58,7 +58,7 @@ public sealed record NatsSyncOptions
 
     private static void ValidateStreamName(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > 255 || value.Any(character =>
                 char.IsWhiteSpace(character) || character is '.' or '*' or '>'))
         {
@@ -70,7 +70,7 @@ public sealed record NatsSyncOptions
 
     private static void ValidateSubjectPrefix(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > 240 ||
             value[0] == '.' ||
             value[^1] == '.' ||

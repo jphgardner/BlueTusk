@@ -16,8 +16,10 @@ namespace BlueTusk.Live;
 [JsonSerializable(typeof(double))]
 [JsonSerializable(typeof(decimal))]
 [JsonSerializable(typeof(Guid))]
+#if NET8_0_OR_GREATER
 [JsonSerializable(typeof(DateOnly))]
 [JsonSerializable(typeof(TimeOnly))]
+#endif
 [JsonSerializable(typeof(DateTime))]
 [JsonSerializable(typeof(DateTimeOffset))]
 internal sealed partial class LiveScalarJson : JsonSerializerContext;

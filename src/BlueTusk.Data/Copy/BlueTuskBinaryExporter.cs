@@ -38,13 +38,13 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         BlueTuskTypeRegistry registry,
         int columnCount)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(columnCount, short.MaxValue);
         _pipe = pipe;
         _copyTask = copyTask;
         _registry = registry;
         _expectedColumnCount = checked((short)columnCount);
         _fieldStates = ArrayPool<BlueTuskBinaryCopyFieldState>.Shared.Rent(columnCount);
-        Array.Clear(_fieldStates);
+        Array.Clear(_fieldStates, 0, _fieldStates.Length);
     }
 
     internal BlueTuskBinaryExporter(
@@ -53,7 +53,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         int columnCount,
         bool asynchronous = false)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(columnCount, short.MaxValue);
         _pipe = null!;
         _copyTask = null!;
         if (asynchronous)
@@ -67,7 +67,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         _registry = registry;
         _expectedColumnCount = checked((short)columnCount);
         _fieldStates = ArrayPool<BlueTuskBinaryCopyFieldState>.Shared.Rent(columnCount);
-        Array.Clear(_fieldStates);
+        Array.Clear(_fieldStates, 0, _fieldStates.Length);
     }
 
     internal void Initialize()
@@ -84,7 +84,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     internal async ValueTask InitializeAsync(CancellationToken cancellationToken)
     {
         try
@@ -185,7 +187,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return StartRowSlowAsync(cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> StartRowSlowAsync(CancellationToken cancellationToken)
     {
         await ReadExactlyAsync(
@@ -215,7 +219,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return ValueTask.FromResult((int)_fieldCount);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> CompleteExportAsync(CancellationToken cancellationToken)
     {
         if (_asynchronousOperation is not null)
@@ -344,7 +350,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return DecodeFieldAsync<T>(length, postgreSqlTypeOid, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<T?> ReadFieldSlowAsync<T>(
         uint? postgreSqlTypeOid,
         CancellationToken cancellationToken)
@@ -395,7 +403,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return ReadAndDecodeFieldAsync<T>(length, postgreSqlTypeOid, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<T?> ReadAndDecodeFieldAsync<T>(
         int length,
         uint? postgreSqlTypeOid,
@@ -418,7 +428,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
     }
 
     /// <summary>Reads the current field without decoding its PostgreSQL binary payload.</summary>
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     public async ValueTask<ReadOnlyMemory<byte>?> ReadRawAsync(
         CancellationToken cancellationToken = default)
     {
@@ -449,7 +461,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return payload;
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -546,7 +560,9 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return ReadExactlySlowAsync(destination, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask ReadExactlySlowAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
@@ -573,7 +589,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
 
     private void EnsureReadable()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_completed)
         {
             throw new InvalidOperationException("The binary COPY exporter is already complete.");

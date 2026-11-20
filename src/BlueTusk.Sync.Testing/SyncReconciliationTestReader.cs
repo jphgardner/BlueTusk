@@ -14,8 +14,8 @@ public sealed class SyncReconciliationTestDocument
         string contentType = "application/json",
         string? partitionKey = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(contentType);
         Key = key;
         _content = content.ToArray();
         ContentType = contentType;
@@ -44,7 +44,7 @@ public sealed class SyncReconciliationTestReader : ISyncReconciliationReader
     public SyncReconciliationTestReader(
         IEnumerable<SyncReconciliationTestDocument> documents)
     {
-        ArgumentNullException.ThrowIfNull(documents);
+        BlueTuskGuard.NotNull(documents);
         _documents = documents.ToDictionary(
             static document => document.Key,
             StringComparer.Ordinal);
@@ -56,8 +56,8 @@ public sealed class SyncReconciliationTestReader : ISyncReconciliationReader
         string collection,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult((long)_documents.Count);
     }
@@ -70,8 +70,8 @@ public sealed class SyncReconciliationTestReader : ISyncReconciliationReader
         int partitionCount,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         await Task.CompletedTask.ConfigureAwait(false);
         foreach (var document in _documents.Values
                      .Where(document =>

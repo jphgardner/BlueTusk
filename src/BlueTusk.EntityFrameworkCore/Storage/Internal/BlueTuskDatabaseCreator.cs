@@ -1,13 +1,15 @@
 using System.Data.Common;
 using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
 internal sealed class BlueTuskDatabaseCreator(
     RelationalDatabaseCreatorDependencies dependencies,
-    IProviderServices providerServices)
+    IProviderServices providerServices,
+    IDbContextOptions contextOptions)
     : RelationalDatabaseCreator(dependencies)
 {
     public override bool Exists()
@@ -138,7 +140,7 @@ internal sealed class BlueTuskDatabaseCreator(
 
     private DatabaseLifecycleSettings CreateLifecycleSettings()
     {
-        var options = Dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>();
+        var options = contextOptions.FindExtension<BlueTuskOptionsExtension>();
         return providerServices.CreateDatabaseLifecycleSettings(
             GetDataSource()?.UnredactedConnectionString
                 ?? GetConnection().UnredactedConnectionString,

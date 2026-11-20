@@ -9,7 +9,7 @@ public static class BlueTuskTimescaleDbDataSourceBuilderExtensions
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(builder);
+        BlueTuskGuard.NotNull(builder);
         return builder.UsePlugin(new BlueTuskTimescaleDbPlugin(schema));
     }
 }

@@ -14,14 +14,14 @@ internal static class BlueTuskTriggerMetadata
 
     public static IReadOnlyList<BlueTuskTriggerDefinition> Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? [] : Deserialize(json);
     }
 
     public static string Serialize(IEnumerable<BlueTuskTriggerDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         var normalized = Normalize(definitions);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -29,7 +29,7 @@ internal static class BlueTuskTriggerMetadata
 
     public static string Serialize(BlueTuskTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         var normalized = Normalize(definition);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -37,7 +37,7 @@ internal static class BlueTuskTriggerMetadata
 
     public static string Serialize(IEnumerable<BlueTuskTriggerTableDefinition> tables)
     {
-        ArgumentNullException.ThrowIfNull(tables);
+        BlueTuskGuard.NotNull(tables);
         return JsonSerializer.Serialize(
             tables.OrderBy(table => table.Schema, StringComparer.Ordinal)
                 .ThenBy(table => table.Name, StringComparer.Ordinal)
@@ -47,7 +47,7 @@ internal static class BlueTuskTriggerMetadata
 
     public static IReadOnlyList<BlueTuskTriggerDefinition> Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskTriggerDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The trigger definition set is empty.", nameof(json));
         var normalized = Normalize(definitions);
@@ -57,7 +57,7 @@ internal static class BlueTuskTriggerMetadata
 
     public static BlueTuskTriggerDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskTriggerDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The trigger definition is empty.", nameof(json));
         var normalized = Normalize(definition);
@@ -124,10 +124,10 @@ internal static class BlueTuskTriggerMetadata
 
     public static void Validate(BlueTuskTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentNullException.ThrowIfNull(definition.Events);
-        ArgumentNullException.ThrowIfNull(definition.Arguments);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition.Events);
+        BlueTuskGuard.NotNull(definition.Arguments);
         ValidateOptionalIdentifier(definition.ExtensionDependency, nameof(definition.ExtensionDependency));
         if (!Enum.IsDefined(definition.Timing) ||
             !Enum.IsDefined(definition.Orientation) ||
@@ -138,11 +138,11 @@ internal static class BlueTuskTriggerMetadata
 
         if (definition.CanonicalCreateSql is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(definition.CanonicalCreateSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(definition.CanonicalCreateSql);
             return;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.FunctionName);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.FunctionName);
         ValidateIdentifierPair(definition.FunctionName, definition.FunctionSchema, nameof(definition.FunctionName));
         ValidateIdentifierPair(definition.ReferencedTable, definition.ReferencedTableSchema, nameof(definition.ReferencedTable));
         ValidateOptionalIdentifier(definition.OldTransitionTable, nameof(definition.OldTransitionTable));
@@ -156,13 +156,13 @@ internal static class BlueTuskTriggerMetadata
         var eventKinds = new HashSet<BlueTuskTriggerEventKind>();
         foreach (var triggerEvent in definition.Events)
         {
-            ArgumentNullException.ThrowIfNull(triggerEvent);
+            BlueTuskGuard.NotNull(triggerEvent);
             if (!Enum.IsDefined(triggerEvent.Kind) || !eventKinds.Add(triggerEvent.Kind))
             {
                 throw new ArgumentException("Trigger event kinds must be valid and unique.", nameof(definition));
             }
 
-            ArgumentNullException.ThrowIfNull(triggerEvent.UpdateColumns);
+            BlueTuskGuard.NotNull(triggerEvent.UpdateColumns);
             if (triggerEvent.Kind != BlueTuskTriggerEventKind.Update && triggerEvent.UpdateColumns.Count > 0)
             {
                 throw new ArgumentException("Only UPDATE trigger events can select columns.", nameof(definition));
@@ -215,7 +215,7 @@ internal static class BlueTuskTriggerMetadata
         ValidateTransitionTables(definition, eventKinds);
         foreach (var argument in definition.Arguments)
         {
-            ArgumentNullException.ThrowIfNull(argument);
+            BlueTuskGuard.NotNull(argument);
         }
     }
 
@@ -295,7 +295,7 @@ internal static class BlueTuskTriggerMetadata
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var value in values)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            BlueTuskGuard.NotNullOrWhiteSpace(value);
             if (!names.Add(value))
             {
                 throw new ArgumentException("Trigger UPDATE columns must be unique.", parameterName);
@@ -318,7 +318,7 @@ internal static class BlueTuskTriggerMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 
@@ -326,7 +326,7 @@ internal static class BlueTuskTriggerMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 

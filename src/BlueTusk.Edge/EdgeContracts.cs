@@ -10,7 +10,7 @@ public sealed record EdgeScope
     {
         EdgeValidation.Key(tenant, nameof(tenant), 256);
         EdgeValidation.Key(id, nameof(id), 256);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(epoch);
+        BlueTuskGuard.NotNegativeOrZero(epoch);
         Tenant = tenant;
         Id = id;
         Epoch = epoch;
@@ -31,7 +31,7 @@ public sealed class EdgeRecord
     public EdgeRecord(string id, long revision, ReadOnlyMemory<byte> payload, bool deleted = false)
     {
         EdgeValidation.Key(id, nameof(id), 512);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(revision);
+        BlueTuskGuard.NotNegativeOrZero(revision);
         if (deleted && !payload.IsEmpty)
         {
             throw new ArgumentException("A tombstone cannot carry document content.", nameof(payload));
@@ -58,9 +58,9 @@ public sealed class EdgeMutation
 {
     public EdgeMutation(EdgeScope scope, Guid id, string documentId, long expectedRevision, EdgeMutationKind kind, ReadOnlyMemory<byte> payload)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         EdgeValidation.Key(documentId, nameof(documentId), 512);
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        BlueTuskGuard.NotNegative(expectedRevision);
         if (id == Guid.Empty || !Enum.IsDefined(kind))
         {
             throw new ArgumentException("Mutations require a nonempty stable identity and a supported kind.");
@@ -83,7 +83,7 @@ public sealed class EdgeMutation
         Kind = kind;
         Payload = payload.ToArray();
         Fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{scope.Tenant}\0{scope.Id}\0{scope.Epoch}\0{documentId}\0{expectedRevision}\0{kind}\0{Convert.ToBase64String(payload.Span)}"))));
+            BlueTuskRuntime.Format(System.Globalization.CultureInfo.InvariantCulture, $"{scope.Tenant}\0{scope.Id}\0{scope.Epoch}\0{documentId}\0{expectedRevision}\0{kind}\0{Convert.ToBase64String(payload.Span)}"))));
     }
 
     public EdgeScope Scope { get; }
@@ -192,11 +192,11 @@ public sealed class EdgeSynchronizationCoordinator(IEdgeLocalStore store, IEdgeR
 {
     public async ValueTask SynchronizeAsync(EdgeScope scope, int maxPushes = 32, int maxChangeBatches = 32, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxPushes, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxPushes, 1000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxChangeBatches, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxChangeBatches, 1000);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotLessThan(maxPushes, 1);
+        BlueTuskGuard.NotGreaterThan(maxPushes, 1000);
+        BlueTuskGuard.NotLessThan(maxChangeBatches, 1);
+        BlueTuskGuard.NotGreaterThan(maxChangeBatches, 1000);
         await using var session = store is IEdgeSynchronizationSessionLocalStore sessionStore
             ? await sessionStore.OpenSynchronizationSessionAsync(cancellationToken).ConfigureAwait(false)
             : null;
@@ -346,7 +346,7 @@ public static class EdgeValidation
 {
     public static void Key(string value, string parameterName, int maxBytes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(value) > maxBytes)
         {
             throw new ArgumentException($"Value must fit within {maxBytes} UTF-8 bytes and cannot contain NUL.", parameterName);

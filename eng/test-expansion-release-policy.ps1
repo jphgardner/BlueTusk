@@ -60,10 +60,13 @@ try
     $arguments.PolicyPath = $testPolicy
     Assert-Rejected -ExpectedMessage 'product-specific capacity' -Arguments $arguments
     $arguments.PolicyPath = $policyPath
-    Assert-Rejected -ExpectedMessage 'stable 1.0.0-or-newer version' -Arguments $arguments
 
     $versionDirectory = Join-Path $temporaryRoot 'eng/versions'
     [IO.Directory]::CreateDirectory($versionDirectory) | Out-Null
+    $arguments.RepositoryRoot = $temporaryRoot
+    Set-Content -LiteralPath (Join-Path $versionDirectory 'Jobs.props') `
+        -Value '<Project><PropertyGroup><VersionPrefix>1.2.0</VersionPrefix><VersionSuffix>preview.1</VersionSuffix></PropertyGroup></Project>'
+    Assert-Rejected -ExpectedMessage 'stable 1.0.0-or-newer version' -Arguments $arguments
     Set-Content -LiteralPath (Join-Path $versionDirectory 'Jobs.props') `
         -Value '<Project><PropertyGroup><VersionPrefix>1.0.0</VersionPrefix><VersionSuffix /></PropertyGroup></Project>' `
         -Encoding utf8
@@ -187,7 +190,7 @@ try
     Write-Governance
     & $verifier @arguments | Out-Null
 
-    Write-Output 'Expansion release policy self-test passed: disabled preview, stable-version, exact workflow, mode-aligned independent-readiness and protected-tag gates.'
+    Write-Output 'Expansion release policy self-test passed: disabled publication, stable-version, exact workflow, mode-aligned independent-readiness and protected-tag gates.'
 }
 finally
 {

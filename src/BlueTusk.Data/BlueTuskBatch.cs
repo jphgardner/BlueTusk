@@ -88,7 +88,7 @@ public sealed class BlueTuskBatch : DbBatch
         get => _timeout;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            BlueTuskGuard.NotNegative(value);
             _timeout = value;
         }
     }
@@ -252,7 +252,9 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BatchResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
@@ -395,7 +397,9 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BatchResult> ExecuteCoreOnceAsync(
         Action<BlueTuskConnection> startTelemetry,
         CancellationToken cancellationToken)
@@ -490,7 +494,9 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<BlueTuskQueryResult> ExecuteCommandsAsync(
         BlueTuskConnection connection,
         BlueTuskBatchCommandExecution[] commands,
@@ -980,7 +986,7 @@ public sealed class BlueTuskBatch : DbBatch
                     return;
                 }
 
-                var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(_startedTimestamp);
+                var elapsed = BlueTuskRuntime.GetElapsedTime(_startedTimestamp);
                 if (elapsed < _dueTime)
                 {
                     // Timer callbacks may be delivered slightly before their requested due time.

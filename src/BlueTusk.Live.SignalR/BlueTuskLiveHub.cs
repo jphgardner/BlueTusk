@@ -54,8 +54,8 @@ public static class BlueTuskLiveSignalREndpointRouteBuilderExtensions
         this IEndpointRouteBuilder endpoints,
         string pattern = "/bluetusk/live")
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
+        BlueTuskGuard.NotNull(endpoints);
+        BlueTuskGuard.NotNullOrWhiteSpace(pattern);
         return endpoints.MapHub<BlueTuskLiveHub>(pattern);
     }
 }

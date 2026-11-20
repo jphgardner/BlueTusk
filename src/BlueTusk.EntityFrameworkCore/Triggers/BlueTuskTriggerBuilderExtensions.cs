@@ -13,9 +13,9 @@ public static class BlueTuskTriggerBuilderExtensions
         string name,
         Action<BlueTuskTriggerBuilder> configure)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskTriggerBuilder(entityBuilder.Metadata, name);
         configure(builder);
         Set(entityBuilder.Metadata, Replace(BlueTuskTriggerMetadata.Get(entityBuilder.Metadata), builder.Build()));
@@ -28,9 +28,9 @@ public static class BlueTuskTriggerBuilderExtensions
         Action<BlueTuskTriggerBuilder<TEntity>> configure)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(configure);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(configure);
         var builder = new BlueTuskTriggerBuilder<TEntity>(entityBuilder.Metadata, name);
         configure(builder);
         Set(entityBuilder.Metadata, Replace(BlueTuskTriggerMetadata.Get(entityBuilder.Metadata), builder.Build()));
@@ -39,8 +39,8 @@ public static class BlueTuskTriggerBuilderExtensions
 
     public static EntityTypeBuilder HasNoTrigger(this EntityTypeBuilder entityBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Set(
             entityBuilder.Metadata,
             BlueTuskTriggerMetadata.Get(entityBuilder.Metadata)
@@ -52,7 +52,7 @@ public static class BlueTuskTriggerBuilderExtensions
     public static IReadOnlyList<BlueTuskTriggerDefinition> GetTriggerDefinitions(
         this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskTriggerMetadata.Get(entityType);
     }
 
@@ -61,7 +61,7 @@ public static class BlueTuskTriggerBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         Set(entityBuilder.Metadata, BlueTuskTriggerMetadata.Deserialize(serializedDefinitions));
         return entityBuilder;
     }

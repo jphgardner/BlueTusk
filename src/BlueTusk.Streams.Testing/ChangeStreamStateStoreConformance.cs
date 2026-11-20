@@ -10,7 +10,7 @@ public sealed record ChangeStreamStateStoreConformanceOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(
+        BlueTuskGuard.NotLessThanOrEqual(
             ExpiringLeaseDuration,
             TimeSpan.Zero);
         if (ExpirationWait <= ExpiringLeaseDuration)
@@ -35,8 +35,8 @@ public static class ChangeStreamStateStoreConformance
         ChangeStreamStateStoreConformanceOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentException.ThrowIfNullOrWhiteSpace(storeName);
+        BlueTuskGuard.NotNull(store);
+        BlueTuskGuard.NotNullOrWhiteSpace(storeName);
         var effectiveOptions = options ?? new ChangeStreamStateStoreConformanceOptions();
         effectiveOptions.Validate();
         var started = TimeProvider.System.GetTimestamp();

@@ -1,5 +1,8 @@
 using System.Net;
 using System.Net.Security;
+#if !NET7_0_OR_GREATER
+using NegotiateAuthenticationStatusCode = BlueTusk.Security.LegacyNegotiateStatus;
+#endif
 
 namespace BlueTusk.Security;
 
@@ -40,7 +43,7 @@ public sealed class BlueTuskGssApiClient : IDisposable
     /// </summary>
     public byte[]? GetOutgoingBlob(ReadOnlySpan<byte> incomingBlob)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_complete)
         {
             throw new BlueTuskAuthenticationException(
@@ -83,7 +86,7 @@ public sealed class BlueTuskGssApiClient : IDisposable
     /// <summary>Verifies that negotiation completed with mutual authentication.</summary>
     public void EnsureComplete()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (!_complete || !_authentication.IsAuthenticated)
         {
             throw new BlueTuskAuthenticationException(
@@ -108,14 +111,18 @@ public sealed class BlueTuskGssApiClient : IDisposable
         _disposed = true;
     }
 
+#if NET7_0_OR_GREATER
     private static SystemNegotiateAuthentication CreateAuthentication(
+#else
+    private static LegacyNegotiateAuthentication CreateAuthentication(
+#endif
         string host,
         string kerberosServiceName,
         NetworkCredential? credential,
         bool useSspi)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(host);
-        ArgumentException.ThrowIfNullOrWhiteSpace(kerberosServiceName);
+        BlueTuskGuard.NotNullOrWhiteSpace(host);
+        BlueTuskGuard.NotNullOrWhiteSpace(kerberosServiceName);
         if (kerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
         {
             throw new ArgumentException(
@@ -125,6 +132,7 @@ public sealed class BlueTuskGssApiClient : IDisposable
 
         try
         {
+#if NET7_0_OR_GREATER
             return new SystemNegotiateAuthentication(
                 new NegotiateAuthenticationClientOptions
                 {
@@ -134,6 +142,10 @@ public sealed class BlueTuskGssApiClient : IDisposable
                     RequireMutualAuthentication = true,
                     RequiredProtectionLevel = ProtectionLevel.None,
                 });
+#else
+            return new LegacyNegotiateAuthentication(
+                host, kerberosServiceName, credential ?? CredentialCache.DefaultNetworkCredentials, useSspi);
+#endif
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -142,6 +154,7 @@ public sealed class BlueTuskGssApiClient : IDisposable
         }
     }
 
+#if NET7_0_OR_GREATER
     private sealed class SystemNegotiateAuthentication : IBlueTuskNegotiateAuthentication
     {
         private readonly NegotiateAuthentication _authentication;
@@ -162,6 +175,7 @@ public sealed class BlueTuskGssApiClient : IDisposable
 
         public void Dispose() => _authentication.Dispose();
     }
+#endif
 }
 
 internal interface IBlueTuskNegotiateAuthentication : IDisposable

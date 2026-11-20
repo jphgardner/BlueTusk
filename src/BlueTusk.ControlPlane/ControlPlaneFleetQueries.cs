@@ -14,6 +14,9 @@ public sealed class ControlPlaneFleetOverview
     public DateTimeOffset ObservedAt { get; }
 
     public IReadOnlyList<ControlPlaneManagedDeploymentSnapshot> Deployments { get; }
+
+    /// <summary>Exclusive cursor for the next page, or null when this query has no further results.</summary>
+    public string? NextAfterDeploymentId { get; init; }
 }
 
 /// <summary>Non-sensitive desired and observed state for one managed deployment.</summary>
@@ -102,6 +105,16 @@ public interface IControlPlaneFleetQueryService
     /// <summary>Gets the latest fleet overview in stable deployment order.</summary>
     ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
         CancellationToken cancellationToken = default);
+
+    /// <summary>Reads a bounded filtered page without loading the complete fleet.</summary>
+    ValueTask<ControlPlaneFleetOverview> GetDeploymentPageAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This fleet service does not support bounded inventory queries.");
+
+    /// <summary>Reads one deployment directly, without enumerating the fleet.</summary>
+    ValueTask<ControlPlaneManagedDeploymentSnapshot?> GetDeploymentAsync(
+        string deploymentId, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This fleet service does not support direct deployment lookup.");
 }
 
 /// <summary>Projects durable managed-hosting state into a redacted fleet inventory.</summary>
@@ -125,8 +138,38 @@ public sealed class ManagedDeploymentFleetQueryService : IControlPlaneFleetQuery
         await foreach (var deployment in _store.ListAsync(cancellationToken: cancellationToken)
                            .ConfigureAwait(false))
         {
-            var usage = ManagedDeploymentValidation.GetRequestedUsage(deployment.Spec);
-            deployments.Add(new ControlPlaneManagedDeploymentSnapshot(
+            deployments.Add(Project(deployment));
+        }
+
+        return new ControlPlaneFleetOverview(
+            _timeProvider.GetUtcNow(),
+            Array.AsReadOnly(
+                deployments
+                    .OrderBy(static deployment => deployment.DeploymentId, StringComparer.Ordinal)
+                    .ToArray()));
+    }
+
+    public async ValueTask<ControlPlaneFleetOverview> GetDeploymentPageAsync(
+        ManagedDeploymentQuery query, CancellationToken cancellationToken = default)
+    {
+        var page = await _store.QueryAsync(query, cancellationToken).ConfigureAwait(false);
+        return new ControlPlaneFleetOverview(_timeProvider.GetUtcNow(), Array.AsReadOnly(page.Deployments.Select(Project).ToArray()))
+        {
+            NextAfterDeploymentId = page.NextAfterDeploymentId,
+        };
+    }
+
+    public async ValueTask<ControlPlaneManagedDeploymentSnapshot?> GetDeploymentAsync(
+        string deploymentId, CancellationToken cancellationToken = default)
+    {
+        var deployment = await _store.GetAsync(deploymentId, cancellationToken).ConfigureAwait(false);
+        return deployment is null ? null : Project(deployment);
+    }
+
+    private static ControlPlaneManagedDeploymentSnapshot Project(ManagedDeployment deployment)
+    {
+        var usage = ManagedDeploymentValidation.GetRequestedUsage(deployment.Spec);
+        return new ControlPlaneManagedDeploymentSnapshot(
                 deployment.Spec.DeploymentId,
                 deployment.Spec.TenantId,
                 deployment.Spec.Provider,
@@ -148,14 +191,7 @@ public sealed class ManagedDeploymentFleetQueryService : IControlPlaneFleetQuery
                 usage.MemoryBytes,
                 usage.StorageBytes,
                 deployment.Status.DiagnosticCode,
-                deployment.Status.UpdatedAt));
-        }
-
-        return new ControlPlaneFleetOverview(
-            _timeProvider.GetUtcNow(),
-            Array.AsReadOnly(
-                deployments
-                    .OrderBy(static deployment => deployment.DeploymentId, StringComparer.Ordinal)
-                    .ToArray()));
+                deployment.Status.UpdatedAt);
     }
+
 }

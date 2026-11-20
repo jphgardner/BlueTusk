@@ -7,9 +7,15 @@ namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 internal sealed class BlueTuskJsonToRecordsetQueryRootExpression(
     IEntityType entityType,
     Expression json)
+#if BLUETUSK_EF7_OR_GREATER
     : QueryRootExpression(entityType.ClrType)
+#else
+    : EntityQueryRootExpression(entityType)
+#endif
 {
+#if BLUETUSK_EF7_OR_GREATER
     public IEntityType EntityType { get; } = entityType;
+#endif
 
     public Expression Json { get; } = json;
 

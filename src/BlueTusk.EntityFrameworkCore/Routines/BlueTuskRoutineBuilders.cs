@@ -61,7 +61,7 @@ public sealed class BlueTuskFunctionBuilder
     /// <summary>Sets the trusted PostgreSQL implementation language name.</summary>
     public BlueTuskFunctionBuilder UseLanguage(string language)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(language);
+        BlueTuskGuard.NotNullOrWhiteSpace(language);
         Language = language;
         return this;
     }
@@ -194,7 +194,7 @@ public sealed class BlueTuskProcedureBuilder
     /// <summary>Sets the trusted PostgreSQL implementation language name.</summary>
     public BlueTuskProcedureBuilder UseLanguage(string language)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(language);
+        BlueTuskGuard.NotNullOrWhiteSpace(language);
         Language = language;
         return this;
     }
@@ -242,7 +242,7 @@ internal static class BlueTuskRoutineSqlComposer
         IReadOnlyList<BlueTuskRoutineParameterDefinition> parameters,
         IReadOnlyList<BlueTuskRoutineConfigurationDefinition> configuration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(returnStoreType);
+        BlueTuskGuard.NotNullOrWhiteSpace(returnStoreType);
         ValidateCommon(name, schema, bodySql, language, parameters, configuration);
         if (rows is not null && !returnsSet)
         {
@@ -331,26 +331,26 @@ internal static class BlueTuskRoutineSqlComposer
         IReadOnlyList<BlueTuskRoutineParameterDefinition> parameters,
         IReadOnlyList<BlueTuskRoutineConfigurationDefinition> configuration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (schema is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(schema);
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(bodySql);
-        ArgumentException.ThrowIfNullOrWhiteSpace(language);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(configuration);
+        BlueTuskGuard.NotNullOrWhiteSpace(bodySql);
+        BlueTuskGuard.NotNullOrWhiteSpace(language);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(configuration);
         var inputDefaultSeen = false;
         var variadicSeen = false;
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var parameter in parameters)
         {
-            ArgumentNullException.ThrowIfNull(parameter);
-            ArgumentException.ThrowIfNullOrWhiteSpace(parameter.StoreType);
+            BlueTuskGuard.NotNull(parameter);
+            BlueTuskGuard.NotNullOrWhiteSpace(parameter.StoreType);
             if (parameter.Name is not null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(parameter.Name);
+                BlueTuskGuard.NotNullOrWhiteSpace(parameter.Name);
                 if (!names.Add(parameter.Name))
                 {
                     throw new ArgumentException($"Routine parameter name '{parameter.Name}' is duplicated.", nameof(parameters));
@@ -370,7 +370,7 @@ internal static class BlueTuskRoutineSqlComposer
             var acceptsDefault = parameter.Mode is BlueTuskRoutineParameterMode.In or BlueTuskRoutineParameterMode.InOut;
             if (parameter.DefaultSql is not null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(parameter.DefaultSql);
+                BlueTuskGuard.NotNullOrWhiteSpace(parameter.DefaultSql);
                 if (!acceptsDefault)
                 {
                     throw new ArgumentException("Only IN and INOUT parameters may have defaults.", nameof(parameters));
@@ -389,9 +389,9 @@ internal static class BlueTuskRoutineSqlComposer
         var configurationNames = new HashSet<string>(StringComparer.Ordinal);
         foreach (var setting in configuration)
         {
-            ArgumentNullException.ThrowIfNull(setting);
+            BlueTuskGuard.NotNull(setting);
             ValidateConfigurationName(setting.Name);
-            ArgumentException.ThrowIfNullOrWhiteSpace(setting.ValueSql);
+            BlueTuskGuard.NotNullOrWhiteSpace(setting.ValueSql);
             if (!configurationNames.Add(setting.Name))
             {
                 throw new ArgumentException($"Routine configuration '{setting.Name}' is duplicated.", nameof(configuration));
@@ -467,11 +467,11 @@ internal static class BlueTuskRoutineSqlComposer
 
     private static void ValidateConfigurationName(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Split('.').Any(segment =>
                 segment.Length == 0 ||
-                !char.IsAsciiLetter(segment[0]) && segment[0] != '_' ||
-                segment.Skip(1).Any(character => !char.IsAsciiLetterOrDigit(character) && character != '_')))
+                !BlueTuskRuntime.IsAsciiLetter(segment[0]) && segment[0] != '_' ||
+                segment.Skip(1).Any(character => !BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character != '_')))
         {
             throw new ArgumentException(
                 $"Routine configuration name '{name}' contains an unsupported character.",

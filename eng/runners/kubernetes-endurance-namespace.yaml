@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bluetusk-endurance-runners
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-internet-only
+  namespace: bluetusk-endurance-runners
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {protocol: TCP, port: 53}
+        - {protocol: UDP, port: 53}
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 100.64.0.0/10
+              - 127.0.0.0/8
+              - 169.254.0.0/16
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - {protocol: TCP, port: 443}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: bluetusk-endurance-runner-isolation
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: bluetusk-endurance-runners
+    resourceRules:
+      - apiGroups: ['']
+        apiVersions: [v1]
+        resources: [pods, pods/ephemeralcontainers]
+        operations: [CREATE, UPDATE]
+  validations:
+    - expression: >-
+        has(object.spec.hostUsers) && !object.spec.hostUsers &&
+        (!has(object.spec.hostNetwork) || !object.spec.hostNetwork) &&
+        (!has(object.spec.hostPID) || !object.spec.hostPID) &&
+        (!has(object.spec.hostIPC) || !object.spec.hostIPC) &&
+        (!has(object.spec.shareProcessNamespace) || !object.spec.shareProcessNamespace) &&
+        has(object.spec.automountServiceAccountToken) && !object.spec.automountServiceAccountToken &&
+        (!has(object.spec.volumes) || object.spec.volumes.all(v, has(v.emptyDir)))
+      message: Endurance pods require a private user namespace, ephemeral volumes and no Kubernetes API token.
+    - expression: >-
+        object.spec.containers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged) &&
+        (!has(object.spec.ephemeralContainers) || size(object.spec.ephemeralContainers) == 0) &&
+        (!has(object.spec.initContainers) || object.spec.initContainers.all(c,
+        !has(c.securityContext) || !has(c.securityContext.privileged) || !c.securityContext.privileged ||
+        (c.name == 'docker' && c.image == 'docker@sha256:9d337aaf171682751be04d67c15d880d6a95c6fd44cb8e12043f605012e5e654')))
+      message: Only the pinned Docker sidecar may request privileges within its pod user namespace.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: bluetusk-endurance-runner-isolation
+spec:
+  policyName: bluetusk-endurance-runner-isolation
+  validationActions: [Deny]

@@ -200,7 +200,7 @@ internal static class BlueTuskCompositeFieldName
 
     public static void Validate(string fieldName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+        BlueTuskGuard.NotNullOrWhiteSpace(fieldName);
         if (fieldName.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException(

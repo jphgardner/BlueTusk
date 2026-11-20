@@ -1,0 +1,1185 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      include_legacy_all_family_packages:
+        description: Also retain historical six-family package evidence (not core release qualification)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  applications:
+    name: Package-only application suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+
+      - name: Verify application and deployment contracts
+        shell: pwsh
+        run: |
+          ./eng/verify-applications.ps1
+          ./eng/test-application-image-evidence-verifier.ps1
+          ./eng/test-prerelease-release-verifier.ps1
+          ./eng/test-application-postgresql-tracks.ps1
+
+      - name: Restore, format, build, and test applications
+        shell: pwsh
+        run: |
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            --configfile eng/nuget/applications-candidate.config `
+            --packages artifacts/application-nuget-cache `
+            --force-evaluate `
+            --no-http-cache
+          ./eng/verify-application-candidate-restore.ps1
+          dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
+          dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore --filter 'ReleaseTrack!=ContinuousGraphPortable'
+
+      - name: Test core applications against digest-pinned stable PostgreSQL
+        shell: pwsh
+        run: ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core -OutputRoot artifacts/application-postgresql-core
+
+      - name: Retain core application integration results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-application-postgresql-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/application-postgresql-core
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Build all browser clients from local RC npm artifacts
+        shell: pwsh
+        run: ./eng/build-application-web.ps1
+
+      - name: Exercise primary browser journeys
+        shell: pwsh
+        run: |
+          npm exec --yes playwright@1.62.1 install --with-deps chromium
+          Get-ChildItem artifacts/application-web -Directory | ForEach-Object {
+            Push-Location (Join-Path $_.FullName 'work')
+            try { npm run test:e2e }
+            finally { Pop-Location }
+          }
+
+      - name: Lint digest-only application chart
+        shell: bash
+        run: |
+          digest="sha256:$(printf '0%.0s' {1..64})"
+          helm lint applications/deploy/charts/bluetusk-application \
+            --set hostname=test.example.invalid \
+            --set images.api.repository=ghcr.io/test/api --set images.api.digest="$digest" \
+            --set images.worker.repository=ghcr.io/test/worker --set images.worker.digest="$digest" \
+            --set images.ui.repository=ghcr.io/test/ui --set images.ui.digest="$digest" \
+            --set database.ownerSecret=test-db-owner \
+            --set secrets.runtime=test-runtime --set secrets.liveTenant=test-live --set secrets.oidc=test-oidc \
+            --set authentication.authority=https://auth.example.invalid/realms/bluetusk \
+            --set authentication.clientId=test
+
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify solution layout
+        shell: pwsh
+        run: ./eng/verify-solution-layout.ps1
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Verify formatting
+        run: dotnet format BlueTusk.slnx --no-restore --verify-no-changes
+
+      - name: Verify documentation
+        shell: pwsh
+        run: ./eng/verify-documentation.ps1
+
+      - name: Verify supply-chain source gates
+        shell: pwsh
+        run: |
+          ./eng/verify-supply-chain.ps1
+          ./eng/verify-postgresql19-programme.ps1
+
+      - name: Verify independent release trains
+        shell: pwsh
+        run: |
+          $applicationPrereleaseVersion = [string](
+            Get-Content ./eng/prerelease-train.json -Raw |
+              ConvertFrom-Json
+          ).version
+          $packagePrereleaseVersion = [string](
+            Get-Content ./eng/package-prerelease-train.json -Raw |
+              ConvertFrom-Json
+          ).version
+          'Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+              ./eng/pack-product-family.ps1 `
+                -Family $_ `
+                -ValidateOnly `
+                -Prerelease `
+                -VersionOverride $applicationPrereleaseVersion
+              ./eng/pack-product-family.ps1 `
+                -Family $_ `
+                -ValidateOnly `
+                -Prerelease `
+                -VersionOverride $packagePrereleaseVersion `
+                -PrereleaseTrainPath ./eng/package-prerelease-train.json
+            }
+          ./eng/test-prerelease-release-verifier.ps1
+          ./eng/test-prerelease-release-verifier.ps1 `
+            -PrereleaseTrainPath ./eng/package-prerelease-train.json
+          ./eng/test-v1-approval-evidence-verifier.ps1
+          ./eng/test-allocation-budget-verifier.ps1
+          ./eng/test-latency-budget-verifier.ps1
+          ./eng/test-multiplexing-performance-verifier.ps1
+          ./eng/test-provider-performance-verifier.ps1
+          ./eng/test-v1-performance-gate-contract.ps1
+          ./eng/test-sole-maintainer-governance.ps1
+          ./eng/verify-performance-leadership-contract.ps1
+          ./eng/test-performance-leadership-evidence-verifier.ps1
+          ./eng/test-endurance-workflow-sbom-contract.ps1
+          ./eng/test-live-control-plane-endurance-verifier.ps1
+          ./eng/verify-v1.1-release-contract.ps1
+          ./eng/test-v1.1-release-contract-verifier.ps1
+          ./eng/test-core-recovery-rehearsal.ps1
+          ./eng/test-release-track-verifier.ps1
+          'Events', 'Jobs', 'Documents', 'Schema', 'Projections', 'Search',
+          'Sql', 'Studio', 'Edge', 'Workflows' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+            }
+          ./eng/test-expansion-release-policy.ps1
+          ./eng/test-expansion-readiness-evidence.ps1
+          ./eng/test-expansion-candidate-readiness.ps1
+          ./eng/test-expansion-release-failover.ps1
+          ./eng/test-jobs-release-capacity-contract.ps1
+          ./eng/test-expansion-capacity-contract.ps1
+          ./eng/test-jobs-release-failover-policy.ps1
+          ./eng/test-jobs-release-upgrade-policy.ps1
+          ./eng/test-expansion-release-upgrade-policy.ps1
+          ./eng/test-core-approval-evidence.ps1
+          ./eng/test-core-endurance-evidence.ps1
+          ./eng/test-core-workflow-evidence.ps1
+          ./eng/test-core-github-run-capture.ps1
+          ./eng/test-core-github-artifact-capture.ps1
+          ./eng/test-core-github-job-log-binding.ps1
+          ./eng/test-core-endurance-contract.ps1
+          ./eng/test-core-candidate-bindings.ps1
+          ./eng/test-core-test-evidence.ps1
+
+      - name: Build
+        run: dotnet build BlueTusk.slnx --configuration Release --no-restore
+
+      - name: Test
+        # The original provider/core matrix has only the fixtures provisioned by this job.
+        # New ecosystem families run their fixture-specific matrix in ecosystem-build.yml.
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+
+      - name: Test individual-request performance capture machinery
+        run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
+
+      - name: Test the Core performance-evidence pipeline with synthetic fixtures
+        # Synthetic fixtures exercise generator, independent checker, assembler and verifier guards; they are never evidence.
+        shell: pwsh
+        run: |
+          dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --performance-evidence-self-test eng/performance-leadership-contract.json eng/performance-variant-map.json
+          if ($LASTEXITCODE -ne 0) { throw 'Performance evidence generator self-test failed.' }
+          dotnet format eng/PerformanceEvidenceChecker/PerformanceEvidenceChecker.csproj --verify-no-changes
+          if ($LASTEXITCODE -ne 0) { throw 'The independent checker is not formatted.' }
+          ./eng/test-performance-evidence-pipeline.ps1
+
+      - name: Verify core release-track policy
+        shell: pwsh
+        run: ./eng/verify-release-track.ps1
+
+      - name: Pack
+        run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+      - name: Capture exact Core unit regression evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: >-
+          ./eng/run-core-test-evidence.ps1
+          -Kind Regression
+          -OutputRoot artifacts/core-regression/${{ matrix.os }}
+          -ExpectedCommit ${{ github.sha }}
+
+      - name: Retain raw Core unit regression evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-regression-${{ matrix.os }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-regression/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 90
+
+  browser-clients:
+    name: Browser client contracts (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Restore locked client and framework test dependencies
+        run: npm ci --ignore-scripts
+      - name: Build and test all five clients (no missing-test allowance)
+        run: npm run check:clients
+      - name: Audit client dependency closure
+        run: npm audit --audit-level=moderate
+
+  website:
+    name: Angular website and complete documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: website
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Restore website dependencies
+        run: npm ci
+
+      - name: Verify generated documentation
+        run: npm run docs:check
+
+      - name: Test website
+        run: npm test -- --watch=false
+
+      - name: Build website
+        run: npm run build
+
+      - name: Audit website dependencies
+        run: npm audit --audit-level=moderate
+
+      - name: Archive static website
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bluetusk-website
+          path: website/dist/website/browser
+          if-no-files-found: error
+          include-hidden-files: true
+
+  candidate-packages:
+    name: Historical all-family package evidence
+    if: github.event_name == 'workflow_dispatch' && inputs.include_legacy_all_family_packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build and verify canonical V1 packages, SBOMs, and provenance
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -Commit ${{ github.sha }}
+
+      - name: Archive immutable V1 package evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1-candidate-packages-${{ github.sha }}
+          path: |
+            artifacts/v1-candidate-packages/package-manifest.json
+            artifacts/v1-candidate-packages/packages
+            artifacts/v1-candidate-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+  core-candidate-packages:
+    name: Immutable five-family core package evidence
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Build and verify five-family core package evidence
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -ReleaseTrack Core
+          -OutputRoot artifacts/v1.1-core-packages
+          -Commit ${{ github.sha }}
+
+      - name: Verify stable core package reader and integrity guards
+        shell: pwsh
+        run: >-
+          ./eng/test-core-package-evidence.ps1
+          -EvidenceRoot artifacts/v1.1-core-packages
+          -ExpectedCommit ${{ github.sha }}
+
+      - name: Archive immutable core package evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.1-core-packages-${{ github.sha }}
+          path: |
+            artifacts/v1.1-core-packages/package-manifest.json
+            artifacts/v1.1-core-packages/packages
+            artifacts/v1.1-core-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+  observability-config:
+    name: Prometheus and OpenTelemetry production config
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify telemetry, SLO, dashboard, and alert contracts
+        shell: pwsh
+        run: ./eng/verify-production-observability.ps1
+
+      - name: Validate Prometheus rules
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --entrypoint /bin/promtool
+          prom/prometheus:v3.13.1@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
+          check rules /work/prometheus-rules.yml
+
+      - name: Validate OpenTelemetry Collector configuration
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --env BLUETUSK_TRACES_ENDPOINT=https://traces.example.test:4317
+          otel/opentelemetry-collector-contrib:0.153.0@sha256:93aad750175cbf1a973ae1c5886c3371f4d800f61be25cdd26870b8441ffe9fa
+          validate --config=/work/otel-collector.yaml
+
+  provider-core-publish:
+    name: Provider core trimming and NativeAOT (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore trimmed smoke
+        run: dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj --runtime ${{ matrix.rid }}
+
+      - name: Restore NativeAOT smoke
+        run: dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj --runtime ${{ matrix.rid }}
+
+      - name: Publish, execute, and measure provider core
+        shell: pwsh
+        run: ./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier ${{ matrix.rid }} -NoRestore
+
+      - name: Archive publish measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: provider-core-publish-${{ matrix.rid }}
+          path: artifacts/provider-core-smoke/${{ matrix.rid }}/report.json
+          if-no-files-found: error
+
+  postgresql-integration:
+    name: PostgreSQL ${{ matrix.major }} live matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        major: [15, 16, 17, 18]
+    env:
+      BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
+
+      - name: Prepare live tablespace fixture
+        run: |
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} mkdir -p /srv/postgresql/bluetusk_archive_space
+          docker compose -f eng/compose/postgres.yml exec -T --user root postgres${{ matrix.major }} chown postgres /srv/postgresql/bluetusk_archive_space
+          echo 'BLUETUSK_TEST_TABLESPACE_LOCATION=/srv/postgresql/bluetusk_archive_space' >> "$GITHUB_ENV"
+
+      - name: Run live provider matrix
+        run: dotnet test BlueTusk.Core.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+
+      - name: Capture exact Core stable compatibility evidence
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $container = (& docker compose -f eng/compose/postgres.yml --profile preview ps --quiet postgres${{ matrix.major }}).Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($container)) { throw 'Stable PostgreSQL fixture is missing.' }
+          ./eng/run-core-test-evidence.ps1 -Kind Compatibility `
+            -OutputRoot artifacts/core-compatibility/postgresql-${{ matrix.major }} `
+            -ExpectedCommit ${{ github.sha }} `
+            -PostgreSqlMajor ${{ matrix.major }} -PostgreSqlContainer $container
+
+      - name: Retain raw Core stable compatibility evidence
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: core-test-compatibility-postgresql-${{ matrix.major }}-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-compatibility/postgresql-${{ matrix.major }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres${{ matrix.major }}
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  core-test-evidence:
+    name: Aggregate immutable Core regression and stable compatibility payloads
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build-and-test, postgresql-integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-ubuntu-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/linux-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-regression-windows-latest-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/regression/runs/windows-x64
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-15-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-15
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-16-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-16
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-17-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-17
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: core-test-compatibility-postgresql-18-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence/compatibility/runs/postgresql-18
+      - name: Verify every raw test payload and build complete Core manifests
+        shell: pwsh
+        run: |
+          ./eng/build-core-test-manifest.ps1 -Kind Regression `
+            -EvidenceRoot artifacts/core-test-evidence/regression -ExpectedCommit ${{ github.sha }}
+          ./eng/build-core-test-manifest.ps1 -Kind Compatibility `
+            -EvidenceRoot artifacts/core-test-evidence/compatibility -ExpectedCommit ${{ github.sha }}
+      - name: Retain complete immutable Core test matrices
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.1-core-test-evidence-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/core-test-evidence
+          if-no-files-found: error
+          retention-days: 90
+
+  postgresql19-provider-compatibility:
+    # Keep the existing protected status context. This is real provider preview
+    # compatibility, not Graph runtime qualification or PostgreSQL 19 GA evidence.
+    name: PostgreSQL 19 live matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Verify the recorded historical preview fixture
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1
+      - name: Restore locked provider integration dependencies
+        run: dotnet restore tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj --locked-mode
+      - name: Start historical PostgreSQL 19 provider fixture
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+      - name: Test provider preview compatibility without Graph runtime tests
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release --no-restore --maxcpucount:1
+          --filter 'FullyQualifiedName!~BlueTuskSqlPgqIntegrationTests'
+          --logger trx --results-directory artifacts/test-results/postgres19-provider
+      - name: Retain provider preview results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-postgres19-provider-${{ github.sha }}-${{ github.run_id }}
+          path: artifacts/test-results/postgres19-provider
+          if-no-files-found: error
+          retention-days: 90
+      - name: Stop only the historical provider fixture
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml stop postgres19
+
+  redis-streams-integration:
+    name: Redis Streams state-store conformance
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Run Redis checkpoint and lease conformance
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~BlueTuskStreamsRedisStateStoreIntegrationTests
+          --logger trx
+          --results-directory artifacts/test-results/redis-streams
+
+      - name: Run Redis Sync recovery and shared conformance
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/redis-sync
+
+  nats-sync-integration:
+    name: NATS JetStream Sync recovery
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start NATS JetStream
+        run: |
+          docker run --detach --name bluetusk-nats --publish 4222:4222 nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66 -js
+          for attempt in $(seq 1 20); do
+            if nc -z 127.0.0.1 4222; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-nats
+          exit 1
+
+      - name: Run NATS recovery and shared conformance
+        env:
+          BLUETUSK_NATS_URL: nats://localhost:4222
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/nats-sync
+
+      - name: Capture NATS logs on failure
+        if: failure()
+        run: docker logs bluetusk-nats
+
+      - name: Stop NATS
+        if: always()
+        run: docker rm --force bluetusk-nats
+
+  opensearch-sync-integration:
+    name: OpenSearch Sync recovery and rebuild
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start OpenSearch
+        run: |
+          docker run --detach --name bluetusk-opensearch \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env DISABLE_SECURITY_PLUGIN=true \
+            --env DISABLE_INSTALL_DEMO_CONFIG=true \
+            --env "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" \
+            opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-opensearch
+          exit 1
+
+      - name: Run OpenSearch recovery, rebuild, and shared conformance
+        env:
+          BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
+        run: >-
+          dotnet test tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/opensearch-sync
+
+      - name: Capture OpenSearch logs on failure
+        if: failure()
+        run: docker logs bluetusk-opensearch
+
+      - name: Stop OpenSearch
+        if: always()
+        run: docker rm --force bluetusk-opensearch
+
+  extension-integration:
+    name: ${{ matrix.name }} dedicated extension image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: pgvector
+            service: pgvector18
+            port: 5518
+            database: bluetusk_tests
+            ado_project: tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj
+          - name: PostGIS
+            service: postgis18
+            port: 5519
+            database: bluetusk_tests
+            ado_project: tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj
+          - name: TimescaleDB
+            service: timescaledb17
+            port: 5520
+            database: bluetusk_tests
+            ado_project: tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj
+          - name: pg_durable
+            service: pgdurable17
+            port: 5521
+            database: postgres
+            ado_project: tests/BlueTusk.Extensions.PgDurable.Tests/BlueTusk.Extensions.PgDurable.Tests.csproj
+            ef_project: ''
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start dedicated extension image
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests up -d --wait ${{ matrix.service }}
+
+      - name: Run ADO.NET extension acceptance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_PGDURABLE_LIVE_TESTS: ${{ matrix.name == 'pg_durable' }}
+        run: >-
+          dotnet test ${{ matrix.ado_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ado
+
+      - name: Run EF Core extension acceptance
+        if: matrix.ef_project != ''
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test ${{ matrix.ef_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ef
+
+      - name: Capture extension logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests logs ${{ matrix.service }}
+
+      - name: Stop dedicated extension image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests down --volumes
+
+  pgbouncer-integration:
+    name: PgBouncer session and transaction pooling
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL and PgBouncer modes
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait
+          pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Run PgBouncer acceptance
+        env:
+          BLUETUSK_PGBOUNCER_SESSION_CONNECTION_STRING: Host=localhost;Port=5818;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+          BLUETUSK_PGBOUNCER_TRANSACTION_CONNECTION_STRING: Host=localhost;Port=5819;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~PgBouncer
+          --logger trx
+          --results-directory artifacts/test-results/pgbouncer
+
+      - name: Capture PgBouncer logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs postgres18 pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Stop PostgreSQL and PgBouncer
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
+  locale-timezone-integration:
+    name: PostgreSQL 18 ${{ matrix.locale }} / ${{ matrix.timezone }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: locale-en18
+            port: 5820
+            locale: en_GB.UTF-8
+            timezone: Europe/London
+          - service: locale-de18
+            port: 5821
+            locale: de_DE.UTF-8
+            timezone: America/New_York
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start locale/time-zone image
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait ${{ matrix.service }}
+
+      - name: Run locale/time-zone acceptance
+        env:
+          BLUETUSK_LOCALE_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+          BLUETUSK_EXPECTED_LOCALE: ${{ matrix.locale }}
+          BLUETUSK_EXPECTED_TIME_ZONE: ${{ matrix.timezone }}
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Locale_and_time_zone
+          --logger trx
+          --results-directory artifacts/test-results/${{ matrix.service }}
+
+      - name: Capture locale/time-zone logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs ${{ matrix.service }}
+
+      - name: Stop locale/time-zone image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
+  primary-standby-integration:
+    name: PostgreSQL 18 primary/standby topology
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start streaming-replication topology
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          up -d --build --wait topology-standby18
+
+      - name: Run topology and target-session acceptance
+        env:
+          BLUETUSK_TOPOLOGY_CONNECTION_STRING: Host=localhost,localhost;Port=5830,5831;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Topology
+          --logger trx
+          --results-directory artifacts/test-results/topology
+
+      - name: Capture topology logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          logs topology-primary18 topology-standby18
+
+      - name: Stop streaming-replication topology
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile topology-tests down --volumes
+
+  postgresql19-nightly:
+    name: PostgreSQL 19 official branch snapshot
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Verify recorded upstream milestone
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1 -VerifyOfficialCurrent
+
+      - name: Build and start official PostgreSQL 19 snapshot
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          up -d --build --wait postgres19-nightly
+
+      - name: Run full provider matrix against the branch snapshot
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test BlueTusk.Core.slnx
+          --configuration Release
+          --no-restore
+          --maxcpucount:1
+          --logger trx
+          --results-directory artifacts/test-results/postgres19-nightly
+
+      - name: Capture PostgreSQL snapshot logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          logs postgres19-nightly
+
+      - name: Stop PostgreSQL snapshot
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile nightly-tests down --volumes
+
+  replication-endurance:
+    name: PostgreSQL 19 replication endurance
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run persistent-slot reconnect endurance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_REPLICATION_DURABILITY_EPOCHS: 1000
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Logical_replication_validates_and_resumes
+          --logger trx
+          --results-directory artifacts/test-results/replication-endurance
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  provider-stress:
+    name: PostgreSQL 19 provider stress
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run elevated-concurrency provider stress
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_STRESS_SCALE: 8
+        run: >-
+          dotnet test tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj
+          --configuration Release
+          --no-restore
+          --filter 'FullyQualifiedName!~ReplicationStressTests'
+          --logger trx
+          --results-directory artifacts/test-results/provider-stress
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  oauth-authentication:
+    name: PostgreSQL 18 native OAUTHBEARER
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL OAuth validator
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait oauth18
+
+      - name: Run native OAUTHBEARER acceptance
+        env:
+          BLUETUSK_OAUTH_TEST_CONNECTION_STRING: Host=localhost;Port=5618;Username=bluetusk_oauth_test;Database=bluetusk_tests;SSL Mode=Require;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Native_OAUTHBEARER
+          --logger trx
+          --results-directory artifacts/test-results/oauth18
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests logs oauth18
+
+      - name: Stop PostgreSQL OAuth validator
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes
+
+  gssapi-authentication:
+    name: PostgreSQL 18 GSSAPI/Kerberos
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Install Kerberos client
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          . /etc/os-release
+          architecture="$(dpkg --print-architecture)"
+          if [[ "$ID" != ubuntu || "$architecture" != amd64 || ! "$VERSION_CODENAME" =~ ^[a-z]+$ ]]; then
+            echo 'The Kerberos fixture requires a supported Ubuntu amd64 runner.' >&2
+            exit 1
+          fi
+          test -r /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          # The runner's mirror selector stalled on the Azure HTTP mirror after
+          # fetching signed release metadata from the official HTTPS archive.
+          # Scope direct, signed Ubuntu sources to these two APT invocations;
+          # keep the runner's system sources and signature/TLS checks intact.
+          kerberos_sources="$(mktemp --tmpdir="$RUNNER_TEMP" bluetusk-kerberos-XXXXXX.list)"
+          trap 'rm -f -- "$kerberos_sources"' EXIT
+          for suite in "$VERSION_CODENAME" "$VERSION_CODENAME-updates"; do
+            printf 'deb [arch=%s signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ %s main restricted universe multiverse\n' \
+              "$architecture" "$suite" >> "$kerberos_sources"
+          done
+          printf 'deb [arch=%s signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu/ %s-security main restricted universe multiverse\n' \
+            "$architecture" "$VERSION_CODENAME" >> "$kerberos_sources"
+          apt_options=(
+            -o "Dir::Etc::sourcelist=$kerberos_sources"
+            -o 'Dir::Etc::sourceparts=-'
+            -o 'Acquire::Retries=2'
+            -o 'Acquire::http::Timeout=30'
+            -o 'Acquire::https::Timeout=30'
+            -o 'APT::Update::Error-Mode=any'
+          )
+          sudo apt-get "${apt_options[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --yes krb5-user
+
+      - name: Start PostgreSQL and MIT Kerberos KDC
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
+
+      - name: Acquire test Kerberos ticket
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
+        run: |
+          printf '%s\n' '127.0.0.1 gss18.bluetusk.test' | sudo tee -a /etc/hosts
+          printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
+          for attempt in $(seq 1 10); do
+            if kvno postgres/gss18.bluetusk.test@BLUETUSK.TEST; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Run GSSAPI/Kerberos acceptance
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
+          KRB5_TRACE: ${{ runner.temp }}/bluetusk-krb5.trace
+          BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=gss18.bluetusk.test;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~GSSAPI_Kerberos
+          --logger trx
+          --results-directory artifacts/test-results/gss18
+
+      - name: Capture PostgreSQL/Kerberos logs on failure
+        if: failure()
+        run: |
+          if [[ -f "${{ runner.temp }}/bluetusk-krb5.trace" ]]; then
+            cat "${{ runner.temp }}/bluetusk-krb5.trace"
+          fi
+          docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
+
+      - name: Stop PostgreSQL and MIT Kerberos KDC
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes

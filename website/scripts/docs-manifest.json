@@ -1,771 +1,652 @@
 [
   {
     "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "architecture",
-    "source": "docs/architecture/overview.md",
-    "summary": "Understand the layers, dependency direction, ownership, and async boundaries.",
-    "keywords": ["architecture", "layers", "ownership"],
-    "order": 10
+    "slug": "quickstart",
+    "source": "docs/getting-started/quickstart.md",
+    "summary": "Run a parameterized PostgreSQL query from a new .NET console app.",
+    "order": 0
   },
   {
     "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "provider-overview",
-    "source": "docs/ado-net/README.md",
-    "summary": "Use BlueTusk.Data for direct PostgreSQL commands, transactions, batches, COPY and notifications from .NET.",
-    "keywords": ["ado.net", "quickstart", "connection"],
-    "order": 20
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "authentication",
-    "source": "docs/ado-net/authentication.md",
-    "summary": "Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.",
-    "keywords": ["auth", "tls", "scram", "gssapi"],
-    "order": 10
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "cloud-identity",
-    "source": "docs/ado-net/cloud-identity.md",
-    "summary": "AWS, Azure, and Google Cloud identity integration and live-test boundaries.",
-    "keywords": ["aws", "azure", "gcp", "oauth"],
-    "order": 20
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "pooling",
-    "source": "docs/ado-net/pooling.md",
-    "summary": "Pool sizing, reset behavior, operational signals, and PgBouncer modes.",
-    "keywords": ["pool", "reset", "pgbouncer"],
-    "order": 30
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "multi-host",
-    "source": "docs/ado-net/multi-host.md",
-    "summary": "Multi-host routing, failover, target session attributes, and recovery.",
-    "keywords": ["failover", "host", "topology"],
-    "order": 40
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "batches",
-    "source": "docs/ado-net/batches.md",
-    "summary": "Execute ordered command batches with PostgreSQL-aware error behavior.",
-    "keywords": ["batch", "command"],
-    "order": 50
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "copy",
-    "source": "docs/ado-net/copy.md",
-    "summary": "Text and binary COPY APIs, typed values, cancellation, and completion.",
-    "keywords": ["copy", "import", "export", "binary"],
-    "order": 60
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "large-objects",
-    "source": "docs/ado-net/large-objects.md",
-    "summary": "Large-object ownership and streaming behavior.",
-    "keywords": ["large objects", "stream"],
-    "order": 70
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "notifications",
-    "source": "docs/ado-net/notifications.md",
-    "summary": "LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.",
-    "keywords": ["listen", "notify"],
-    "order": 80
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "sequential-readers",
-    "source": "docs/ado-net/sequential-readers.md",
-    "summary": "Bounded sequential reads for large PostgreSQL values.",
-    "keywords": ["reader", "streaming", "memory"],
-    "order": 90
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "types",
-    "source": "docs/types/README.md",
-    "summary": "Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.",
-    "keywords": ["types", "arrays", "ranges", "json"],
-    "order": 100
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "repack",
-    "source": "docs/ado-net/repack.md",
-    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
-    "keywords": ["repack", "maintenance", "postgresql 19", "bloat"],
-    "order": 105
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "pipeline-mode",
-    "source": "docs/pipeline-mode.md",
-    "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
-    "keywords": ["pipeline", "protocol"],
-    "order": 110
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "replication",
-    "source": "docs/replication/README.md",
-    "summary": "Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.",
-    "keywords": ["logical", "physical", "wal", "pgoutput"],
-    "order": 120
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "overview",
-    "source": "docs/ef-core/README.md",
-    "summary": "Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.",
-    "keywords": ["linq", "migrations", "scaffolding", "mapping"],
-    "order": 10
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "specification-tests",
-    "source": "docs/ef-core/specification-tests.md",
-    "summary": "Official relational specification coverage and native PostgreSQL gates.",
-    "keywords": ["tests", "1987", "2111"],
-    "order": 20,
-    "listed": false
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "platform",
-    "source": "docs/realtime-platform/README.md",
-    "summary": "Pick the real-time product you need: Streams, Sync, Live, Control Plane or Continuous Graph.",
-    "keywords": ["streams", "sync", "live", "contracts"],
-    "order": 10
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "contracts",
-    "source": "docs/realtime-platform/contracts.md",
-    "summary": "What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.",
-    "keywords": ["contract", "delivery", "checkpoint"],
-    "order": 20
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams",
-    "source": "docs/streams/README.md",
-    "summary": "Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.",
-    "keywords": ["cdc", "stream", "transaction"],
-    "order": 30
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "snapshot-bootstrap",
-    "source": "docs/streams/snapshot-bootstrap.md",
-    "summary": "A fenced snapshot-then-stream protocol.",
-    "keywords": ["snapshot", "bootstrap", "fence"],
-    "order": 40
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "durable-relay",
-    "source": "docs/streams/durable-relay.md",
-    "summary": "Storage, backup, groups, retention, and relay fan-out.",
-    "keywords": ["relay", "retention", "backup"],
-    "order": 50
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "state-stores",
-    "source": "docs/streams/state-stores.md",
-    "summary": "State-store contracts and supported persistence behavior.",
-    "keywords": ["state", "store"],
-    "order": 60
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-hosting",
-    "source": "docs/streams/hosting-observability.md",
-    "summary": "Hosted services, health checks, metrics, and operational behavior.",
-    "keywords": ["hosting", "health", "metrics"],
-    "order": 70
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-endurance",
-    "source": "docs/streams/release-endurance.md",
-    "listed": false,
-    "summary": "The 72-hour endurance gate and evidence contract.",
-    "keywords": ["72h", "endurance", "release"],
-    "order": 80
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync",
-    "source": "docs/sync/README.md",
-    "summary": "Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.",
-    "keywords": ["redis", "nats", "opensearch", "destination"],
-    "order": 90
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-endurance",
-    "source": "docs/sync/release-endurance.md",
-    "listed": false,
-    "summary": "The 24-hour Sync release gate and evidence contract.",
-    "keywords": ["24h", "endurance", "release"],
-    "order": 100
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live",
-    "source": "docs/live/README.md",
-    "summary": "Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.",
-    "keywords": ["websocket", "sse", "replay", "security"],
-    "order": 110
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane",
-    "source": "docs/control-plane/README.md",
-    "summary": "Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.",
-    "keywords": ["dashboard", "operations", "audit"],
-    "order": 120
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "continuous-graph",
-    "source": "docs/continuous-graph/README.md",
-    "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
-    "keywords": ["graph", "projection", "checkpoint"],
-    "order": 130
-  },
-  {
-    "category": "extensions",
-    "categoryLabel": "Extensions",
-    "slug": "catalog",
-    "source": "docs/extensions/README.md",
-    "summary": "Choose and configure typed support for PostGIS, pgvector, TimescaleDB, citext, and other extensions.",
-    "keywords": ["postgis", "pgvector", "timescaledb", "citext"],
-    "order": 10
-  },
-  {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "slug": "sql-pgq",
-    "source": "docs/graph/README.md",
-    "summary": "Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.",
-    "keywords": ["sql/pgq", "property graph", "postgresql 19"],
-    "order": 10
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "observability",
-    "source": "docs/observability.md",
-    "summary": "Metrics, traces, and slow-command events.",
-    "keywords": ["metrics", "tracing", "opentelemetry"],
-    "order": 10
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "security",
-    "source": "docs/security.md",
-    "summary": "Apply secure connection, identity, secret-handling, and diagnostics defaults before production.",
-    "keywords": ["security", "threat", "secrets"],
-    "order": 20
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "release-readiness",
-    "source": "docs/release-readiness.md",
-    "listed": false,
-    "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
-    "keywords": ["release", "gates", "artifacts"],
-    "order": 30
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "api-compatibility",
-    "source": "docs/api-compatibility.md",
-    "listed": false,
-    "summary": "Public API baselines and compatibility expectations.",
-    "keywords": ["api", "compatibility", "freeze"],
-    "order": 40
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "testing",
-    "source": "docs/contributing/testing.md",
-    "listed": false,
-    "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
-    "keywords": ["testing", "postgresql", "docker"],
-    "order": 50
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "repository-layout",
-    "source": "docs/contributing/repository-layout.md",
-    "listed": false,
-    "summary": "Repository projects and dependency boundaries.",
-    "keywords": ["repository", "projects", "dependencies"],
-    "order": 60
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "roadmap",
-    "source": "docs/roadmap.md",
-    "listed": false,
-    "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
-    "keywords": ["roadmap", "milestone"],
-    "order": 70
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "contributing",
-    "source": "CONTRIBUTING.md",
-    "listed": false,
-    "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
-    "keywords": ["contribute", "issues", "pull request"],
-    "order": 80
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "report-security",
-    "source": "SECURITY.md",
-    "listed": false,
-    "summary": "Report vulnerabilities privately through the repository hosting platform.",
-    "keywords": ["vulnerability", "reporting"],
-    "order": 90
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "handbook",
-    "source": "docs/README.md",
-    "listed": false,
-    "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
-    "keywords": ["documentation", "handbook", "navigation", "v1"],
+    "slug": "install",
+    "source": "docs/getting-started/install.md",
+    "summary": "Choose packages and check what your PostgreSQL and .NET versions support.",
     "order": 1
   },
   {
     "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "quickstart",
-    "source": "docs/getting-started/quickstart.md",
-    "summary": "Start PostgreSQL, create a .NET console app, and run a parameterized query in five minutes.",
-    "keywords": ["quickstart", "install", "query", "connection", "sample"],
+    "slug": "concepts",
+    "source": "docs/getting-started/concepts.md",
+    "summary": "Understand data sources, sessions, type identity, and committed changes.",
+    "order": 2
+  },
+  {
+    "category": "getting-started",
+    "slug": "handbook",
+    "source": "docs/README.md",
+    "summary": "Find the right documentation for the BlueTusk feature you use.",
+    "order": 3
+  },
+  {
+    "category": "getting-started",
+    "slug": "architecture",
+    "source": "docs/architecture/overview.md",
+    "summary": "See how the provider, EF Core, and change-delivery products fit together.",
     "order": 5
   },
   {
     "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "concepts",
-    "source": "docs/getting-started/concepts.md",
-    "summary": "The shared vocabulary: data sources, parameters, the type catalogue, logical replication, acknowledgement and checkpoints.",
-    "keywords": ["concepts", "data source", "session", "checkpoint", "capability"],
+    "slug": "examples",
+    "source": "docs/getting-started/examples.md",
+    "summary": "Follow runnable samples and complete application workflows.",
+    "order": 6
+  },
+  {
+    "category": "getting-started",
+    "slug": "runtime-compatibility",
+    "source": "docs/getting-started/runtime-compatibility.md",
+    "summary": "Match .NET 5–11, EF Core dependencies, and PostgreSQL features to your deployment.",
+    "order": 7
+  },
+  {
+    "category": "provider",
+    "slug": "overview",
+    "source": "docs/ado-net/README.md",
+    "summary": "Learn the ADO.NET API for connections, commands, readers, and transactions.",
+    "order": -1,
+    "aliases": ["getting-started/provider-overview"]
+  },
+  {
+    "category": "provider",
+    "slug": "dependency-injection",
+    "source": "docs/ado-net/dependency-injection.md",
+    "summary": "Register a shared data source and configure an application health check.",
+    "order": 0
+  },
+  {
+    "category": "provider",
+    "slug": "authentication",
+    "source": "docs/ado-net/authentication.md",
+    "summary": "Configure TLS, SCRAM, Kerberos, and client authentication.",
+    "order": 1
+  },
+  {
+    "category": "provider",
+    "slug": "pooling",
+    "source": "docs/ado-net/pooling.md",
+    "summary": "Size connection pools, manage leases, and control session reset.",
+    "order": 2
+  },
+  {
+    "category": "provider",
+    "slug": "multi-host",
+    "source": "docs/ado-net/multi-host.md",
+    "summary": "Connect to primary and replica hosts with explicit targeting.",
+    "order": 3
+  },
+  {
+    "category": "provider",
+    "slug": "cloud-identity",
+    "source": "docs/ado-net/cloud-identity.md",
+    "summary": "Use cloud credentials and rotate database tokens.",
+    "order": 4
+  },
+  {
+    "category": "provider",
+    "slug": "batches",
+    "source": "docs/ado-net/batches.md",
+    "summary": "Send multiple parameterized statements in a batch.",
+    "order": 5
+  },
+  {
+    "category": "provider",
+    "slug": "copy",
+    "source": "docs/ado-net/copy.md",
+    "summary": "Bulk-import and export data with PostgreSQL COPY.",
+    "order": 6
+  },
+  {
+    "category": "provider",
+    "slug": "large-objects",
+    "source": "docs/ado-net/large-objects.md",
+    "summary": "Read and write large objects inside transactions.",
+    "order": 7
+  },
+  {
+    "category": "provider",
+    "slug": "notifications",
+    "source": "docs/ado-net/notifications.md",
+    "summary": "Listen for PostgreSQL notifications on a dedicated session.",
     "order": 8
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "dependency-injection",
-    "source": "docs/ado-net/dependency-injection.md",
-    "summary": "Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.",
-    "keywords": ["dependency injection", "health checks", "DbDataSource", "hosting"],
-    "order": 25
+    "slug": "sequential-readers",
+    "source": "docs/ado-net/sequential-readers.md",
+    "summary": "Stream result values without buffering entire rows.",
+    "order": 9
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
     "slug": "schema-discovery",
     "source": "docs/ado-net/schema-discovery.md",
-    "summary": "Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.",
-    "keywords": ["schema", "metadata", "GetSchema", "columns", "catalogue"],
-    "order": 95
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "operations",
-    "source": "docs/realtime-platform/operations.md",
-    "summary": "Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.",
-    "keywords": ["operations", "incident", "failover", "checkpoint", "rebuild"],
-    "order": 125
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "deployment",
-    "source": "docs/operations/deployment.md",
-    "summary": "Design production topology, security roles, pool capacity, migrations, rolling deployment, and real-time persistence.",
-    "keywords": ["deployment", "configuration", "roles", "migrations", "rolling"],
-    "order": 5
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "troubleshooting",
-    "source": "docs/operations/troubleshooting.md",
-    "summary": "Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.",
-    "keywords": ["troubleshooting", "errors", "diagnostics", "pool", "replication"],
-    "order": 15
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "performance",
-    "source": "docs/operations/performance.md",
-    "summary": "Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.",
-    "keywords": ["performance", "benchmark", "latency", "allocation", "throughput"],
-    "order": 25
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "npgsql-performance-comparison",
-    "source": "docs/operations/npgsql-performance-comparison.md",
-    "listed": false,
-    "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
-    "keywords": ["npgsql", "comparison", "benchmark", "multiplexing", "pooling"],
-    "order": 26
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "upgrade-guide",
-    "source": "docs/operations/upgrade-guide.md",
-    "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
-    "keywords": ["upgrade", "migration", "rollback", "format", "version"],
-    "order": 35
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "install",
-    "source": "docs/getting-started/install.md",
-    "summary": "Choose packages and a version, add them to a .NET or npm project, and install the bluetusk tool and templates.",
-    "keywords": ["install", "nuget", "npm", "packages", "versions", "1.1.0", "templates", "tool"],
-    "order": 2
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-rc1",
-    "source": "docs/releases/1.1.0-rc.1.md",
-    "listed": false,
-    "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
-    "keywords": ["release", "rc", "1.1.0-rc.1", "nuget", "npm", "verification"],
-    "order": 3
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "production-checklist",
-    "source": "docs/operations/production-checklist.md",
-    "summary": "Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.",
-    "keywords": ["production", "checklist", "deployment", "security", "slo", "rollback", "runbook"],
-    "order": 2
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "overview",
-    "source": "docs/getting-started/overview.md",
-    "summary": "What BlueTusk is, the product families and their status, and where to start.",
-    "keywords": ["overview", "products", "families", "status", "introduction"],
-    "order": 1
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-0",
-    "source": "docs/releases/1.1.0.md",
-    "summary": "What 1.1.0 contains, what is new since 1.1.0-rc.1, and how to upgrade.",
-    "keywords": ["release notes", "1.1.0", "upgrade", "whats new"],
-    "order": 4
+    "summary": "Inspect database and result-set metadata.",
+    "order": 10
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "quickstart",
-    "source": "docs/ado-net/quickstart.md",
-    "summary": "Create a table, write rows in a transaction, read them back, and register the data source with dependency injection.",
-    "keywords": ["quickstart", "transaction", "reader", "dependency injection"],
-    "order": 1
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "concepts",
-    "source": "docs/ado-net/concepts.md",
-    "summary": "How data sources, connections, commands, protocols, preparation, transactions and pooling work.",
-    "keywords": ["concepts", "data source", "protocol", "prepare", "pool"],
-    "order": 2
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "configuration",
-    "source": "docs/ado-net/configuration.md",
-    "summary": "Every connection-string keyword and data source option, with types and defaults.",
-    "keywords": ["configuration", "connection string", "keywords", "options"],
-    "order": 3
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "troubleshooting",
-    "source": "docs/ado-net/troubleshooting.md",
-    "summary": "Fix connection, TLS, authentication, pool, timeout, cancellation and type-mapping problems.",
-    "keywords": ["troubleshooting", "errors", "tls", "timeout", "pool"],
-    "order": 4
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "quickstart",
-    "source": "docs/ef-core/quickstart.md",
-    "summary": "Define a DbContext, create and apply a migration, and query PostgreSQL with LINQ.",
-    "keywords": ["quickstart", "dbcontext", "migrations", "linq"],
+    "slug": "types",
+    "source": "docs/types/README.md",
+    "summary": "Map PostgreSQL types, including domains, arrays, enums, composites, and ranges.",
     "order": 11
   },
   {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "concepts",
-    "source": "docs/ef-core/concepts.md",
-    "summary": "How the EF Core provider maps types, batches SaveChanges, handles transactions and builds migrations.",
-    "keywords": ["concepts", "mapping", "batching", "migrations"],
+    "category": "provider",
+    "slug": "types-reference",
+    "source": "docs/types/reference.md",
+    "summary": "Look up type mappings and catalogue behavior.",
     "order": 12
   },
   {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "configuration",
-    "source": "docs/ef-core/configuration.md",
-    "summary": "UseBlueTusk overloads, provider options, model-building extensions and scaffolding options.",
-    "keywords": ["configuration", "UseBlueTusk", "options", "scaffold"],
+    "category": "provider",
+    "slug": "pipeline-mode",
+    "source": "docs/pipeline-mode.md",
+    "summary": "Use pipeline mode within its transaction and cancellation boundaries.",
     "order": 13
   },
   {
+    "category": "provider",
+    "slug": "multiplexing-compatibility",
+    "source": "docs/ado-net/multiplexing-compatibility.md",
+    "summary": "Choose which commands can share a physical session.",
+    "order": 14,
+    "aliases": ["provider/ado-net-multiplexing-compatibility"]
+  },
+  {
+    "category": "provider",
+    "slug": "nativeaot",
+    "source": "docs/ado-net/nativeaot.md",
+    "summary": "Prepare a trimmed or Native AOT .NET application.",
+    "order": 15,
+    "aliases": ["provider/ado-net-nativeaot"]
+  },
+  {
+    "category": "provider",
+    "slug": "replication",
+    "source": "docs/replication/README.md",
+    "summary": "Read WAL and pgoutput changes through low-level replication APIs.",
+    "order": 16
+  },
+  {
+    "category": "provider",
+    "slug": "replication-reference",
+    "source": "docs/replication/reference.md",
+    "summary": "Configure replication sessions, messages, and LSN feedback.",
+    "order": 17
+  },
+  {
+    "category": "provider",
+    "slug": "repack",
+    "source": "docs/ado-net/repack.md",
+    "summary": "Run repack with the right PostgreSQL permissions and operational controls.",
+    "order": 18
+  },
+  {
+    "category": "provider",
+    "slug": "ado-net-compatibility",
+    "source": "docs/ado-net/compatibility.md",
+    "summary": "Check supported ADO.NET contracts and migrate provider-neutral code.",
+    "order": 19
+  },
+  {
     "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "troubleshooting",
-    "source": "docs/ef-core/troubleshooting.md",
-    "summary": "Fix setup, translation, migration, concurrency and type-mapping problems.",
-    "keywords": ["troubleshooting", "errors", "migrations", "translation"],
+    "slug": "overview",
+    "source": "docs/ef-core/README.md",
+    "summary": "Configure a DbContext and use LINQ, migrations, and database scaffolding.",
+    "order": 0
+  },
+  {
+    "category": "ef-core",
+    "slug": "ef-core-reference",
+    "source": "docs/ef-core/reference.md",
+    "summary": "Look up type mappings, query translations, migrations, and provider configuration.",
+    "order": 1
+  },
+  {
+    "category": "real-time",
+    "slug": "platform",
+    "source": "docs/realtime-platform/README.md",
+    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane.",
+    "order": 0
+  },
+  {
+    "category": "real-time",
+    "slug": "contracts",
+    "source": "docs/realtime-platform/contracts.md",
+    "summary": "Understand checkpoints, idempotency, replay, and delivery guarantees.",
+    "order": 1
+  },
+  {
+    "category": "real-time",
+    "slug": "streams",
+    "source": "docs/streams/README.md",
+    "summary": "Consume whole committed transactions from PostgreSQL.",
+    "order": 2
+  },
+  {
+    "category": "real-time",
+    "slug": "snapshot-bootstrap",
+    "source": "docs/streams/snapshot-bootstrap.md",
+    "summary": "Load existing rows and continue from the matching WAL position.",
+    "order": 3
+  },
+  {
+    "category": "real-time",
+    "slug": "state-stores",
+    "source": "docs/streams/state-stores.md",
+    "summary": "Choose and configure durable checkpoint and spool storage.",
+    "order": 4
+  },
+  {
+    "category": "real-time",
+    "slug": "durable-relay",
+    "source": "docs/streams/durable-relay.md",
+    "summary": "Place durable storage between change capture and delivery.",
+    "order": 5
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-hosting",
+    "source": "docs/streams/hosting-observability.md",
+    "summary": "Host the consumer and monitor slot lag, retries, and spool use.",
+    "order": 6
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-cloudevents",
+    "source": "docs/streams/cloudevents.md",
+    "summary": "Encode committed change deliveries as CloudEvents.",
+    "order": 7
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-prepared-transactions",
+    "source": "docs/streams/prepared-transactions.md",
+    "summary": "Understand two-phase changes and settlement behavior.",
+    "order": 8
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-typed-mappings",
+    "source": "docs/streams/typed-mappings.md",
+    "summary": "Decode change rows into generated or hand-written types.",
+    "order": 9
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-cli",
+    "source": "docs/streams/cli.md",
+    "summary": "Inspect logical streams, run samples, and diagnose configuration.",
+    "order": 10
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-aspire",
+    "source": "docs/streams/aspire.md",
+    "summary": "Configure Streams resources in a .NET Aspire host.",
+    "order": 11
+  },
+  {
+    "category": "real-time",
+    "slug": "streams-sample",
+    "source": "docs/streams/sample.md",
+    "summary": "Run a sample replication consumer and observe committed changes.",
+    "order": 12
+  },
+  {
+    "category": "real-time",
+    "slug": "sync",
+    "source": "docs/sync/README.md",
+    "summary": "Deliver change transactions to a destination with replay-safe identities.",
+    "order": 13
+  },
+  {
+    "category": "real-time",
+    "slug": "sync-reference",
+    "source": "docs/sync/reference.md",
+    "summary": "Configure destination adapters, checkpoint behavior, and data mappings.",
     "order": 14
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-quickstart",
-    "source": "docs/streams/quickstart.md",
-    "summary": "Prepare PostgreSQL, run a hosted Streams consumer, and process committed transactions with a durable checkpoint.",
-    "keywords": ["streams", "quickstart", "cdc", "replication"],
-    "order": 31
+    "slug": "live",
+    "source": "docs/live/README.md",
+    "summary": "Register authorized, bounded queries and stream results to clients.",
+    "order": 15
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-concepts",
-    "source": "docs/streams/concepts.md",
-    "summary": "Transactions, acknowledgement, checkpoints, state stores, spooling, snapshots and redelivery.",
-    "keywords": ["streams", "concepts", "checkpoint", "acknowledge"],
-    "order": 32
+    "slug": "live-reference",
+    "source": "docs/live/reference.md",
+    "summary": "Configure query plans, diffing, replay stores, transports, and browser clients.",
+    "order": 16
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-configuration",
-    "source": "docs/streams/configuration.md",
-    "summary": "Streams options, configuration keys, state stores and limits, with defaults.",
-    "keywords": ["streams", "configuration", "options", "slot", "publication"],
-    "order": 33
+    "slug": "live-format-compatibility",
+    "source": "docs/live/format-compatibility.md",
+    "summary": "Understand versioned Live envelopes and replay store formats.",
+    "order": 17
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-troubleshooting",
-    "source": "docs/streams/troubleshooting.md",
-    "summary": "Fix replication slot, publication, privilege, source identity, spool and lease problems.",
-    "keywords": ["streams", "troubleshooting", "slot", "wal"],
-    "order": 34
+    "slug": "continuous-graph",
+    "source": "docs/continuous-graph/README.md",
+    "summary": "Keep an authorized graph result up to date after relevant commits.",
+    "order": 18
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-quickstart",
-    "source": "docs/sync/quickstart.md",
-    "summary": "Copy a PostgreSQL table into another database with Sync and watch inserts, updates and deletes arrive.",
-    "keywords": ["sync", "quickstart", "replicate"],
-    "order": 91
+    "slug": "continuous-graph-reference",
+    "source": "docs/continuous-graph/reference.md",
+    "summary": "Configure graph query plans, dependencies, maintenance, and replay.",
+    "order": 19,
+    "aliases": ["graph/continuous-graph-reference"]
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-concepts",
-    "source": "docs/sync/concepts.md",
-    "summary": "Pipelines, whole-transaction apply, idempotency, ordering, checkpoints, rebuilds and retries.",
-    "keywords": ["sync", "concepts", "idempotency", "rebuild"],
-    "order": 92
+    "slug": "control-plane",
+    "source": "docs/control-plane/README.md",
+    "summary": "Manage registered database instances, pipelines, and operational resources.",
+    "order": 20
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-configuration",
-    "source": "docs/sync/configuration.md",
-    "summary": "Sync options and every destination option, with defaults.",
-    "keywords": ["sync", "configuration", "destinations", "kafka", "s3", "webhooks"],
-    "order": 93
+    "slug": "control-plane-reference",
+    "source": "docs/control-plane/reference.md",
+    "summary": "Configure inventory providers, operations, permissions, and dashboard APIs.",
+    "order": 21
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-troubleshooting",
-    "source": "docs/sync/troubleshooting.md",
-    "summary": "Fix destination, duplicate, mapping, lag and permission problems.",
-    "keywords": ["sync", "troubleshooting", "lag", "retry"],
-    "order": 94
+    "slug": "operations",
+    "source": "docs/realtime-platform/operations.md",
+    "summary": "Deploy and recover the real-time data pipeline.",
+    "order": 22
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-quickstart",
-    "source": "docs/live/quickstart.md",
-    "summary": "Register an authorized live query in ASP.NET Core and show updating rows in a browser.",
-    "keywords": ["live", "quickstart", "browser", "asp.net core"],
-    "order": 111
+    "category": "graph",
+    "slug": "property-graphs",
+    "source": "docs/graph/README.md",
+    "summary": "Map vertex and edge tables and run typed, portable graph patterns.",
+    "order": 0,
+    "aliases": ["graph/sql-pgq"]
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-concepts",
-    "source": "docs/live/concepts.md",
-    "summary": "Registered queries, subscriber scope, re-query and diff, snapshots, resume, batching and transports.",
-    "keywords": ["live", "concepts", "subscription", "resume"],
-    "order": 112
+    "category": "graph",
+    "slug": "graph-reference",
+    "source": "docs/graph/reference.md",
+    "summary": "Look up graph metadata, path semantics, migration options, and native SQL/PGQ.",
+    "order": 1
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-configuration",
-    "source": "docs/live/configuration.md",
-    "summary": "Live server options, transport settings and browser client options, with defaults.",
-    "keywords": ["live", "configuration", "options", "client"],
-    "order": 113
+    "category": "graph",
+    "slug": "traversals",
+    "source": "docs/graph/traversals.md",
+    "summary": "Run neighbors, reachability, and shortest-path queries with bounded work.",
+    "order": 2
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-troubleshooting",
-    "source": "docs/live/troubleshooting.md",
-    "summary": "Fix missing updates, authorization, reconnect, resume, limit and proxy problems.",
-    "keywords": ["live", "troubleshooting", "sse", "signalr"],
-    "order": 114
+    "category": "graph",
+    "slug": "engine",
+    "source": "docs/graph/engine.md",
+    "summary": "Install and operate the optional PostgreSQL server extension.",
+    "order": 3
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-clients",
-    "source": "docs/live/clients.md",
-    "summary": "Use Live from Angular, React, Vue, Svelte or plain TypeScript.",
-    "keywords": ["live", "angular", "react", "vue", "svelte", "npm"],
-    "order": 115
+    "category": "extensions",
+    "slug": "catalog",
+    "source": "docs/extensions/README.md",
+    "summary": "Choose client integrations for PostgreSQL extensions and register their codecs.",
+    "order": 0
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-quickstart",
-    "source": "docs/control-plane/quickstart.md",
-    "summary": "Host the Control Plane API and dashboard, register a component, and query the inventory.",
-    "keywords": ["control plane", "quickstart", "dashboard"],
-    "order": 121
+    "category": "extensions",
+    "slug": "reference",
+    "source": "docs/extensions/reference.md",
+    "summary": "Look up package names, supported types, and EF Core mappings.",
+    "order": 1,
+    "aliases": ["extensions/extensions-reference"]
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-concepts",
-    "source": "docs/control-plane/concepts.md",
-    "summary": "Inventory, components, health, operations, fleet operations, audit and authorization.",
-    "keywords": ["control plane", "concepts", "fleet", "audit"],
-    "order": 122
+    "category": "services",
+    "slug": "overview",
+    "source": "docs/ecosystem/README.md",
+    "summary": "Choose a BlueTusk data service for your application.",
+    "order": 0
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-configuration",
-    "source": "docs/control-plane/configuration.md",
-    "summary": "Control Plane options, endpoints, authorization policies, persistence and Kubernetes settings.",
-    "keywords": ["control plane", "configuration", "options"],
-    "order": 123
+    "category": "services",
+    "slug": "documents",
+    "source": "docs/documents/README.md",
+    "summary": "Store JSONB documents, metadata, and streamed attachments.",
+    "order": 1,
+    "aliases": ["operations/documents"]
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-troubleshooting",
-    "source": "docs/control-plane/troubleshooting.md",
-    "summary": "Fix authorization, missing inventory, stale health, rejected operations and Kubernetes problems.",
-    "keywords": ["control plane", "troubleshooting"],
-    "order": 124
+    "category": "services",
+    "slug": "events",
+    "source": "docs/events/README.md",
+    "summary": "Append ordered events and load application state by stream.",
+    "order": 2,
+    "aliases": ["operations/events"]
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-operations",
-    "source": "docs/control-plane/operations.md",
-    "summary": "Turn on audited operator actions: pause, resume, rebuild and fleet operations.",
-    "keywords": ["control plane", "operations", "audit", "fleet"],
-    "order": 125
+    "category": "services",
+    "slug": "event-retention",
+    "source": "docs/events/PUBLISHED-RETENTION.md",
+    "summary": "Manage event retention with registered consumers and safe watermarks.",
+    "order": 3,
+    "aliases": ["operations/events-published-retention"]
   },
   {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-kubernetes",
-    "source": "docs/control-plane/kubernetes.md",
-    "summary": "Install and use the BlueTusk Kubernetes operator.",
-    "keywords": ["control plane", "kubernetes", "operator", "crd"],
-    "order": 126
+    "category": "services",
+    "slug": "projections",
+    "source": "docs/projections/README.md",
+    "summary": "Build queryable views of event streams with durable progress.",
+    "order": 4,
+    "aliases": ["operations/projections"]
+  },
+  {
+    "category": "services",
+    "slug": "projection-recovery",
+    "source": "docs/projections/RECOVERY.md",
+    "summary": "Recover projections after reconnect, restart, or failover.",
+    "order": 5,
+    "aliases": ["operations/projections-recovery"]
+  },
+  {
+    "category": "services",
+    "slug": "projection-live",
+    "source": "docs/projections/LIVE.md",
+    "summary": "Publish projection changes to authorized Live subscribers.",
+    "order": 6,
+    "aliases": ["operations/projections-live"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs",
+    "source": "docs/jobs/README.md",
+    "summary": "Enqueue, lease, retry, and complete durable background work.",
+    "order": 7,
+    "aliases": ["operations/jobs"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs-hosting",
+    "source": "docs/jobs/hosting.md",
+    "summary": "Operate the job worker and configure leases and concurrency.",
+    "order": 8,
+    "aliases": ["operations/jobs-hosting"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs-maintenance",
+    "source": "docs/jobs/maintenance.md",
+    "summary": "Clean up completed jobs and maintain queue health.",
+    "order": 9,
+    "aliases": ["operations/jobs-maintenance"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs-failover",
+    "source": "docs/jobs/failover.md",
+    "summary": "Prepare for database failover and recover leased jobs.",
+    "order": 10,
+    "aliases": ["operations/jobs-failover"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs-durable-format",
+    "source": "docs/jobs/durable-format.md",
+    "summary": "Understand the job database schema and durable data format.",
+    "order": 11,
+    "aliases": ["operations/jobs-durable-format"]
+  },
+  {
+    "category": "services",
+    "slug": "jobs-upgrade",
+    "source": "docs/jobs/upgrade.md",
+    "summary": "Upgrade queues and workers without losing durable work.",
+    "order": 12,
+    "aliases": ["operations/jobs-upgrade"]
+  },
+  {
+    "category": "services",
+    "slug": "workflows",
+    "source": "docs/workflows/README.md",
+    "summary": "Coordinate persistent steps and signals with explicit recovery policies.",
+    "order": 13,
+    "aliases": ["operations/workflows"]
+  },
+  {
+    "category": "services",
+    "slug": "schema",
+    "source": "docs/schema/README.md",
+    "summary": "Compare PostgreSQL schemas and apply controlled schema changes.",
+    "order": 14,
+    "aliases": ["operations/schema"]
+  },
+  {
+    "category": "services",
+    "slug": "schema-attestation",
+    "source": "docs/schema/catalogue-attestation.md",
+    "summary": "Check database catalogue state against an expected schema.",
+    "order": 15,
+    "aliases": ["operations/schema-catalogue-attestation"]
+  },
+  {
+    "category": "services",
+    "slug": "sql",
+    "source": "docs/sql/README.md",
+    "summary": "Build and validate typed SQL catalogs.",
+    "order": 16,
+    "aliases": ["operations/sql"]
+  },
+  {
+    "category": "services",
+    "slug": "search",
+    "source": "docs/search/README.md",
+    "summary": "Index data and query search or vector backends.",
+    "order": 17,
+    "aliases": ["operations/search"]
+  },
+  {
+    "category": "services",
+    "slug": "edge",
+    "source": "docs/edge/README.md",
+    "summary": "Synchronize client data through intermittent connections.",
+    "order": 18,
+    "aliases": ["operations/edge"]
+  },
+  {
+    "category": "services",
+    "slug": "studio",
+    "source": "docs/studio/README.md",
+    "summary": "Inspect PostgreSQL data through capability-authorized client queries.",
+    "order": 19,
+    "aliases": ["operations/studio"]
+  },
+  {
+    "category": "operations",
+    "slug": "production-checklist",
+    "source": "docs/operations/production-checklist.md",
+    "summary": "Review access, capacity, observability, recovery, and rollback before deployment.",
+    "order": 0
+  },
+  {
+    "category": "operations",
+    "slug": "deployment",
+    "source": "docs/operations/deployment.md",
+    "summary": "Deploy BlueTusk with PostgreSQL and configure its runtime dependencies.",
+    "order": 1
+  },
+  {
+    "category": "operations",
+    "slug": "security",
+    "source": "docs/security.md",
+    "summary": "Configure TLS, least privilege, tenant isolation, and safe telemetry.",
+    "order": 2
+  },
+  {
+    "category": "operations",
+    "slug": "observability",
+    "source": "docs/operations/observability.md",
+    "summary": "Instrument commands, pooling, logical replication, and real-time processing.",
+    "order": 3,
+    "aliases": ["operations/operations-observability"]
+  },
+  {
+    "category": "operations",
+    "slug": "troubleshooting",
+    "source": "docs/operations/troubleshooting.md",
+    "summary": "Diagnose connection, query, type mapping, and change-delivery issues.",
+    "order": 4
+  },
+  {
+    "category": "operations",
+    "slug": "performance",
+    "source": "docs/operations/performance.md",
+    "summary": "Measure and tune application workloads using realistic database access patterns.",
+    "order": 5
+  },
+  {
+    "category": "operations",
+    "slug": "upgrade-guide",
+    "source": "docs/operations/upgrade-guide.md",
+    "summary": "Plan compatible upgrades across packages, PostgreSQL, and persisted state.",
+    "order": 6
+  },
+  {
+    "category": "operations",
+    "slug": "application-platform-health",
+    "source": "docs/operations/application-platform-health.md",
+    "summary": "Check application, worker, and database health.",
+    "order": 7,
+    "aliases": ["operations/operations-application-platform-health"]
+  },
+  {
+    "category": "operations",
+    "slug": "report-security",
+    "source": "SECURITY.md",
+    "summary": "Report a suspected security vulnerability privately.",
+    "order": 8
+  },
+  {
+    "category": "operations",
+    "slug": "tools",
+    "source": "docs/operations/tools.md",
+    "summary": "Check a database connection, scaffold a model, or validate a typed SQL catalog.",
+    "order": 9
   }
 ]

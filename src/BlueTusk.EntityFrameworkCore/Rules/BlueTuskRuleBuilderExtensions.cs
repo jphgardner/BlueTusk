@@ -17,8 +17,8 @@ public static class BlueTuskRuleBuilderExtensions
         string? conditionSql = null,
         BlueTuskRuleEnabledMode enabledMode = BlueTuskRuleEnabledMode.Origin)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definition = new BlueTuskRuleDefinition(
             name,
             @event,
@@ -44,7 +44,7 @@ public static class BlueTuskRuleBuilderExtensions
         BlueTuskRuleEnabledMode enabledMode = BlueTuskRuleEnabledMode.Origin)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         HasRule(
             (EntityTypeBuilder)entityBuilder,
             name,
@@ -58,8 +58,8 @@ public static class BlueTuskRuleBuilderExtensions
 
     public static EntityTypeBuilder HasNoRule(this EntityTypeBuilder entityBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(entityBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Set(
             entityBuilder.Metadata,
             BlueTuskRuleMetadata.Get(entityBuilder.Metadata)
@@ -70,14 +70,14 @@ public static class BlueTuskRuleBuilderExtensions
 
     public static IReadOnlyList<BlueTuskRuleDefinition> GetRules(this IReadOnlyEntityType entityType)
     {
-        ArgumentNullException.ThrowIfNull(entityType);
+        BlueTuskGuard.NotNull(entityType);
         return BlueTuskRuleMetadata.Get(entityType);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static EntityTypeBuilder HasRules(this EntityTypeBuilder entityBuilder, string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         Set(entityBuilder.Metadata, BlueTuskRuleMetadata.Deserialize(serializedDefinitions));
         return entityBuilder;
     }

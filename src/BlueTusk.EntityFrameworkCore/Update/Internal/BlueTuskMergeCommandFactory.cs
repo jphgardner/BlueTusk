@@ -32,9 +32,9 @@ internal static class BlueTuskMergeCommandFactory
         BlueTuskMergeMatchedAction matchedAction)
         where TEntity : class
     {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(values);
-        ArgumentNullException.ThrowIfNull(matchProperties);
+        BlueTuskGuard.NotNull(context);
+        BlueTuskGuard.NotNull(values);
+        BlueTuskGuard.NotNull(matchProperties);
         if (context.Database.ProviderName != BlueTuskEntityFrameworkCoreInfo.ProviderName)
         {
             throw new InvalidOperationException(
@@ -100,9 +100,12 @@ internal static class BlueTuskMergeCommandFactory
             commandBuilder.AddParameter(new TypeMappedRelationalParameter(
                 invariantName,
                 parameterName,
-                insertedValues[index].Column.StoreTypeMapping,
-                insertedValues[index].Property.IsNullable,
-                ParameterDirection.Input));
+                insertedValues[index].Column.GetBlueTuskStoreTypeMapping(),
+                insertedValues[index].Property.IsNullable
+#if BLUETUSK_EF6_OR_GREATER
+                , ParameterDirection.Input
+#endif
+            ));
         }
 
         const string targetAlias = "target";
@@ -231,7 +234,7 @@ internal static class BlueTuskMergeCommandFactory
                 Method.DeclaringType: not null,
                 Method.Name: nameof(ValueTuple.Create),
             } tuple when tuple.Method.DeclaringType == typeof(ValueTuple) => tuple.Arguments,
-            _ => [selector.Body],
+            _ => Array.AsReadOnly(new[] { selector.Body }),
         };
         if (selectedExpressions.Count == 0)
         {

@@ -180,13 +180,13 @@ public sealed class FingerprintControlPlaneLiveScopeRedactor : IControlPlaneLive
 {
     public string Redact(string securityScope)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(securityScope);
+        BlueTuskGuard.NotNullOrWhiteSpace(securityScope);
         var separator = securityScope.IndexOf(':', StringComparison.Ordinal);
         var category = separator is > 0 and <= 32 &&
                        IsSafeCategory(securityScope.AsSpan(0, separator))
             ? securityScope[..separator]
             : "scope";
-        var fingerprint = Convert.ToHexStringLower(
+        var fingerprint = BlueTuskRuntime.ToHexStringLower(
             SHA256.HashData(Encoding.UTF8.GetBytes(securityScope)));
         return category + ":#" + fingerprint[..12];
     }
@@ -195,7 +195,7 @@ public sealed class FingerprintControlPlaneLiveScopeRedactor : IControlPlaneLive
     {
         foreach (var character in category)
         {
-            if (!char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_')
+            if (!BlueTuskRuntime.IsAsciiLetterOrDigit(character) && character is not '-' and not '_')
             {
                 return false;
             }

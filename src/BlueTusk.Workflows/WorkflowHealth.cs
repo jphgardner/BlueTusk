@@ -12,7 +12,7 @@ public sealed partial class PostgreSqlWorkflowStore
     /// <summary>Reads bounded active-instance counts and database-clock age without enumerating terminal history.</summary>
     public async ValueTask<WorkflowScopeHealth> InspectAsync(JobScope scope, int maximumObserved = 10000, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(scope);
         WorkflowOptions.Range(maximumObserved, 1, 100000, nameof(maximumObserved));
         await using var connection = await _source.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = Command(connection, transaction: null, $"""

@@ -19,9 +19,18 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
     public BlueTuskSocketTransport()
         : this(
             Dns.GetHostAddresses,
-            static (host, cancellationToken) =>
-                new ValueTask<IPAddress[]>(Dns.GetHostAddressesAsync(host, cancellationToken)))
+            ResolveAddressesAsync)
     {
+    }
+
+    private static ValueTask<IPAddress[]> ResolveAddressesAsync(string host, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+#if NET6_0_OR_GREATER
+        return new ValueTask<IPAddress[]>(Dns.GetHostAddressesAsync(host, cancellationToken));
+#else
+        return new ValueTask<IPAddress[]>(Dns.GetHostAddressesAsync(host).WaitAsync(cancellationToken));
+#endif
     }
 
     internal BlueTuskSocketTransport(
@@ -131,7 +140,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         return _stream is NetworkStream && _socket is { } socket
             ? socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken)
             : GetConnectedStream().ReadAsync(buffer, cancellationToken);
@@ -139,7 +148,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public int Read(Span<byte> buffer)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         return _stream is NetworkStream && _socket is { } socket
             ? socket.Receive(buffer, SocketFlags.None)
             : GetConnectedStream().Read(buffer);
@@ -147,7 +156,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_stream is not NetworkStream || _socket is not { } socket)
         {
             return GetConnectedStream().WriteAsync(buffer, cancellationToken);
@@ -176,7 +185,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public void Write(ReadOnlySpan<byte> buffer)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_stream is not NetworkStream || _socket is not { } socket)
         {
             GetConnectedStream().Write(buffer);
@@ -197,7 +206,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public ValueTask FlushAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         return _stream is NetworkStream
             ? ValueTask.CompletedTask
             : new ValueTask(GetConnectedStream().FlushAsync(cancellationToken));
@@ -205,7 +214,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public void Flush()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         if (_stream is not NetworkStream)
         {
             GetConnectedStream().Flush();
@@ -214,8 +223,8 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public async ValueTask UpgradeToTlsAsync(BlueTuskTlsOptions options, CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
 
         var innerStream = GetConnectedStream();
@@ -296,8 +305,8 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public void UpgradeToTls(BlueTuskTlsOptions options)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
 
         var innerStream = GetConnectedStream();
@@ -359,7 +368,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     private Stream GetConnectedStream()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BlueTuskGuard.NotDisposed(_disposed, this);
         return _stream ?? throw new InvalidOperationException("The transport is not connected.");
     }
 
@@ -529,7 +538,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
             var pollInterval = TimeSpan.FromSeconds(1);
             if (timeout != Timeout.InfiniteTimeSpan)
             {
-                var remaining = timeout - Stopwatch.GetElapsedTime(started);
+                var remaining = timeout - BlueTuskRuntime.GetElapsedTime(started);
                 if (remaining <= TimeSpan.Zero)
                 {
                     throw new TimeoutException($"Connecting to PostgreSQL exceeded the {timeout} timeout.");
@@ -538,7 +547,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
                 pollInterval = remaining < pollInterval ? remaining : pollInterval;
             }
 
-            var microseconds = Math.Max(1, checked((int)Math.Ceiling(pollInterval.TotalMicroseconds)));
+            var microseconds = Math.Max(1, checked((int)Math.Ceiling(pollInterval.TotalMilliseconds * 1000)));
             if (!socket.Poll(microseconds, SelectMode.SelectWrite) &&
                 !socket.Poll(0, SelectMode.SelectError))
             {
@@ -571,9 +580,9 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     private void ValidateConnect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotDisposed(_disposed, this);
+        BlueTuskGuard.NotNull(endpoint);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
 
         if (_socket is not null)

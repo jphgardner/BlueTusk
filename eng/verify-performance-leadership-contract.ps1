@@ -1,16 +1,23 @@
 [CmdletBinding()]
 param(
-    [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json')
+    [string] $ContractPath = (Join-Path $PSScriptRoot 'performance-leadership-contract.json'),
+    [string] $VariantMapPath
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
-if ($contract.schemaVersion -ne 2 -or $contract.release -ne '1.1.0' -or
+if ($contract.schemaVersion -ne 2 -or $contract.release -cnotin @('1.1.0', '1.2.0') -or
     $contract.releaseTracksFile -cne 'eng/release-tracks.json')
 {
-    throw 'The performance-leadership contract must be schema 2 for release 1.1.0 and bind the family release tracks.'
+    throw 'The performance-leadership contract must be schema 2 for a supported release and bind the family release tracks.'
+}
+if ($contract.release -ceq '1.2.0')
+{
+    $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
+    if ($tracks.releaseVersion -cne $contract.release)
+    { throw 'The 1.2 performance contract must match the active release track.' }
 }
 & (Join-Path $PSScriptRoot 'verify-release-track.ps1')
 
@@ -24,7 +31,9 @@ if ($rules.sameRuntimeMaximumRatio -ne 0.98 -or
     $rules.primaryHotPathMaximumP95Ratio -ne 0.8 -or
     $rules.primaryHotPathMaximumAllocationRatio -ne 0.8 -or
     $rules.trustedCdcMaximumFullRequeryRatio -ne 0.1 -or
-    $rules.authoritativeDeltaMaximumFullRequeryRatio -ne 0.35)
+    $rules.authoritativeDeltaMaximumP95Ratio -ne 1.0 -or
+    $rules.authoritativeDeltaTargetP95Ratio -ne 0.35 -or
+    $rules.authoritativeDeltaMaximumAllocationRatio -ne 0.35)
 {
     throw 'A release-leading comparison threshold was weakened or removed.'
 }
@@ -66,6 +75,24 @@ if (@($provider.features).Count -ne $provider.featureCount -or
 {
     throw 'The complete 16-feature Provider comparison matrix is not named explicitly.'
 }
+if ($contract.release -ceq '1.2.0')
+{
+    if ($provider.PSObject.Properties['variants'] -or
+        ($provider.variantsByEnvironment.PSObject.Properties.Name | Sort-Object) -join ',' -cne 'linux,windows' -or
+        $provider.variantsByEnvironment.windows -join ',' -cne 'windows,linux,tls,constrained-network' -or
+        $provider.variantsByEnvironment.linux -join ',' -cne 'linux,tls,constrained-network')
+    { throw 'The 1.2 Provider contract must declare the approved Windows and Linux client variants.' }
+
+    if ($VariantMapPath)
+    {
+        $map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
+        $profile = $map.profiles.'linux-container-client'
+        if ($map.crossOsProfile -cne 'linux-container-client' -or $map.variants.windows.linux -cne 'crossOsProfile' -or
+            $map.variants.linux.PSObject.Properties['windows'] -or $profile.hostOs -join ',' -cne 'windows' -or
+            $profile.clientOs -cne 'linux')
+        { throw 'The 1.2 Provider map must run the cross-OS client in a Linux container on the Windows host.' }
+    }
+}
 
 $requiredMetrics = @(
     'throughput', 'mean', 'p95', 'p99', 'allocatedBytes',
@@ -83,9 +110,9 @@ if ($contract.enduranceHours.Streams -ne 72 -or
     $contract.enduranceHours.Live -ne 24 -or
     $contract.enduranceHours.ControlPlane -ne 24 -or
     $contract.enduranceHours.ContinuousGraph -ne 24 -or
-    $contract.graphStablePublicationRequiresQualifiedSqlPgqServer -ne $true)
+    $contract.graphStablePublicationRequiresPortablePostgreSqlEvidence -ne $true)
 {
-    throw 'Endurance duration or the qualified SQL/PGQ Graph publication gate was weakened.'
+    throw 'Endurance duration or the portable PostgreSQL Graph publication gate was weakened.'
 }
 if (@($contract.workloads.Sync.destinations).Count -ne 7 -or
     @(Compare-Object @('nats', 'redis', 'opensearch', 'postgresql', 'kafka', 's3', 'webhooks') `
@@ -109,4 +136,4 @@ if ($workflow -notmatch '(?m)^\s*workflow_dispatch\s*:' -or
     throw 'The manual exact-SHA Windows/Linux evidence capture workflow is incomplete.'
 }
 
-Write-Output 'Verified the complete BlueTusk 1.1 performance-leadership contract.'
+Write-Output "Verified the complete BlueTusk $($contract.release) performance-leadership contract."

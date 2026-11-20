@@ -6,7 +6,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeLibrary>true</BlueTuskRuntimeLibrary>
     <Description>PostgreSQL pgoutput protocol decoding for BlueTusk replication streams.</Description>
     <PackageTags>postgresql;replication;pgoutput;logical-decoding;dotnet</PackageTags>
   </PropertyGroup>

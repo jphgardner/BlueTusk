@@ -16,7 +16,7 @@ public sealed class BlueTuskPgOutputDecoder
 
     public BlueTuskPgOutputDecoder(BlueTuskPgOutputDecoderOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
     }
@@ -28,7 +28,7 @@ public sealed class BlueTuskPgOutputDecoder
     /// <summary>Decodes one pgoutput message and retains its WAL envelope.</summary>
     public BlueTuskPgOutputEnvelope Decode(BlueTuskXLogData xLogData)
     {
-        ArgumentNullException.ThrowIfNull(xLogData);
+        BlueTuskGuard.NotNull(xLogData);
         var message = Decode(xLogData.Data);
         return xLogData.OwnsData
             ? BlueTuskPgOutputEnvelope.CreateOwned(xLogData, message)
@@ -486,7 +486,7 @@ public sealed class BlueTuskPgOutputDecoder
         try
         {
             return PostgreSqlEpoch.AddTicks(
-                checked(microseconds * TimeSpan.TicksPerMicrosecond));
+                checked(microseconds * BlueTuskRuntime.TicksPerMicrosecond));
         }
         catch (ArgumentOutOfRangeException exception)
         {

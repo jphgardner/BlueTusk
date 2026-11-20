@@ -524,3 +524,69 @@ BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler.RebuildAsync(BlueTusk.Con
 BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler
 BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ManagedDeploymentControlPlaneOperationHandler(BlueTusk.ControlPlane.IManagedDeploymentStore! store, BlueTusk.ControlPlane.ManagedDeploymentController! controller, BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler! rebuilds, BlueTusk.ControlPlane.IControlPlaneOperationHandler? fallback = null) -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceAvailability
+BlueTusk.ControlPlane.ControlPlaneInstanceAvailability.Current = 0 -> BlueTusk.ControlPlane.ControlPlaneInstanceAvailability
+BlueTusk.ControlPlane.ControlPlaneInstanceAvailability.Stale = 1 -> BlueTusk.ControlPlane.ControlPlaneInstanceAvailability
+BlueTusk.ControlPlane.ControlPlaneInstanceAvailability.Unavailable = 2 -> BlueTusk.ControlPlane.ControlPlaneInstanceAvailability
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneInstanceStatus!
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.AttemptedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.AttemptedAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.Availability.get -> BlueTusk.ControlPlane.ControlPlaneInstanceAvailability
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.Availability.init -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.ControlPlaneInstanceStatus(string! InstanceName, BlueTusk.ControlPlane.ControlPlaneInstanceAvailability Availability, System.DateTimeOffset AttemptedAt, System.DateTimeOffset? LastSuccessfulObservationAt, string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.Deconstruct(out string! InstanceName, out BlueTusk.ControlPlane.ControlPlaneInstanceAvailability Availability, out System.DateTimeOffset AttemptedAt, out System.DateTimeOffset? LastSuccessfulObservationAt, out string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.DiagnosticCode.init -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.Equals(BlueTusk.ControlPlane.ControlPlaneInstanceStatus? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.InstanceName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.InstanceName.init -> void
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.LastSuccessfulObservationAt.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneInstanceStatus.LastSuccessfulObservationAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneOverview.Instances.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneInstanceStatus!>!
+BlueTusk.ControlPlane.ControlPlaneOverview.Instances.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.IsStale.get -> bool
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.IsStale.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ObservedAt.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ObservedAt.init -> void
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.InstanceTimeout.get -> System.TimeSpan
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.InstanceTimeout.init -> void
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.RefreshBudget.get -> System.TimeSpan
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.RefreshBudget.init -> void
+override BlueTusk.ControlPlane.ControlPlaneInstanceStatus.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneInstanceStatus.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneInstanceStatus.ToString() -> string!
+static BlueTusk.ControlPlane.ControlPlaneInstanceStatus.operator !=(BlueTusk.ControlPlane.ControlPlaneInstanceStatus? left, BlueTusk.ControlPlane.ControlPlaneInstanceStatus? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneInstanceStatus.operator ==(BlueTusk.ControlPlane.ControlPlaneInstanceStatus? left, BlueTusk.ControlPlane.ControlPlaneInstanceStatus? right) -> bool
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.NextAfterDeploymentId.get -> string?
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.NextAfterDeploymentId.init -> void
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService.GetDeploymentAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot?>
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService.GetDeploymentPageAsync(BlueTusk.ControlPlane.ManagedDeploymentQuery! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.IManagedDeploymentStore.QueryAsync(BlueTusk.ControlPlane.ManagedDeploymentQuery! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentPage!>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.QueryAsync(BlueTusk.ControlPlane.ManagedDeploymentQuery! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentPage!>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.GetDeploymentAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot?>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.GetDeploymentPageAsync(BlueTusk.ControlPlane.ManagedDeploymentQuery! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.ManagedDeploymentPage
+BlueTusk.ControlPlane.ManagedDeploymentPage.Deployments.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedDeployment!>!
+BlueTusk.ControlPlane.ManagedDeploymentPage.ManagedDeploymentPage(System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedDeployment!>! deployments, string? nextAfterDeploymentId) -> void
+BlueTusk.ControlPlane.ManagedDeploymentPage.NextAfterDeploymentId.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery
+BlueTusk.ControlPlane.ManagedDeploymentQuery.AfterDeploymentId.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.AfterDeploymentId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.DeploymentIdPrefix.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.DeploymentIdPrefix.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.ManagedDeploymentQuery() -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.PageSize.get -> int
+BlueTusk.ControlPlane.ManagedDeploymentQuery.PageSize.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.Provider.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.Provider.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.Region.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.Region.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.State.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.TenantId.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.TenantId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.Validate() -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuery.WorkloadKind.get -> BlueTusk.ControlPlane.ManagedWorkloadKind?
+BlueTusk.ControlPlane.ManagedDeploymentQuery.WorkloadKind.init -> void
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.QueryAsync(BlueTusk.ControlPlane.ManagedDeploymentQuery! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentPage!>

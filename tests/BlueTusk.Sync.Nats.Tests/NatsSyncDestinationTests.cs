@@ -4,7 +4,6 @@ using BlueTusk.TypeSystem;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Net;
-using Xunit.Sdk;
 
 namespace BlueTusk.Sync.Nats.Tests;
 
@@ -13,7 +12,7 @@ public sealed class NatsSyncDestinationTests
     private static readonly ChangeSourceIdentity Source =
         new("nats-system", "nats-database", "nats-slot", "public:orders");
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_NATS_URL")]
     public async Task JetStream_persists_whole_transactions_and_deduplicates_stable_ids()
     {
         var url = GetNatsUrl();
@@ -165,7 +164,7 @@ public sealed class NatsSyncDestinationTests
     {
         var url = Environment.GetEnvironmentVariable("BLUETUSK_NATS_URL");
         return string.IsNullOrWhiteSpace(url)
-            ? throw SkipException.ForSkip("BLUETUSK_NATS_URL is not configured.")
+            ? throw new InvalidOperationException("BLUETUSK_NATS_URL is not configured.")
             : url;
     }
 }

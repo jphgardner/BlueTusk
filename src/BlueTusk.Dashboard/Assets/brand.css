@@ -1,0 +1,23 @@
+:root {
+  --bt-canvas: #15161a;
+  --bt-deep: #101115;
+  --bt-panel: #1c1e24;
+  --bt-raised: #262931;
+  --bt-line: #3b414f;
+  --bt-line-soft: #2d3039;
+  --bt-ink: #f2f3f7;
+  --bt-secondary: #bdc2cf;
+  --bt-muted: #989fb0;
+  --bt-accent: #819dff;
+  --bt-blue: #a7baff;
+  --bt-action: #3159e7;
+  --bt-action-hover: #284ac7;
+  --bt-on-action: #fff;
+  --bt-highlight: #242e55;
+  --bt-green: #64dfa2;
+  --bt-amber: #f3ca80;
+  --bt-red: #ff8996;
+  --bt-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --bt-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  --bt-radius: 14px;
+}

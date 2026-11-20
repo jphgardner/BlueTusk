@@ -310,7 +310,7 @@ public sealed class WebhookSyncDestinationTests
             hash.AppendData(Encoding.ASCII.GetBytes(timestamp));
             hash.AppendData("."u8);
             hash.AppendData(body);
-            var expected = "v1=" + Convert.ToHexStringLower(hash.GetHashAndReset());
+            var expected = "v1=" + Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
             return CryptographicOperations.FixedTimeEquals(
                 Encoding.ASCII.GetBytes(expected),
                 Encoding.ASCII.GetBytes(signature));

@@ -1,192 +1,162 @@
-<div class="site-shell">
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a routerLink="/" class="brand" aria-label="BlueTusk home">
-        <img src="/bluetusk-mark.png" width="36" height="36" alt="" />
-        <span>BlueTusk</span>
-      </a>
+<a class="skip-link" [href]="currentUrl() + '#main-content'">Skip to content</a>
+<header class="site-header">
+  <div class="site-width header-row">
+    <a routerLink="/" class="wordmark" aria-label="BlueTusk home">
+      <img src="/bluetusk-mark.png" width="32" height="32" alt="" />
+      <span>BlueTusk</span>
+    </a>
+    <nav class="primary-links" aria-label="Primary">
+      @for (item of navItems; track item.href) {
+        <a [routerLink]="item.href" routerLinkActive="nav-current" ariaCurrentWhenActive="page">{{
+          item.label
+        }}</a>
+      }
+    </nav>
+    <div class="header-actions">
+      <button
+        mat-button
+        type="button"
+        class="search-trigger"
+        (click)="openSearch()"
+        aria-label="Search documentation"
+      >
+        <mat-icon>search</mat-icon><span>Search</span><kbd>Ctrl K</kbd>
+      </button>
+      <a mat-flat-button class="header-cta" routerLink="/packages">Install</a>
+      <button
+        mat-icon-button
+        type="button"
+        class="mobile-trigger"
+        (click)="mobileOpen.set(true)"
+        aria-label="Open navigation"
+        [attr.aria-expanded]="mobileOpen()"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+    </div>
+  </div>
+</header>
 
-      <nav class="desktop-nav" aria-label="Primary navigation">
-        @for (item of navItems; track item.href) {
-          <a [routerLink]="item.href" routerLinkActive="active">{{ item.label }}</a>
-        }
-      </nav>
+<main id="main-content" tabindex="-1"><router-outlet /></main>
 
-      <div class="topbar-actions">
-        <button
-          #searchTrigger
-          mat-icon-button
-          type="button"
-          (click)="openSearch()"
-          matTooltip="Search BlueTusk"
-          aria-label="Search BlueTusk"
-        >
-          <mat-icon>search</mat-icon>
-        </button>
-        <a
-          class="github-link"
-          href="https://github.com/jphgardner/BlueTusk"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <mat-icon>terminal</mat-icon>
-          <span>GitHub</span>
-        </a>
-        <a mat-flat-button routerLink="/documentation/getting-started/quickstart" class="topbar-cta"
-          >Quickstart</a
-        >
-        <button
-          #mobileNavTrigger
-          mat-icon-button
-          type="button"
-          (click)="openMobileNav()"
-          aria-label="Open navigation"
-          aria-controls="mobile-navigation"
-          [attr.aria-expanded]="mobileNavOpen()"
-          class="mobile-menu-trigger"
-        >
-          <mat-icon>menu</mat-icon>
+<footer class="site-footer">
+  <div class="site-width flex flex-wrap items-center justify-between gap-5">
+    <a routerLink="/" class="wordmark" aria-label="BlueTusk home">
+      <img src="/bluetusk-mark.png" width="28" height="28" alt="" /> BlueTusk
+    </a>
+    <nav class="footer-links" aria-label="Footer">
+      <a routerLink="/documentation">Documentation</a>
+      <a routerLink="/documentation/operations/security">Security</a>
+      <a routerLink="/use-cases">Use cases</a>
+      <a routerLink="/compatibility">Compatibility</a>
+      <a routerLink="/whats-new">BlueTusk 1.2</a>
+      <a routerLink="/community">Community</a>
+      <a href="https://github.com/jphgardner/BlueTusk">GitHub <mat-icon>arrow_outward</mat-icon></a>
+    </nav>
+  </div>
+</footer>
+
+@if (searchOpen()) {
+  <div class="overlay" (click)="closeSearch()">
+    <section
+      class="overlay-panel search-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="search-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="overlay-header">
+        <h2 id="search-title">Search documentation</h2>
+        <button type="button" mat-icon-button (click)="closeSearch()" aria-label="Close search">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
-    </div>
-  </header>
-
-  @if (mobileNavOpen()) {
-    <div class="mobile-nav-backdrop" role="presentation" (click)="closeMobileNav()">
-      <aside
-        id="mobile-navigation"
-        class="mobile-nav-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="BlueTusk navigation"
-        (click)="$event.stopPropagation()"
-      >
-        <header>
-          <div>
-            <span>EXPLORE BLUETUSK</span>
-            <strong>Choose what you want to build.</strong>
-          </div>
-          <button
-            mat-icon-button
-            type="button"
-            (click)="closeMobileNav()"
-            aria-label="Close navigation"
+      <div class="search-field">
+        <mat-icon>search</mat-icon>
+        <input
+          cdkFocusInitial
+          type="search"
+          aria-label="Search terms"
+          placeholder="Try connection pooling or shortest path"
+          [value]="searchQuery()"
+          (input)="searchUpdate($event)"
+          (keydown.enter)="openResult()"
+        />
+      </div>
+      @if (!searchQuery().trim()) {
+        <nav class="search-suggestions" aria-label="Popular topics">
+          <a (click)="closeSearch()" routerLink="/documentation/getting-started/quickstart"
+            >Quickstart <mat-icon>arrow_forward</mat-icon></a
           >
-            <mat-icon>close</mat-icon>
-          </button>
-        </header>
-        <nav aria-label="Mobile navigation">
-          @for (item of navItems; track item.href) {
-            <a
-              #mobileNavFirst
-              [routerLink]="item.href"
-              routerLinkActive="active"
-              (click)="closeMobileNav(false)"
-            >
-              <mat-icon>{{ item.icon }}</mat-icon>
-              <span
-                ><strong>{{ item.label }}</strong
-                ><small>{{ item.description }}</small></span
-              >
-              <mat-icon>arrow_forward</mat-icon>
-            </a>
-          }
+          <a (click)="closeSearch()" routerLink="/documentation/graph/property-graphs"
+            >Property graphs <mat-icon>arrow_forward</mat-icon></a
+          >
+          <a (click)="closeSearch()" routerLink="/documentation/operations/troubleshooting"
+            >Troubleshooting <mat-icon>arrow_forward</mat-icon></a
+          >
         </nav>
-        <footer>
-          <a
-            mat-flat-button
-            routerLink="/documentation/getting-started/quickstart"
-            (click)="closeMobileNav(false)"
-            >Start the quickstart</a
-          >
-          <a href="https://github.com/jphgardner/BlueTusk" target="_blank" rel="noreferrer"
-            >View GitHub <mat-icon>open_in_new</mat-icon></a
-          >
-        </footer>
-      </aside>
-    </div>
-  }
-
-  <main>
-    <router-outlet />
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div>
-        <a routerLink="/" class="footer-brand">
-          <img src="/bluetusk-mark.png" width="26" height="26" alt="" />
-          <span>BlueTusk</span>
-        </a>
-        <p>© 2026 BlueTusk. Stable 1.0 · 1.1 release candidate available.</p>
-      </div>
-      <div class="footer-links">
-        <a routerLink="/documentation/getting-started/install">Install</a>
-        <a routerLink="/documentation/getting-started/release-1-1-rc1">Current release</a>
-        <a routerLink="/documentation">Documentation</a>
-        <a
-          href="https://github.com/jphgardner/BlueTusk/blob/main/docs/roadmap.md"
-          target="_blank"
-          rel="noreferrer"
-          >Roadmap</a
-        >
-        <a
-          href="https://github.com/jphgardner/BlueTusk/blob/main/SECURITY.md"
-          target="_blank"
-          rel="noreferrer"
-          >Security</a
-        >
-        <a routerLink="/evidence">Evidence</a>
-        <a href="https://github.com/jphgardner/BlueTusk" target="_blank" rel="noreferrer">GitHub</a>
-      </div>
-    </div>
-  </footer>
-
-  @if (searchOpen()) {
-    <div class="search-backdrop" role="presentation" (click)="closeSearch()">
-      <section
-        class="search-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search BlueTusk"
-        (click)="$event.stopPropagation()"
-      >
-        <div class="search-input-row">
-          <mat-icon>search</mat-icon>
-          <input
-            #searchField
-            class="search-field"
-            type="search"
-            aria-label="Search the platform"
-            [value]="searchQuery()"
-            (input)="updateSearch($event)"
-            placeholder="Connections, EF Core, live updates, graph…"
-          />
-          <button mat-icon-button type="button" (click)="closeSearch()" aria-label="Close search">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-
-        <div class="search-results">
-          @if (guideSearchUnavailable()) {
-            <p class="empty-search">Documentation search is temporarily unavailable.</p>
-          }
-          @for (item of filteredSearchItems(); track item.route) {
+      } @else {
+        <div class="search-results" aria-label="Search results">
+          <div class="sr-only" role="status">{{ results().length }} results</div>
+          @for (item of results(); track item.route) {
             <a [routerLink]="item.route" (click)="closeSearch()">
-              <mat-icon>{{ item.icon }}</mat-icon>
-              <span>
-                <small>{{ item.group }}</small>
-                <strong>{{ item.title }}</strong>
-                <small>{{ item.description }}</small>
-              </span>
-              <mat-icon>arrow_forward</mat-icon>
+              <span class="result-group">{{ item.group }}</span>
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.description }}</span>
             </a>
           } @empty {
-            <p class="empty-search">No section matches that search.</p>
+            <p role="status">
+              @switch (searchStatus()) {
+                @case ('loading') {
+                  Loading search…
+                }
+                @case ('failed') {
+                  Search is unavailable.
+                }
+                @default {
+                  No matching topics.
+                }
+              }
+            </p>
+            <a (click)="closeSearch()" routerLink="/documentation"
+              >Browse documentation <mat-icon>arrow_forward</mat-icon></a
+            >
           }
         </div>
-        <p class="search-hint">ESC TO CLOSE · CTRL K TO OPEN</p>
-      </section>
-    </div>
-  }
-</div>
+      }
+    </section>
+  </div>
+}
+
+@if (mobileOpen()) {
+  <div class="overlay mobile-overlay" (click)="closeMobile()">
+    <section
+      class="overlay-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="overlay-header">
+        <h2 id="mobile-title">Navigation</h2>
+        <button type="button" mat-icon-button aria-label="Close navigation" (click)="closeMobile()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <nav class="mobile-links">
+        @for (item of navItems; track item.href) {
+          <a [routerLink]="item.href" (click)="closeMobile()"
+            >{{ item.label }} <mat-icon>arrow_forward</mat-icon></a
+          >
+        }
+        <a routerLink="/packages" (click)="closeMobile()"
+          >Install <mat-icon>arrow_forward</mat-icon></a
+        >
+      </nav>
+    </section>
+  </div>
+}

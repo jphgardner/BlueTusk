@@ -57,7 +57,7 @@ internal sealed class BlueTuskCopyTextReaderStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        ValidateBufferArguments(buffer, offset, count);
+        BlueTuskRuntime.ValidateBufferArguments(buffer, offset, count);
         if (count == 0)
         {
             return 0;
@@ -175,7 +175,7 @@ internal sealed class BlueTuskCopyTextWriterStream : Stream
         ReadOnlyMemory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_completed, this);
+        BlueTuskGuard.NotDisposed(_completed, this);
         var offset = 0;
         while (offset < buffer.Length)
         {
@@ -246,8 +246,8 @@ internal sealed class BlueTuskCopyTextWriterStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        ValidateBufferArguments(buffer, offset, count);
-        ObjectDisposedException.ThrowIf(_completed, this);
+        BlueTuskRuntime.ValidateBufferArguments(buffer, offset, count);
+        BlueTuskGuard.NotDisposed(_completed, this);
         var remaining = buffer.AsSpan(offset, count);
         while (!remaining.IsEmpty)
         {
@@ -268,7 +268,7 @@ internal sealed class BlueTuskCopyTextWriterStream : Stream
 
     public override void Flush()
     {
-        ObjectDisposedException.ThrowIf(_completed, this);
+        BlueTuskGuard.NotDisposed(_completed, this);
         _writer.Flush();
     }
 

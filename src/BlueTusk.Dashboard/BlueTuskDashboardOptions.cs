@@ -25,19 +25,19 @@ public sealed record BlueTuskDashboardOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(RoutePrefix);
-        ArgumentException.ThrowIfNullOrWhiteSpace(BrandLabel);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ReadAuthorizationPolicy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(MutationAuthorizationPolicy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(GraphExecutionAuthorizationPolicy);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ViewerRole);
-        ArgumentException.ThrowIfNullOrWhiteSpace(OperatorRole);
-        ArgumentException.ThrowIfNullOrWhiteSpace(AdministratorRole);
-        ArgumentException.ThrowIfNullOrWhiteSpace(GraphExecutorRole);
+        BlueTuskGuard.NotNullOrWhiteSpace(RoutePrefix);
+        BlueTuskGuard.NotNullOrWhiteSpace(BrandLabel);
+        BlueTuskGuard.NotNullOrWhiteSpace(ReadAuthorizationPolicy);
+        BlueTuskGuard.NotNullOrWhiteSpace(MutationAuthorizationPolicy);
+        BlueTuskGuard.NotNullOrWhiteSpace(GraphExecutionAuthorizationPolicy);
+        BlueTuskGuard.NotNullOrWhiteSpace(ViewerRole);
+        BlueTuskGuard.NotNullOrWhiteSpace(OperatorRole);
+        BlueTuskGuard.NotNullOrWhiteSpace(AdministratorRole);
+        BlueTuskGuard.NotNullOrWhiteSpace(GraphExecutorRole);
         if (!RoutePrefix.StartsWith('/') ||
             RoutePrefix.Length > 1 && RoutePrefix.EndsWith('/') ||
             RoutePrefix.Any(character =>
-                !(char.IsAsciiLetterOrDigit(character) ||
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) ||
                   character is '/' or '-' or '_' or '.' or '~')))
         {
             throw new ArgumentException(

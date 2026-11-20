@@ -5,7 +5,7 @@ public sealed class PostgreSqlJobStoreTests
     private static readonly int[] ExpectedHistoryAttempts = [3, 2];
     private static readonly string[] KnownJobTypes = ["test.v1"];
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ClaimIsBoundedByAggregatePayloadBytesAsWellAsRows()
     {
         await using var database = await JobDatabase.CreateAsync(new JobStoreOptions { MaximumPayloadBytes = 4, MaximumClaimPayloadBytes = 8 });
@@ -21,7 +21,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Single(await database.Store.ClaimAsync(database.Scope, "worker-b", 3, TimeSpan.FromMinutes(1)));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ConcurrentWorkersClaimDisjointBatches()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -45,7 +45,7 @@ public sealed class PostgreSqlJobStoreTests
         }
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExpiredLeaseCannotHeartbeatOrCompleteBeforeOrAfterReclaim()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -66,7 +66,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Equal("expired", history[1].Outcome);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ExpiredLeaseUsesItsExpiryTimeWhenOrderedWithPendingWork()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -88,7 +88,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.True(await database.Store.CompleteAsync(reclaimed));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CrashedFinalAttemptBecomesFailedWithoutBeingClaimedAgain()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -103,7 +103,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.False(await database.Store.CompleteAsync(lease));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TransactionRollbackRemovesJobAndDeduplicationIdentity()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -128,7 +128,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.NotNull(await database.Store.ReadAsync(database.Scope, committed));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ConcurrentDeduplicationReturnsOneIdentityAndRejectsDifferentPayload()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -139,7 +139,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Single(await database.Store.ClaimAsync(database.Scope, "worker", 128, TimeSpan.FromMinutes(1)));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task TenantAndQueueBoundariesApplyToClaimReadCancelAndDeduplication()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -157,7 +157,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Equal(queue, Assert.Single(await database.Store.ClaimAsync(otherQueue, "worker", 10, TimeSpan.FromMinutes(1))).JobId);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DelaysRetriesAndHistoryRemainBounded()
     {
         await using var database = await JobDatabase.CreateAsync(new JobStoreOptions { MaximumHistoryEntries = 2 });
@@ -184,7 +184,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Equal(2L, await command.ExecuteScalarAsync<long>(CancellationToken.None));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task CancellationFencesActiveLeaseAndRetentionReleasesDeduplication()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -203,7 +203,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.NotEqual(id, await database.Store.EnqueueAsync(database.Request("retain-key")));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task WorkerAllowlistDoesNotClaimUnknownJobTypes()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -214,7 +214,7 @@ public sealed class PostgreSqlJobStoreTests
         Assert.Empty(await database.Store.ClaimAsync(database.Scope, "worker", 2, TimeSpan.FromMinutes(1), Array.Empty<string>()));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SchemaInitializationRejectsIncompatiblePersistentLimits()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -224,7 +224,7 @@ public sealed class PostgreSqlJobStoreTests
         await same.InitializeAsync();
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DatabaseConstraintRejectsOversizeDirectWrite()
     {
         await using var database = await JobDatabase.CreateAsync(new JobStoreOptions { MaximumPayloadBytes = 64 });

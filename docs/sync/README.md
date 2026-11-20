@@ -5,9 +5,9 @@ reads committed transactions from [Streams](../streams/README.md), turns each
 row into a keyed document with your code, and writes the result to another
 PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook.
 
-**Status:** Core family, version 1.1.0. 1.1.0 is not published yet; the
-current releases are 1.0.0 (stable) and 1.1.0-rc.1. Supports .NET 10 and
-PostgreSQL 15 to 18. See [Install BlueTusk](../getting-started/install.md).
+Install matching 1.2.0 Sync and destination packages. See
+[the installation guide](../getting-started/install.md) and
+[runtime compatibility](../getting-started/runtime-compatibility.md).
 
 ## When should I use Sync?
 
@@ -27,15 +27,15 @@ Use something else when:
 Install `BlueTusk.Sync.DependencyInjection` and the package for your
 destination. Each destination package brings in `BlueTusk.Sync`.
 
-| Package | Writes | Status |
-| --- | --- | --- |
-| `BlueTusk.Sync.PostgreSql` | Rows in your own tables (with a custom writer) or JSON documents, plus the checkpoint, in one transaction | Stable since 1.0.0 |
-| `BlueTusk.Sync.Redis` | Documents in Redis hashes, plus the checkpoint, in one Lua script | Stable since 1.0.0 |
-| `BlueTusk.Sync.Nats` | One JetStream message per transaction, with a stable message ID | Stable since 1.0.0 |
-| `BlueTusk.Sync.OpenSearch` | Documents in versioned indexes behind aliases; supports zero-downtime rebuilds | Stable since 1.0.0 |
-| `BlueTusk.Sync.Kafka` | One event per transaction plus a checkpoint in a compacted state topic, in one Kafka transaction | New in 1.1.0 |
-| `BlueTusk.Sync.S3` | One immutable Parquet object per transaction, made visible by a commit manifest | New in 1.1.0 |
-| `BlueTusk.Sync.Webhooks` | One signed HTTPS request per transaction | New in 1.1.0 |
+| Package | Writes |
+| --- | --- |
+| `BlueTusk.Sync.PostgreSql` | Rows in your own tables (with a custom writer) or JSON documents, plus the checkpoint, in one transaction |
+| `BlueTusk.Sync.Redis` | Documents in Redis hashes, plus the checkpoint, in one Lua script |
+| `BlueTusk.Sync.Nats` | One JetStream message per transaction, with a stable message ID |
+| `BlueTusk.Sync.OpenSearch` | Documents in versioned indexes behind aliases; supports zero-downtime rebuilds |
+| `BlueTusk.Sync.Kafka` | One event per transaction plus a checkpoint in a compacted state topic, in one Kafka transaction |
+| `BlueTusk.Sync.S3` | One immutable Parquet object per transaction, made visible by a commit manifest |
+| `BlueTusk.Sync.Webhooks` | One signed HTTPS request per transaction |
 
 Supporting packages:
 

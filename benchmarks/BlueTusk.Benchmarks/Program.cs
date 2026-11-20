@@ -4,10 +4,28 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--graph-scoped-connection-capture", var scopedConnectionDirectory])
+{
+    await ContinuousGraphBenchmarks.CaptureScopedConnectionAsync(scopedConnectionDirectory);
+    return;
+}
+
+if (args is ["--graph-scoped-read-capture", var graphCaptureDirectory])
+{
+    await ContinuousGraphBenchmarks.CaptureScopedReadAsync(graphCaptureDirectory);
+    return;
+}
+
 if (args is ["--ef-batch-capture", var efOptionsPath, var efRowCount, var efBatchSize])
 {
     await EfBatchCapture.RunAsync(efOptionsPath, int.Parse(efRowCount, System.Globalization.CultureInfo.InvariantCulture),
         efBatchSize == "default" ? null : int.Parse(efBatchSize, System.Globalization.CultureInfo.InvariantCulture));
+    return;
+}
+
+if (args is ["--streams-commit-delivery-candidate", var streamsCaptureOptions])
+{
+    await StreamsCommitDeliveryCapture.RunAsync(streamsCaptureOptions);
     return;
 }
 
@@ -225,6 +243,19 @@ var benchmarkTypes = typeof(ProtocolParserBenchmarks).Assembly
         (!liveBenchmarkTypes.Contains(type) ||
             !string.IsNullOrWhiteSpace(competitiveConnectionString)))
     .ToArray();
+using var benchmarkProcess = System.Diagnostics.Process.GetCurrentProcess();
+var cpuAtStart = benchmarkProcess.TotalProcessorTime;
 _ = BenchmarkSwitcher
     .FromTypes(benchmarkTypes)
     .Run(args, configuration);
+if (Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_PLAN_DIRECTORY") is { Length: > 0 } graphPlanDirectory)
+{
+    benchmarkProcess.Refresh();
+    Directory.CreateDirectory(graphPlanDirectory);
+    await File.WriteAllTextAsync(Path.Combine(graphPlanDirectory, "benchmark-process-resources.json"),
+        System.Text.Json.JsonSerializer.Serialize(new
+        {
+            benchmarkProcessCpuMilliseconds = (benchmarkProcess.TotalProcessorTime - cpuAtStart).TotalMilliseconds,
+            benchmarkProcessPeakRssBytes = benchmarkProcess.PeakWorkingSet64,
+        }));
+}

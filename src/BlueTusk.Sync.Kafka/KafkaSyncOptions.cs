@@ -35,10 +35,10 @@ public sealed record KafkaSyncOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(BootstrapServers);
+        BlueTuskGuard.NotNullOrWhiteSpace(BootstrapServers);
         ValidateTopicPrefix(TopicPrefix);
-        ArgumentException.ThrowIfNullOrWhiteSpace(TransactionalId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(ClientId);
+        BlueTuskGuard.NotNullOrWhiteSpace(TransactionalId);
+        BlueTuskGuard.NotNullOrWhiteSpace(ClientId);
         if (TransactionalId.Length > 240 || ClientId.Length > 240)
         {
             throw new ArgumentOutOfRangeException(
@@ -52,9 +52,9 @@ public sealed record KafkaSyncOptions
                 "BlueTusk requires one Kafka partition per pipeline to preserve commit order.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThan(ReplicationFactor, (short)1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(ReplicationFactor, (short)5);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxEnvelopeBytes, 1024);
+        BlueTuskGuard.NotLessThan(ReplicationFactor, (short)1);
+        BlueTuskGuard.NotGreaterThan(ReplicationFactor, (short)5);
+        BlueTuskGuard.NotLessThan(MaxEnvelopeBytes, 1024);
         if (InitializationTimeout < TimeSpan.FromSeconds(1))
         {
             throw new ArgumentOutOfRangeException(nameof(InitializationTimeout));
@@ -67,16 +67,16 @@ public sealed record KafkaSyncOptions
 
         foreach (var entry in ClientConfiguration)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(entry.Key);
-            ArgumentNullException.ThrowIfNull(entry.Value);
+            BlueTuskGuard.NotNullOrWhiteSpace(entry.Key);
+            BlueTuskGuard.NotNull(entry.Value);
         }
     }
 
     private static void ValidateTopicPrefix(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Length > 230 || value is "." or ".." || value.Any(character =>
-                !(char.IsAsciiLetterOrDigit(character) || character is '.' or '_' or '-')))
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '.' or '_' or '-')))
         {
             throw new ArgumentException(
                 "The topic prefix must use only ASCII letters, digits, '.', '_' or '-' and be at most 230 characters.",

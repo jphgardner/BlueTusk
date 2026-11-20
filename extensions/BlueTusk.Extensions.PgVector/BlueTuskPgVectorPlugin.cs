@@ -20,7 +20,7 @@ public sealed class BlueTuskPgVectorPlugin : IBlueTuskPlugin
 
     public void Configure(IBlueTuskPluginContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         context.Types.Register(TypeName.Schema, TypeName.Name, new BlueTuskVectorCodec());
         context.Types.Register(
             HalfVectorTypeName.Schema,

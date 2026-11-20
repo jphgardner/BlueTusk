@@ -29,8 +29,8 @@ public sealed record LiveTableDependency
 {
     public LiveTableDependency(string schema, string table)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
         Schema = schema;
         Table = table;
     }
@@ -46,8 +46,8 @@ public sealed record LiveQueryParameter
 {
     public LiveQueryParameter(string name, Type parameterType, bool allowNull = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(parameterType);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(parameterType);
         if (!IsSupportedParameterType(parameterType))
         {
             throw new ArgumentException(
@@ -113,7 +113,7 @@ public sealed class LiveQueryArguments
 
     public T? Get<T>(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (!_values.TryGetValue(name, out var value))
         {
             throw new KeyNotFoundException($"Live query parameter '{name}' was not supplied.");
@@ -126,8 +126,8 @@ public sealed class LiveQueryArguments
         IEnumerable<LiveQueryParameter> parameters,
         IReadOnlyDictionary<string, object?> values)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(values);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNull(values);
         var definitions = parameters.ToArray();
         if (definitions.Select(parameter => parameter.Name).Distinct(StringComparer.Ordinal).Count() != definitions.Length)
         {
@@ -186,7 +186,7 @@ public sealed class LiveQueryArguments
         return new LiveQueryArguments(
             Array.AsReadOnly(definitions),
             materialized,
-            Convert.ToHexStringLower(hash.GetHashAndReset()));
+            BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset()));
     }
 
     private static void Append(IncrementalHash hash, string value) =>
@@ -194,6 +194,17 @@ public sealed class LiveQueryArguments
 
     private static byte[] SerializeScalar(object value, Type type)
     {
+#if !NET8_0_OR_GREATER
+        // The older .NET Standard JSON asset has no DateOnly or TimeOnly converters.
+        if (value is DateOnly date)
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(date.ToString("O", CultureInfo.InvariantCulture), LiveScalarJson.Default.String);
+        }
+        if (value is TimeOnly time)
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(time.ToString("O", CultureInfo.InvariantCulture), LiveScalarJson.Default.String);
+        }
+#endif
         if (RuntimeFeature.IsDynamicCodeSupported)
         {
             // Preserve the existing JIT canonical argument format for issued subscription identities.
@@ -226,8 +237,8 @@ public sealed record LiveSecurityScope
 {
     public LiveSecurityScope(string scope, string authorizationPolicyVersion)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(scope);
-        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationPolicyVersion);
+        BlueTuskGuard.NotNullOrWhiteSpace(scope);
+        BlueTuskGuard.NotNullOrWhiteSpace(authorizationPolicyVersion);
         Scope = scope;
         AuthorizationPolicyVersion = authorizationPolicyVersion;
     }
@@ -260,8 +271,8 @@ public sealed class LiveQueryPlan<T, TKey>
         IEqualityComparer<T>? rowComparer = null,
         IEqualityComparer<TKey>? keyComparer = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         ValidateFingerprint(fingerprint);
         const LiveQueryCapabilities allCapabilities =
             LiveQueryCapabilities.SingleTable |
@@ -279,11 +290,11 @@ public sealed class LiveQueryPlan<T, TKey>
             throw new ArgumentOutOfRangeException(nameof(capabilities));
         }
 
-        ArgumentNullException.ThrowIfNull(dependencies);
-        ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumResultCount);
-        ArgumentNullException.ThrowIfNull(executeAsync);
-        ArgumentNullException.ThrowIfNull(keySelector);
+        BlueTuskGuard.NotNull(dependencies);
+        BlueTuskGuard.NotNull(parameters);
+        BlueTuskGuard.NotNegativeOrZero(maximumResultCount);
+        BlueTuskGuard.NotNull(executeAsync);
+        BlueTuskGuard.NotNull(keySelector);
         var dependencyArray = dependencies.Distinct().ToArray();
         if (dependencyArray.Length == 0)
         {
@@ -338,7 +349,7 @@ public sealed class LiveQueryPlan<T, TKey>
 
     private static void ValidateFingerprint(string fingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint);
         if (fingerprint.Length != 64 || !fingerprint.All(Uri.IsHexDigit))
         {
             throw new ArgumentException(
@@ -390,8 +401,8 @@ public static class LiveQueryFingerprint
         string version,
         ReadOnlySpan<byte> canonicalPlan = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Append(hash, name);
         Append(hash, version);
@@ -399,7 +410,7 @@ public static class LiveQueryFingerprint
         System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(length, canonicalPlan.Length);
         hash.AppendData(length);
         hash.AppendData(canonicalPlan);
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, string value)
@@ -444,12 +455,12 @@ public sealed record LiveSubscriptionIdentity
         string authorizationPolicyVersion,
         int resultLimit)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(databaseIdentity);
         ValidateFingerprint(queryPlanFingerprint, nameof(queryPlanFingerprint));
         ValidateFingerprint(parameterFingerprint, nameof(parameterFingerprint));
-        ArgumentException.ThrowIfNullOrWhiteSpace(securityScope);
-        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationPolicyVersion);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(resultLimit);
+        BlueTuskGuard.NotNullOrWhiteSpace(securityScope);
+        BlueTuskGuard.NotNullOrWhiteSpace(authorizationPolicyVersion);
+        BlueTuskGuard.NotNegativeOrZero(resultLimit);
         DatabaseIdentity = databaseIdentity;
         QueryPlanFingerprint = queryPlanFingerprint.ToLowerInvariant();
         ParameterFingerprint = parameterFingerprint.ToLowerInvariant();
@@ -480,9 +491,9 @@ public sealed record LiveSubscriptionIdentity
         int? resultLimit = null)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(arguments);
-        ArgumentNullException.ThrowIfNull(securityScope);
+        BlueTuskGuard.NotNull(plan);
+        BlueTuskGuard.NotNull(arguments);
+        BlueTuskGuard.NotNull(securityScope);
         var limit = resultLimit ?? plan.MaximumResultCount;
         if (limit <= 0 || limit > plan.MaximumResultCount)
         {
@@ -510,12 +521,12 @@ public sealed record LiveSubscriptionIdentity
             identity.SecurityScope,
             identity.AuthorizationPolicyVersion,
             identity.ResultLimit.ToString(CultureInfo.InvariantCulture));
-        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
+        return BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 
     private static void ValidateFingerprint(string fingerprint, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint, parameterName);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint, parameterName);
         if (fingerprint.Length != 64 || !fingerprint.All(Uri.IsHexDigit))
         {
             throw new ArgumentException("A fingerprint must contain 64 hexadecimal characters.", parameterName);
@@ -532,7 +543,7 @@ public sealed class LiveQueryRegistry
     public void Register<T, TKey>(LiveQueryPlan<T, TKey> plan)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(plan);
+        BlueTuskGuard.NotNull(plan);
         if (!_plans.TryAdd(plan.Name, plan))
         {
             throw new InvalidOperationException($"Live query '{plan.Name}' is already registered.");
@@ -542,7 +553,7 @@ public sealed class LiveQueryRegistry
     public LiveQueryPlan<T, TKey> Get<T, TKey>(string name)
         where TKey : notnull
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (!_plans.TryGetValue(name, out var plan))
         {
             throw new KeyNotFoundException($"Live query '{name}' is not registered.");

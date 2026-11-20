@@ -18,7 +18,7 @@ evidence.
 ## Core and Graph integration tests
 
 Order Operations is the core application journey. Service Topology and Fraud
-Investigation use SQL/PGQ and stay on the separate Graph preview track. They are
+Investigation use BlueTusk Graphs and run on the independent portable Graph track. They are
 still compiled, architecture-checked and retained; their server/runtime tests
 do not block the core CI run.
 
@@ -30,13 +30,12 @@ above, run:
 # tenant isolation and idempotency. Uses a disposable loopback-only database.
 ./eng/test-applications-postgresql.ps1
 
-# Separate historical SQL/PGQ preview: both Topology and Fraud journeys.
-# This does not qualify Graph for production or establish Beta 4 support.
-./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview
+# Portable Graph: both Topology and Fraud journeys on pinned PostgreSQL 18.
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPortable
 
 # Read-only plans: no containers or tests are started.
 ./eng/test-applications-postgresql.ps1 -ValidateOnly
-./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPreview -ValidateOnly
+./eng/test-applications-postgresql.ps1 -ReleaseTrack ContinuousGraphPortable -ValidateOnly
 ./eng/test-application-postgresql-tracks.ps1
 ```
 

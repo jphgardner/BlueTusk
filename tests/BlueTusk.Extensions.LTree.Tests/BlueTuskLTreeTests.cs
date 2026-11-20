@@ -72,7 +72,7 @@ public sealed class BlueTuskLTreeTests
         Assert.False(dataSource.Features.Contains("test.late-feature"));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Ltree_plugin_executes_all_types_arrays_and_operator_live_paths()
     {
         var connectionString = GetConnectionString();

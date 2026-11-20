@@ -29,16 +29,16 @@ public sealed record StudioEventOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumEvents, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumEvents, 1000);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumPayloadBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumPayloadBytes, 64 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumReplyBytes, 1024);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaximumConcurrentReads, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumConcurrentReads, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(TimeoutSeconds, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(TimeoutSeconds, 30);
+        BlueTuskGuard.NotLessThan(MaximumEvents, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumEvents, 1000);
+        BlueTuskGuard.NotLessThan(MaximumPayloadBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaximumPayloadBytes, 64 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(MaximumReplyBytes, 1024);
+        BlueTuskGuard.NotGreaterThan(MaximumReplyBytes, 16 * 1024 * 1024);
+        BlueTuskGuard.NotLessThan(MaximumConcurrentReads, 1);
+        BlueTuskGuard.NotGreaterThan(MaximumConcurrentReads, 64);
+        BlueTuskGuard.NotLessThan(TimeoutSeconds, 1);
+        BlueTuskGuard.NotGreaterThan(TimeoutSeconds, 30);
     }
 }
 
@@ -47,8 +47,8 @@ public static class StudioEventEndpoints
     public static IServiceCollection AddBlueTuskStudioEvents<TResolver>(this IServiceCollection services,
         StudioEventOptions options) where TResolver : class, IStudioEventScopeResolver
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         services.AddSingleton(options);
         services.AddSingleton<StudioEventAdmission>();
@@ -56,10 +56,15 @@ public static class StudioEventEndpoints
         return services;
     }
 
+#if NET7_0_OR_GREATER
     public static RouteGroupBuilder MapBlueTuskStudioEvents(this IEndpointRouteBuilder endpoints)
+#else
+    public static IEndpointConventionBuilder MapBlueTuskStudioEvents(this IEndpointRouteBuilder endpoints)
+#endif
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
+        BlueTuskGuard.NotNull(endpoints);
         var studio = endpoints.ServiceProvider.GetRequiredService<StudioOptions>();
+#if NET7_0_OR_GREATER
         var group = endpoints.MapGroup(studio.Path + "/events").RequireAuthorization(studio.ReadPolicy);
         group.AddEndpointFilter(async (context, next) =>
         {
@@ -67,12 +72,19 @@ public static class StudioEventEndpoints
             context.HttpContext.Response.Headers.XContentTypeOptions = "nosniff";
             return await next(context).ConfigureAwait(false);
         });
-        group.MapGet("/streams", (HttpContext context, IStudioEventScopeResolver resolver, StudioEventOptions options,
-            StudioEventAdmission admission, IStudioAuditSink audit) => ReadAsync(context, resolver, options, admission, audit, true));
-        group.MapGet("/", (HttpContext context, IStudioEventScopeResolver resolver, StudioEventOptions options,
-            StudioEventAdmission admission, IStudioAuditSink audit) => ReadAsync(context, resolver, options, admission, audit, false));
+#else
+        var group = new LegacyStudioRoutes(endpoints, studio.Path + "/events", studio.ReadPolicy);
+#endif
+        group.MapGet("/streams", (HttpContext context) => ReadFromRequestAsync(context, listStreams: true));
+        group.MapGet("/", (HttpContext context) => ReadFromRequestAsync(context, listStreams: false));
         return group;
     }
+
+    private static Task ReadFromRequestAsync(HttpContext context, bool listStreams) => ReadAsync(context,
+        context.RequestServices.GetRequiredService<IStudioEventScopeResolver>(),
+        context.RequestServices.GetRequiredService<StudioEventOptions>(),
+        context.RequestServices.GetRequiredService<StudioEventAdmission>(),
+        context.RequestServices.GetRequiredService<IStudioAuditSink>(), listStreams);
 
     private static async Task ReadAsync(HttpContext context, IStudioEventScopeResolver resolver, StudioEventOptions options,
         StudioEventAdmission admission, IStudioAuditSink audit, bool listStreams)
@@ -87,9 +99,9 @@ public static class StudioEventEndpoints
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
             deadline.CancelAfter(TimeSpan.FromSeconds(options.TimeoutSeconds));
             var scope = await resolver.ResolveAsync(context.User, deadline.Token).ConfigureAwait(false);
-            ArgumentNullException.ThrowIfNull(scope);
-            ArgumentNullException.ThrowIfNull(scope.Store);
-            ArgumentNullException.ThrowIfNull(scope.Streams);
+            BlueTuskGuard.NotNull(scope);
+            BlueTuskGuard.NotNull(scope.Store);
+            BlueTuskGuard.NotNull(scope.Streams);
             if (scope.Streams.Count > 1000) { throw new StudioReplyLimitException(); }
             foreach (var (alias, key) in scope.Streams)
             {
@@ -101,7 +113,7 @@ public static class StudioEventEndpoints
             if (listStreams)
             {
                 writer.WriteStartArray("streams");
-                foreach (var alias in scope.Streams.Keys.Order(StringComparer.Ordinal))
+                foreach (var alias in scope.Streams.Keys.OrderBy(static value => value, StringComparer.Ordinal))
                 {
                     writer.WriteStringValue(alias);
                     Check(writer, options.MaximumReplyBytes);
@@ -120,11 +132,11 @@ public static class StudioEventEndpoints
                 var limit = options.MaximumEvents;
                 if (context.Request.Query.TryGetValue("limit", out var requested) && (!int.TryParse(requested, NumberStyles.None, CultureInfo.InvariantCulture, out limit) ||
                     limit < 1 || limit > options.MaximumEvents)) { throw new ArgumentException("Invalid event count."); }
-                var operation = Guid.CreateVersion7();
+                var operation = StudioOperationId.CreateVersion7();
                 var actor = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
                 if (string.IsNullOrWhiteSpace(actor)) { throw new UnauthorizedAccessException("A stable Studio audit actor is required."); }
-                var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("events:" + alias + ":" + after.ToString(CultureInfo.InvariantCulture))));
-                var scopeId = "events:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(stream.TenantId + "\0" + stream.StreamId)));
+                var fingerprint = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("events:" + alias + ":" + after.ToString(CultureInfo.InvariantCulture))));
+                var scopeId = "events:" + BlueTuskRuntime.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(stream.TenantId + "\0" + stream.StreamId)));
                 await audit.RecordAsync(new(operation, actor, fingerprint, "event-trace-attempt", 0) { ScopeId = scopeId }, deadline.Token).ConfigureAwait(false);
                 var values = await scope.Store.ReadAsync(stream, after, limit, options.MaximumPayloadBytes, deadline.Token).ConfigureAwait(false);
                 writer.WriteStartArray("events");
@@ -169,7 +181,7 @@ public static class StudioEventEndpoints
         finally { admission.Capacity.Release(); }
     }
 
-    private static bool Alias(string value) => value is { Length: > 0 and <= 128 } && value.All(character => char.IsAsciiLetterOrDigit(character) || character is '_' or '-' or '.');
+    private static bool Alias(string value) => value is { Length: > 0 and <= 128 } && value.All(character => BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '_' or '-' or '.');
     private static void Check(Utf8JsonWriter writer, int maximum)
     {
         if (writer.BytesCommitted + writer.BytesPending > maximum) { throw new StudioReplyLimitException(); }

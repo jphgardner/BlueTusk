@@ -45,7 +45,7 @@ Retention requires every applicable group to pass a transaction and the resume w
 
 `ISyncDestination` advertises transactional batches, idempotent upserts, deletes, checkpoint co-location, reconciliation, and alias-swap support. Source transactions stay intact. Transform fingerprints are stable and changes require an explicit migration or rebuild. Poison records pause unless an operator explicitly chooses quarantine-and-advance.
 
-PostgreSQL atomically applies writes and its destination checkpoint. NATS uses stable change IDs for JetStream deduplication. Redis uses idempotent materialisation with atomic scripts or batches. OpenSearch uses stable document IDs, bulk operations, versioned rebuild indexes, and alias swaps. All four connectors must pass the same conformance suite before the first Sync preview.
+PostgreSQL atomically applies writes and its destination checkpoint. NATS uses stable change IDs for JetStream deduplication. Redis uses idempotent materialisation with atomic scripts or batches. OpenSearch uses stable document IDs, bulk operations, versioned rebuild indexes, and alias swaps. Those four destinations shipped first. The current Core gate covers all seven destinations, including Kafka, S3, and Webhooks, with the required connector conformance and endurance evidence.
 
 ## Live
 
@@ -57,20 +57,21 @@ Subscription identity includes database, query fingerprint, parameters, security
 
 Control Plane and Dashboard expose source, slot, WAL, relay, group, checkpoint, snapshot, pipeline, retry, quarantine, reconciliation, subscription, quota, and replay health. Mutations require role-based authorisation, confirmation, and immutable audit records; slot deletion and checkpoint rewind are never one-click defaults.
 
-Continuous Graph registers capability-guarded SQL/PGQ plans, extracts table
-dependencies, and supports both transaction invalidation followed by
-authoritative `GRAPH_TABLE` requery/diff and bounded incremental maintenance.
+Continuous Graph registers typed EF graph queries, validates their table
+dependencies, and supports both authoritative requery and bounded incremental
+maintenance. BlueTusk Graphs is the portable default on PostgreSQL 15–18.
+Native SQL/PGQ is an explicit backend and requires a capability check.
 Incremental evaluators derive complete affected-key sets from Streams
 transactions and execute authorised key-scoped queries; they never expose CDC
 tuple values. Removal, predicate exit, worsening rank, uncertain coverage,
 two-phase commit, resource limits, and periodic repair trigger an authoritative
 full query.
 
-The preview compiler accepts trusted typed EF graph factories only. A
+The compiler accepts trusted typed EF graph factories only. A
 registration names the configured graph element-table aliases it uses; those
 aliases are validated against EF property-graph metadata and become the exact
-Live table dependency set. Plans require PostgreSQL 19 SQL/PGQ capability,
-deterministic ordering including a direct result key, and one bounded `Take`.
+Live table dependency set. Plans require deterministic ordering including
+a direct result key and one bounded `Take`.
 The compiled plan delegates initial cursor reservation, security-scoped
 identity, invalidation coalescing, authoritative requery, and keyed diff/reset
 to Live. Incremental consumers persist replay events before committing their

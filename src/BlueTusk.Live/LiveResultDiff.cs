@@ -80,38 +80,36 @@ public sealed class LiveResultEvent<T, TKey>
 public sealed class LiveResultSnapshot<T, TKey>
     where TKey : notnull
 {
-    private readonly T[] _ownedRows;
+    private readonly LiveSnapshotRows<T> _ownedRows;
     private readonly TKey[] _ownedKeys;
-    private readonly ReadOnlyCollection<T> _rows;
     private readonly ReadOnlyCollection<TKey> _keys;
     private readonly Dictionary<TKey, int> _keyIndexes;
 
     private LiveResultSnapshot(
-        T[] rows,
+        LiveSnapshotRows<T> rows,
         TKey[] keys,
         Dictionary<TKey, int> keyIndexes)
     {
         _ownedRows = rows;
         _ownedKeys = keys;
-        _rows = Array.AsReadOnly(rows);
         _keys = Array.AsReadOnly(keys);
         _keyIndexes = keyIndexes;
     }
 
-    public IReadOnlyList<T> Rows => _rows;
+    public IReadOnlyList<T> Rows => _ownedRows;
 
     public IReadOnlyList<TKey> Keys => _keys;
 
     internal Dictionary<TKey, int> KeyIndexes => _keyIndexes;
 
-    internal T[] OwnedRows => _ownedRows;
+    internal LiveSnapshotRows<T> OwnedRows => _ownedRows;
 
     internal TKey[] OwnedKeys => _ownedKeys;
 
     internal IEqualityComparer<TKey> KeyComparer => _keyIndexes.Comparer;
 
     internal static LiveResultSnapshot<T, TKey> CreateOwned(
-        T[] rows,
+        LiveSnapshotRows<T> rows,
         TKey[] keys,
         Dictionary<TKey, int> keyIndexes) =>
         new(rows, keys, keyIndexes);
@@ -121,7 +119,7 @@ public sealed record LiveDiffOptions
 {
     public int MaximumEventsPerRefresh { get; init; } = 1_024;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumEventsPerRefresh);
+    internal void Validate() => BlueTuskGuard.NotNegativeOrZero(MaximumEventsPerRefresh);
 }
 
 public sealed class LiveDiffBatch<T, TKey>
@@ -152,8 +150,8 @@ public sealed class LiveDiffBatch<T, TKey>
         LiveResultSnapshot<T, TKey> snapshot,
         LiveResultEvent<T, TKey>[] events)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentNullException.ThrowIfNull(events);
+        BlueTuskGuard.NotNull(snapshot);
+        BlueTuskGuard.NotNull(events);
         return new LiveDiffBatch<T, TKey>(snapshot, events);
     }
 }
@@ -167,9 +165,9 @@ public static class LiveResultDiffer
         long sequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(rows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequence);
+        BlueTuskGuard.NotNull(rows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(sequence);
         var snapshot = CreateSnapshot(rows, keySelector, keyComparer ?? EqualityComparer<TKey>.Default);
         var initial = new LiveResultEvent<T, TKey>(
             sequence,
@@ -194,10 +192,10 @@ public static class LiveResultDiffer
         long nextSequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(previous);
-        ArgumentNullException.ThrowIfNull(currentRows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        BlueTuskGuard.NotNull(previous);
+        BlueTuskGuard.NotNull(currentRows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(nextSequence);
         options ??= new LiveDiffOptions();
         options.Validate();
         rowComparer ??= EqualityComparer<T>.Default;
@@ -292,7 +290,8 @@ public static class LiveResultDiffer
 
     /// <summary>
     /// Applies replacements for an explicitly affected set whose result membership and order are unchanged.
-    /// The existing immutable key index is shared with the next snapshot, avoiding a complete key-map rebuild.
+    /// Rows use persistent storage and the existing key index is shared, so replacements
+    /// copy only tree paths and preserve every historical snapshot without cloning all rows.
     /// </summary>
     public static LiveDiffBatch<T, TKey> DiffAffected<T, TKey>(
         LiveResultSnapshot<T, TKey> previous,
@@ -303,22 +302,22 @@ public static class LiveResultDiffer
         long nextSequence = 1)
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(previous);
-        ArgumentNullException.ThrowIfNull(affectedRows);
-        ArgumentNullException.ThrowIfNull(keySelector);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        BlueTuskGuard.NotNull(previous);
+        BlueTuskGuard.NotNull(affectedRows);
+        BlueTuskGuard.NotNull(keySelector);
+        BlueTuskGuard.NotNegativeOrZero(nextSequence);
         options ??= new LiveDiffOptions();
         options.Validate();
         rowComparer ??= EqualityComparer<T>.Default;
 
-        var rows = (T[])previous.OwnedRows.Clone();
+        var rows = previous.OwnedRows.ToBuilder();
         var events = new List<LiveResultEvent<T, TKey>>(
             Math.Min(affectedRows.Count, options.MaximumEventsPerRefresh + 1));
         var seen = new HashSet<TKey>(previous.KeyComparer);
         var sequence = nextSequence;
         foreach (var row in affectedRows)
         {
-            ArgumentNullException.ThrowIfNull(row);
+            BlueTuskGuard.NotNull(row);
             var key = keySelector(row) ??
                 throw new InvalidOperationException("A live query key selector returned null.");
             if (!seen.Add(key))
@@ -350,8 +349,8 @@ public static class LiveResultDiffer
                 null));
         }
 
-        var snapshot = LiveResultSnapshot<T, TKey>.CreateOwned(
-            rows,
+        var snapshot = events.Count == 0 ? previous : LiveResultSnapshot<T, TKey>.CreateOwned(
+            rows.ToImmutable(),
             previous.OwnedKeys,
             previous.KeyIndexes);
         if (events.Count > options.MaximumEventsPerRefresh)
@@ -378,7 +377,7 @@ public static class LiveResultDiffer
         IEqualityComparer<TKey> keyComparer)
         where TKey : notnull
     {
-        var ownedRows = new T[rows.Count];
+        var ownedRows = LiveSnapshotRows<T>.CreateBuilder(rows.Count);
         var keys = new TKey[rows.Count];
         var keyIndexes = new Dictionary<TKey, int>(rows.Count, keyComparer);
         for (var index = 0; index < rows.Count; index++)
@@ -395,7 +394,7 @@ public static class LiveResultDiffer
             keys[index] = key;
         }
 
-        return LiveResultSnapshot<T, TKey>.CreateOwned(ownedRows, keys, keyIndexes);
+        return LiveResultSnapshot<T, TKey>.CreateOwned(ownedRows.ToImmutable(), keys, keyIndexes);
     }
 
     private static Dictionary<TKey, int> GetKeyIndexes<T, TKey>(

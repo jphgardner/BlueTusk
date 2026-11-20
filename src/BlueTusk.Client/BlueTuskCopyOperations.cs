@@ -23,7 +23,7 @@ public sealed class BlueTuskCopyInOperation : IDisposable
 
     public void Write(ReadOnlySpan<byte> data)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed)
         {
             throw new InvalidOperationException("The COPY IN operation is already complete.");
@@ -42,7 +42,7 @@ public sealed class BlueTuskCopyInOperation : IDisposable
         ReadOnlyMemory<byte> data,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed)
         {
             throw new InvalidOperationException("The COPY IN operation is already complete.");
@@ -66,7 +66,7 @@ public sealed class BlueTuskCopyInOperation : IDisposable
 
     public BlueTuskCopyResult Complete()
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed)
         {
             throw new InvalidOperationException("The COPY IN operation is already complete.");
@@ -76,11 +76,13 @@ public sealed class BlueTuskCopyInOperation : IDisposable
         return _session.CompleteCopyIn(Response, _bytesTransferred);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     internal async ValueTask<BlueTuskCopyResult> CompleteAsync(
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed)
         {
             throw new InvalidOperationException("The COPY IN operation is already complete.");
@@ -93,7 +95,9 @@ public sealed class BlueTuskCopyInOperation : IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     internal async ValueTask DisposeAsync()
     {
         var session = Interlocked.Exchange(ref _session, null);
@@ -112,7 +116,9 @@ public sealed class BlueTuskCopyInOperation : IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     private async ValueTask AwaitWriteAsync(ValueTask write, int length)
     {
         await write.ConfigureAwait(false);
@@ -146,7 +152,7 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
 
     public int Read(Span<byte> destination)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (destination.IsEmpty || _completed)
         {
             return 0;
@@ -208,7 +214,7 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
         Memory<byte> destination,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (destination.IsEmpty || _completed)
         {
             return ValueTask.FromResult(0);
@@ -224,7 +230,7 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
 
     internal bool TryReadExactly(Memory<byte> destination)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed || _currentSequence.Length < destination.Length)
         {
             return false;
@@ -238,7 +244,7 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
 
     internal bool TryReadMemory(int length, out ReadOnlyMemory<byte> value)
     {
-        ObjectDisposedException.ThrowIf(_session is null, this);
+        BlueTuskGuard.NotDisposed(_session is null, this);
         if (_completed ||
             length < 0 ||
             _currentSequence.Length < length ||
@@ -340,7 +346,9 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
         return ReadAsyncSlow(session, destination, cancellationToken);
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitCopyOutBufferEventAsync(
         BlueTuskSession session,
         Memory<byte> destination,
@@ -363,7 +371,9 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private static async ValueTask<int> AbortCopyOutAndThrowAsync(
         BlueTuskSession session,
         Exception exception)
@@ -371,7 +381,9 @@ public sealed class BlueTuskCopyOutOperation : IDisposable
         await session.AbortCopyOutOperationAsync().ConfigureAwait(false);
         throw exception;
     }
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
     internal async ValueTask DisposeAsync()
     {
         var session = Interlocked.Exchange(ref _session, null);

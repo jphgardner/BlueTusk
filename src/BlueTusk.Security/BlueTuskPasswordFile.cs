@@ -5,6 +5,7 @@ namespace BlueTusk.Security;
 /// <summary>Resolves credentials from PostgreSQL password files.</summary>
 public static class BlueTuskPasswordFile
 {
+#if NET7_0_OR_GREATER
     private const UnixFileMode DisallowedUnixPermissions =
         UnixFileMode.GroupRead |
         UnixFileMode.GroupWrite |
@@ -12,6 +13,7 @@ public static class BlueTuskPasswordFile
         UnixFileMode.OtherRead |
         UnixFileMode.OtherWrite |
         UnixFileMode.OtherExecute;
+#endif
 
     /// <summary>Gets the platform-default PostgreSQL password-file path.</summary>
     public static string? GetDefaultPath()
@@ -42,12 +44,12 @@ public static class BlueTuskPasswordFile
         string database,
         string username)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        ArgumentException.ThrowIfNullOrWhiteSpace(host);
-        ArgumentOutOfRangeException.ThrowIfLessThan(port, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(port, 65_535);
-        ArgumentNullException.ThrowIfNull(database);
-        ArgumentNullException.ThrowIfNull(username);
+        BlueTuskGuard.NotNullOrWhiteSpace(path);
+        BlueTuskGuard.NotNullOrWhiteSpace(host);
+        BlueTuskGuard.NotLessThan(port, 1);
+        BlueTuskGuard.NotGreaterThan(port, 65_535);
+        BlueTuskGuard.NotNull(database);
+        BlueTuskGuard.NotNull(username);
 
         if (!File.Exists(path) || !HasSafePermissions(path))
         {
@@ -71,12 +73,12 @@ public static class BlueTuskPasswordFile
         string username,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        ArgumentException.ThrowIfNullOrWhiteSpace(host);
-        ArgumentOutOfRangeException.ThrowIfLessThan(port, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(port, 65_535);
-        ArgumentNullException.ThrowIfNull(database);
-        ArgumentNullException.ThrowIfNull(username);
+        BlueTuskGuard.NotNullOrWhiteSpace(path);
+        BlueTuskGuard.NotNullOrWhiteSpace(host);
+        BlueTuskGuard.NotLessThan(port, 1);
+        BlueTuskGuard.NotGreaterThan(port, 65_535);
+        BlueTuskGuard.NotNull(database);
+        BlueTuskGuard.NotNull(username);
 
         if (!File.Exists(path) || !HasSafePermissions(path))
         {
@@ -131,7 +133,11 @@ public static class BlueTuskPasswordFile
 
         try
         {
+#if NET7_0_OR_GREATER
             return (File.GetUnixFileMode(path) & DisallowedUnixPermissions) == 0;
+#else
+            return LegacyUnixFilePermissions.HasSafePasswordFilePermissions(path);
+#endif
         }
         catch (PlatformNotSupportedException)
         {

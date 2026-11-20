@@ -1,20 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(BlueTuskRuntimeTargetFrameworks)</TargetFrameworks>
+    <BlueTuskRuntimeTests>true</BlueTuskRuntimeTests>
+    <UseAppHost Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</UseAppHost>
     <BlueTuskProductFamily>ContinuousGraph</BlueTuskProductFamily>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <Import Project="..\..\eng\versions\ContinuousGraph.props" />
+  <Import Project="..\..\eng\EntityFrameworkCore.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.v3" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
+    <PackageReference Include="xunit" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BlueTuskGraphEngineTests)' != 'true'">
+    <Compile Remove="GraphEngineIntegrationTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,4 +32,16 @@
     <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="'$(BlueTuskTopologyCanaryTests)' != 'true'">
+    <Compile Remove="ServiceTopologyGraphCanaryTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BlueTuskTopologyCanaryTests)' == 'true'">
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Domain/TopologyModel.cs" Link="Topology/TopologyModel.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Application/TopologyService.cs" Link="Topology/TopologyService.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Infrastructure/TopologyInfrastructure.cs" Link="Topology/TopologyInfrastructure.cs" />
+    <Compile Include="../../applications/src/ServiceTopology/BlueTusk.ServiceTopology.Infrastructure/Migrations/*.cs" Link="Topology/Migrations/%(Filename)%(Extension)" />
+    <ProjectReference Include="../../src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -2,6 +2,7 @@
 param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$verifier = Join-Path $PSScriptRoot 'verify-github-governance.ps1'
 $baseline = Get-Content (Join-Path $PSScriptRoot 'v1-github-governance.json') -Raw
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('bluetusk-governance-' + [Guid]::NewGuid().ToString('N') + '.json')
 try
@@ -36,6 +37,29 @@ try
     foreach ($environment in $restored.environments) { $environment.preventSelfReview = $true }
     $restored | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $temporary -Encoding utf8NoBOM
     & (Join-Path $PSScriptRoot 'verify-github-governance.ps1') -ConfigurationPath $temporary | Out-Null
-    Write-Output "Verified sole-maintainer policy, restored governed policy, and $rejected rejected unsafe cases."
+    $scoped = $baseline | ConvertFrom-Json
+    $prerelease = $scoped.environments | Where-Object name -ceq 'package-prerelease'
+    $prerelease.requiredSecrets = @('UNAVAILABLE_HISTORICAL_SECRET')
+    $expansion = $scoped.environments | Where-Object name -ceq 'expansion-candidate-readiness'
+    if ($null -ne $expansion) { $expansion.requiredSecrets = @('UNAVAILABLE_EXPANSION_SECRET') }
+    $scoped | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $temporary -Encoding utf8NoBOM
+    & $verifier -Scope CorePackages -ConfigurationPath $temporary | Out-Null
+    $failure = $null
+    try { & $verifier -ConfigurationPath $temporary | Out-Null }
+    catch { $failure = $_.Exception.Message }
+    if ($failure -notmatch 'UNAVAILABLE_HISTORICAL_SECRET')
+    { throw 'Full governance must continue to validate the historical environment.' }
+
+    $production = $scoped.environments | Where-Object name -ceq 'package-production'
+    $production.deploymentBranchPolicy.requiredPatterns = @(
+        $production.deploymentBranchPolicy.requiredPatterns | Where-Object { $_ -cne 'provider-v1.2.0' })
+    $scoped | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $temporary -Encoding utf8NoBOM
+    $failure = $null
+    try { & $verifier -Scope CorePackages -ConfigurationPath $temporary | Out-Null }
+    catch { $failure = $_.Exception.Message }
+    if ($failure -notmatch 'five exact 1.2 tags')
+    { throw 'Core package governance must reject a missing production tag.' }
+
+    Write-Output "Verified governance scopes, historical environment protection, every Core production tag, and $rejected rejected unsafe cases."
 }
 finally { Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue }

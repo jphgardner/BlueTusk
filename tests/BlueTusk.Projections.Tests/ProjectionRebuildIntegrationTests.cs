@@ -9,7 +9,7 @@ namespace BlueTusk.Projections.Tests;
 
 public sealed class ProjectionRebuildIntegrationTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task TwoRealSnapshotSlotsShareVerifiedLineageCatchUpToSourceBarrierAndPublishLiveResetWithoutGap()
     {
         await using var db = await ProjectionDatabase.CreateAsync();

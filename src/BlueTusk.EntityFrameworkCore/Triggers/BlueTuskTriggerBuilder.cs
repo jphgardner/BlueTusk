@@ -55,13 +55,13 @@ public class BlueTuskTriggerBuilder
 
     public BlueTuskTriggerBuilder OnUpdate(params string[] propertyNames)
     {
-        ArgumentNullException.ThrowIfNull(propertyNames);
+        BlueTuskGuard.NotNull(propertyNames);
         foreach (var propertyName in propertyNames)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
+            BlueTuskGuard.NotNullOrWhiteSpace(propertyName);
             _ = _entityType.FindProperty(propertyName)
                 ?? throw new ArgumentException(
-                    $"Property '{propertyName}' is not mapped by entity '{_entityType.DisplayName()}'.",
+                    $"Property '{propertyName}' is not mapped by entity '{_entityType.Name}'.",
                     nameof(propertyNames));
         }
 
@@ -83,8 +83,8 @@ public class BlueTuskTriggerBuilder
         string? schema = null,
         params string[] arguments)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(arguments);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(arguments);
         FunctionName = name;
         FunctionSchema = schema;
         _arguments.Clear();
@@ -171,7 +171,7 @@ public sealed class BlueTuskTriggerBuilder<TEntity> : BlueTuskTriggerBuilder
 
     public BlueTuskTriggerBuilder<TEntity> OnUpdate(Expression<Func<TEntity, object?>> properties)
     {
-        ArgumentNullException.ThrowIfNull(properties);
+        BlueTuskGuard.NotNull(properties);
         base.OnUpdate(GetPropertyNames(properties));
         return this;
     }

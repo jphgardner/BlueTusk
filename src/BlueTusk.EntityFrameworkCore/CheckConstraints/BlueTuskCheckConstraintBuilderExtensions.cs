@@ -15,7 +15,7 @@ public static class BlueTuskCheckConstraintBuilderExtensions
         this CheckConstraintBuilder checkConstraintBuilder,
         bool notValid = true)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraintBuilder);
+        BlueTuskGuard.NotNull(checkConstraintBuilder);
         SetOrRemove(checkConstraintBuilder.Metadata, BlueTuskCheckConstraintMetadata.NotValidAnnotationName, notValid);
         return checkConstraintBuilder;
     }
@@ -25,7 +25,7 @@ public static class BlueTuskCheckConstraintBuilderExtensions
         this CheckConstraintBuilder checkConstraintBuilder,
         bool noInherit = true)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraintBuilder);
+        BlueTuskGuard.NotNull(checkConstraintBuilder);
         SetOrRemove(checkConstraintBuilder.Metadata, BlueTuskCheckConstraintMetadata.NoInheritAnnotationName, noInherit);
         return checkConstraintBuilder;
     }
@@ -37,7 +37,7 @@ public static class BlueTuskCheckConstraintBuilderExtensions
         this CheckConstraintBuilder checkConstraintBuilder,
         bool notEnforced = true)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraintBuilder);
+        BlueTuskGuard.NotNull(checkConstraintBuilder);
         SetOrRemove(
             checkConstraintBuilder.Metadata,
             BlueTuskCheckConstraintMetadata.NotEnforcedAnnotationName,
@@ -48,21 +48,21 @@ public static class BlueTuskCheckConstraintBuilderExtensions
     /// <summary>Returns whether the CHECK constraint is configured as PostgreSQL NOT VALID.</summary>
     public static bool IsNotValid(this IReadOnlyCheckConstraint checkConstraint)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraint);
+        BlueTuskGuard.NotNull(checkConstraint);
         return BlueTuskCheckConstraintMetadata.IsNotValid(checkConstraint);
     }
 
     /// <summary>Returns whether the CHECK constraint is configured as PostgreSQL NO INHERIT.</summary>
     public static bool IsNoInherit(this IReadOnlyCheckConstraint checkConstraint)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraint);
+        BlueTuskGuard.NotNull(checkConstraint);
         return BlueTuskCheckConstraintMetadata.HasNoInherit(checkConstraint);
     }
 
     /// <summary>Returns whether the CHECK constraint is configured as PostgreSQL NOT ENFORCED.</summary>
     public static bool IsNotEnforced(this IReadOnlyCheckConstraint checkConstraint)
     {
-        ArgumentNullException.ThrowIfNull(checkConstraint);
+        BlueTuskGuard.NotNull(checkConstraint);
         return BlueTuskCheckConstraintMetadata.IsNotEnforced(checkConstraint);
     }
 
@@ -71,7 +71,7 @@ public static class BlueTuskCheckConstraintBuilderExtensions
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(entityBuilder);
+        BlueTuskGuard.NotNull(entityBuilder);
         foreach (var definition in BlueTuskCheckConstraintMetadata.Deserialize(serializedDefinitions))
         {
             var constraint = entityBuilder.Metadata.AddCheckConstraint(definition.Name, definition.Sql);

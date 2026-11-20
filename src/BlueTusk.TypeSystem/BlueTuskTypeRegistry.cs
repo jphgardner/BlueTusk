@@ -92,7 +92,7 @@ public sealed class BlueTuskTypeRegistry
         out BlueTuskTypeDescriptor? type,
         out IBlueTuskCodec? codec)
     {
-        ArgumentNullException.ThrowIfNull(clrType);
+        BlueTuskGuard.NotNull(clrType);
         if (!_uniqueClrTypes.TryGetValue(clrType, out var id) && clrType.IsArray)
         {
             var elementType = clrType.GetElementType()!;
@@ -121,8 +121,8 @@ public readonly record struct BlueTuskTypeName
 {
     public BlueTuskTypeName(string schema, string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         Schema = schema;
         Name = name;
     }
@@ -133,7 +133,7 @@ public readonly record struct BlueTuskTypeName
 
     public static BlueTuskTypeName Parse(string qualifiedName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(qualifiedName);
+        BlueTuskGuard.NotNullOrWhiteSpace(qualifiedName);
         var text = qualifiedName.AsSpan().Trim();
         var separator = -1;
         var quoted = false;
@@ -210,7 +210,7 @@ public sealed class BlueTuskTypeRegistryBuilder
 
     public BlueTuskTypeRegistryBuilder Register(BlueTuskTypeDescriptor type, IBlueTuskCodec? codec = null)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (!_types.TryAdd(type.Id, type))
         {
             throw new InvalidOperationException($"PostgreSQL type OID {type.Id} is already registered.");
@@ -226,7 +226,7 @@ public sealed class BlueTuskTypeRegistryBuilder
 
     public BlueTuskTypeRegistryBuilder RegisterCodec(BlueTuskTypeId type, IBlueTuskCodec codec)
     {
-        ArgumentNullException.ThrowIfNull(codec);
+        BlueTuskGuard.NotNull(codec);
         if (!_types.ContainsKey(type))
         {
             throw new InvalidOperationException($"PostgreSQL type OID {type} is not registered.");
@@ -245,7 +245,7 @@ public sealed class BlueTuskTypeRegistryBuilder
         string name,
         IBlueTuskCodec<T> codec)
     {
-        ArgumentNullException.ThrowIfNull(codec);
+        BlueTuskGuard.NotNull(codec);
         var typeName = new BlueTuskTypeName(schema, name);
         if (!_namedCodecs.TryAdd(typeName, codec))
         {
@@ -264,7 +264,7 @@ public sealed class BlueTuskTypeRegistryBuilder
 
     internal BlueTuskTypeRegistryBuilder RegisterOrReplaceCodec(BlueTuskTypeId type, IBlueTuskCodec codec)
     {
-        ArgumentNullException.ThrowIfNull(codec);
+        BlueTuskGuard.NotNull(codec);
         if (!_types.ContainsKey(type))
         {
             throw new InvalidOperationException($"PostgreSQL type OID {type} is not registered.");
@@ -276,7 +276,7 @@ public sealed class BlueTuskTypeRegistryBuilder
 
     internal BlueTuskTypeRegistryBuilder RegisterNamedCodec(BlueTuskTypeName type, IBlueTuskCodec codec)
     {
-        ArgumentNullException.ThrowIfNull(codec);
+        BlueTuskGuard.NotNull(codec);
         _namedCodecs[type] = codec;
         return this;
     }

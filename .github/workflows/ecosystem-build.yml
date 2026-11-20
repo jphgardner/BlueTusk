@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
       - name: Verify repository registration
         shell: pwsh
         run: ./eng/verify-solution-layout.ps1
@@ -75,6 +76,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
       - name: Install locked workspace dependencies
         run: npm ci --ignore-scripts
       - name: Install selected real browser
@@ -115,6 +117,7 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+          dotnet-version: '10.0.404'
       - name: Install locked workspace dependencies and Microsoft Edge
         shell: pwsh
         run: |
@@ -125,7 +128,7 @@ jobs:
       - name: Verify Node checkpoint publication while the Windows observer holds a snapshot
         shell: pwsh
         run: |
-          dotnet test tests/BlueTusk.Edge.Tests/BlueTusk.Edge.Tests.csproj --configuration Release `
+          dotnet test tests/BlueTusk.Edge.Tests/BlueTusk.Edge.Tests.csproj --framework net10.0 --configuration Release `
             --filter 'FullyQualifiedName~BrowserCheckpointFileTests' `
             --logger trx --results-directory artifacts/edge-checkpoint-tests
           if ($LASTEXITCODE -ne 0) { throw 'Windows checkpoint publication failed.' }

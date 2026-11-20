@@ -156,7 +156,7 @@ public sealed class ResumingConsumerHostingTests
     {
         var builder = new ServiceCollection().AddBlueTuskStreams();
         Func<IServiceProvider, CancellationToken, IAsyncEnumerable<ChangeTransactionDelivery>> factory =
-            (_, _) => AsyncEnumerable.Empty<ChangeTransactionDelivery>();
+            (_, _) => EmptyTransactions();
 
         Assert.Throws<ArgumentNullException>(() => builder.AddHostedConsumer<RecordingConsumer>(null!, factory));
         Assert.Throws<ArgumentException>(() => builder.AddHostedConsumer<RecordingConsumer>(" ", factory));
@@ -174,14 +174,14 @@ public sealed class ResumingConsumerHostingTests
         var builder = new ServiceCollection().AddBlueTuskStreams();
         builder.AddHostedConsumer<RecordingConsumer>(
             "orders",
-            (_, _) => AsyncEnumerable.Empty<ChangeTransactionDelivery>());
+            (_, _) => EmptyTransactions());
 
         var snapshotDuplicate = Assert.Throws<InvalidOperationException>(() =>
             builder.AddHostedConsumer<RecordingConsumer>("orders", _ => new UnusedSnapshotSource()));
         var resumingDuplicate = Assert.Throws<InvalidOperationException>(() =>
             builder.AddHostedConsumer<RecordingConsumer>(
                 "orders",
-                (_, _) => AsyncEnumerable.Empty<ChangeTransactionDelivery>()));
+                (_, _) => EmptyTransactions()));
         builder.AddHostedConsumer<RecordingConsumer>("customers", _ => new UnusedSnapshotSource());
 
         Assert.Contains("already registered", snapshotDuplicate.Message, StringComparison.Ordinal);
@@ -213,6 +213,12 @@ public sealed class ResumingConsumerHostingTests
         await hosted.StopAsync(CancellationToken.None);
 
         Assert.Equal(["bootstrap", "resumed"], registry.GetStatuses().Select(status => status.Name));
+    }
+
+    private static async IAsyncEnumerable<ChangeTransactionDelivery> EmptyTransactions()
+    {
+        await Task.CompletedTask;
+        yield break;
     }
 
     private static IHostedService GetHostedService(IServiceProvider provider) =>

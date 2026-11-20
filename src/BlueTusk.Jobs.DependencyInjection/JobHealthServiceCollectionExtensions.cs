@@ -9,12 +9,12 @@ public static class JobHealthServiceCollectionExtensions
     public static IServiceCollection AddJobsReadiness(this IServiceCollection services, string name,
         JobScope scope, Func<IServiceProvider, PostgreSqlJobStore> storeFactory, JobHealthCheckOptions options)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(name.Length, 64);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(storeFactory);
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(services);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotGreaterThan(name.Length, 64);
+        BlueTuskGuard.NotNull(scope);
+        BlueTuskGuard.NotNull(storeFactory);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         int count = 0;
         foreach (var descriptor in services)
@@ -28,7 +28,7 @@ public static class JobHealthServiceCollectionExtensions
                 }
             }
         }
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(count, 128);
+        BlueTuskGuard.NotGreaterThanOrEqual(count, 128);
         services.AddSingleton(new Registration(name));
         services.AddKeyedSingleton<JobQueueHealthCheck>(name, (provider, _) => new JobQueueHealthCheck(storeFactory(provider), scope, options));
         services.AddHealthChecks().Add(new HealthCheckRegistration(name, provider => provider.GetRequiredKeyedService<JobQueueHealthCheck>(name),

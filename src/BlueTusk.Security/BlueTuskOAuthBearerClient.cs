@@ -15,7 +15,7 @@ public static class BlueTuskOAuthBearerClient
     /// <remarks>The caller must clear the returned array after it has been sent.</remarks>
     public static byte[] CreateInitialResponse(string accessToken)
     {
-        ArgumentNullException.ThrowIfNull(accessToken);
+        BlueTuskGuard.NotNull(accessToken);
         ValidateAccessToken(accessToken);
 
         var response = new byte[checked(ResponsePrefix.Length + accessToken.Length + ResponseSuffix.Length)];

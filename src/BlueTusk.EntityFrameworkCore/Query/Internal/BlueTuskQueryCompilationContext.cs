@@ -10,7 +10,14 @@ internal sealed class BlueTuskQueryCompilationContext : RelationalQueryCompilati
         RelationalQueryCompilationContextDependencies relationalDependencies,
         bool async,
         bool precompiling = false)
-        : base(dependencies, relationalDependencies, async, precompiling)
+        : base(dependencies, relationalDependencies, async
+#if BLUETUSK_EF9_OR_GREATER
+            , precompiling
+#if !BLUETUSK_EF10_OR_GREATER
+            , nonNullableReferenceTypeParameters: null
+#endif
+#endif
+        )
     {
     }
 

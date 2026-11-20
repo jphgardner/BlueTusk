@@ -16,7 +16,7 @@ public static class BlueTuskViewModelBuilderExtensions
         Action<BlueTuskViewBuilder>? buildAction = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskViewBuilder(name, schema, querySql);
         buildAction?.Invoke(builder);
         return HasView(modelBuilder, builder.Build());
@@ -27,7 +27,7 @@ public static class BlueTuskViewModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskViewDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskViewMetadata.Validate(definition);
         definition = BlueTuskViewMetadata.Normalize(definition);
         var definitions = BlueTuskViewMetadata.Get(modelBuilder.Model);
@@ -52,7 +52,7 @@ public static class BlueTuskViewModelBuilderExtensions
         Action<BlueTuskMaterializedViewBuilder>? buildAction = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskMaterializedViewBuilder(name, schema, querySql);
         buildAction?.Invoke(builder);
         return HasMaterializedView(modelBuilder, builder.Build());
@@ -63,7 +63,7 @@ public static class BlueTuskViewModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskMaterializedViewDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskViewMetadata.Validate(definition);
         definition = BlueTuskViewMetadata.Normalize(definition);
         var definitions = BlueTuskViewMetadata.Get(modelBuilder.Model);
@@ -86,8 +86,8 @@ public static class BlueTuskViewModelBuilderExtensions
         string name,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var key = new BlueTuskViewMetadata.ViewKey(schema, name);
         var definitions = BlueTuskViewMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskViewDefinitionSet(
@@ -98,7 +98,7 @@ public static class BlueTuskViewModelBuilderExtensions
     /// <summary>Reads all provider-owned PostgreSQL view definitions from an EF model.</summary>
     public static BlueTuskViewDefinitionSet GetViews(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskViewMetadata.Get(model);
     }
 
@@ -107,7 +107,7 @@ public static class BlueTuskViewModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskViewMetadata.Deserialize(serializedDefinitions));
     }
 

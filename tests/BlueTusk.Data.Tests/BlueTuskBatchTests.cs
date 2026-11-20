@@ -13,8 +13,8 @@ public sealed class BlueTuskBatchTests
 
         Assert.True(factory.CanCreateBatch);
         Assert.IsType<BlueTuskBatch>(factory.CreateBatch());
-        Assert.IsType<BlueTuskBatchCommand>(factory.CreateBatchCommand());
-        Assert.IsType<BlueTuskParameter>(factory.CreateBatchCommand()!.CreateParameter());
+        var batchCommand = Assert.IsType<BlueTuskBatchCommand>(factory.CreateBatchCommand());
+        Assert.IsType<BlueTuskParameter>(batchCommand.CreateParameter());
     }
 
     [Fact]

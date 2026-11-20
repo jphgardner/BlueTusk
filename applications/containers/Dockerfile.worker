@@ -3,6 +3,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe8
 ARG PROJECT_FAMILY
 WORKDIR /source
 COPY Directory.Build.props Directory.Packages.props README.md ./
+COPY eng/TargetFrameworks.props eng/
+COPY eng/versions/ eng/versions/
 COPY applications/ applications/
 RUN dotnet restore "applications/src/${PROJECT_FAMILY}/BlueTusk.${PROJECT_FAMILY}.Worker/BlueTusk.${PROJECT_FAMILY}.Worker.csproj" \
     --source https://api.nuget.org/v3/index.json

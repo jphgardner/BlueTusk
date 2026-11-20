@@ -33,11 +33,11 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
         where TResult : class
         where TKey : notnull
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(boundArguments);
-        ArgumentNullException.ThrowIfNull(editableParameters);
-        ArgumentNullException.ThrowIfNull(securityScopeFactory);
-        ArgumentNullException.ThrowIfNull(projector);
+        BlueTuskGuard.NotNull(plan);
+        BlueTuskGuard.NotNull(boundArguments);
+        BlueTuskGuard.NotNull(editableParameters);
+        BlueTuskGuard.NotNull(securityScopeFactory);
+        BlueTuskGuard.NotNull(projector);
         var arguments = plan.Bind(boundArguments);
         var editable = editableParameters.Distinct(StringComparer.Ordinal).ToArray();
         if (editable.Any(name => !plan.LivePlan.Parameters.Any(parameter =>
@@ -60,14 +60,14 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
 
     public bool Unregister(string queryFingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(queryFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(queryFingerprint);
         return _registrations.TryRemove(queryFingerprint, out _);
     }
 
     public IReadOnlyList<ControlPlaneContinuousGraphParameterSnapshot> GetParameters(
         string queryFingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(queryFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(queryFingerprint);
         return _registrations.TryGetValue(queryFingerprint, out var registration)
             ? registration.Parameters
             : [];
@@ -75,7 +75,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
 
     public bool CanExecute(string queryFingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(queryFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(queryFingerprint);
         return _registrations.ContainsKey(queryFingerprint);
     }
 
@@ -139,9 +139,9 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
             TimeProvider timeProvider,
             CancellationToken cancellationToken)
         {
-            ArgumentNullException.ThrowIfNull(actor);
-            ArgumentNullException.ThrowIfNull(request);
-            ArgumentNullException.ThrowIfNull(request.Parameters);
+            BlueTuskGuard.NotNull(actor);
+            BlueTuskGuard.NotNull(request);
+            BlueTuskGuard.NotNull(request.Parameters);
             var unknown = request.Parameters.Keys.FirstOrDefault(name =>
                 !_editableParameters.Contains(name));
             if (unknown is not null)
@@ -220,7 +220,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
             return new ControlPlaneContinuousGraphRunResult(
                 Guid.NewGuid(),
                 timeProvider.GetUtcNow(),
-                Stopwatch.GetElapsedTime(started),
+                BlueTuskRuntime.GetElapsedTime(started),
                 _plan.Fingerprint,
                 _plan.Name,
                 _plan.LivePlan.DatabaseIdentity,
@@ -238,7 +238,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
             IReadOnlyList<ControlPlaneContinuousGraphNode> nodes,
             int limit)
         {
-            ArgumentNullException.ThrowIfNull(nodes);
+            BlueTuskGuard.NotNull(nodes);
             foreach (var node in nodes)
             {
                 ValidateNode(node);
@@ -266,7 +266,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
             IReadOnlyList<ControlPlaneContinuousGraphEdge> edges,
             int limit)
         {
-            ArgumentNullException.ThrowIfNull(edges);
+            BlueTuskGuard.NotNull(edges);
             foreach (var edge in edges)
             {
                 ValidateEdge(edge);
@@ -291,7 +291,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
 
         private static void ValidateNode(ControlPlaneContinuousGraphNode node)
         {
-            ArgumentNullException.ThrowIfNull(node);
+            BlueTuskGuard.NotNull(node);
             if (string.IsNullOrWhiteSpace(node.Id) ||
                 string.IsNullOrWhiteSpace(node.Label) ||
                 string.IsNullOrWhiteSpace(node.Category) ||
@@ -305,7 +305,7 @@ public sealed class ContinuousGraphControlPlaneExecutionRegistry
 
         private static void ValidateEdge(ControlPlaneContinuousGraphEdge edge)
         {
-            ArgumentNullException.ThrowIfNull(edge);
+            BlueTuskGuard.NotNull(edge);
             if (string.IsNullOrWhiteSpace(edge.Id) ||
                 string.IsNullOrWhiteSpace(edge.SourceNodeId) ||
                 string.IsNullOrWhiteSpace(edge.TargetNodeId) ||
@@ -454,9 +454,9 @@ public sealed class HostedContinuousGraphControlPlaneExecutionService :
         ControlPlaneContinuousGraphRunRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(queryFingerprint);
-        ArgumentNullException.ThrowIfNull(actor);
-        ArgumentNullException.ThrowIfNull(request);
+        BlueTuskGuard.NotNullOrWhiteSpace(queryFingerprint);
+        BlueTuskGuard.NotNull(actor);
+        BlueTuskGuard.NotNull(request);
         if (!_registry.TryGet(queryFingerprint, out var registration) || registration is null)
         {
             throw new ControlPlaneContinuousGraphExecutionException(
@@ -503,9 +503,9 @@ public sealed class HostedContinuousGraphControlPlaneExecutionService :
             throw new ArgumentOutOfRangeException(nameof(options), "Graph execution timeout must be positive.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumConcurrentExecutions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumNodes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumEdges);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumConcurrentExecutions);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumNodes);
+        BlueTuskGuard.NotNegativeOrZero(options.MaximumEdges);
     }
 }
 

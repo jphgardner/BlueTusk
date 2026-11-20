@@ -33,12 +33,14 @@ public sealed class ControlPlaneApiFreezeTests
                 Path.Combine(repositoryRoot, "src"),
                 "PublicAPI.*.txt",
                 SearchOption.AllDirectories)
-            .Where(IsControlPlaneApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
-            .Order(StringComparer.Ordinal)
+            .Where(path => !path.Contains("/obj/", StringComparison.OrdinalIgnoreCase) &&
+                !path.Contains("/bin/", StringComparison.OrdinalIgnoreCase))
+            .Where(path => IsControlPlaneApiBaseline(Path.Combine(repositoryRoot, path)))
+            .OrderBy(static path => path, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(discovered, registered.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(discovered, registered.Keys.OrderBy(static path => path, StringComparer.Ordinal));
         foreach (var path in discovered)
         {
             var shippedPath = Path.Combine(repositoryRoot, path);

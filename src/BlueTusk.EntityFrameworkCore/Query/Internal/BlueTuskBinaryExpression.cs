@@ -14,7 +14,9 @@ internal sealed class BlueTuskBinaryExpression(
     RelationalTypeMapping typeMapping)
     : SqlExpression(resultType, typeMapping)
 {
+#if BLUETUSK_EF9_OR_GREATER
     private static ConstructorInfo? _quotingConstructor;
+#endif
 
     public BlueTuskBinaryExpression(
         SqlExpression left,
@@ -41,6 +43,7 @@ internal sealed class BlueTuskBinaryExpression(
             (SqlExpression)visitor.Visit(Left),
             (SqlExpression)visitor.Visit(Right));
 
+#if BLUETUSK_EF9_OR_GREATER
     public override Expression Quote()
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
@@ -57,6 +60,7 @@ internal sealed class BlueTuskBinaryExpression(
             Constant(OperatorToken),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+#endif
 #pragma warning restore EF9100
 
     protected override void Print(ExpressionPrinter expressionPrinter)

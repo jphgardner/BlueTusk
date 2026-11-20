@@ -2,7 +2,7 @@ namespace BlueTusk.Jobs.Tests;
 
 public sealed class RecurringJobTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task ConcurrentDispatchersEnqueueOneOccurrenceAndAdvanceScheduleAtomically()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -24,7 +24,7 @@ public sealed class RecurringJobTests
         Assert.False(await database.Store.DeleteScheduleAsync(database.Scope, schedule.Name));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task SkipMisfireAdvancesPastMissedIntervalsWithoutBacklog()
     {
         await using var database = await JobDatabase.CreateAsync();
@@ -41,7 +41,7 @@ public sealed class RecurringJobTests
         Assert.Empty(await database.Store.ClaimAsync(database.Scope, "worker", 10, TimeSpan.FromMinutes(1)));
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task DispatchHonorsBatchAndTenantBoundaries()
     {
         await using var database = await JobDatabase.CreateAsync();

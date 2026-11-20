@@ -9,7 +9,7 @@ namespace BlueTusk.Workflows.DependencyInjection.Tests;
 
 public sealed class CredentialRotationTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task OwnedPasswordProviderRotationAndSessionDrainRecoverFencedJobAndPausedWorkflow()
     {
         await using var database = await WorkflowDatabase.CreateAsync();

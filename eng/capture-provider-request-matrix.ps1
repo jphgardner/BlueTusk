@@ -15,6 +15,7 @@ param(
     [ValidateSet('', 'windows', 'linux', 'tls', 'constrained-network')][string] $Variant = '',
     # Directory written by start-performance-fixture.ps1. Required for profiled (pipeline) captures.
     [string] $FixturePath = '',
+    [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json'),
     # Legacy switch: equivalent to -Variant tls without a fixture.
     [switch] $Tls,
     [switch] $Diagnostic
@@ -54,8 +55,9 @@ $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw '
 # Resolve the contract variant through the single data-driven table.
 if ($Tls -and $Variant -and $Variant -cne 'tls') { throw '-Tls conflicts with the requested variant.' }
 if (-not $Variant) { $Variant = if ($Tls) { 'tls' } else { $os } }
-$map = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-variant-map.json') -Raw | ConvertFrom-Json
-$profileName = [string]$map.variants.$os.$Variant
+$map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
+$variantEntry = $map.variants.$os.PSObject.Properties[$Variant]
+$profileName = if ($variantEntry) { [string]$variantEntry.Value } else { '' }
 if ($profileName -ceq 'crossOsProfile') { $profileName = [string]$map.crossOsProfile }
 if (-not $profileName -or $profileName -ceq 'unresolved')
 {
@@ -132,7 +134,9 @@ $startedUtc = [DateTimeOffset]::UtcNow.ToString('o')
 function Test-Capture([string] $Path, [string] $Stem, [string] $Provider, [string] $Feature, [int] $Workers)
 {
     # Light identity checks without materializing millions of samples in PowerShell.
-    $document = [Text.Json.JsonDocument]::Parse([IO.File]::ReadAllBytes($Path))
+    $stream = [IO.File]::OpenRead($Path)
+    try { $document = [Text.Json.JsonDocument]::Parse($stream, [Text.Json.JsonDocumentOptions]::new()) }
+    finally { $stream.Dispose() }
     try
     {
         $capture = $document.RootElement

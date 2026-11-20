@@ -5,7 +5,7 @@ namespace BlueTusk.Events.Tests;
 
 public sealed class EventsBoundedWorkloadTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task IndependentStreamBacklogsRecoverFencedReplayWithoutDuplicateEffectsOrOffsetGaps()
     {
         await using var db = await EventDatabase.CreateAsync(new PostgreSqlEventsOptions { MaximumEventBytes = 128, MaximumAppendBytes = 16384 });

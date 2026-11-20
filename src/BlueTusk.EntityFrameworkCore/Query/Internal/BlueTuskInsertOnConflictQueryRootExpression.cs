@@ -26,6 +26,7 @@ internal sealed class BlueTuskInsertOnConflictQueryRootExpression(
             ConflictProperties,
             UpdateProperties);
 
+#if BLUETUSK_EF7_OR_GREATER
     public override EntityQueryRootExpression UpdateEntityType(IEntityType entityType)
     {
         if (entityType.ClrType != EntityType.ClrType || entityType.Name != EntityType.Name)
@@ -39,6 +40,8 @@ internal sealed class BlueTuskInsertOnConflictQueryRootExpression(
             ConflictProperties,
             UpdateProperties);
     }
+
+#endif
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
     {

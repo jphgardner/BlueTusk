@@ -16,8 +16,8 @@ public sealed record RedisChangeStreamStateStoreOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Connection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(KeyPrefix);
+        BlueTuskGuard.NotNull(Connection);
+        BlueTuskGuard.NotNullOrWhiteSpace(KeyPrefix);
         if (KeyPrefix.Contains('{') || KeyPrefix.Contains('}'))
         {
             throw new ArgumentException(
@@ -137,7 +137,7 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
 
     public RedisChangeStreamStateStore(RedisChangeStreamStateStoreOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _database = options.Connection.GetDatabase(options.Database);
         _keyPrefix = options.KeyPrefix;
@@ -159,8 +159,8 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(replacement);
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(replacement);
+        BlueTuskGuard.NotNull(lease);
         ChangeCheckpointWriteStatus? precondition = null;
         if (replacement.StoreGeneration != checked(expectedGeneration + 1))
         {
@@ -241,7 +241,7 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseArguments(lease.OwnerId, duration);
         var result = await _database.ScriptEvaluateAsync(
                 RenewScript,
@@ -261,7 +261,7 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         var result = await _database.ScriptEvaluateAsync(
                 ReleaseScript,
                 [GetKey(lease.Key)],
@@ -273,7 +273,7 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
     private RedisKey GetKey(ChangeStreamStateKey key)
     {
         var bytes = Encoding.UTF8.GetBytes(key.SourceFingerprint + "\n" + key.ConsumerGroup);
-        var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        var hash = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(bytes));
         return $"{_keyPrefix}:{{{hash}}}";
     }
 
@@ -318,8 +318,8 @@ public sealed class RedisChangeStreamStateStore : IChangeStreamStateStore
 
     private static void ValidateLeaseArguments(string ownerId, TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(ownerId);
+        BlueTuskGuard.NotLessThanOrEqual(duration, TimeSpan.Zero);
         if (duration.TotalMilliseconds > long.MaxValue)
         {
             throw new ArgumentOutOfRangeException(nameof(duration));

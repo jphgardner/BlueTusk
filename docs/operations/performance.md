@@ -110,10 +110,7 @@ turning into unbounded memory growth.
 The multiplexing record follows this discipline and is explained in
 [multiplexing compatibility](../ado-net/multiplexing-compatibility.md).
 The complete direct-provider result is published in the
-[BlueTusk versus Npgsql V1 performance report](npgsql-performance-comparison.md).
-The coordinated cross-product 1.1 contract and current evidence boundary are
-published in the [1.1 performance leadership report](performance-leadership-1.1.md).
-
+Compare providers with the same database, data, and workload.
 ## Production investigation
 
 Correlate client and server evidence:
@@ -129,17 +126,3 @@ Correlate client and server evidence:
 
 Avoid logging parameter values simply to diagnose performance. Prefer query
 shape identifiers, operation names and redacted structured dimensions.
-
-## Performance gates
-
-Release gates include:
-
-- zero-warning optimized build;
-- allocation-budget verification;
-- provider NativeAOT/trimming measurements;
-- commit-bound multiplexing evidence;
-- full tests against selected PostgreSQL versions; and
-- exact-duration Streams/Sync endurance reports.
-
-See [allocation discipline](../architecture/allocation-discipline.md) and the
-[release process](../release-process.md).

@@ -1,0 +1,17 @@
+<Project>
+  <Target Name="GenerateLegacyStudioApiBaseline" BeforeTargets="CoreCompile"
+          Condition="'$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0'">
+    <ItemGroup>
+      <_LegacyStudioBaseline Include="$(MSBuildProjectDirectory)/PublicAPI.Shipped.txt;$(MSBuildProjectDirectory)/PublicAPI.Unshipped.txt" />
+    </ItemGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)CompatibilityApi" />
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)CompatibilityApi/%(_LegacyStudioBaseline.Filename)%(_LegacyStudioBaseline.Extension)"
+      Lines="$([MSBuild]::Escape($([System.IO.File]::ReadAllText('%(_LegacyStudioBaseline.FullPath)').Replace('-&gt; Microsoft.AspNetCore.Routing.RouteGroupBuilder!', '-&gt; Microsoft.AspNetCore.Builder.IEndpointConventionBuilder!').Replace('System.Data.Common.DbDataSource', 'BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource'))))"
+      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <AdditionalFiles Remove="PublicAPI.Shipped.txt;PublicAPI.Unshipped.txt" />
+      <AdditionalFiles Include="@(_LegacyStudioBaseline->'$(IntermediateOutputPath)CompatibilityApi/%(Filename)%(Extension)')" />
+    </ItemGroup>
+  </Target>
+</Project>

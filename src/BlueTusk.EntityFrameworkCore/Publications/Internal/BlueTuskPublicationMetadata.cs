@@ -12,7 +12,7 @@ internal static class BlueTuskPublicationMetadata
 
     public static BlueTuskPublicationDefinitionSet Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? BlueTuskPublicationDefinitionSet.Empty : Deserialize(json);
     }
@@ -31,7 +31,7 @@ internal static class BlueTuskPublicationMetadata
 
     public static BlueTuskPublicationDefinitionSet Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskPublicationDefinitionSet>(json, SerializerOptions)
             ?? throw new ArgumentException("The publication definition set is empty.", nameof(json));
         Validate(definitions);
@@ -40,7 +40,7 @@ internal static class BlueTuskPublicationMetadata
 
     public static BlueTuskPublicationDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskPublicationDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The publication definition is empty.", nameof(json));
         Validate(definition);
@@ -49,8 +49,8 @@ internal static class BlueTuskPublicationMetadata
 
     public static void Validate(BlueTuskPublicationDefinitionSet definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
-        ArgumentNullException.ThrowIfNull(definitions.Publications);
+        BlueTuskGuard.NotNull(definitions);
+        BlueTuskGuard.NotNull(definitions.Publications);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions.Publications)
         {
@@ -64,10 +64,10 @@ internal static class BlueTuskPublicationMetadata
 
     public static void Validate(BlueTuskPublicationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentNullException.ThrowIfNull(definition.Tables);
-        ArgumentNullException.ThrowIfNull(definition.Schemas);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNull(definition.Tables);
+        BlueTuskGuard.NotNull(definition.Schemas);
         if ((definition.Operations & ~BlueTuskPublicationOperations.All) != 0 ||
             !Enum.IsDefined(definition.GeneratedColumns))
         {
@@ -111,7 +111,7 @@ internal static class BlueTuskPublicationMetadata
         var schemas = new HashSet<string>(StringComparer.Ordinal);
         foreach (var schema in definition.Schemas)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+            BlueTuskGuard.NotNullOrWhiteSpace(schema);
             if (!schemas.Add(schema))
             {
                 throw new ArgumentException($"Publication schema '{schema}' is configured more than once.");
@@ -121,10 +121,10 @@ internal static class BlueTuskPublicationMetadata
         var tables = new HashSet<(string? Schema, string Name)>();
         foreach (var table in definition.Tables)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(table.Name);
+            BlueTuskGuard.NotNullOrWhiteSpace(table.Name);
             if (table.Schema is not null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(table.Schema);
+                BlueTuskGuard.NotNullOrWhiteSpace(table.Schema);
             }
 
             if (!tables.Add((table.Schema, table.Name)))
@@ -147,7 +147,7 @@ internal static class BlueTuskPublicationMetadata
                 var columns = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var column in table.Columns)
                 {
-                    ArgumentException.ThrowIfNullOrWhiteSpace(column);
+                    BlueTuskGuard.NotNullOrWhiteSpace(column);
                     if (!columns.Add(column))
                     {
                         throw new ArgumentException($"Publication column '{column}' is configured more than once.");
@@ -163,7 +163,7 @@ internal static class BlueTuskPublicationMetadata
 
             if (table.RowFilterSql is not null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(table.RowFilterSql);
+                BlueTuskGuard.NotNullOrWhiteSpace(table.RowFilterSql);
             }
         }
     }
@@ -178,14 +178,14 @@ internal static class BlueTuskPublicationMetadata
         {
             Tables = definition.Tables.Select(table => table with
             {
-                Columns = table.Columns?.Order(StringComparer.Ordinal).ToArray(),
+                Columns = table.Columns?.OrderBy(value => value, StringComparer.Ordinal).ToArray(),
                 RowFilterSql = table.RowFilterSql?.Trim(),
             })
                 .OrderBy(table => table.IsExcluded)
                 .ThenBy(table => table.Schema, StringComparer.Ordinal)
                 .ThenBy(table => table.Name, StringComparer.Ordinal)
                 .ToArray(),
-            Schemas = definition.Schemas.Order(StringComparer.Ordinal).ToArray(),
+            Schemas = definition.Schemas.OrderBy(value => value, StringComparer.Ordinal).ToArray(),
         };
 
     public static int MinimumServerVersion(BlueTuskPublicationDefinition definition)

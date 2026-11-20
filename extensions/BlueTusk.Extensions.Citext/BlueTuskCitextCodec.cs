@@ -10,7 +10,7 @@ public sealed class BlueTuskCitextCodec : BlueTuskCodec<BlueTuskCitext>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         return format is BlueTuskDataFormat.Text or BlueTuskDataFormat.Binary
             ? new BlueTuskCitext(reader.ReadRemainingUtf8())
             : throw new ArgumentOutOfRangeException(nameof(format));
@@ -22,7 +22,7 @@ public sealed class BlueTuskCitextCodec : BlueTuskCodec<BlueTuskCitext>
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
     {
-        ArgumentNullException.ThrowIfNull(type);
+        BlueTuskGuard.NotNull(type);
         if (format is not (BlueTuskDataFormat.Text or BlueTuskDataFormat.Binary))
         {
             throw new ArgumentOutOfRangeException(nameof(format));

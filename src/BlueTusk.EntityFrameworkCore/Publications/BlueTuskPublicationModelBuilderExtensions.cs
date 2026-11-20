@@ -12,8 +12,8 @@ public static class BlueTuskPublicationModelBuilderExtensions
         string name,
         Action<BlueTuskPublicationBuilder>? configure = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var builder = new BlueTuskPublicationBuilder(name);
         configure?.Invoke(builder);
         return HasPublication(modelBuilder, builder.Build());
@@ -23,7 +23,7 @@ public static class BlueTuskPublicationModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskPublicationDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskPublicationMetadata.Validate(definition);
         definition = BlueTuskPublicationMetadata.Normalize(definition);
         var definitions = BlueTuskPublicationMetadata.Get(modelBuilder.Model);
@@ -36,8 +36,8 @@ public static class BlueTuskPublicationModelBuilderExtensions
 
     public static ModelBuilder HasNoPublication(this ModelBuilder modelBuilder, string name)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
         var definitions = BlueTuskPublicationMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskPublicationDefinitionSet(
             definitions.Publications
@@ -47,7 +47,7 @@ public static class BlueTuskPublicationModelBuilderExtensions
 
     public static BlueTuskPublicationDefinitionSet GetPublications(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskPublicationMetadata.Get(model);
     }
 
@@ -56,7 +56,7 @@ public static class BlueTuskPublicationModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskPublicationMetadata.Deserialize(serializedDefinitions));
     }
 

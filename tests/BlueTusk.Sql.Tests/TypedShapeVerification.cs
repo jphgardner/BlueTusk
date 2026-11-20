@@ -1,6 +1,9 @@
 using System.Data.Common;
 using System.Text.Json;
 using BlueTusk.TypeSystem;
+#if !NET7_0_OR_GREATER
+using DbDataSource = BlueTusk.Data.Compatibility.BlueTuskLegacyDataSource;
+#endif
 
 namespace BlueTusk.Sql.Verification;
 
@@ -25,7 +28,7 @@ internal static class TypedShapeVerification
                 !row.Keys.SequenceEqual(arguments.keys) || !row.Singles.SequenceEqual(arguments.singles) || !row.Doubles.SequenceEqual(arguments.doubles) ||
                 !row.Decimals.SequenceEqual(arguments.decimals) || !row.Precise.SequenceEqual(arguments.precise) ||
                 !row.Timestamps.SequenceEqual(arguments.timestamps) || !row.Timezones.SequenceEqual(arguments.timezones) || !row.Dates.SequenceEqual(arguments.dates) ||
-                !row.Jsons.SequenceEqual(arguments.jsons) || !row.Words.SequenceEqual(arguments.words) || row.Day != arguments.day || row.Time != arguments.time ||
+                !Enumerable.SequenceEqual(row.Jsons, arguments.jsons) || !Enumerable.SequenceEqual(row.Words, arguments.words) || row.Day != arguments.day || row.Time != arguments.time ||
                 row.Interval != arguments.interval || row.Jsonbs.Length != 2 || row.Jsonbs[1] is not null)
             {
                 throw new InvalidOperationException("Generated PostgreSQL type roundtrip changed a value, null element or temporal component.");

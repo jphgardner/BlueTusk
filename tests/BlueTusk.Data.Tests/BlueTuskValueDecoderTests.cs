@@ -21,10 +21,10 @@ public sealed class BlueTuskValueDecoderTests
             TimeSpan.FromDays(1),
             DecodeParameter(new BlueTuskParameter<TimeSpan>(TimeSpan.FromDays(1))));
         Assert.Equal(
-            new DateTime(2000, 1, 1).AddTicks(TimeSpan.TicksPerMicrosecond),
+            new DateTime(2000, 1, 1).AddTicks(10),
             DecodeParameter(
                 new BlueTuskParameter<DateTime>(
-                    new DateTime(2000, 1, 1).AddTicks(TimeSpan.TicksPerMicrosecond))));
+                    new DateTime(2000, 1, 1).AddTicks(10))));
     }
 
     [Fact]

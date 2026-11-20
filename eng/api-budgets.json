@@ -3,7 +3,7 @@
   "measurement": "non-comment PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt signatures",
   "families": {
     "Provider": {
-      "maximumSignatures": 8406,
+      "maximumSignatures": 8454,
       "baselineProjects": 28,
       "apiExemptProjects": [
         "src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj",
@@ -30,12 +30,12 @@
       "apiExemptProjects": []
     },
     "ControlPlane": {
-      "maximumSignatures": 1099,
+      "maximumSignatures": 1165,
       "baselineProjects": 3,
       "apiExemptProjects": []
     },
     "ContinuousGraph": {
-      "maximumSignatures": 222,
+      "maximumSignatures": 234,
       "baselineProjects": 2,
       "apiExemptProjects": []
     },

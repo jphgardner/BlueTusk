@@ -47,8 +47,8 @@ public sealed record LiveQuerySessionOptions
 
     internal void Validate()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumInitialCatchUpPasses);
-        ArgumentNullException.ThrowIfNull(Diff);
+        BlueTuskGuard.NotNegativeOrZero(MaximumInitialCatchUpPasses);
+        BlueTuskGuard.NotNull(Diff);
         Diff.Validate();
     }
 }
@@ -87,10 +87,10 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         int? resultLimit = null,
         LiveQuerySessionOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(arguments);
-        ArgumentNullException.ThrowIfNull(securityScope);
-        ArgumentNullException.ThrowIfNull(invalidationLog);
+        BlueTuskGuard.NotNull(plan);
+        BlueTuskGuard.NotNull(arguments);
+        BlueTuskGuard.NotNull(securityScope);
+        BlueTuskGuard.NotNull(invalidationLog);
         options ??= new LiveQuerySessionOptions();
         options.Validate();
         _plan = plan;
@@ -124,7 +124,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
         CancellationToken cancellationToken, long initialSequence = 1, LiveResetReason? resetReason = null)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -207,7 +207,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask>? persist,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         var telemetryStarted = LiveDiagnostics.GetTimestamp();
         var telemetryOutcome = "success";
         var telemetryEvents = 0;
@@ -309,7 +309,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
             throw new ArgumentOutOfRangeException(nameof(reason));
         }
 
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -371,7 +371,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         Func<LiveDiffBatch<T, TKey>, CancellationToken, ValueTask> persist,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -438,7 +438,7 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         try
         {
             var rows = await _plan.ExecuteAsync(_context, cancellationToken).ConfigureAwait(false);
-            ArgumentNullException.ThrowIfNull(rows);
+            BlueTuskGuard.NotNull(rows);
             if (rows.Count > Identity.ResultLimit)
             {
                 throw new LiveQueryResultLimitException(

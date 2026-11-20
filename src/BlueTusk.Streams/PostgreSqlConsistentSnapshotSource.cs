@@ -16,7 +16,7 @@ public sealed class PostgreSqlSnapshotTable
     public PostgreSqlSnapshotTable(ChangeTable table, IEnumerable<int> keyOrdinals)
     {
         Table = table ?? throw new ArgumentNullException(nameof(table));
-        ArgumentNullException.ThrowIfNull(keyOrdinals);
+        BlueTuskGuard.NotNull(keyOrdinals);
         var keys = keyOrdinals.Distinct().ToArray();
         if (keys.Length == 0)
         {
@@ -25,7 +25,7 @@ public sealed class PostgreSqlSnapshotTable
 
         foreach (var ordinal in keys)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(ordinal);
+            BlueTuskGuard.NotNegative(ordinal);
             if (ordinal >= table.Columns.Count)
             {
                 throw new ArgumentOutOfRangeException(
@@ -80,9 +80,9 @@ public sealed record PostgreSqlConsistentSnapshotOptions
 
     internal void Validate()
     {
-        ArgumentNullException.ThrowIfNull(Source);
-        ArgumentNullException.ThrowIfNull(PublicationNames);
-        ArgumentNullException.ThrowIfNull(Tables);
+        BlueTuskGuard.NotNull(Source);
+        BlueTuskGuard.NotNull(PublicationNames);
+        BlueTuskGuard.NotNull(Tables);
         if (PublicationNames.Count == 0 || PublicationNames.Any(string.IsNullOrWhiteSpace))
         {
             throw new ArgumentException("At least one non-empty publication name is required.", nameof(PublicationNames));
@@ -98,11 +98,11 @@ public sealed record PostgreSqlConsistentSnapshotOptions
             throw new ArgumentException("The source slot name cannot have surrounding whitespace.", nameof(Source));
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(CopyPageRows);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumBatchRows);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumBatchBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumRowBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumParallelTables);
+        BlueTuskGuard.NotNegativeOrZero(CopyPageRows);
+        BlueTuskGuard.NotNegativeOrZero(MaximumBatchRows);
+        BlueTuskGuard.NotNegativeOrZero(MaximumBatchBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaximumRowBytes);
+        BlueTuskGuard.NotNegativeOrZero(MaximumParallelTables);
         if (!Enum.IsDefined(ExistingSlotMode))
         {
             throw new ArgumentOutOfRangeException(nameof(ExistingSlotMode));
@@ -370,7 +370,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
     public async IAsyncEnumerable<ChangeSnapshotBatch> ReadSnapshotAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (Interlocked.Exchange(ref _snapshotStarted, 1) != 0)
         {
             throw new InvalidOperationException("A consistent snapshot attempt can be read only once.");
@@ -439,7 +439,7 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
 
     public IChangeStream CreateChangeStream()
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        BlueTuskGuard.NotDisposed(Volatile.Read(ref _disposed) != 0, this);
         if (Volatile.Read(ref _snapshotCompleted) == 0)
         {
             throw new InvalidOperationException("The snapshot must complete before replication starts.");

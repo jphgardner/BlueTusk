@@ -5,14 +5,14 @@ public static class BlueTuskSql
 {
     public static string QuoteIdentifier(string identifier)
     {
-        ArgumentException.ThrowIfNullOrEmpty(identifier);
+        BlueTuskGuard.NotNullOrEmpty(identifier);
         RejectNullCharacter(identifier, nameof(identifier));
         return $"\"{identifier.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
     }
 
     public static string QuoteLiteral(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         RejectNullCharacter(value, nameof(value));
         return $"E'{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("'", "''", StringComparison.Ordinal)}'";
     }

@@ -17,7 +17,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
         Action<BlueTuskFunctionBuilder>? buildAction = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskFunctionBuilder(name, schema, returnStoreType, bodySql);
         buildAction?.Invoke(builder);
         return HasRoutine(modelBuilder, builder.Build());
@@ -31,7 +31,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
         Action<BlueTuskProcedureBuilder>? buildAction = null,
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         var builder = new BlueTuskProcedureBuilder(name, schema, bodySql);
         buildAction?.Invoke(builder);
         return HasRoutine(modelBuilder, builder.Build());
@@ -42,7 +42,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
         this ModelBuilder modelBuilder,
         BlueTuskRoutineDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         BlueTuskRoutineMetadata.Validate(definition);
         definition = BlueTuskRoutineMetadata.Normalize(definition);
         var definitions = BlueTuskRoutineMetadata.Get(modelBuilder.Model);
@@ -62,9 +62,9 @@ public static class BlueTuskRoutineModelBuilderExtensions
         string inputArgumentTypesSql = "",
         string? schema = null)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(inputArgumentTypesSql);
+        BlueTuskGuard.NotNull(modelBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(inputArgumentTypesSql);
         var key = new BlueTuskRoutineMetadata.RoutineKey(kind, schema, name, inputArgumentTypesSql.Trim());
         var definitions = BlueTuskRoutineMetadata.Get(modelBuilder.Model);
         return Set(modelBuilder, new BlueTuskRoutineDefinitionSet(
@@ -76,7 +76,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
     /// <summary>Reads all provider-owned PostgreSQL routine definitions from an EF model.</summary>
     public static BlueTuskRoutineDefinitionSet GetRoutines(this IReadOnlyModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
+        BlueTuskGuard.NotNull(model);
         return BlueTuskRoutineMetadata.Get(model);
     }
 
@@ -85,7 +85,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+        BlueTuskGuard.NotNull(modelBuilder);
         return Set(modelBuilder, BlueTuskRoutineMetadata.Deserialize(serializedDefinitions));
     }
 

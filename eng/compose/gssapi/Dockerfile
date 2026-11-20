@@ -4,6 +4,7 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
         krb5-admin-server \
         krb5-kdc \
+        krb5-user \
     && rm -rf /var/lib/apt/lists/*
 
 COPY krb5-server.conf /etc/krb5.conf

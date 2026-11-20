@@ -1,34 +1,30 @@
-# Jobs binary upgrade and rollback gate
+# Upgrade Jobs storage and workers
 
-Select `Jobs` in the manual [Expansion release upgrade workflow](../../.github/workflows/expansion-release-upgrade.yml).
-The rehearsal uses two immutable full commit SHAs, an earlier Jobs preview source commit
-reachable from the candidate and the exact candidate commit. It builds and archives
-both Jobs packages and separate probe executables from those source trees. The
-executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between
-old and candidate. A same-binary configuration reopen does not satisfy this gate.
+Job data and workflow state can survive a process restart. Before a package
+upgrade, read the [durable format](durable-format.md) documentation and
+confirm that the target application can read the entries and payload versions
+the existing deployment writes.
 
-The old process initializes a fresh format-one schema, persists a running lease,
-a failed attempt ready for retry, and pending work. While the old process remains
-alive and holds its lease, the candidate process opens the same store, confirms
-deduplication identities, completes the retry and pending work, and signals the
-old process to complete its held lease. The candidate verifies that completion.
-After both processes exit, the old binary reopens the store, checks all states and
-attempt histories, then admits and completes a new job. Each phase rejects a
-duplicate completion. The store header must remain format 1 with unchanged
-payload and history admission limits throughout. This is the only supported
-rollback boundary; there is no format migration or downgrade procedure.
+## Rehearse
 
-The successful artifact includes the old Git source archive, both package files,
-both executable snapshots, phase records and process logs, and a manifest of
-SHA-256 hashes. Its verifier ties the source trees, probe, packages, executable
-Jobs DLLs and exact effect counts to the candidate and old commits. A partial or
-failed run uses a separate artifact name and never satisfies release readiness.
-This workflow has not run and creates no qualification merely by existing.
+1. Restore a backup to an isolated PostgreSQL database.
+2. Record counts by job state and sample durable job IDs.
+3. Pause old workers and run the new version’s controlled initialization step.
+4. Start a new worker and verify it can process a queued job, retry a failed
+   job, and observe a terminal job without rerunning it.
 
-An earlier preview commit such as `14b212e` is reachable from this branch.
-The candidate's claim-ordering correction changes the Jobs assembly while
-preserving format one, so it provides a real cross-binary boundary to rehearse.
-The verifier still checks the selected old commit and both packaged DLLs; no
-passing rehearsal has yet been retained.
-There is no previously published Jobs package or released durable format. A
-future format change requires a separate migration and rollback policy.
+Confirm that payloads and their type or version identifiers still resolve to
+the intended registered handlers. Keep any old handler or deserializer needed
+by pending and retryable jobs.
+
+## Deploy and verify
+
+Drain or pause workers before an incompatible schema or handler change.
+Apply database changes with the deployment identity and start an updated
+worker using its normal restricted role. Verify readiness, queue age, lease
+renewals, and terminal outcomes before restoring full concurrency.
+
+If the new version changed a durable format the old version cannot read,
+restore a compatible backup or use the documented migration procedure before
+rolling back application binaries. See [failover](failover.md) for the
+database promotion sequence.

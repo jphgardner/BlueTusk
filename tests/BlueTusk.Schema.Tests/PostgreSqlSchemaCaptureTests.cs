@@ -6,7 +6,7 @@ namespace BlueTusk.Schema.Tests;
 [Collection("Schema catalogue mutation")]
 public sealed class PostgreSqlSchemaCaptureTests
 {
-    [Fact]
+    [PostgreSqlFact]
     public async Task Captures_shapes_keys_indexes_policies_and_view_definitions_and_detects_drift()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -49,7 +49,7 @@ public sealed class PostgreSqlSchemaCaptureTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Bounds_fail_explicitly_and_do_not_poison_the_connection_pool()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -68,7 +68,7 @@ public sealed class PostgreSqlSchemaCaptureTests
         }
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Schema_filters_are_parameters_even_for_quoted_names()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());
@@ -77,7 +77,7 @@ public sealed class PostgreSqlSchemaCaptureTests
         Assert.Empty((await capture.CaptureAsync(TestContext.Current.CancellationToken)).Relations);
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public async Task Partition_strategy_and_key_are_fingerprinted_independently_of_transient_relation_OIDs()
     {
         await using var dataSource = BlueTuskDataSource.Create(ConnectionString());

@@ -17,7 +17,7 @@ namespace BlueTusk.FraudInvestigation.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("fraud")
-                .HasPropertyGraphs("[{\"name\":\"fraud_graph\",\"schema\":\"fraud\",\"elementTables\":[{\"alias\":\"accounts\",\"kind\":\"Vertex\",\"table\":\"accounts\",\"schema\":\"fraud\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"account\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"DisplayName\",\"name\":\"DisplayName\",\"isColumn\":true}]}],\"source\":null,\"destination\":null},{\"alias\":\"transfers\",\"kind\":\"Edge\",\"table\":\"transfers\",\"schema\":\"fraud\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"transfer\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"Amount\",\"name\":\"Amount\",\"isColumn\":true},{\"expression\":\"Currency\",\"name\":\"Currency\",\"isColumn\":true}]}],\"source\":{\"vertexTableAlias\":\"accounts\",\"edgeKeyColumns\":[\"SourceId\"],\"vertexKeyColumns\":[\"Id\"]},\"destination\":{\"vertexTableAlias\":\"accounts\",\"edgeKeyColumns\":[\"DestinationId\"],\"vertexKeyColumns\":[\"Id\"]}}]}]")
+                .HasPropertyGraphs("[{\"name\":\"fraud_graph\",\"schema\":\"fraud\",\"elementTables\":[{\"alias\":\"accounts\",\"kind\":\"Vertex\",\"table\":\"accounts\",\"schema\":\"fraud\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"account\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"DisplayName\",\"name\":\"DisplayName\",\"isColumn\":true}]}],\"source\":null,\"destination\":null},{\"alias\":\"transfers\",\"kind\":\"Edge\",\"table\":\"transfers\",\"schema\":\"fraud\",\"keyColumns\":[\"Id\"],\"labels\":[{\"name\":\"transfer\",\"properties\":[{\"expression\":\"Id\",\"name\":\"Id\",\"isColumn\":true},{\"expression\":\"Amount\",\"name\":\"Amount\",\"isColumn\":true},{\"expression\":\"Currency\",\"name\":\"Currency\",\"isColumn\":true}]}],\"source\":{\"vertexTableAlias\":\"accounts\",\"edgeKeyColumns\":[\"SourceId\"],\"vertexKeyColumns\":[\"Id\"]},\"destination\":{\"vertexTableAlias\":\"accounts\",\"edgeKeyColumns\":[\"DestinationId\"],\"vertexKeyColumns\":[\"Id\"]}}],\"backend\":\"Relational\"}]")
                 .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -153,6 +153,10 @@ namespace BlueTusk.FraudInvestigation.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId", "RecordedAt");
+
+                    b.HasIndex("DestinationId");
+
+                    b.HasIndex("SourceId");
 
                     b.ToTable("transfers", "fraud");
                 });

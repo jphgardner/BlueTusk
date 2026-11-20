@@ -10,7 +10,7 @@ function Get-ApprovalTrackGateIds
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('Legacy', 'Core')]
+        [ValidateSet('Legacy', 'Core', 'CorePackages')]
         [string] $ReleaseTrack,
 
         [string] $ApprovalContractPath = (Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json'),
@@ -41,6 +41,11 @@ function Get-ApprovalTrackGateIds
         @(Compare-Object $allGateIds $legacyRequired -SyncWindow 0 -CaseSensitive).Count -ne 0)
     {
         throw 'The historical 1.0.0 Legacy track must require every approval gate, in contract order, with no waiver.'
+    }
+
+    if ($ReleaseTrack -eq 'CorePackages')
+    {
+        return @($legacyRequired | Where-Object { $_ -cne 'website-deployment-acceptance' })
     }
 
     $core = $tracks.Value.Core

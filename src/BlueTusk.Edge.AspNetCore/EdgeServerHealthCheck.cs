@@ -25,7 +25,7 @@ public sealed class EdgeServerHealthCheck : IHealthCheck
 
     public EdgeServerHealthCheck(PostgreSqlEdgeServerStore store, EdgeScope scope, EdgeServerHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(store); ArgumentNullException.ThrowIfNull(scope);
+        BlueTuskGuard.NotNull(store); BlueTuskGuard.NotNull(scope);
         Options = options ?? new();
         if (Options.Timeout <= TimeSpan.Zero || Options.Timeout > TimeSpan.FromSeconds(10) || Options.MaxConcurrentProbes is < 1 or > 64)
         { throw new ArgumentException("Edge health deadlines and concurrency exceed bounded probe limits.", nameof(options)); }
@@ -35,7 +35,7 @@ public sealed class EdgeServerHealthCheck : IHealthCheck
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
+        BlueTuskGuard.NotNull(context);
         var started = Stopwatch.GetTimestamp();
         cancellationToken.ThrowIfCancellationRequested();
         if (Interlocked.Increment(ref _activeProbes) > Options.MaxConcurrentProbes)
@@ -95,12 +95,12 @@ public sealed class EdgeServerHealthCheck : IHealthCheck
     {
         var status = result.Status switch { HealthStatus.Healthy => "healthy", HealthStatus.Degraded => "degraded", _ => "unhealthy" };
         var tag = new KeyValuePair<string, object?>("status", status);
-        Results.Add(1, tag); Duration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tag); return result;
+        Results.Add(1, tag); Duration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds, tag); return result;
     }
     private static void ObserveCancellation(long started)
     {
         var tag = new KeyValuePair<string, object?>("status", "cancelled");
-        Results.Add(1, tag); Duration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds, tag);
+        Results.Add(1, tag); Duration.Record(BlueTuskRuntime.GetElapsedTime(started).TotalSeconds, tag);
     }
 }
 
@@ -110,7 +110,7 @@ public static class EdgeServerHealthCheckExtensions
     public static IHealthChecksBuilder AddBlueTuskEdgeServer(this IHealthChecksBuilder builder, string name,
         PostgreSqlEdgeServerStore store, EdgeScope scope, EdgeServerHealthCheckOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(builder); ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(builder); BlueTuskGuard.NotNullOrWhiteSpace(name);
         if (name.Length > 128 || name.Contains('\0', StringComparison.Ordinal)) { throw new ArgumentException("Health check name exceeds its bounded identity limit.", nameof(name)); }
         var check = new EdgeServerHealthCheck(store, scope, options);
         return builder.Add(new HealthCheckRegistration(name, _ => check, HealthStatus.Unhealthy, ["ready"]));

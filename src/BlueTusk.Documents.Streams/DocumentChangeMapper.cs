@@ -34,20 +34,20 @@ public sealed class DocumentChangeMapper<T>
     public DocumentChangeMapper(string tenant, DocumentCollectionDefinition<T> collection, DocumentStreamOptions? options = null)
     {
         ValidateKey(tenant, 256);
-        ArgumentNullException.ThrowIfNull(collection);
+        BlueTuskGuard.NotNull(collection);
         _options = options ?? new DocumentStreamOptions();
         ValidateKey(_options.Schema, 63);
-        ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaxTransactionChanges, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_options.MaxTransactionChanges, 100_000);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.MaxDocumentBytes);
-        ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaxTransactionBytes, _options.MaxDocumentBytes);
+        BlueTuskGuard.NotLessThan(_options.MaxTransactionChanges, 1);
+        BlueTuskGuard.NotGreaterThan(_options.MaxTransactionChanges, 100_000);
+        BlueTuskGuard.NotNegativeOrZero(_options.MaxDocumentBytes);
+        BlueTuskGuard.NotLessThan(_options.MaxTransactionBytes, _options.MaxDocumentBytes);
         _tenant = tenant;
         _collection = collection;
     }
 
     public async ValueTask<DocumentStreamTransaction<T>> MapTransactionAsync(ChangeTransaction transaction, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(transaction);
+        BlueTuskGuard.NotNull(transaction);
         cancellationToken.ThrowIfCancellationRequested();
         if (transaction.Outcome is not ChangeTransactionOutcome.Committed || transaction.GlobalTransactionId is not null)
         {
@@ -105,7 +105,7 @@ public sealed class DocumentChangeMapper<T>
 
     public DocumentStreamSnapshot<T> MapSnapshot(ChangeSnapshotBatch batch, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(batch);
+        BlueTuskGuard.NotNull(batch);
         cancellationToken.ThrowIfCancellationRequested();
         if (!Matches(batch.Table))
         {
@@ -219,7 +219,7 @@ public sealed class DocumentChangeMapper<T>
 
     private static void ValidateKey(string value, int maxBytes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        BlueTuskGuard.NotNullOrWhiteSpace(value);
         if (value.Contains('\0', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(value) > maxBytes)
         {
             throw new ArgumentException("Document scope/key exceeds its UTF-8 byte budget or contains NUL.", nameof(value));

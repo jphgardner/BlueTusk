@@ -21,6 +21,7 @@ namespace BlueTusk.Dashboard;
 [JsonSerializable(typeof(ControlPlaneApiResponse<ControlPlaneLiveOverview>))]
 [JsonSerializable(typeof(ControlPlaneApiResponse<ControlPlaneContinuousGraphOverview>))]
 [JsonSerializable(typeof(ControlPlaneApiResponse<ControlPlaneFleetOverview>))]
+[JsonSerializable(typeof(ControlPlaneApiResponse<ControlPlaneManagedDeploymentSnapshot>))]
 [JsonSerializable(typeof(ControlPlaneApiResponse<ControlPlaneContinuousGraphRunResult>))]
 [JsonSerializable(typeof(BlueTuskDashboardEndpointRouteBuilderExtensions.OperationSucceededResponse))]
 [JsonSerializable(typeof(ControlPlaneApiResponse<BlueTuskDashboardEndpointRouteBuilderExtensions.OperationSucceededResponse>))]

@@ -5,431 +5,19 @@ export const GUIDES: readonly GuideIndexEntry[] = [
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
-    "slug": "handbook",
-    "listed": false,
-    "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
-    "keywords": [
-      "documentation",
-      "handbook",
-      "navigation",
-      "v1"
-    ],
-    "order": 1,
-    "title": "BlueTusk documentation",
-    "sourcePath": "docs/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-documentation",
-        "text": "BlueTusk documentation",
-        "level": 1
-      },
-      {
-        "id": "start-here",
-        "text": "Start here",
-        "level": 2
-      },
-      {
-        "id": "products",
-        "text": "Products",
-        "level": 2
-      },
-      {
-        "id": "preview-products",
-        "text": "Preview products",
-        "level": 2
-      },
-      {
-        "id": "run-in-production",
-        "text": "Run in production",
-        "level": 2
-      },
-      {
-        "id": "reference",
-        "text": "Reference",
-        "level": 2
-      },
-      {
-        "id": "conventions-in-these-docs",
-        "text": "Conventions in these docs",
-        "level": 2
-      }
-    ],
-    "wordCount": 637,
-    "readMinutes": 3,
-    "searchText": "BlueTusk documentation BlueTusk is a PostgreSQL platform for .NET 10. Use this page to find the guide for what you want to do. Start here New to BlueTusk? Read these in order. Together they take about 20 minutes. [What is BlueTusk?](getting-started/overview.md): the products and how they fit together. [Install BlueTusk](getting-started/install.md): choose packages and a version. [5-minute first app](getting-started/quickstart.md): connect and run a query. [Core concepts](getting-started/concepts.md): the vocabulary every product uses. Products Every product has the same set of pages, in the order you need them: an overview, a quick start, concepts, task guides, configuration and troubleshooting. Product What it does Quick start Concepts Configuration Troubleshooting [ADO.NET](ado-net/README.md) Connections, commands, transactions, COPY, notifications [Quick start](ado-net/quickstart.md) [Concepts](ado-net/concepts.md) [Configuration](ado-net/configuration.md) [Troubleshooting](ado-net/troubleshooting.md) [EF Core](ef-core/README.md) LINQ, change tracking, migrations and scaffolding [Quick start](ef-core/quickstart.md) [Concepts](ef-core/concepts.md) [Configuration](ef-core/configuration.md) [Troubleshooting](ef-core/troubleshooting.md) [Streams](streams/README.md) Process every committed change, in order [Quick start](streams/quickstart.md) [Concepts](streams/concepts.md) [Configuration](streams/configuration.md) [Troubleshooting](streams/troubleshooting.md) [Sync](sync/README.md) Copy committed changes to another database, cache, broker or index [Quick start](sync/quickstart.md) [Concepts](sync/concepts.md) [Configuration](sync/configuration.md) [Troubleshooting](sync/troubleshooting.md) [Live](live/README.md) Push live query results to browsers and .NET clients [Quick start](live/quickstart.md) [Concepts](live/concepts.md) [Configuration](live/configuration.md) [Troubleshooting](live/troubleshooting.md) [Control Plane](control-plane/README.md) Inspect and operate "
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "overview",
-    "summary": "What BlueTusk is, the product families and their status, and where to start.",
-    "keywords": [
-      "overview",
-      "products",
-      "families",
-      "status",
-      "introduction"
-    ],
-    "order": 1,
-    "listed": true,
-    "title": "What is BlueTusk?",
-    "sourcePath": "docs/getting-started/overview.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/overview.md",
-    "headings": [
-      {
-        "id": "what-is-bluetusk",
-        "text": "What is BlueTusk?",
-        "level": 1
-      },
-      {
-        "id": "the-product-families",
-        "text": "The product families",
-        "level": 2
-      },
-      {
-        "id": "how-the-families-fit-together",
-        "text": "How the families fit together",
-        "level": 2
-      },
-      {
-        "id": "choose-where-to-start",
-        "text": "Choose where to start",
-        "level": 2
-      },
-      {
-        "id": "release-status",
-        "text": "Release status",
-        "level": 2
-      },
-      {
-        "id": "what-the-status-labels-mean",
-        "text": "What the status labels mean",
-        "level": 3
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 726,
-    "readMinutes": 4,
-    "searchText": "What is BlueTusk? BlueTusk is a PostgreSQL platform for .NET 10. It gives .NET applications a native PostgreSQL driver and EF Core provider, then adds products that react to committed database changes: change streams, destination sync, live queries for browsers, and an operations dashboard. BlueTusk talks to PostgreSQL directly over the PostgreSQL wire protocol. It does not wrap or depend on Npgsql at run time. The product families BlueTusk is a set of product families. Install only the families you need. Family What it does Main package Status [Provider: ADO.NET](../ado-net/README.md) Connections, commands, transactions, COPY, notifications and replication `BlueTusk.Data` Core [Provider: EF Core](../ef-core/README.md) LINQ, change tracking, migrations and scaffolding `BlueTusk.EntityFrameworkCore` Core [Streams](../streams/README.md) Turns committed PostgreSQL changes into ordered, acknowledged transactions (change data capture) `BlueTusk.Streams` Core [Sync](../sync/README.md) Applies those transactions to PostgreSQL, Redis, NATS, OpenSearch, Kafka, S3 or a webhook `BlueTusk.Sync` Core [Live](../live/README.md) Pushes the result of an authorized query to browsers and .NET clients as it changes `BlueTusk.Live` and `@bluetusk/live` Core [Control Plane](../control-plane/README.md) A dashboard and API to inspect and operate the other products `BlueTusk.ControlPlane` Core [Graph](../graph/README.md) and [Continuous Graph](../continuous-graph/README.md) SQL/PGQ property-graph queries and incrementally maintained graph results `BlueTusk.Data`, `BlueTusk.ContinuousGraph` Preview, not part of 1.1.0 [Ecosystem](../ecosystem/release-qualification.md) Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge Several Preview, not published The provider also has optional packages for [PostgreSQL extensions](../extensions/README.md) such as PostGIS, pgvector and TimescaleDB, and for [cloud identity](../ado-net/cloud-identity.md) on AWS, Azure and Goog"
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "install",
-    "summary": "Choose packages and a version, add them to a .NET or npm project, and install the bluetusk tool and templates.",
-    "keywords": [
-      "install",
-      "nuget",
-      "npm",
-      "packages",
-      "versions",
-      "1.1.0",
-      "templates",
-      "tool"
-    ],
-    "order": 2,
-    "listed": true,
-    "title": "Install BlueTusk",
-    "sourcePath": "docs/getting-started/install.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/install.md",
-    "headings": [
-      {
-        "id": "install-bluetusk",
-        "text": "Install BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "requirements",
-        "text": "Requirements",
-        "level": 2
-      },
-      {
-        "id": "choose-a-version",
-        "text": "Choose a version",
-        "level": 2
-      },
-      {
-        "id": "product-status",
-        "text": "Product status",
-        "level": 3
-      },
-      {
-        "id": "choose-packages",
-        "text": "Choose packages",
-        "level": 2
-      },
-      {
-        "id": "add-net-packages",
-        "text": "Add .NET packages",
-        "level": 2
-      },
-      {
-        "id": "keep-every-bluetusk-package-on-one-version",
-        "text": "Keep every BlueTusk package on one version",
-        "level": 3
-      },
-      {
-        "id": "add-the-browser-clients",
-        "text": "Add the browser clients",
-        "level": 2
-      },
-      {
-        "id": "install-the-command-line-tool",
-        "text": "Install the command-line tool",
-        "level": 2
-      },
-      {
-        "id": "install-the-project-templates",
-        "text": "Install the project templates",
-        "level": 2
-      },
-      {
-        "id": "check-what-you-installed",
-        "text": "Check what you installed",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 938,
-    "readMinutes": 5,
-    "searchText": "Install BlueTusk This page helps you choose the BlueTusk packages and the version you need, and add them to a .NET or JavaScript project. Requirements Requirement Version .NET .NET 10 (`net10.0`) EF Core (only for `BlueTusk.EntityFrameworkCore`) 10.0.11 PostgreSQL 15, 16, 17 or 18. PostgreSQL 19 is preview only. Node.js (only for the browser clients) A current LTS release Streams, Sync and Live also need PostgreSQL logical replication: `wal_level = logical` on the server and a role with the `REPLICATION` attribute. The [Streams quick start](../streams/quickstart.md) shows the setup. The [support matrix](../../VERSIONING.md) is the authority on supported versions. Choose a version All Core packages share one version number. Use the same exact version for every BlueTusk package in an application. Version Status Use it when `1.1.0` Next release. In release qualification; **not published yet**. When it is published, use it for all new and existing applications. `1.1.0-rc.1` Public release candidate, published 2026-08-29. You want to evaluate 1.1 before `1.1.0` is published. `1.0.0` Stable release, published 2026-08-23. You need a stable package today. When `1.1.0` is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on NuGet and npm and will point to `1.1.0`. To move an existing application, see the [upgrade guide](../operations/upgrade-guide.md). Some features documented here are new in `1.1.0` and are not in `1.0.0` or `1.1.0-rc.1`. Those pages say **New in 1.1.0**. The [1.1.0 release notes](../releases/1.1.0.md) list them all. Product status Family Version line Status Provider (ADO.NET, EF Core, extensions, cloud identity, `bluetusk` tool) 1.1.0 Core Streams 1.1.0 Core Sync 1.1.0 Core Live (NuGet and npm) 1.1.0 Core Control Plane 1.1.0 Core Graph (SQL/PGQ) and Continuous Graph Not part of 1.1.0 Preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. Events, Jobs, Workflows, Documents, Schema, Projections"
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-rc1",
-    "listed": false,
-    "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
-    "keywords": [
-      "release",
-      "rc",
-      "1.1.0-rc.1",
-      "nuget",
-      "npm",
-      "verification"
-    ],
-    "order": 3,
-    "title": "BlueTusk 1.1.0-rc.1 release record",
-    "sourcePath": "docs/releases/1.1.0-rc.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-rc.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-1-0-rc-1-release-record",
-        "text": "BlueTusk 1.1.0-rc.1 release record",
-        "level": 1
-      },
-      {
-        "id": "published-inventory",
-        "text": "Published inventory",
-        "level": 2
-      },
-      {
-        "id": "verification-record",
-        "text": "Verification record",
-        "level": 2
-      },
-      {
-        "id": "what-changed",
-        "text": "What changed",
-        "level": 2
-      },
-      {
-        "id": "provider-and-ef-core",
-        "text": "Provider and EF Core",
-        "level": 3
-      },
-      {
-        "id": "streams",
-        "text": "Streams",
-        "level": 3
-      },
-      {
-        "id": "sync",
-        "text": "Sync",
-        "level": 3
-      },
-      {
-        "id": "live",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "control-plane",
-        "text": "Control Plane",
-        "level": 3
-      },
-      {
-        "id": "continuous-graph",
-        "text": "Continuous Graph",
-        "level": 3
-      },
-      {
-        "id": "install",
-        "text": "Install",
-        "level": 2
-      },
-      {
-        "id": "stable-1-1-0-boundary",
-        "text": "Stable 1.1.0 boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 722,
-    "readMinutes": 4,
-    "searchText": "BlueTusk 1.1.0-rc.1 release record **Published:** 2026-08-29 **Release commit:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Channel:** public release candidate (`rc` on npm; explicit prerelease on NuGet) BlueTusk `1.1.0-rc.1` is the first coordinated public 1.1 package train across Provider, Streams, Sync, Live, Control Plane, Continuous Graph, and all three Live browser clients. It preserves the 1.0 public contracts while exposing the performance, allocation, batching, bounded-concurrency, and incremental graph work for production-like evaluation. Published inventory Registry Inventory Version behavior [NuGet](https://www.nuget.org/profiles/jphgardner) 62 `BlueTusk.*` packages Exact version `1.1.0-rc.1` [npm](https://www.npmjs.com/org/bluetusk) `@bluetusk/live`, `@bluetusk/live-angular`, `@bluetusk/live-react` `rc` points to `1.1.0-rc.1`; `latest` remains `1.0.0` All six release tags resolve to the same commit: `provider-v1.1.0-rc.1` `streams-v1.1.0-rc.1` `sync-v1.1.0-rc.1` `live-v1.1.0-rc.1` `control-plane-v1.1.0-rc.1` `continuous-graph-v1.1.0-rc.1` RC artifacts are immutable. A correction is published as `rc.2`; packages at `rc.1` are never replaced. Verification record The protected release workflows completed successfully at the release commit: Family Workflow run Provider [`33225555247`](https://github.com/jphgardner/BlueTusk/actions/runs/33225555247) Streams [`33227465140`](https://github.com/jphgardner/BlueTusk/actions/runs/33227465140) Sync [`33227966505`](https://github.com/jphgardner/BlueTusk/actions/runs/33227966505) Live [`33228526989`](https://github.com/jphgardner/BlueTusk/actions/runs/33228526989) Control Plane [`33229129438`](https://github.com/jphgardner/BlueTusk/actions/runs/33229129438) Continuous Graph [`33229550446`](https://github.com/jphgardner/BlueTusk/actions/runs/33229550446) Post-publication verification confirmed: all 62 NuGet packages and all three npm packages were available publicly; every internal package dependency resolved to `1."
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "slug": "release-1-1-0",
-    "summary": "What 1.1.0 contains, what is new since 1.1.0-rc.1, and how to upgrade.",
-    "keywords": [
-      "release notes",
-      "1.1.0",
-      "upgrade",
-      "whats new"
-    ],
-    "order": 4,
-    "listed": true,
-    "title": "BlueTusk 1.1.0 release notes",
-    "sourcePath": "docs/releases/1.1.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-1-0-release-notes",
-        "text": "BlueTusk 1.1.0 release notes",
-        "level": 1
-      },
-      {
-        "id": "not-in-this-release",
-        "text": "Not in this release",
-        "level": 2
-      },
-      {
-        "id": "what-is-new-since-1-1-0-rc-1",
-        "text": "What is new since 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "provider",
-        "text": "Provider",
-        "level": 3
-      },
-      {
-        "id": "ef-core",
-        "text": "EF Core",
-        "level": 3
-      },
-      {
-        "id": "sync",
-        "text": "Sync",
-        "level": 3
-      },
-      {
-        "id": "live",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "control-plane",
-        "text": "Control Plane",
-        "level": 3
-      },
-      {
-        "id": "fixes-since-1-1-0-rc-1",
-        "text": "Fixes since 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "provider-2",
-        "text": "Provider",
-        "level": 3
-      },
-      {
-        "id": "ef-core-2",
-        "text": "EF Core",
-        "level": 3
-      },
-      {
-        "id": "streams-and-sync",
-        "text": "Streams and Sync",
-        "level": 3
-      },
-      {
-        "id": "live-2",
-        "text": "Live",
-        "level": 3
-      },
-      {
-        "id": "changes-since-1-0-0",
-        "text": "Changes since 1.0.0",
-        "level": 2
-      },
-      {
-        "id": "release-checks-pilots-and-rehearsals",
-        "text": "Release checks: pilots and rehearsals",
-        "level": 2
-      },
-      {
-        "id": "upgrade-from-1-0-0-or-1-1-0-rc-1",
-        "text": "Upgrade from 1.0.0 or 1.1.0-rc.1",
-        "level": 2
-      },
-      {
-        "id": "supported-platforms",
-        "text": "Supported platforms",
-        "level": 2
-      }
-    ],
-    "wordCount": 1073,
-    "readMinutes": 5,
-    "searchText": "BlueTusk 1.1.0 release notes **Not published yet.** `1.1.0` is in release qualification. Until it is published, the latest packages are `1.0.0` (stable) and `1.1.0-rc.1` (release candidate). This page describes what `1.1.0` will contain, based on the `main` branch. BlueTusk 1.1.0 re-releases every Core family on one version line: Provider (ADO.NET, EF Core, extensions, cloud identity and the `bluetusk` tool), Streams, Sync, Live and Control Plane. It keeps the 1.0 public API: code written for 1.0.0 compiles against 1.1.0. When 1.1.0 is published, `1.0.0` and `1.1.0-rc.1` will be deprecated on NuGet and npm and will point to `1.1.0`. Not in this release **Graph (SQL/PGQ) and Continuous Graph** stay in preview. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so these wait for a PostgreSQL release that ships it. See the [Graph guide](../graph/README.md). **Ecosystem families** (Events, Jobs, Workflows, Documents, Schema, Projections, Search, Sql, Studio and Edge) are `0.1.0-preview.1` and are released separately when their own checks pass. What is new since 1.1.0-rc.1 None of these are in `1.0.0` or `1.1.0-rc.1`. Provider **Native REPACK** for PostgreSQL 19 (preview server): run `REPACK` and watch its progress from .NET with `RepackAsync` in `BlueTusk.Data.Maintenance`. See [Native REPACK](../ado-net/repack.md). `BlueTuskDataReader.GetFieldByteLength` and `GetPostgreSqlTypeOid`. **`bluetusk doctor`** checks a server before you deploy: version, TLS, logical replication settings and required extensions. See the [tool README](../../tooling/BlueTusk.Tool/README.md). **Production template.** `dotnet new bluetusk-production` from the new `BlueTusk.Production.Templates` package creates a complete application. See the [template README](../../templates/BlueTusk.Production/README.md). EF Core **`SaveChanges` batching.** Inserts, updates and deletes are now sent in batches of up to 42 statements per round trip. In 1.0.0 and 1.1.0-rc.1 each statement was its own command. To ch"
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
     "slug": "quickstart",
-    "summary": "Start PostgreSQL, create a .NET console app, and run a parameterized query in five minutes.",
-    "keywords": [
-      "quickstart",
-      "install",
-      "query",
-      "connection",
-      "sample"
-    ],
-    "order": 5,
-    "listed": true,
-    "title": "5-minute first app",
-    "sourcePath": "docs/getting-started/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/quickstart.md",
+    "title": "Run your first query",
+    "summary": "Run a parameterized PostgreSQL query from a new .NET console app.",
+    "order": 0,
     "headings": [
       {
-        "id": "5-minute-first-app",
-        "text": "5-minute first app",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
+        "id": "1-prepare-a-database",
+        "text": "1. Prepare a database",
         "level": 2
       },
       {
-        "id": "1-start-postgresql",
-        "text": "1. Start PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-app",
-        "text": "2. Create the app",
+        "id": "2-create-the-application",
+        "text": "2. Create the application",
         "level": 2
       },
       {
@@ -438,144 +26,172 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
-        "id": "4-write-the-code",
-        "text": "4. Write the code",
+        "id": "4-replace-programcs",
+        "text": "4. Replace Program.cs",
         "level": 2
       },
       {
-        "id": "5-run-it",
-        "text": "5. Run it",
+        "id": "5-run-and-verify",
+        "text": "5. Run and verify",
         "level": 2
       },
       {
-        "id": "what-just-happened",
-        "text": "What just happened",
-        "level": 2
-      },
-      {
-        "id": "if-it-fails",
-        "text": "If it fails",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "build-your-next-feature",
+        "text": "Build your next feature",
         "level": 2
       }
     ],
-    "wordCount": 510,
-    "readMinutes": 3,
-    "searchText": "5-minute first app In this quick start you create a .NET console app, connect it to PostgreSQL and run a parameterized query. It takes about five minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have Docker, step 1 starts one for you. 1. Start PostgreSQL Skip this step if you already have a test database. `wal_level=logical` is not needed for this quick start. It lets you reuse the same container for the [Streams guide](../streams/README.md) later. 2. Create the app This code works with every published BlueTusk version. See [Install BlueTusk](install.md) to choose and pin a version. 3. Set the connection string Keep credentials out of source code by using an environment variable: On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING=\"...\"` instead. **Warning:** `SSL Mode=Disable` is only for a local test container. BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates the server certificate. Keep that default everywhere else. 4. Write the code Replace the contents of `Program.cs`: 5. Run it You should see: What just happened `BlueTuskDataSourceBuilder.Build()` created a **data source**. It owns the configuration, the connection pool and the PostgreSQL type catalogue. Create one per connection string and keep it for the life of the app. `dataSource.CreateCommand(...)` created a command that borrows a pooled connection when it runs and returns it afterwards. The parameter values were sent separately from the SQL text. They are never pasted into the SQL, so this pattern is safe from SQL injection. If it fails Error Fix Connection refused or timeout Check that PostgreSQL is running and that `Host` and `Port` are correct. TLS or certificate error For a local container only, keep `SSL Mode=Disable`. For a real server, configure TLS. Password authentication failed Check `Username` and `Password`. The [ADO.NET troubleshoot"
+    "sourcePath": "docs/getting-started/quickstart.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/quickstart.md",
+    "keywords": []
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "install",
+    "title": "Install BlueTusk",
+    "summary": "Choose packages and check what your PostgreSQL and .NET versions support.",
+    "order": 1,
+    "headings": [
+      {
+        "id": "start-with-a-supported-environment",
+        "text": "Start with a supported environment",
+        "level": 2
+      },
+      {
+        "id": "choose-packages-by-workload",
+        "text": "Choose packages by workload",
+        "level": 2
+      },
+      {
+        "id": "install-the-provider",
+        "text": "Install the provider",
+        "level": 2
+      },
+      {
+        "id": "install-the-ef-core-provider",
+        "text": "Install the EF Core provider",
+        "level": 2
+      },
+      {
+        "id": "add-a-browser-client",
+        "text": "Add a browser client",
+        "level": 2
+      },
+      {
+        "id": "configure-postgresql-access",
+        "text": "Configure PostgreSQL access",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/getting-started/install.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/install.md",
+    "keywords": []
   },
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "concepts",
-    "summary": "The shared vocabulary: data sources, parameters, the type catalogue, logical replication, acknowledgement and checkpoints.",
-    "keywords": [
-      "concepts",
-      "data source",
-      "session",
-      "checkpoint",
-      "capability"
-    ],
-    "order": 8,
-    "listed": true,
     "title": "Core concepts",
-    "sourcePath": "docs/getting-started/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/concepts.md",
+    "summary": "Understand data sources, sessions, type identity, and committed changes.",
+    "order": 2,
     "headings": [
       {
-        "id": "core-concepts",
-        "text": "Core concepts",
-        "level": 1
-      },
-      {
-        "id": "data-source-connection-and-session",
-        "text": "Data source, connection and session",
+        "id": "data-source-logical-connection-and-physical-session",
+        "text": "Data source, logical connection and physical session",
         "level": 2
       },
       {
-        "id": "parameters-keep-sql-safe",
-        "text": "Parameters keep SQL safe",
+        "id": "commands-protocol-groups-and-cancellation",
+        "text": "Commands, protocol groups and cancellation",
         "level": 2
       },
       {
-        "id": "types-come-from-the-server-catalogue",
-        "text": "Types come from the server catalogue",
+        "id": "type-identity",
+        "text": "Type identity",
         "level": 2
       },
       {
-        "id": "capabilities-not-version-numbers",
-        "text": "Capabilities, not version numbers",
+        "id": "capabilities",
+        "text": "Capabilities",
         "level": 2
       },
       {
-        "id": "two-kinds-of-transaction",
-        "text": "Two kinds of transaction",
+        "id": "transactions-and-committed-changes",
+        "text": "Transactions and committed changes",
         "level": 2
       },
       {
-        "id": "delivery-acknowledgement-and-checkpoints",
-        "text": "Delivery, acknowledgement and checkpoints",
-        "level": 2
-      },
-      {
-        "id": "source-identity",
-        "text": "Source identity",
+        "id": "source-identity-and-schema-identity",
+        "text": "Source identity and schema identity",
         "level": 2
       },
       {
         "id": "snapshot-then-stream",
-        "text": "Snapshot, then stream",
+        "text": "Snapshot then stream",
         "level": 2
       },
       {
-        "id": "relay-and-consumer-groups",
-        "text": "Relay and consumer groups",
+        "id": "relay-destination-and-live-delivery",
+        "text": "Relay, destination and live delivery",
         "level": 2
       },
       {
-        "id": "live-results-are-re-queried-not-copied-from-the-change-feed",
-        "text": "Live results are re-queried, not copied from the change feed",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "where-to-continue",
+        "text": "Where to continue",
         "level": 2
       }
     ],
-    "wordCount": 819,
-    "readMinutes": 4,
-    "searchText": "Core concepts These are the ideas every BlueTusk product builds on. Each product guide adds its own concepts page; this page covers what they share. Data source, connection and session A **data source** (`BlueTuskDataSource`) is the long-lived object that owns: the connection settings and credentials; the **connection pool** of physical PostgreSQL sessions; and the **type catalogue** loaded from the server. A **connection** (`BlueTuskConnection`) is a short-lived logical connection. Opening it borrows a physical session from the pool. Disposing it returns the session. Rules of thumb: Create **one data source per distinct configuration** and keep it for the lifetime of the app. Register it as a singleton. Open connections late and dispose them early. Never create a data source per request. Each one creates its own pool. PostgreSQL sessions carry state: temporary tables, `SET` values, prepared statements, advisory locks, `LISTEN` registrations and open transactions. Before a session is reused, BlueTusk rolls back any open transaction and runs `DISCARD ALL`, so this state does not leak between callers. See [connection pooling](../ado-net/pooling.md). Parameters keep SQL safe Commands send parameter values separately from the SQL text, using the PostgreSQL protocol. Values are never pasted into the SQL string. You can write placeholders as `@name`, `:name` or `$1`. Never build SQL by concatenating user input. Types come from the server catalogue PostgreSQL identifies every type by an object identifier (OID) in its catalogue. When a data source starts, BlueTusk reads the catalogue and builds a type map. This is why custom enums, composites, domains and extension types work: they are discovered, not hard-coded. If a value is ambiguous (for example a `null`, or a `string` that should be `jsonb`), state the PostgreSQL type explicitly with `PostgreSqlTypeName`, `PostgreSqlTypeOid` or `DbType`. See [PostgreSQL types](../types/README.md). Capabilities, not version numbers Opti"
+    "sourcePath": "docs/getting-started/concepts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/concepts.md",
+    "keywords": []
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "handbook",
+    "title": "BlueTusk documentation",
+    "summary": "Find the right documentation for the BlueTusk feature you use.",
+    "order": 3,
+    "headings": [
+      {
+        "id": "start-here",
+        "text": "Start here",
+        "level": 2
+      },
+      {
+        "id": "connect-and-query",
+        "text": "Connect and query",
+        "level": 2
+      },
+      {
+        "id": "react-to-changes-and-query-connected-data",
+        "text": "React to changes and query connected data",
+        "level": 2
+      },
+      {
+        "id": "add-a-data-service",
+        "text": "Add a data service",
+        "level": 2
+      },
+      {
+        "id": "operate-your-application",
+        "text": "Operate your application",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/README.md",
+    "keywords": []
   },
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "architecture",
-    "summary": "Understand the layers, dependency direction, ownership, and async boundaries.",
-    "keywords": [
-      "architecture",
-      "layers",
-      "ownership"
-    ],
-    "order": 10,
-    "listed": true,
     "title": "Architecture",
-    "sourcePath": "docs/architecture/overview.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/overview.md",
+    "summary": "See how the provider, EF Core, and change-delivery products fit together.",
+    "order": 5,
     "headings": [
-      {
-        "id": "architecture",
-        "text": "Architecture",
-        "level": 1
-      },
       {
         "id": "layer-rules",
         "text": "Layer rules",
@@ -597,477 +213,150 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 886,
-    "readMinutes": 5,
-    "searchText": "Architecture BlueTusk is split by responsibility so protocol correctness can be tested without ADO.NET or EF Core and so higher layers cannot leak their concepts downward. The real-time products add a second enforced boundary: [BlueTusk Streams](../realtime-platform/README.md) is the only application-level CDC abstraction. Sync, Live, and Continuous Graph may depend on Streams contracts but cannot reference Replication or PgOutput directly. Layer rules **Transport** moves bytes. It owns endpoint resolution, ordered address attempts, socket/TLS I/O, connect deadlines, cancellation, and stable connection-failure classification, but does not know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET. See the [transport contract](transport.md). **Protocol** owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types. **Security** owns authentication primitives, secret handling, certificate policy, and diagnostic redaction. **Diagnostics** owns dependency-free `ActivitySource`, `Meter`, and redacted event contracts. Client, Data, and Replication may publish through it; it has no references back into provider layers. **TypeSystem** owns catalogue type identities and codecs. Unknown types are values, not fatal errors. **Client** coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions. **Data** exposes `System.Data.Common` APIs, pooling, connection strings, and data sources. **Identity packages** adapt vendor credential SDKs to Data's access-token callback. Vendor dependencies do not enter Data, Client, Security, or lower layers. **Replication** consumes `COPY BOTH` without introducing ADO.NET concepts into the protocol engine. **Replication.PgOutput** statefully decodes standard logical-replication messages while preserving their WAL envelopes. **EntityFrameworkCore** is the only layer allowed to depend on EF Core. **"
+    "sourcePath": "docs/architecture/overview.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/overview.md",
+    "keywords": []
   },
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
-    "slug": "provider-overview",
-    "summary": "Use BlueTusk.Data for direct PostgreSQL commands, transactions, batches, COPY and notifications from .NET.",
-    "keywords": [
-      "ado.net",
-      "quickstart",
-      "connection"
+    "slug": "examples",
+    "title": "Explore complete examples",
+    "summary": "Follow runnable samples and complete application workflows.",
+    "order": 6,
+    "headings": [
+      {
+        "id": "start-with-a-single-feature",
+        "text": "Start with a single feature",
+        "level": 2
+      },
+      {
+        "id": "study-an-application-end-to-end",
+        "text": "Study an application end to end",
+        "level": 2
+      },
+      {
+        "id": "adapt-a-reference-app",
+        "text": "Adapt a reference app",
+        "level": 2
+      }
     ],
-    "order": 20,
-    "listed": true,
-    "title": "ADO.NET provider",
+    "sourcePath": "docs/getting-started/examples.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/examples.md",
+    "keywords": []
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "runtime-compatibility",
+    "title": ".NET, EF Core, and PostgreSQL compatibility",
+    "summary": "Match .NET 5–11, EF Core dependencies, and PostgreSQL features to your deployment.",
+    "order": 7,
+    "headings": [
+      {
+        "id": "use-the-matching-ef-core-runtime-and-tools",
+        "text": "Use the matching EF Core runtime and tools",
+        "level": 2
+      },
+      {
+        "id": "check-integration-prerequisites",
+        "text": "Check integration prerequisites",
+        "level": 2
+      },
+      {
+        "id": "match-the-postgresql-capabilities-you-use",
+        "text": "Match the PostgreSQL capabilities you use",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/getting-started/runtime-compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/runtime-compatibility.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "overview",
+    "title": "ADO.NET",
+    "summary": "Learn the ADO.NET API for connections, commands, readers, and transactions.",
+    "order": -1,
+    "headings": [
+      {
+        "id": "run-one-query",
+        "text": "Run one query",
+        "level": 2
+      },
+      {
+        "id": "choose-the-api-by-task",
+        "text": "Choose the API by task",
+        "level": 2
+      },
+      {
+        "id": "how-the-provider-works",
+        "text": "How the provider works",
+        "level": 2
+      }
+    ],
     "sourcePath": "docs/ado-net/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/README.md",
-    "headings": [
-      {
-        "id": "ado-net-provider",
-        "text": "ADO.NET provider",
-        "level": 1
-      },
-      {
-        "id": "when-to-use-it",
-        "text": "When to use it",
-        "level": 2
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "status",
-        "text": "Status",
-        "level": 2
-      },
-      {
-        "id": "a-first-taste",
-        "text": "A first taste",
-        "level": 2
-      },
-      {
-        "id": "guides",
-        "text": "Guides",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 652,
-    "readMinutes": 3,
-    "searchText": "ADO.NET provider Use `BlueTusk.Data` to run SQL against PostgreSQL from .NET with the standard ADO.NET types: connections, commands, parameters, data readers and transactions. It also gives you PostgreSQL features that generic ADO.NET does not have, such as COPY, `LISTEN`/`NOTIFY`, large objects and multi-host routing. BlueTusk speaks the PostgreSQL wire protocol directly. It does not wrap or depend on Npgsql. When to use it Use `BlueTusk.Data` when you want: hand-written SQL, Dapper, or provider-neutral `DbDataSource` code; control over transactions, batches and round trips; bulk import and export with COPY; PostgreSQL notifications, large objects or streaming of large values. Choose something else when: your app is mostly LINQ queries and change tracking: use the [EF Core provider](../ef-core/README.md), which is built on this one; you want to react to committed changes: use [Streams](../streams/README.md). Packages Package Install it when `BlueTusk.Data` Always. The ADO.NET provider. `BlueTusk.Data.DependencyInjection` You use `Microsoft.Extensions.DependencyInjection`. Adds `AddDataSource` and a health check. `BlueTusk.SourceGeneration` You map composite types and want reflection-free code, for example for [NativeAOT](nativeaot.md). `BlueTusk.Identity.Aws`, `.Azure`, `.GoogleCloud` You sign in with a cloud identity instead of a password. See [Cloud identity](cloud-identity.md). `BlueTusk.Extensions.*` You use PostGIS, pgvector, TimescaleDB and other [extensions](../extensions/README.md). See [Install BlueTusk](../getting-started/install.md) for release channels and version pinning. Status The provider is part of the Core release line. `1.0.0` is the current stable release and `1.1.0-rc.1` is the current release candidate; `1.1.0` is not released yet. It supports .NET 10 and PostgreSQL 15, 16, 17 and 18. PostgreSQL 19 is preview only. See [Compatibility](compatibility.md) for the ADO.NET features that are deliberately not supported. A first taste The data source "
-  },
-  {
-    "category": "getting-started",
-    "categoryLabel": "Getting started",
-    "listed": false,
-    "slug": "project-overview",
-    "summary": "PostgreSQL, fully exposed to .NET.",
-    "keywords": [
-      "README"
-    ],
-    "order": 1001,
-    "title": "BlueTusk",
-    "sourcePath": "README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/README.md",
-    "headings": [
-      {
-        "id": "bluetusk",
-        "text": "BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "choose-what-you-need",
-        "text": "Choose what you need",
-        "level": 2
-      },
-      {
-        "id": "install-and-run-a-query",
-        "text": "Install and run a query",
-        "level": 2
-      },
-      {
-        "id": "build-the-repository",
-        "text": "Build the repository",
-        "level": 2
-      },
-      {
-        "id": "architecture",
-        "text": "Architecture",
-        "level": 2
-      },
-      {
-        "id": "release-status-and-evidence",
-        "text": "Release status and evidence",
-        "level": 2
-      },
-      {
-        "id": "contributing-and-security",
-        "text": "Contributing and security",
-        "level": 2
-      }
-    ],
-    "wordCount": 547,
-    "readMinutes": 3,
-    "searchText": "BlueTusk **PostgreSQL, fully exposed to .NET.** [Website](https://bluetusk.io/) · [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) · [Documentation](https://bluetusk.io/documentation) · [GitHub](https://github.com/jphgardner/BlueTusk) BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET provider, EF Core integration, replication, real-time delivery, extension packages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency. Choose what you need Need Start with Add when required Connect a .NET application [`BlueTusk.Data`](docs/ado-net/README.md) Pooling, authentication, COPY, notifications, or replication Use EF Core [`BlueTusk.EntityFrameworkCore`](docs/ef-core/README.md) PostgreSQL-native mappings, migrations, and scaffolding Consume committed changes [Streams](docs/streams/README.md) Snapshot bootstrap, replay, and durable relay Update other systems [Sync](docs/sync/README.md) Redis, NATS, OpenSearch, Kafka, webhooks, or object storage Push authorized live data [Live](docs/live/README.md) ASP.NET transports and browser clients Work with specialized PostgreSQL features [Extensions](docs/extensions/README.md) PostGIS, pgvector, TimescaleDB, and other focused packages Query connected data [Graph](docs/graph/README.md) SQL/PGQ and Continuous Graph The [documentation index](docs/README.md) organizes the complete guide set by task and audience. Install and run a query BlueTusk `1.0.0` is the current stable line. `1.1.0-rc.1` is available for prerelease evaluation. Use one exact BlueTusk version throughout an application; see the [support matrix](VERSIONING.md) before choosing a line. Create one long-lived data source for each distinct configuration. It owns the connection pool, PostgreSQL type catalogue, and runtime codecs. Replication uses dedicated unpooled sessions derived from the same configuration. For a runnable local setup, follow the [quickstart](docs/getting-started/quickstart.md). For package sele"
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "quickstart",
-    "summary": "Create a table, write rows in a transaction, read them back, and register the data source with dependency injection.",
-    "keywords": [
-      "quickstart",
-      "transaction",
-      "reader",
-      "dependency injection"
-    ],
-    "order": 1,
-    "listed": true,
-    "title": "ADO.NET quick start: a small web API",
-    "sourcePath": "docs/ado-net/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/quickstart.md",
+    "categoryLabel": "ADO.NET",
+    "slug": "dependency-injection",
+    "title": "Dependency injection and health checks",
+    "summary": "Register a shared data source and configure an application health check.",
+    "order": 0,
     "headings": [
       {
-        "id": "ado-net-quick-start-a-small-web-api",
-        "text": "ADO.NET quick start: a small web API",
-        "level": 1
-      },
-      {
-        "id": "1-check-the-prerequisites",
-        "text": "1. Check the prerequisites",
+        "id": "registration",
+        "text": "Registration",
         "level": 2
       },
       {
-        "id": "2-start-postgresql",
-        "text": "2. Start PostgreSQL",
+        "id": "consuming-the-data-source",
+        "text": "Consuming the data source",
         "level": 2
       },
       {
-        "id": "3-create-the-project",
-        "text": "3. Create the project",
+        "id": "readiness-health-check",
+        "text": "Readiness health check",
         "level": 2
       },
       {
-        "id": "4-write-the-code",
-        "text": "4. Write the code",
+        "id": "liveness-versus-readiness",
+        "text": "Liveness versus readiness",
         "level": 2
       },
       {
-        "id": "5-run-it",
-        "text": "5. Run it",
+        "id": "ownership-and-disposal",
+        "text": "Ownership and disposal",
         "level": 2
       },
       {
-        "id": "6-call-the-api",
-        "text": "6. Call the API",
+        "id": "testing-registrations",
+        "text": "Testing registrations",
         "level": 2
       },
       {
-        "id": "what-just-happened",
-        "text": "What just happened",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
+        "id": "migration-from-npgsql-di",
+        "text": "Migration from Npgsql DI",
         "level": 2
       }
     ],
-    "wordCount": 869,
-    "readMinutes": 4,
-    "searchText": "ADO.NET quick start: a small web API This quick start helps you build a minimal ASP.NET Core API that creates a table, inserts rows inside a transaction and reads them back with a data reader. The data source is registered with dependency injection, the way you would in a real app. It takes about 10 minutes. If you have never run BlueTusk before, do the [5-minute first app](../getting-started/quickstart.md) first. This page builds on it. 1. Check the prerequisites You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. 2. Start PostgreSQL If the `bluetusk-postgres` container from the 5-minute app is still running, skip this step. Otherwise start one with Docker: In bash, use `\\` instead of the backtick to continue lines. 3. Create the project `BlueTusk.Data.DependencyInjection` brings in `BlueTusk.Data`, so one package is enough. See [Install BlueTusk](../getting-started/install.md) to choose a release channel or pin a version. 4. Write the code Replace the contents of `Program.cs`: 5. Run it Set the connection string and start the app: In bash, use `export ConnectionStrings__Todo=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, for every other server. 6. Call the API Open a second terminal and add two items in one transaction: You should see the new IDs, then the rows: Now send a batch where the second title breaks the `CHECK` constraint: The request fails with `400 Bad Request` and this message: Run `Invoke-RestMethod http://localhost:5050/todos` again. \"Walk the dog\" is not there, because the transaction was rolled back. Finally, check the health endpoint: With bash, use `curl`: `curl http://localhost:5050/todos` prints JSON: `[{\"id\":1,\"title\":\"Buy milk\",\"done\":false},{\"id\":2,\"title\":\"Write docs\",\"done\":false}]`. What just happened `AddDataSource` registered one `BlueTuskDataSource` as a singleton. The same inst"
+    "sourcePath": "docs/ado-net/dependency-injection.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/dependency-injection.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "concepts",
-    "summary": "How data sources, connections, commands, protocols, preparation, transactions and pooling work.",
-    "keywords": [
-      "concepts",
-      "data source",
-      "protocol",
-      "prepare",
-      "pool"
-    ],
-    "order": 2,
-    "listed": true,
-    "title": "ADO.NET concepts",
-    "sourcePath": "docs/ado-net/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/concepts.md",
-    "headings": [
-      {
-        "id": "ado-net-concepts",
-        "text": "ADO.NET concepts",
-        "level": 1
-      },
-      {
-        "id": "who-owns-what",
-        "text": "Who owns what",
-        "level": 2
-      },
-      {
-        "id": "how-a-command-is-sent",
-        "text": "How a command is sent",
-        "level": 2
-      },
-      {
-        "id": "preparation",
-        "text": "Preparation",
-        "level": 2
-      },
-      {
-        "id": "transactions",
-        "text": "Transactions",
-        "level": 2
-      },
-      {
-        "id": "timeouts-and-cancellation",
-        "text": "Timeouts and cancellation",
-        "level": 2
-      },
-      {
-        "id": "pooling-and-reset",
-        "text": "Pooling and reset",
-        "level": 2
-      },
-      {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      },
-      {
-        "id": "how-types-are-resolved",
-        "text": "How types are resolved",
-        "level": 2
-      },
-      {
-        "id": "errors",
-        "text": "Errors",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1329,
-    "readMinutes": 7,
-    "searchText": "ADO.NET concepts This page explains the model behind `BlueTusk.Data`: which object owns what, how commands reach PostgreSQL, and what happens to a session between uses. Read [Core concepts](../getting-started/concepts.md) first for the shared terms (data source, pooling, parameters, type catalogue). Who owns what **Data source.** Create one per connection string and keep it. Register it as a singleton. Disposing it closes the pool. **Connection.** A short-lived lease on one physical session. Open it late, dispose it early. Use one when several commands must run on the same session: a transaction, a temporary table, `SET`, explicit preparation, COPY or `LISTEN`. **Command.** Pick the form that matches the work: You need Use One independent statement `dataSource.CreateCommand(sql)` Several statements on one session, or a transaction `new BlueTuskCommand(sql, connection)` Several independent statements in one round trip `connection.CreateBatch()` or `dataSource.CreateBatch()` ([Batches](batches.md)) `connection.CreateCommand()` is the standard ADO.NET method and is typed as `DbCommand`, so BlueTusk-only members such as `ExecuteScalarAsync<T>()` are not visible on it. Use one of the forms in the table instead. `new BlueTuskConnection(connectionString)` creates a connection outside any data source. It is not pooled and loads its own type catalogue. Prefer `dataSource.OpenConnectionAsync()`. How a command is sent PostgreSQL has two query protocols. BlueTusk chooses for you. Command Protocol Result format No parameters Simple query Text Parameters, a prepared command, or `CommandBehavior.SequentialAccess` Extended query (Parse, Bind, Execute) Binary where possible Parameter values always travel separately from the SQL text. You can write placeholders as `@name`, `:name` or `$1`, `$2`. Do not mix named and positional placeholders in one command. BlueTusk rewrites named placeholders to positional ones and skips quoted strings, dollar-quoted bodies and comments. `BlueTuskComm"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "configuration",
-    "summary": "Every connection-string keyword and data source option, with types and defaults.",
-    "keywords": [
-      "configuration",
-      "connection string",
-      "keywords",
-      "options"
-    ],
-    "order": 3,
-    "listed": true,
-    "title": "ADO.NET configuration",
-    "sourcePath": "docs/ado-net/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/configuration.md",
-    "headings": [
-      {
-        "id": "ado-net-configuration",
-        "text": "ADO.NET configuration",
-        "level": 1
-      },
-      {
-        "id": "where-settings-go",
-        "text": "Where settings go",
-        "level": 2
-      },
-      {
-        "id": "how-the-connection-string-is-parsed",
-        "text": "How the connection string is parsed",
-        "level": 2
-      },
-      {
-        "id": "reject-unknown-keywords",
-        "text": "Reject unknown keywords",
-        "level": 3
-      },
-      {
-        "id": "connection",
-        "text": "Connection",
-        "level": 2
-      },
-      {
-        "id": "security-and-tls",
-        "text": "Security and TLS",
-        "level": 2
-      },
-      {
-        "id": "authentication",
-        "text": "Authentication",
-        "level": 2
-      },
-      {
-        "id": "pooling",
-        "text": "Pooling",
-        "level": 2
-      },
-      {
-        "id": "commands-and-preparation",
-        "text": "Commands and preparation",
-        "level": 2
-      },
-      {
-        "id": "multi-host-routing",
-        "text": "Multi-host routing",
-        "level": 2
-      },
-      {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      },
-      {
-        "id": "diagnostics",
-        "text": "Diagnostics",
-        "level": 2
-      },
-      {
-        "id": "data-source-builder-options",
-        "text": "Data source builder options",
-        "level": 2
-      },
-      {
-        "id": "multiplexing-options",
-        "text": "Multiplexing options",
-        "level": 3
-      },
-      {
-        "id": "per-command-settings",
-        "text": "Per-command settings",
-        "level": 2
-      },
-      {
-        "id": "dependency-injection-registration",
-        "text": "Dependency-injection registration",
-        "level": 2
-      },
-      {
-        "id": "full-reference",
-        "text": "Full reference",
-        "level": 2
-      }
-    ],
-    "wordCount": 2021,
-    "readMinutes": 10,
-    "searchText": "ADO.NET configuration This page lists every setting you can give `BlueTusk.Data`: connection-string keywords, `BlueTuskDataSourceBuilder` options, per-command properties and the dependency-injection registration. Names and defaults come from the 1.1.0 source. Where settings go Setting kind Where you set it Server, credentials, TLS, pooling, routing Connection string (this page's keyword tables) Callbacks, certificates, type mappings, diagnostics, multiplexing tuning `BlueTuskDataSourceBuilder` Command timeout, protocol, streaming Properties on each `BlueTuskCommand` or `BlueTuskBatch` Host registration `services.AddDataSource(...)` A typical app keeps the connection string in configuration and the rest in code: `AddDataSource` is in `BlueTusk.Data.DependencyInjection`, and `BlueTuskDiagnosticsOptions` is in `BlueTusk.Diagnostics`. How the connection string is parsed Keywords are case-insensitive. Write them as shown, with spaces (`SSL Mode`, not `SslMode`). There are **no aliases**. `Server`, `User ID`, `UID`, `Pwd` and `SslMode` are not recognized. **Unknown keywords are ignored by default.** A misspelled keyword silently falls back to the default. For example, `SslMode=Disable` leaves `SSL Mode` at `VerifyFull`. Check spelling against the tables below, or [turn on rejection](#reject-unknown-keywords). Enum values are case-insensitive, and `-`, `_` and spaces are ignored, so `read-write`, `ReadWrite` and `read_write` are the same. An invalid value throws `ArgumentException` (for example `'verify-ca' is not a valid value for SSL Mode.`) when the data source is created. Durations are whole seconds. `BlueTuskConnectionStringBuilder` exposes every keyword as a typed property (shown in the **Property** column). Reject unknown keywords For compatibility with 1.0.0, BlueTusk accepts and ignores keywords it does not recognize, such as Npgsql's `Command Timeout` or a misspelled `Usernme`. To make them an error, as Npgsql does, turn on the `BlueTusk.Data.RejectUnknownConnect"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "troubleshooting",
-    "summary": "Fix connection, TLS, authentication, pool, timeout, cancellation and type-mapping problems.",
-    "keywords": [
-      "troubleshooting",
-      "errors",
-      "tls",
-      "timeout",
-      "pool"
-    ],
-    "order": 4,
-    "listed": true,
-    "title": "ADO.NET troubleshooting",
-    "sourcePath": "docs/ado-net/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/troubleshooting.md",
-    "headings": [
-      {
-        "id": "ado-net-troubleshooting",
-        "text": "ADO.NET troubleshooting",
-        "level": 1
-      },
-      {
-        "id": "read-the-whole-exception-chain",
-        "text": "Read the whole exception chain",
-        "level": 2
-      },
-      {
-        "id": "connection-failures",
-        "text": "Connection failures",
-        "level": 2
-      },
-      {
-        "id": "tls-failures",
-        "text": "TLS failures",
-        "level": 2
-      },
-      {
-        "id": "authentication-failures",
-        "text": "Authentication failures",
-        "level": 2
-      },
-      {
-        "id": "pool-exhaustion-and-timeouts",
-        "text": "Pool exhaustion and timeouts",
-        "level": 2
-      },
-      {
-        "id": "commands-and-transactions",
-        "text": "Commands and transactions",
-        "level": 2
-      },
-      {
-        "id": "type-mapping",
-        "text": "Type mapping",
-        "level": 2
-      },
-      {
-        "id": "pgbouncer-and-prepared-statements",
-        "text": "PgBouncer and prepared statements",
-        "level": 2
-      },
-      {
-        "id": "multi-host-routing",
-        "text": "Multi-host routing",
-        "level": 2
-      },
-      {
-        "id": "multiplexing",
-        "text": "Multiplexing",
-        "level": 2
-      }
-    ],
-    "wordCount": 1552,
-    "readMinutes": 8,
-    "searchText": "ADO.NET troubleshooting This page helps you match an error from `BlueTusk.Data` to its cause and fix. For problems outside the provider, see the [platform troubleshooting guide](../operations/troubleshooting.md). Read the whole exception chain Connection failures arrive as a `BlueTuskException` that wraps the real cause. Log `exception.ToString()` (never the connection string) and read the innermost exception. To find a SQLSTATE anywhere in the chain: `BlueTuskServerException` is in the `BlueTusk.Client` namespace. Connection failures Outer message: `Could not open a PostgreSQL connection matching Any across 1 configured host(s).` Innermost exception Cause Fix `BlueTuskTransportException`: `... (ConnectionRefused)` Nothing is listening on that host and port. Start PostgreSQL, or fix `Host` and `Port`. Check firewalls. `BlueTuskTransportException`: `... (NameResolution)` The host name does not resolve. Fix `Host` or DNS. `BlueTuskTransportException`: `... (Timeout)` No connection within `Timeout` (default 15 s). Check the network path. `BlueTuskServerException`: `database \"orders\" does not exist` Wrong database name. Create the database or fix `Database`. `ArgumentException`: `... (Parameter 'Database')` or `(Parameter 'Username')` The keyword is missing. Aliases such as `User ID` are not recognized. Use `Database=` and `Username=`. See [parsing rules](configuration.md#how-the-connection-string-is-parsed). `ObjectDisposedException`: `... 'BlueTusk.Data.BlueTuskConnectionPool'` The data source was disposed. Keep one for the app's lifetime. `ArgumentException`: `The connection-string keyword 'usernme' is not supported by BlueTusk.` You turned on [rejection of unknown keywords](configuration.md#reject-unknown-keywords); by default they are ignored. Fix or remove the keyword. TLS failures Error Cause Fix `BlueTuskAuthenticationException`: `PostgreSQL refused the required TLS connection.` The default `SSL Mode=VerifyFull` needs TLS and the server has none. A misspelled `S"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "authentication",
-    "summary": "Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.",
-    "keywords": [
-      "auth",
-      "tls",
-      "scram",
-      "gssapi"
-    ],
-    "order": 10,
-    "listed": true,
     "title": "Authentication",
-    "sourcePath": "docs/ado-net/authentication.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/authentication.md",
+    "summary": "Configure TLS, SCRAM, Kerberos, and client authentication.",
+    "order": 1,
     "headings": [
-      {
-        "id": "authentication",
-        "text": "Authentication",
-        "level": 1
-      },
       {
         "id": "credential-sources",
         "text": "Credential sources",
@@ -1099,143 +388,21 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1050,
-    "readMinutes": 5,
-    "searchText": "Authentication This page helps you choose how your app proves its identity to PostgreSQL: passwords and password files, callbacks, access tokens, Kerberos and TLS client certificates. BlueTusk supports SCRAM-SHA-256, SCRAM-SHA-256-PLUS (channel binding), PostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5, and cleartext passwords. By default it requires TLS (`SSL Mode=VerifyFull`) and validates the server certificate with the operating system's trust store. The connection-string keywords are listed in [Configuration](configuration.md#security-and-tls). See PostgreSQL's [password authentication](https://www.postgresql.org/docs/current/auth-password.html) and [encryption options](https://www.postgresql.org/docs/current/encryption-options.html) for server configuration guidance. Credential sources Credentials are resolved lazily only when PostgreSQL asks for a password. A certificate-authenticated or trusted connection therefore does not read a password file or invoke a callback. The precedence for a password challenge is: access-token callback; password callback; explicit `Password` connection setting; then the first matching PostgreSQL password-file entry. Password and access-token callbacks are mutually exclusive. A synchronous open requires a synchronous callback; asynchronous opens prefer the asynchronous callback and fall back to the synchronous callback when necessary. Configure both callback forms when the same data source is used by synchronous and asynchronous callers: Connection-string secrecy `Persist Security Info` defaults to `false`. A `BlueTuskConnection` exposes the original connection string until its first successful open, then permanently omits `Password` and `Passfile` from the public `ConnectionString` property. `BlueTuskDataSource.ConnectionString` omits them immediately because a data source is ready to open physical sessions as soon as it is built. Authentication continues to use the private immutable configuration, including on a "
+    "sourcePath": "docs/ado-net/authentication.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/authentication.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "cloud-identity",
-    "summary": "AWS, Azure, and Google Cloud identity integration and live-test boundaries.",
-    "keywords": [
-      "aws",
-      "azure",
-      "gcp",
-      "oauth"
-    ],
-    "order": 20,
-    "listed": true,
-    "title": "Cloud identity",
-    "sourcePath": "docs/ado-net/cloud-identity.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/cloud-identity.md",
-    "headings": [
-      {
-        "id": "cloud-identity",
-        "text": "Cloud identity",
-        "level": 1
-      },
-      {
-        "id": "aws-rds-and-aurora-postgresql",
-        "text": "AWS RDS and Aurora PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "azure-database-for-postgresql",
-        "text": "Azure Database for PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "google-cloud-sql-for-postgresql",
-        "text": "Google Cloud SQL for PostgreSQL",
-        "level": 2
-      }
-    ],
-    "wordCount": 551,
-    "readMinutes": 3,
-    "searchText": "Cloud identity This page helps you connect to AWS RDS and Aurora, Azure Database for PostgreSQL, or Google Cloud SQL with a cloud identity instead of a stored password. The cloud SDKs are kept out of the core provider. Install only the adapter for the service you use: Each adapter installs an access-token callback on the data-source builder and requires TLS before the callback is invoked. A token is acquired for every new physical connection. Checking an existing physical connection out of the pool does not acquire another token because PostgreSQL does not authenticate that session again. An authenticated session can outlive its token; `Connection Lifetime` and `ClearPoolAsync()` limit how long it stays in use. Provider exceptions and token values are not attached to BlueTusk's authentication errors. Tokens are never placed in the connection string or logged by the adapters. The returned .NET `string` is immutable and cannot be overwritten, so applications should not retain or log it. AWS RDS and Aurora PostgreSQL `BlueTusk.Identity.Aws` uses AWS SDK for .NET v4 to generate a SigV4 RDS IAM authentication token from the host, port, and PostgreSQL username of the physical connection being opened: The parameterless overload uses the AWS SDK's standard region and credential resolution chains. Other overloads accept an explicit `AWSCredentials`, `RegionEndpoint`, or both. Synchronous and asynchronous BlueTusk opens use the corresponding AWS SDK token-generation path. Enable IAM database authentication, grant the PostgreSQL role `rds_iam`, and allow the AWS identity to perform `rds-db:connect`. Use the actual RDS or Aurora endpoint rather than a custom DNS alias because the host is part of the signature. AWS tokens are valid for 15 minutes; BlueTusk requests a fresh token for each new physical connection rather than caching it. See AWS's [IAM database authentication guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html) and [.NET token-"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "dependency-injection",
-    "summary": "Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.",
-    "keywords": [
-      "dependency injection",
-      "health checks",
-      "DbDataSource",
-      "hosting"
-    ],
-    "order": 25,
-    "listed": true,
-    "title": "Dependency injection and health checks",
-    "sourcePath": "docs/ado-net/dependency-injection.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/dependency-injection.md",
-    "headings": [
-      {
-        "id": "dependency-injection-and-health-checks",
-        "text": "Dependency injection and health checks",
-        "level": 1
-      },
-      {
-        "id": "register-the-data-source",
-        "text": "Register the data source",
-        "level": 2
-      },
-      {
-        "id": "use-the-data-source-in-a-service",
-        "text": "Use the data source in a service",
-        "level": 2
-      },
-      {
-        "id": "readiness-health-check",
-        "text": "Readiness health check",
-        "level": 2
-      },
-      {
-        "id": "liveness-versus-readiness",
-        "text": "Liveness versus readiness",
-        "level": 2
-      },
-      {
-        "id": "ownership-and-disposal",
-        "text": "Ownership and disposal",
-        "level": 2
-      },
-      {
-        "id": "test-your-registration",
-        "text": "Test your registration",
-        "level": 2
-      },
-      {
-        "id": "migration-from-npgsql-di",
-        "text": "Migration from Npgsql DI",
-        "level": 2
-      }
-    ],
-    "wordCount": 597,
-    "readMinutes": 3,
-    "searchText": "Dependency injection and health checks This page helps you register a BlueTusk data source in an ASP.NET Core, worker or other generic-host app, and expose a database readiness check. It uses `BlueTusk.Data.DependencyInjection`, which works with `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Diagnostics.HealthChecks`. The [quick start](quickstart.md) shows a complete minimal API. Register the data source The registration creates one long-lived `BlueTuskDataSource`. The same instance is resolvable as: `BlueTuskDataSource` for provider-specific APIs; and `DbDataSource` for provider-neutral application and library code. Do not register a data source as transient or create one per request. The data source owns the physical pool and immutable provider configuration. All parameters are described in [Configuration](configuration.md#dependency-injection-registration). Use the data source in a service Provider-neutral service: Provider-specific code can resolve `BlueTuskDataSource` when it needs a dedicated replication session, PostgreSQL type configuration or another BlueTusk-only surface. Readiness health check Registration always adds a health check. Its name is `healthCheckName` (default `bluetusk`) and it is tagged: `bluetusk` `ready` The check opens a logical connection and executes `SELECT 1`. It verifies the path an application needs for ordinary database work: configuration, DNS, network reachability, authentication, pool acquisition and a server round-trip. It does not prove: that every migration has been applied; that a replication slot is healthy; that a standby has caught up; that a Sync destination is reachable; or that the application has domain-level read/write permission. Add separate checks for those responsibilities. To serve only readiness checks on one endpoint, filter by tag: Liveness versus readiness Database connectivity normally belongs in readiness, not liveness. Restarting a healthy process because PostgreSQL is briefly unavai"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "pooling",
-    "summary": "Pool sizing, reset behavior, operational signals, and PgBouncer modes.",
-    "keywords": [
-      "pool",
-      "reset",
-      "pgbouncer"
-    ],
-    "order": 30,
-    "listed": true,
     "title": "Connection pooling",
-    "sourcePath": "docs/ado-net/pooling.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/pooling.md",
+    "summary": "Size connection pools, manage leases, and control session reset.",
+    "order": 2,
     "headings": [
-      {
-        "id": "connection-pooling",
-        "text": "Connection pooling",
-        "level": 1
-      },
       {
         "id": "settings",
         "text": "Settings",
-        "level": 2
-      },
-      {
-        "id": "what-happens-when-the-pool-is-full",
-        "text": "What happens when the pool is full?",
         "level": 2
       },
       {
@@ -1254,88 +421,76 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1144,
-    "readMinutes": 6,
-    "searchText": "Connection pooling This page helps you size, warm up and monitor the connection pool, and understand what happens to a connection between uses. `BlueTuskDataSource` owns its own pool of physical connections, limited by `Maximum Pool Size`. Connections created directly with `new BlueTuskConnection(...)` remain unpooled; applications that want pooling should keep one data source for each distinct connection string and open logical connections from it. For high-concurrency, session-neutral commands, enable the statement multiplexer and create commands directly from the data source: Settings Every keyword is described in [Configuration](configuration.md#pooling). Setting Default Meaning `Pooling` `true` Enables the data source's physical connection pool. `Minimum Pool Size` `0` Physical sessions opened by warm-up and before the first checkout. `Maximum Pool Size` `100` Hard limit for physical sessions in each host endpoint pool. `Connection Idle Lifetime` 5 minutes Maximum idle age checked before reuse; zero disables idle expiry. `Connection Lifetime` 1 hour Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. `Multiplexing` `false` Enables statement multiplexing; pooling must also be enabled. `Timeout` 15 seconds Limits connecting to the server and waiting for a free connection when the pool is full. Watch the pool from your own health or metrics code: Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate. What happens when the pool is full? When every connection is in use, `Open`, `OpenAsync` and data-source commands wait in order for a connection to be returned. The connection-string `Timeout` (default 15 seconds"
+    "sourcePath": "docs/ado-net/pooling.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/pooling.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "multi-host",
-    "summary": "Multi-host routing, failover, target session attributes, and recovery.",
-    "keywords": [
-      "failover",
-      "host",
-      "topology"
-    ],
-    "order": 40,
-    "listed": true,
     "title": "Multi-host connections",
+    "summary": "Connect to primary and replica hosts with explicit targeting.",
+    "order": 3,
+    "headings": [],
     "sourcePath": "docs/ado-net/multi-host.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multi-host.md",
-    "headings": [
-      {
-        "id": "multi-host-connections",
-        "text": "Multi-host connections",
-        "level": 1
-      }
-    ],
-    "wordCount": 493,
-    "readMinutes": 3,
-    "searchText": "Multi-host connections This page helps you connect to a primary and its standbys with one connection string, and route work to the server role you need. BlueTusk accepts PostgreSQL's keyword/value multi-host form. `Host` is a comma-separated ordered list; `Port` can contain one shared port or a positionally matching list. Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver's address order, and attempts every returned address under one shared connect deadline. This respects the operating system's IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host's inner `BlueTuskTransportException`. `Target Session Attributes` accepts: `any` `primary` `standby` `prefer-primary` `prefer-standby` `read-write` `read-only` BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authentication when role selection is required. A strict target rejects incompatible servers; a preferred target retains the first healthy fallback while it searches the remaining hosts. Network and server-availability failures advance to the next host, while authentication rejection stops the sequence. This follows PostgreSQL's [multiple-host and target-session connection behavior](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-MULTIPLE-HOSTS). `BlueTuskConnection.ConnectedEndpoint` reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads. `BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work t"
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "batches",
-    "summary": "Execute ordered command batches with PostgreSQL-aware error behavior.",
-    "keywords": [
-      "batch",
-      "command"
-    ],
-    "order": 50,
-    "listed": true,
-    "title": "Batches",
-    "sourcePath": "docs/ado-net/batches.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/batches.md",
+    "categoryLabel": "ADO.NET",
+    "slug": "cloud-identity",
+    "title": "Cloud identity",
+    "summary": "Use cloud credentials and rotate database tokens.",
+    "order": 4,
     "headings": [
       {
-        "id": "batches",
-        "text": "Batches",
-        "level": 1
+        "id": "aws-rds-and-aurora-postgresql",
+        "text": "AWS RDS and Aurora PostgreSQL",
+        "level": 2
       },
+      {
+        "id": "azure-database-for-postgresql",
+        "text": "Azure Database for PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "google-cloud-sql-for-postgresql",
+        "text": "Google Cloud SQL for PostgreSQL",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/cloud-identity.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/cloud-identity.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "batches",
+    "title": "Batches",
+    "summary": "Send multiple parameterized statements in a batch.",
+    "order": 5,
+    "headings": [
       {
         "id": "several-statements-in-one-command",
         "text": "Several statements in one command",
         "level": 2
       }
     ],
-    "wordCount": 549,
-    "readMinutes": 3,
-    "searchText": "Batches This page helps you send several SQL statements to PostgreSQL in one round trip, either as a `BlueTuskBatch` or as one multi-statement command. `BlueTuskBatch` implements the .NET `DbBatch` abstraction and sends every command through one PostgreSQL extended-query protocol cycle. Each command has its own text and parameter collection; positional and named placeholders use the same safe rewriting and encoding rules as `BlueTuskCommand`. `ExecuteReaderAsync` exposes one result in command order, including empty non-query results. `ExecuteNonQueryAsync` returns the sum of affected rows, while every `BlueTuskBatchCommand.RecordsAffected` reports its own command tag. `ExecuteScalarAsync` returns the first field of the first row. Set `Transaction` to enlist the complete protocol cycle in the connection's active transaction. `Timeout`, cancellation tokens, `Cancel()`, and `CancelAsync()` use PostgreSQL's cancellation channel and drain through `ReadyForQuery` before the connection can be reused. `PrepareAsync` creates one named server statement per batch command. Later executions bind all of those statements in one cycle, and changing command text or PostgreSQL parameter OIDs rebuilds the prepared set. Batches created by a data source own a temporary pooled connection for each execution and therefore cannot be explicitly prepared. Several statements in one command **Note:** New in 1.1.0. Not available in 1.0.0 or 1.1.0-rc.1. A buffered `BlueTuskCommand` also accepts ordinary parameterized, semicolon-separated statements. EF Core uses this path for its write batches: Named parameters are rebound separately for each statement. Positional `$1`, `$2`, etc. retain their ordinals in the parent command's parameter collection. Do not mix named and positional placeholders. Quoted strings, quoted identifiers, dollar-quoted bodies and SQL comments can contain semicolons without creating a new statement. Supply data through parameters, not string interpolation. The driver uses se"
+    "sourcePath": "docs/ado-net/batches.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/batches.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "copy",
-    "summary": "Text and binary COPY APIs, typed values, cancellation, and completion.",
-    "keywords": [
-      "copy",
-      "import",
-      "export",
-      "binary"
-    ],
-    "order": 60,
-    "listed": true,
     "title": "COPY",
-    "sourcePath": "docs/ado-net/copy.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/copy.md",
+    "summary": "Bulk-import and export data with PostgreSQL COPY.",
+    "order": 6,
     "headings": [
-      {
-        "id": "copy",
-        "text": "COPY",
-        "level": 1
-      },
       {
         "id": "typed-binary-copy",
         "text": "Typed binary COPY",
@@ -1347,30 +502,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 3
       }
     ],
-    "wordCount": 920,
-    "readMinutes": 5,
-    "searchText": "COPY This page helps you import and export many rows quickly with PostgreSQL's `COPY` command, as raw text, CSV or binary streams, or as typed binary rows. `BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation. The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream. For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks: Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names. The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends `CopyFail` or a cancellation request as appropriate and drains through `ReadyForQuery` before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller's next command. Typed binary COPY `BeginBinaryImportAsync` writes PostgreSQL's binary COPY header, rows, field lengths, null markers, and trailer while using the data source's catalogue-loaded binary codecs: `StartRowAsync` uses the server-reported column count and requires every field to be written before another row or completion. `WriteAsync<T>` infers the PostgreSQL type from the same registry used for parameters; an overload accepts an"
+    "sourcePath": "docs/ado-net/copy.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/copy.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "large-objects",
-    "summary": "Large-object ownership and streaming behavior.",
-    "keywords": [
-      "large objects",
-      "stream"
-    ],
-    "order": 70,
-    "listed": true,
     "title": "Large objects",
-    "sourcePath": "docs/ado-net/large-objects.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/large-objects.md",
+    "summary": "Read and write large objects inside transactions.",
+    "order": 7,
     "headings": [
-      {
-        "id": "large-objects",
-        "text": "Large objects",
-        "level": 1
-      },
       {
         "id": "transaction-ownership",
         "text": "Transaction ownership",
@@ -1382,89 +525,48 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 384,
-    "readMinutes": 2,
-    "searchText": "Large objects This page helps you store and stream binary data as PostgreSQL large objects. For most data, a `bytea` column read with a [sequential reader](sequential-readers.md) is simpler; use large objects when you need seekable, chunked access to very large values. PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream: `CreateLargeObjectAsync(uint preferredObjectId, ...)` requests a particular OID; passing zero, or using the overload without an OID, lets PostgreSQL assign one. `DeleteLargeObjectAsync` calls `lo_unlink` and permanently removes the object when its transaction commits. Transaction ownership PostgreSQL requires every large-object descriptor to remain inside a transaction: If the connection has no active transaction, `OpenLargeObjectAsync` starts an implicit transaction. Successful asynchronous disposal closes the descriptor and commits. A failed read, write, seek, or truncate rolls it back. Only one implicitly transactional stream can be open on a connection. Begin an explicit transaction when multiple descriptors must overlap. If the caller already owns a `BlueTuskTransaction`, large-object creation, deletion, and streams join it. The caller remains responsible for commit or rollback, and multiple streams may be open. Creating or deleting outside an explicit transaction uses a short implicit transaction. Use `using` with `CreateLargeObject`, `OpenLargeObject`, and `DeleteLargeObject` for the native synchronous path, or `await using` with their asynchronous counterparts. Successful disposal closes the descriptor and commits an implicit transaction in both modes; a failed operation rolls it back. Stream behavior `BlueTuskLargeObjectStream` exposes: synchronous and asynchronous reads and writes; 64-bit `Seek`/`SeekAsync` and `SetLength`/`SetLengthAsync`; cached `Length` and `Position`; the backing `ObjectId`; `Fi"
+    "sourcePath": "docs/ado-net/large-objects.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/large-objects.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "notifications",
-    "summary": "LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.",
-    "keywords": [
-      "listen",
-      "notify"
-    ],
-    "order": 80,
-    "listed": true,
     "title": "Asynchronous notifications",
+    "summary": "Listen for PostgreSQL notifications on a dedicated session.",
+    "order": 8,
+    "headings": [],
     "sourcePath": "docs/ado-net/notifications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/notifications.md",
-    "headings": [
-      {
-        "id": "asynchronous-notifications",
-        "text": "Asynchronous notifications",
-        "level": 1
-      }
-    ],
-    "wordCount": 391,
-    "readMinutes": 2,
-    "searchText": "Asynchronous notifications This page helps you receive PostgreSQL `LISTEN`/`NOTIFY` messages in .NET, for example to wake a worker when a row changes. Notifications are not durable: a listener that is not connected misses them. To process every committed change, use [Streams](../streams/README.md). `BlueTuskConnection` exposes notifications as an asynchronous stream: The loop runs until `stoppingToken` is cancelled, which throws `OperationCanceledException`, or until the connection closes. The synchronous path uses a dedicated blocking listener session and a long-running worker, while normal commands continue on the connection's primary session: `UnlistenAll()` synchronously stops every listener. Synchronous listener disposal closes the blocking socket to interrupt its receive loop; it does not block on asynchronous network I/O. `BlueTuskNotification` contains the publishing backend process ID, the channel reported by PostgreSQL, and the payload. PostgreSQL delivers a notification only after the publishing transaction commits; notifications produced by an aborted transaction are discarded. Channel names are PostgreSQL identifiers. `ListenAsync` quotes them through BlueTusk's central identifier-quoting path, so mixed case, whitespace, Unicode, reserved words, and embedded double quotes are safe. Empty names and names containing a null character are rejected. Payload values should be sent as parameters: Calling `ListenAsync` repeatedly for the same channel is idempotent. Use `UnlistenAsync(channel)` for one channel or `UnlistenAllAsync()` for all channels. Closing or disposing the connection stops every listener and completes the current `Notifications` enumeration. Reopening the same connection creates a fresh notification stream. BlueTusk uses a dedicated, non-pooled physical session for each active channel. This keeps the logical connection's normal session available for commands while the notification consumer is waiting and prevents session-level `LISTEN` state f"
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "sequential-readers",
-    "summary": "Bounded sequential reads for large PostgreSQL values.",
-    "keywords": [
-      "reader",
-      "streaming",
-      "memory"
-    ],
-    "order": 90,
-    "listed": true,
     "title": "Sequential readers",
-    "sourcePath": "docs/ado-net/sequential-readers.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/sequential-readers.md",
+    "summary": "Stream result values without buffering entire rows.",
+    "order": 9,
     "headings": [
-      {
-        "id": "sequential-readers",
-        "text": "Sequential readers",
-        "level": 1
-      },
       {
         "id": "rules-for-sequential-access",
         "text": "Rules for sequential access",
         "level": 2
       }
     ],
-    "wordCount": 408,
-    "readMinutes": 2,
-    "searchText": "Sequential readers This page helps you read large values, such as files in `bytea` columns or big JSON documents, without loading whole rows into memory. By default a data reader buffers each result before you read it. Pass `CommandBehavior.SequentialAccess` to stream the result from the connection instead. You can then read a field as a `Stream` (`GetStream`) or a `TextReader` (`GetTextReader`) while its bytes are still arriving. By default the whole result is streamed in one request (`SequentialFetchSize = 0`). Set `SequentialFetchSize` to a positive number to fetch that many rows at a time; this makes the reader available sooner for a long-running query and lets you cancel between fetches. Here `destination` is any writable `Stream`, such as a file. Rules for sequential access Read fields in column order. Going back to an earlier column, or opening a field while another field's stream is still open, throws `InvalidOperationException` (`The active field stream must be consumed or disposed before accessing another field.`). `GetStream` reads `bytea`. `GetTextReader` reads `text`, `json` and `jsonb` and checks the UTF-8 as it goes. `Stream.ReadAsync` can return fewer bytes than you asked for. Keep reading until it returns zero, or use `CopyToAsync`. Scalar getters such as `GetInt64` read only their own field. The reader holds its connection until it finishes or is disposed. Dispose it promptly; disposing early skips the remaining rows without loading them. `CommandTimeout`, `Cancel()`, `CancelAsync()` and cancellation tokens cancel the query on the server and leave the connection usable. With the default fetch size, `ExecuteReaderAsync` waits until PostgreSQL starts sending results. Pass a cancellation token or set `CommandTimeout` if that wait must be limited. A sequential reader returns one result set. `NextResult` returns `false`. Do not use `SequentialAccess` with a multi-statement command. Inside an explicit transaction, `bytea` values arrive in text format and"
+    "sourcePath": "docs/ado-net/sequential-readers.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/sequential-readers.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "schema-discovery",
-    "summary": "Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.",
-    "keywords": [
-      "schema",
-      "metadata",
-      "GetSchema",
-      "columns",
-      "catalogue"
-    ],
-    "order": 95,
-    "listed": true,
     "title": "Schema discovery",
-    "sourcePath": "docs/ado-net/schema-discovery.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/schema-discovery.md",
+    "summary": "Inspect database and result-set metadata.",
+    "order": 10,
     "headings": [
-      {
-        "id": "schema-discovery",
-        "text": "Schema discovery",
-        "level": 1
-      },
       {
         "id": "connection-collections",
         "text": "Connection collections",
@@ -1491,32 +593,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 491,
-    "readMinutes": 3,
-    "searchText": "Schema discovery This page helps you read database metadata at run time (tables, columns and the shape of a query result) through the standard ADO.NET schema APIs. Connection collections Call `GetSchema()` to list supported collections: BlueTusk supports these collections: Collection Requires open connection Purpose `MetaDataCollections` No Lists the available schema collections `DataSourceInformation` No Provider and identifier behavior `DataTypes` No Provider type metadata `Restrictions` No Restriction positions for each collection `ReservedWords` No PostgreSQL reserved words `Databases` Yes Visible databases `Schemas` Yes Visible schemas `Tables` Yes Tables and views filtered by restrictions `Columns` Yes Column metadata filtered by restrictions Catalogue-backed collections require an open connection because visibility is defined by the authenticated PostgreSQL session. Restrictions Restrictions are positional and collection-specific. For example: Use `null` for a restriction you do not want to constrain. Treat returned metadata as the current authenticated view of the catalogue, not a durable schema snapshot. Reader column schema After executing a command, use `GetColumnSchema` or `GetSchemaTable`: Column metadata exposes the information available from PostgreSQL row descriptions and provider type resolution, including: column name and ordinal; CLR data type; provider type identity and name; nullability when known; size/precision/scale when known; and source relation/column metadata when PostgreSQL supplies it. Unavailable metadata remains unavailable; BlueTusk does not invent key or origin information. Intentional exclusions `CommandBehavior.SchemaOnly` and `CommandBehavior.KeyInfo` are not supported and throw `NotSupportedException`. Silently treating either as `CommandBehavior.Default` would execute behavior the caller did not request. When you need PostgreSQL to describe a result shape, run a query that returns no rows: This still parses, plans and describes"
+    "sourcePath": "docs/ado-net/schema-discovery.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/schema-discovery.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
+    "categoryLabel": "ADO.NET",
     "slug": "types",
-    "summary": "Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.",
-    "keywords": [
-      "types",
-      "arrays",
-      "ranges",
-      "json"
-    ],
-    "order": 100,
-    "listed": true,
     "title": "Use PostgreSQL types",
-    "sourcePath": "docs/types/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/README.md",
+    "summary": "Map PostgreSQL types, including domains, arrays, enums, composites, and ranges.",
+    "order": 11,
     "headings": [
-      {
-        "id": "use-postgresql-types",
-        "text": "Use PostgreSQL types",
-        "level": 1
-      },
       {
         "id": "the-normal-path",
         "text": "The normal path",
@@ -1543,426 +631,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 631,
-    "readMinutes": 3,
-    "searchText": "Use PostgreSQL types BlueTusk maps common PostgreSQL values directly to normal .NET types. Start here to read and write values safely; use the [complete type reference](reference.md) only when you need a specialised or catalogue-defined type. The normal path Use typed parameters and typed reader methods. BlueTusk sends parameter values separately from SQL and chooses the PostgreSQL wire format for you: Common mappings PostgreSQL Typical .NET type Notes `int2`, `int4`, `int8` `short`, `int`, `long` Use the matching width. `numeric` `decimal` Check precision and scale in the schema. `text`, `varchar` `string` Length rules remain a schema concern. `uuid` `Guid` Native binary mapping. `bytea` `byte[]` or streaming API Stream very large values. `date` `DateOnly` Calendar date without a time zone. `timestamp` `DateTime` No time-zone conversion. `timestamptz` `DateTimeOffset` Prefer UTC at application boundaries. `json`, `jsonb` JSON/string mapping Choose an explicit application representation. `type[]` `T[]` Element mapping must also be known. `ExecuteScalarAsync<T>()` converts its result with the same rules as `GetFieldValue<T>()`, so `ExecuteScalarAsync<decimal>()` reads a `numeric` result. For a column that can be `NULL`, ask for a nullable type such as `decimal?` or `int?`: a non-nullable `T` returns its default value instead. Null values need a type PostgreSQL cannot always infer the intended type of a null parameter. State it explicitly: Use `DbType`, `PostgreSqlTypeOid`, or `PostgreSqlTypeName`; do not rely on an ambiguous server guess. `PostgreSqlTypeName` must include the schema, for example `pg_catalog.jsonb` or `app.order_status`. The same applies to a `string[]` parameter, as in the first example: give it `PostgreSqlTypeName = \"pg_catalog.text[]\"`. Map application-defined types once Register enums and composites before building the long-lived data source: Without a labels dictionary, `MapEnum` takes each member's label from `[BlueTuskName(\"paid\")]` (namespace "
+    "sourcePath": "docs/types/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/README.md",
+    "keywords": []
   },
   {
     "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "repack",
-    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
-    "keywords": [
-      "repack",
-      "maintenance",
-      "postgresql 19",
-      "bloat"
-    ],
-    "order": 105,
-    "listed": true,
-    "title": "PostgreSQL 19 native REPACK",
-    "sourcePath": "docs/ado-net/repack.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
-    "headings": [
-      {
-        "id": "postgresql-19-native-repack",
-        "text": "PostgreSQL 19 native REPACK",
-        "level": 1
-      },
-      {
-        "id": "repack-one-table",
-        "text": "Repack one table",
-        "level": 2
-      },
-      {
-        "id": "choose-the-operation",
-        "text": "Choose the operation",
-        "level": 2
-      },
-      {
-        "id": "monitor-progress",
-        "text": "Monitor progress",
-        "level": 2
-      },
-      {
-        "id": "production-checks",
-        "text": "Production checks",
-        "level": 2
-      }
-    ],
-    "wordCount": 712,
-    "readMinutes": 4,
-    "searchText": "PostgreSQL 19 native REPACK **Note:** New in 1.1.0. Requires PostgreSQL 19 (preview). PostgreSQL 19 is not yet a final release, so use this API for development and testing until it is. Not available in 1.0.0 or 1.1.0-rc.1. This page helps you reclaim disk space from a bloated table with PostgreSQL 19's native `REPACK` command, and monitor its progress from .NET. This is the PostgreSQL command, not the separate `pg_repack` extension. The `BlueTusk.Data.Maintenance` namespace (in the `BlueTusk.Data` package) supports every documented PostgreSQL 19 form through `BlueTuskRepackRequest`, rejects invalid combinations before sending SQL, and reads live progress from `pg_stat_progress_repack`. On PostgreSQL 18 and earlier, `connection.SupportsRepack` is `false` and the API throws `NotSupportedException`. Repack one table Open a dedicated connection. A repack owns that physical session until the server completes or the operation is cancelled. `CommandTimeoutSeconds = 0` disables the client timeout, which is usually the right choice for scheduled maintenance. Cancellation still sends PostgreSQL's normal cancellation request and restores the connection to a usable protocol state. Choose the operation Goal Request Rewrite one table `ForTable(\"events\", \"app\")` Keep a supported table available Set `Concurrently = true` Refresh all table statistics Set `Analyze = true` Refresh selected column statistics Set `Analyze = true` and `AnalyzeColumns = [\"tenant_id\"]` Physically order by the configured clustering index Set `UseIndex = true` Choose and remember a clustering index Set `IndexName = \"events_created_at_idx\"` Emit PostgreSQL information messages Set `Verbose = true` Process all eligible relations in the database `ForDatabase()` Process all relations with a configured clustering index `ForDatabase() with { UseIndex = true }` Table, schema, index, and column names are quoted as PostgreSQL identifiers; they are never concatenated as untrusted SQL fragments. BlueTusk sends `REPACK`"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "pipeline-mode",
-    "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
-    "keywords": [
-      "pipeline",
-      "protocol"
-    ],
-    "order": 110,
-    "listed": true,
-    "title": "PostgreSQL pipeline mode",
-    "sourcePath": "docs/pipeline-mode.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/pipeline-mode.md",
-    "headings": [
-      {
-        "id": "postgresql-pipeline-mode",
-        "text": "PostgreSQL pipeline mode",
-        "level": 1
-      }
-    ],
-    "wordCount": 294,
-    "readMinutes": 2,
-    "searchText": "PostgreSQL pipeline mode `BlueTusk.Client` supports PostgreSQL pipeline mode on PostgreSQL 14 and later. A pipeline sends multiple extended-query synchronization groups in one network flush, preserves result order, and avoids waiting for each group before sending the next one. This feature is independent of the .NET `System.IO.Pipelines` buffering library. BlueTusk implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport. A separate benchmark-backed evaluation retained the ArrayPool/Span/Memory transport; see [ADR 0005](architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md). Each `BlueTuskPipelineGroup` ends with an explicit protocol `Sync`. A server error is attached to the affected group's result after BlueTusk drains through that group's `ReadyForQuery`. PostgreSQL can then execute the next already-sent group: The synchronous `ExecutePipeline` method has the same ordered result and error contract. Query parameters use the same `BlueTuskExtendedQueryParameter` representation as other Client-layer extended-query APIs. Cancellation sends PostgreSQL `CancelRequest`, drains the active group and every already-sent group to their synchronization boundaries, and throws `OperationCanceledException` only after the session is safe to reuse. A connection that fails during a partial write or cannot recover to `ReadyForQuery` is closed instead of being reused. `BlueTuskSession.Capabilities` and `BlueTuskConnection.ServerCapabilities` expose the authenticated server version and detected features. ADO.NET physical sessions probe PostgreSQL 19's documented `information_schema.property_graphs` view before enabling `SupportsSqlPgq`; low-level normal SQL sessions can call `ProbeOptionalCapabilities` or its asynchronous counterpart explicitly. `SupportsOAuthBearer` becomes true only on a connection that actually completed native OAUTHBEARER negotiation. A version number alone is not treated as product support."
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "slug": "replication",
-    "summary": "Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.",
-    "keywords": [
-      "logical",
-      "physical",
-      "wal",
-      "pgoutput"
-    ],
-    "order": 120,
-    "listed": true,
-    "title": "Start PostgreSQL replication",
-    "sourcePath": "docs/replication/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/README.md",
-    "headings": [
-      {
-        "id": "start-postgresql-replication",
-        "text": "Start PostgreSQL replication",
-        "level": 1
-      },
-      {
-        "id": "choose-the-right-layer",
-        "text": "Choose the right layer",
-        "level": 2
-      },
-      {
-        "id": "1-configure-postgresql",
-        "text": "1. Configure PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-open-a-dedicated-session",
-        "text": "2. Open a dedicated session",
-        "level": 2
-      },
-      {
-        "id": "3-read-pgoutput",
-        "text": "3. Read `pgoutput`",
-        "level": 2
-      },
-      {
-        "id": "run-the-complete-example",
-        "text": "Run the complete example",
-        "level": 2
-      },
-      {
-        "id": "operate-it-safely",
-        "text": "Operate it safely",
-        "level": 2
-      }
-    ],
-    "wordCount": 430,
-    "readMinutes": 2,
-    "searchText": "Start PostgreSQL replication Use `BlueTusk.Replication` when you need direct access to PostgreSQL's logical or physical replication protocol. If your goal is an application change feed, start with [Streams](../streams/README.md); it adds transaction assembly, spooling, checkpoints, leases, and safe acknowledgement. Choose the right layer Need Start with Decode raw `pgoutput` messages This replication guide Receive complete committed transactions [Streams](../streams/README.md) Copy those transactions to another system [Sync](../sync/README.md) Keep browser clients updated [Live](../live/README.md) Replication sessions are dedicated. They do not come from the normal ADO.NET pool. 1. Configure PostgreSQL Set `wal_level = logical`, then create a publication and a replication role with only the required rights: Create the logical slot through controlled provisioning or the application bootstrap process. Give every consumer its own slot; two independent consumers must not race over one checkpoint. Do not create a slot while migrations or other table creation run in the same database: PostgreSQL can create a slot that then fails on every attempt to decode writes to the new tables. See [creating a slot while the schema changes](../streams/troubleshooting.md#a-new-slot-fails-with-could-not-map-filenumber) for the symptoms and the recovery. 2. Open a dedicated session 3. Read `pgoutput` Never acknowledge a payload merely because it was received. The safe point is the transaction-end LSN after the downstream effect and checkpoint are durable. Run the complete example Use TLS outside an isolated local environment. Operate it safely Alert on retained WAL and slot inactivity. Persist the source system identifier, database, slot, publication fingerprint, and last acknowledged transaction-end LSN together. Stop on a source-identity mismatch instead of silently continuing. Bound message size and reconnect delay. Drop unused slots deliberately; an abandoned slot can retain WAL indef"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-compatibility",
-    "summary": "This page helps you check which standard ADO.NET features BlueTusk.Data supports before you port code to it, including code written for Npgsql. A feature marked Not supported throws an exception; BlueTusk never silently",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "compatibility"
-    ],
-    "order": 1009,
-    "title": "ADO.NET compatibility",
-    "sourcePath": "docs/ado-net/compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/compatibility.md",
-    "headings": [
-      {
-        "id": "ado-net-compatibility",
-        "text": "ADO.NET compatibility",
-        "level": 1
-      },
-      {
-        "id": "host-registration",
-        "text": "Host registration",
-        "level": 2
-      },
-      {
-        "id": "migration-from-npgsql",
-        "text": "Migration from Npgsql",
-        "level": 2
-      }
-    ],
-    "wordCount": 586,
-    "readMinutes": 3,
-    "searchText": "ADO.NET compatibility This page helps you check which standard ADO.NET features `BlueTusk.Data` supports before you port code to it, including code written for Npgsql. A feature marked **Not supported** throws an exception; BlueTusk never silently approximates it. Feature Status Details Text commands Supported `CommandType.Text`, named or positional parameters, sync/async execution and local transactions. Stored procedures and functions Supported through SQL text Use `CALL ...` for procedures and `SELECT ...` for functions. PostgreSQL `OUT` and `INOUT` values are read from returned result rows. `CommandType.StoredProcedure` Not supported Setting it throws `NotSupportedException`. Write `CALL` or `SELECT` SQL instead. Parameter directions `Input` supported `Output`, `InputOutput` and `ReturnValue` throw `NotSupportedException`. Use PostgreSQL result rows for output values. Local transactions Supported `BeginTransaction`, command enlistment, commit, rollback and async equivalents. Savepoints Supported through SQL Run `SAVEPOINT`, `ROLLBACK TO SAVEPOINT` and `RELEASE SAVEPOINT` as enlisted commands. `DbTransaction.Save`, `Release` and named `Rollback` throw `NotSupportedException`. `System.Transactions` ambient/distributed enlistment Not supported No promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. `CommandBehavior.Default` Supported All rows and result sets are buffered unless sequential access is selected. `SingleRow` Supported At most the first row is exposed. `SingleResult` Supported `NextResult` returns false after the first result set. `SequentialAccess` Supported Uses the incremental portal reader; combine with `SingleRow`, `SingleResult` or `CloseConnection` as needed. `CloseConnection` Supported Closing or disposing the reader closes its logical connection. `SchemaOnly` and `KeyInfo` Not supported Both throw `NotSupportedException`; they are never silently ignored. Reader schema Supported `GetColumnSchema`, `GetSchem"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-multiplexing-compatibility",
-    "summary": "This page helps you decide whether multiplexing suits your workload, and shows which commands it shares across connections and which it keeps on a dedicated session.",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "multiplexing",
-      "compatibility"
-    ],
-    "order": 1016,
-    "title": "Multiplexing compatibility",
-    "sourcePath": "docs/ado-net/multiplexing-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multiplexing-compatibility.md",
-    "headings": [
-      {
-        "id": "multiplexing-compatibility",
-        "text": "Multiplexing compatibility",
-        "level": 1
-      },
-      {
-        "id": "routing-matrix",
-        "text": "Routing matrix",
-        "level": 2
-      },
-      {
-        "id": "how-the-scheduler-behaves",
-        "text": "How the scheduler behaves",
-        "level": 2
-      },
-      {
-        "id": "pgbouncer",
-        "text": "PgBouncer",
-        "level": 2
-      }
-    ],
-    "wordCount": 739,
-    "readMinutes": 4,
-    "searchText": "Multiplexing compatibility This page helps you decide whether multiplexing suits your workload, and shows which commands it shares across connections and which it keeps on a dedicated session. Multiplexing is opt-in. It runs independent commands created directly from a `BlueTuskDataSource` over a small number of shared physical connections. It never moves session state, such as a transaction, between connections. You can also turn it on with `Multiplexing=true` in the connection string. Options are listed in [Configuration](configuration.md#multiplexing-options). Routing matrix \"Affine\" means the command runs on a dedicated session, as it would without multiplexing. Command Route Why Independent text and parameterised commands from the data source Shared A first-in, first-out queue writes up to `MaxPipelineCommands` commands per flush, each with its own PostgreSQL `Sync`. Commands on an explicit `BlueTuskConnection` Dedicated You own the session. `Require` throws before execution instead of falling back. Transactions and savepoints Affine Transaction state, failures, and savepoints belong to one backend. Explicitly prepared commands and SQL `PREPARE`/`EXECUTE`/`DEALLOCATE` Affine Prepared statement identity belongs to a backend session. Sequential readers and cursors Affine A portal remains live until the reader completes or is disposed. `Require` throws. COPY import/export Affine COPY changes the protocol state until completion, cancellation, or abort recovery. Large objects and `lo_*`/legacy large-object routines Affine Descriptors and their owning transaction belong to one connection. `LISTEN`/`UNLISTEN` and notification APIs Affine Listener registration and the notification pump own dedicated session state. `NOTIFY` is conservatively routed affine as well. Temporary objects and `pg_temp` Affine Temporary schemas and objects belong to one backend. Session advisory locks Affine Lock ownership is the backend process. Transaction-scoped advisory-lock routines are co"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "ado-net-nativeaot",
-    "summary": "This page helps you publish a trimmed or NativeAOT application that uses BlueTusk.Data, and lists the few features that need a JIT runtime.",
-    "keywords": [
-      "docs",
-      "ado",
-      "net",
-      "nativeaot"
-    ],
-    "order": 1017,
-    "title": "NativeAOT and trimming",
-    "sourcePath": "docs/ado-net/nativeaot.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/nativeaot.md",
-    "headings": [
-      {
-        "id": "nativeaot-and-trimming",
-        "text": "NativeAOT and trimming",
-        "level": 1
-      },
-      {
-        "id": "what-is-supported",
-        "text": "What is supported",
-        "level": 2
-      },
-      {
-        "id": "set-up-your-project",
-        "text": "Set up your project",
-        "level": 2
-      },
-      {
-        "id": "composite-and-enum-mappings",
-        "text": "Composite and enum mappings",
-        "level": 2
-      },
-      {
-        "id": "array-boundary",
-        "text": "Array boundary",
-        "level": 2
-      },
-      {
-        "id": "range-boundary",
-        "text": "Range boundary",
-        "level": 2
-      },
-      {
-        "id": "other-bluetusk-packages",
-        "text": "Other BlueTusk packages",
-        "level": 2
-      }
-    ],
-    "wordCount": 566,
-    "readMinutes": 3,
-    "searchText": "NativeAOT and trimming This page helps you publish a trimmed or NativeAOT application that uses `BlueTusk.Data`, and lists the few features that need a JIT runtime. What is supported The provider core supports full trimming and NativeAOT. That covers `BlueTusk.Data` and the packages it depends on: `BlueTusk.Client`, `BlueTusk.Protocol`, `BlueTusk.Transport`, `BlueTusk.Security`, `BlueTusk.TypeSystem`, `BlueTusk.Diagnostics` and `BlueTusk.Extensions.Abstractions`. Connection strings, SCRAM authentication, data sources, commands, built-in types and one-dimensional arrays all work. Every build of the provider is published and run as a trimmed app and as a NativeAOT app on Windows x64 and Linux x64. Those smoke apps do not contact a server, so test your own app against PostgreSQL after publishing. Set up your project Turn on NativeAOT and add the composite source generator: `PublishAot` also turns on the trimming and AOT analyzers at build time, so unsupported patterns show up as build warnings. Composite and enum mappings Prefer the `BlueTusk.SourceGeneration` composite generator in NativeAOT applications. It produces direct member access and avoids reflection during normal encoding and decoding: The generator adds a static `RegisterCodec` method to every `partial` type marked with `[BlueTuskComposite]`. Members match composite fields by snake_case name (`HouseNumber` matches `house_number`). `MapComposite<T>` remains available for statically known public constructors, properties, and fields. Its generic annotations preserve those members during trimming. Source generation is still preferred because it gives compile-time mapping diagnostics and removes reflection from the hot path. `MapEnum<TEnum>` preserves the enum fields needed by its label mapping. Dynamically discovering a CLR type by name and then constructing a closed generic mapping is not supported in NativeAOT; register the concrete type directly in application code. Array boundary NativeAOT supports one-dime"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "protocol",
-    "summary": "PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte.",
-    "keywords": [
-      "docs",
-      "protocol",
-      "README"
-    ],
-    "order": 1146,
-    "title": "Protocol notes",
-    "sourcePath": "docs/protocol/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
-    "headings": [
-      {
-        "id": "protocol-notes",
-        "text": "Protocol notes",
-        "level": 1
-      },
-      {
-        "id": "incremental-messages-and-portals",
-        "text": "Incremental messages and portals",
-        "level": 2
-      }
-    ],
-    "wordCount": 203,
-    "readMinutes": 1,
-    "searchText": "Protocol notes PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte. `BlueTuskBackendMessageParser` deliberately accepts unknown identifiers and returns a zero-copy payload view. It rejects lengths below four and lengths above its configured maximum before waiting for or allocating the payload. Incremental messages and portals `BlueTuskProtocolConnection.ReadMessageHeader` and `ReadMessageHeaderAsync` separate frame validation from payload consumption. Callers can then drain the active payload in bounded chunks with `ReadMessagePayload` or `ReadMessagePayloadAsync`; another frame cannot be read until that payload is complete. This is the primitive used for large `DataRow` fields, so sequential consumers do not need to allocate a complete backend message. `BlueTuskSession.BeginPortal` and `BeginPreparedPortal` expose incremental portals. An unlimited portal uses PostgreSQL's unnamed portal and sends `Sync` in the initial write. A positive fetch size uses a generated named portal, sends `Execute` followed by `Flush`, resumes after `PortalSuspended`, and sends `Sync` only when the command completes or the portal is disposed. The asynchronous counterparts preserve the same protocol behavior. `BlueTuskPortalRow` enforces forward-only field access, can return a transport-backed field stream, and reuses one session-owned row/header buffer after the previous portal is disposed."
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "protocol-capture-format",
-    "summary": "BlueTusk protocol captures use the .btpc extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement.",
-    "keywords": [
-      "docs",
-      "protocol",
-      "capture",
-      "format"
-    ],
-    "order": 1147,
-    "title": "Protocol capture format",
-    "sourcePath": "docs/protocol/capture-format.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
-    "headings": [
-      {
-        "id": "protocol-capture-format",
-        "text": "Protocol capture format",
-        "level": 1
-      },
-      {
-        "id": "file-header",
-        "text": "File header",
-        "level": 2
-      },
-      {
-        "id": "record",
-        "text": "Record",
-        "level": 2
-      }
-    ],
-    "wordCount": 260,
-    "readMinutes": 2,
-    "searchText": "Protocol capture format BlueTusk protocol captures use the `.btpc` extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement. File header Offset Size Value 0 8 ASCII magic `BTPCAP\\r\\n` 8 2 Format version (`1`) 10 2 File-header length (`24`) 12 4 File attributes (zero in version 1) 16 8 Creation time as Unix milliseconds Record Each file-header is followed by zero or more records. Offset Size Value 0 1 Direction: frontend (`0`) or backend (`1`) 1 1 Attributes: redacted (`1`) and encrypted (`2`) 2 2 Record-header length (`16`) 4 8 Microseconds elapsed since capture start 12 4 Payload length 16 variable Captured payload bytes Readers reject unknown versions, unsupported attributes, invalid directions, truncated data, negative lengths, and payloads beyond a configurable limit before allocating the payload buffer. The default limit is 64 MiB. Capture producers must mark or remove authentication secrets, tokens, password messages, and other sensitive payloads. The inspector does not display payload bytes by default and never displays a record marked redacted."
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
-    "slug": "replication-reference",
-    "summary": "BlueTusk.Replication exposes PostgreSQL's physical and logical streaming replication protocol directly. It uses a dedicated replication session and COPY BOTH; it does not borrow an ADO.NET pooled connection.",
-    "keywords": [
-      "docs",
-      "replication",
-      "reference"
-    ],
-    "order": 1164,
-    "title": "Replication",
-    "sourcePath": "docs/replication/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
-    "headings": [
-      {
-        "id": "replication",
-        "text": "Replication",
-        "level": 1
-      },
-      {
-        "id": "server-setup",
-        "text": "Server setup",
-        "level": 2
-      },
-      {
-        "id": "logical-replication",
-        "text": "Logical replication",
-        "level": 2
-      },
-      {
-        "id": "pgoutput-decoding",
-        "text": "pgoutput decoding",
-        "level": 2
-      },
-      {
-        "id": "feedback-and-durability",
-        "text": "Feedback and durability",
-        "level": 2
-      },
-      {
-        "id": "physical-replication",
-        "text": "Physical replication",
-        "level": 2
-      },
-      {
-        "id": "discovery-and-custom-plugins",
-        "text": "Discovery and custom plugins",
-        "level": 2
-      },
-      {
-        "id": "reconnect-and-resume",
-        "text": "Reconnect and resume",
-        "level": 2
-      }
-    ],
-    "wordCount": 1517,
-    "readMinutes": 7,
-    "searchText": "Replication `BlueTusk.Replication` exposes PostgreSQL's physical and logical streaming replication protocol directly. It uses a dedicated replication session and `COPY BOTH`; it does not borrow an ADO.NET pooled connection. Build one long-lived data source for the application configuration, then derive a fresh dedicated-session option snapshot for replication: The data source remains the configuration root, but it does not own the replication connection. The replication object owns one unpooled physical session and must be disposed independently. Its lifetime may be much longer than an ADO.NET command or pooled checkout. Configured credentials, application name, timeout, TLS mode, and channel binding are copied into the snapshot; ADO.NET codecs and runtime catalogue state are intentionally irrelevant to raw replication payloads. The stream is pull-based and does not maintain a background prefetch queue. At most the current `CopyData` payload and decoded message are owned by the consumer path; PostgreSQL/socket flow control supplies backpressure until the consumer requests the next element. Process or hand off each payload promptly, and put an application-owned bounded queue in front of slower durable work only when that queue's capacity and failure semantics are deliberate. The `BlueTusk.Diagnostics` meter records WAL-sender clock lag and byte-position lag for XLogData and keepalive messages. These are receive-side observations, not claims that a downstream consumer has applied a transaction. See [Diagnostics and observability](../observability.md) for metric names and dimensions. For a multi-host data source, select a configured endpoint explicitly: BlueTusk does not silently fail a replication stream over to another host. The application must establish that the replacement server and slot are safe for its persisted resume position. BlueTusk supports PostgreSQL 15 through 19 and provides: physical and logical replication connections; system identification, settings"
-  },
-  {
-    "category": "provider",
-    "categoryLabel": "Provider",
-    "listed": false,
+    "categoryLabel": "ADO.NET",
     "slug": "types-reference",
-    "summary": "BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selecte…",
-    "keywords": [
-      "docs",
-      "types",
-      "reference"
-    ],
-    "order": 1204,
     "title": "Core type mappings",
-    "sourcePath": "docs/types/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
+    "summary": "Look up type mappings and catalogue behavior.",
+    "order": 12,
     "headings": [
-      {
-        "id": "core-type-mappings",
-        "text": "Core type mappings",
-        "level": 1
-      },
       {
         "id": "numeric-values",
         "text": "Numeric values",
@@ -2004,543 +684,306 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1714,
-    "readMinutes": 8,
-    "searchText": "Core type mappings BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selected PostgreSQL type has no binary output function. Inside an explicit transaction they request text fields up front, avoiding a failed Bind that would abort the transaction. PostgreSQL type OID Default CLR value Text Binary `bool` 16 `bool` yes yes `bytea` 17 `byte[]` yes yes `\"char\"` 18 `BlueTuskInternalChar` yes yes `name` 19 `string` yes yes `int8` 20 `long` yes yes `int2` 21 `short` yes yes `int4` 23 `int` yes yes `text` 25 `string` yes yes `oid` 26 `uint` yes yes `json` 114 `string` yes yes `xml` 142 `string` yes yes `float4` 700 `float` yes yes `float8` 701 `double` yes yes `bpchar` 1042 `string` yes yes `varchar` 1043 `string` yes yes `date` 1082 `DateOnly` yes yes `time` 1083 `TimeSpan` yes yes `timestamp` 1114 `DateTime` yes yes `timestamptz` 1184 `DateTimeOffset` yes yes `numeric` 1700 `BlueTuskNumeric` yes yes `uuid` 2950 `Guid` yes yes `jsonb` 3802 `string` yes yes Numeric values `BlueTuskNumeric` preserves PostgreSQL arbitrary precision as a `BigInteger` unscaled value and a scale up to 16,383. It also represents `NaN`, positive infinity, and negative infinity. `GetDecimal` and `GetFieldValue<decimal>` perform a checked conversion and fail when the value is special or outside `decimal`'s range. Use `BlueTuskParameter<BlueTuskNumeric>` to send values that cannot fit in `decimal`: Temporal values PostgreSQL `date` infinity maps to `DateOnly.MinValue` and `DateOnly.MaxValue`. `timestamp` infinity maps to `DateTime.MinValue` and `DateTime.MaxValue`; `timestamptz` uses the corresponding `DateTimeOffset` values and normalizes finite results to UTC. PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan`. `GetFieldValue<TimeOnly>` is available for values before 24:00. Binary temporal values preserve Postg"
+    "sourcePath": "docs/types/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "pipeline-mode",
+    "title": "PostgreSQL pipeline mode",
+    "summary": "Use pipeline mode within its transaction and cancellation boundaries.",
+    "order": 13,
+    "headings": [],
+    "sourcePath": "docs/pipeline-mode.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/pipeline-mode.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "multiplexing-compatibility",
+    "title": "Multiplexing compatibility",
+    "summary": "Choose which commands can share a physical session.",
+    "order": 14,
+    "headings": [
+      {
+        "id": "routing-matrix",
+        "text": "Routing matrix",
+        "level": 2
+      },
+      {
+        "id": "scheduler-and-failure-invariants",
+        "text": "Scheduler and failure invariants",
+        "level": 2
+      },
+      {
+        "id": "pgbouncer",
+        "text": "PgBouncer",
+        "level": 2
+      },
+      {
+        "id": "reproduce",
+        "text": "Reproduce",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/multiplexing-compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multiplexing-compatibility.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "nativeaot",
+    "title": "NativeAOT and trimming",
+    "summary": "Prepare a trimmed or Native AOT .NET application.",
+    "order": 15,
+    "headings": [
+      {
+        "id": "composite-and-enum-mappings",
+        "text": "Composite and enum mappings",
+        "level": 2
+      },
+      {
+        "id": "array-boundary",
+        "text": "Array boundary",
+        "level": 2
+      },
+      {
+        "id": "range-boundary",
+        "text": "Range boundary",
+        "level": 2
+      },
+      {
+        "id": "integration-scope",
+        "text": "Integration scope",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/nativeaot.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/nativeaot.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "replication",
+    "title": "Start PostgreSQL replication",
+    "summary": "Read WAL and pgoutput changes through low-level replication APIs.",
+    "order": 16,
+    "headings": [
+      {
+        "id": "choose-the-right-layer",
+        "text": "Choose the right layer",
+        "level": 2
+      },
+      {
+        "id": "1-configure-postgresql",
+        "text": "1. Configure PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "2-open-a-dedicated-session",
+        "text": "2. Open a dedicated session",
+        "level": 2
+      },
+      {
+        "id": "3-read-pgoutput",
+        "text": "3. Read pgoutput",
+        "level": 2
+      },
+      {
+        "id": "run-the-complete-example",
+        "text": "Run the complete example",
+        "level": 2
+      },
+      {
+        "id": "operate-it-safely",
+        "text": "Operate it safely",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/replication/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/README.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "replication-reference",
+    "title": "Replication",
+    "summary": "Configure replication sessions, messages, and LSN feedback.",
+    "order": 17,
+    "headings": [
+      {
+        "id": "server-setup",
+        "text": "Server setup",
+        "level": 2
+      },
+      {
+        "id": "logical-replication",
+        "text": "Logical replication",
+        "level": 2
+      },
+      {
+        "id": "pgoutput-decoding",
+        "text": "pgoutput decoding",
+        "level": 2
+      },
+      {
+        "id": "feedback-and-durability",
+        "text": "Feedback and durability",
+        "level": 2
+      },
+      {
+        "id": "physical-replication",
+        "text": "Physical replication",
+        "level": 2
+      },
+      {
+        "id": "discovery-and-custom-plugins",
+        "text": "Discovery and custom plugins",
+        "level": 2
+      },
+      {
+        "id": "reconnect-and-resume",
+        "text": "Reconnect and resume",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/replication/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "repack",
+    "title": "PostgreSQL 19 native REPACK",
+    "summary": "Run repack with the right PostgreSQL permissions and operational controls.",
+    "order": 18,
+    "headings": [
+      {
+        "id": "repack-one-table",
+        "text": "Repack one table",
+        "level": 2
+      },
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "monitor-progress",
+        "text": "Monitor progress",
+        "level": 2
+      },
+      {
+        "id": "production-checks",
+        "text": "Production checks",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/repack.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
+    "keywords": []
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "ADO.NET",
+    "slug": "ado-net-compatibility",
+    "title": "ADO.NET compatibility",
+    "summary": "Check supported ADO.NET contracts and migrate provider-neutral code.",
+    "order": 19,
+    "headings": [
+      {
+        "id": "host-registration",
+        "text": "Host registration",
+        "level": 2
+      },
+      {
+        "id": "migration-from-npgsql",
+        "text": "Migration from Npgsql",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/ado-net/compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/compatibility.md",
+    "keywords": []
   },
   {
     "category": "ef-core",
     "categoryLabel": "EF Core",
     "slug": "overview",
-    "summary": "Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.",
-    "keywords": [
-      "linq",
-      "migrations",
-      "scaffolding",
-      "mapping"
+    "title": "Use BlueTusk with Entity Framework Core",
+    "summary": "Configure a DbContext and use LINQ, migrations, and database scaffolding.",
+    "order": 0,
+    "headings": [
+      {
+        "id": "what-you-will-build",
+        "text": "What you will build",
+        "level": 2
+      },
+      {
+        "id": "1-install-the-provider",
+        "text": "1. Install the provider",
+        "level": 2
+      },
+      {
+        "id": "2-create-the-model-and-context",
+        "text": "2. Create the model and context",
+        "level": 2
+      },
+      {
+        "id": "3-register-it-once",
+        "text": "3. Register it once",
+        "level": 2
+      },
+      {
+        "id": "4-read-and-write-data",
+        "text": "4. Read and write data",
+        "level": 2
+      },
+      {
+        "id": "save-several-changes-together",
+        "text": "Save several changes together",
+        "level": 3
+      },
+      {
+        "id": "5-create-and-apply-migrations",
+        "text": "5. Create and apply migrations",
+        "level": 2
+      },
+      {
+        "id": "verify-the-setup",
+        "text": "Verify the setup",
+        "level": 2
+      },
+      {
+        "id": "production-defaults",
+        "text": "Production defaults",
+        "level": 2
+      },
+      {
+        "id": "go-deeper-only-when-needed",
+        "text": "Go deeper only when needed",
+        "level": 2
+      }
     ],
-    "order": 10,
-    "listed": true,
-    "title": "EF Core provider",
     "sourcePath": "docs/ef-core/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/README.md",
-    "headings": [
-      {
-        "id": "ef-core-provider",
-        "text": "EF Core provider",
-        "level": 1
-      },
-      {
-        "id": "when-to-use-it",
-        "text": "When to use it",
-        "level": 2
-      },
-      {
-        "id": "what-it-supports",
-        "text": "What it supports",
-        "level": 2
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "requirements-and-status",
-        "text": "Requirements and status",
-        "level": 2
-      },
-      {
-        "id": "a-taste-of-the-code",
-        "text": "A taste of the code",
-        "level": 2
-      },
-      {
-        "id": "guides",
-        "text": "Guides",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 708,
-    "readMinutes": 4,
-    "searchText": "EF Core provider This page helps you decide whether to use BlueTusk's Entity Framework Core provider and where to start. The provider lets you use LINQ, change tracking, migrations and database-first scaffolding with PostgreSQL, on top of BlueTusk's own PostgreSQL driver. It does not use Npgsql. When to use it Use the EF Core provider when: your application already uses EF Core, or you want LINQ queries and change tracking instead of hand-written SQL; you want EF Core migrations to own your PostgreSQL schema, including PostgreSQL-only objects such as enums, extensions, `GIN` indexes and row-level security; or you want to generate entity classes from an existing database. Use the [ADO.NET provider](../ado-net/README.md) (`BlueTusk.Data`) instead when you only need SQL commands, binary `COPY`, notifications or replication. You can use both in one application: they share the same data source and connection pool. What it supports **Queries**: standard LINQ, plus PostgreSQL operators and functions through `EF.Functions` (arrays, ranges, JSON, full-text search, window functions and more). **PostgreSQL types**: arrays and `List<T>`, ranges and multiranges, `json` and `jsonb` (including EF's `ToJson()`), network, geometric and bit-string types, and your own enums, composites and domains. **Saving**: change tracking, generated keys (identity columns), sequences, `xmin` optimistic concurrency, transactions and savepoints. **New in 1.1.0:** `SaveChanges` sends inserts, updates and deletes in batches of up to 42 statements. In 1.0.0 and 1.1.0-rc.1 each statement was a separate command. **Migrations**: tables, keys, indexes and sequences, plus PostgreSQL enums, domains, extensions, collations, partitioning, triggers, views, functions, publications and row-level security. **Scaffolding**: `dotnet ef dbcontext scaffold` or the `bluetusk scaffold` command. Packages Package Install it when Notes `BlueTusk.EntityFrameworkCore` Always The provider. Brings in `BlueTusk.Data`. `BlueTusk"
+    "keywords": []
   },
   {
     "category": "ef-core",
     "categoryLabel": "EF Core",
-    "slug": "quickstart",
-    "summary": "Define a DbContext, create and apply a migration, and query PostgreSQL with LINQ.",
-    "keywords": [
-      "quickstart",
-      "dbcontext",
-      "migrations",
-      "linq"
-    ],
-    "order": 11,
-    "listed": true,
-    "title": "EF Core quick start",
-    "sourcePath": "docs/ef-core/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/quickstart.md",
-    "headings": [
-      {
-        "id": "ef-core-quick-start",
-        "text": "EF Core quick start",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-start-postgresql",
-        "text": "1. Start PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-app-and-add-packages",
-        "text": "2. Create the app and add packages",
-        "level": 2
-      },
-      {
-        "id": "3-install-the-ef-core-command-line-tool",
-        "text": "3. Install the EF Core command-line tool",
-        "level": 2
-      },
-      {
-        "id": "4-set-the-connection-string",
-        "text": "4. Set the connection string",
-        "level": 2
-      },
-      {
-        "id": "5-write-the-code",
-        "text": "5. Write the code",
-        "level": 2
-      },
-      {
-        "id": "6-create-the-database-with-a-migration",
-        "text": "6. Create the database with a migration",
-        "level": 2
-      },
-      {
-        "id": "7-run-it",
-        "text": "7. Run it",
-        "level": 2
-      },
-      {
-        "id": "what-just-happened",
-        "text": "What just happened",
-        "level": 2
-      },
-      {
-        "id": "if-it-fails",
-        "text": "If it fails",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1074,
-    "readMinutes": 5,
-    "searchText": "EF Core quick start In this quick start you build a .NET console app that uses EF Core with PostgreSQL through BlueTusk. You define two entities, create the database with an EF Core migration, save data and query it with LINQ. It takes about ten minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 server you can use for testing. If you have Docker, step 1 starts one for you. 1. Start PostgreSQL Skip this step if you already have a test server. You do not need to create a database. The migration in step 6 creates the `library` database for you. 2. Create the app and add packages Package Why `BlueTusk.EntityFrameworkCore` The EF Core provider. `BlueTusk.EntityFrameworkCore.Design` Lets `dotnet ef` create migrations for PostgreSQL. `Microsoft.EntityFrameworkCore.Design` Required by `dotnet ef`. Version 10.0.11 matches the provider. `Microsoft.Extensions.Hosting` Dependency injection and configuration. `dotnet ef` also uses it to find your `DbContext`. See [Install BlueTusk](../getting-started/install.md) to choose a release channel for the BlueTusk packages. 3. Install the EF Core command-line tool If you already have `dotnet-ef`, run `dotnet tool update --global dotnet-ef --version 10.0.11` instead. 4. Set the connection string Keep credentials out of source code. .NET reads the environment variable `ConnectionStrings__Library` as the connection string named `Library`: On Linux or macOS, use `export ConnectionStrings__Library=\"...\"` instead. **Warning:** `SSL Mode=Disable` is only for a local test container. BlueTusk's default is `SSL Mode=VerifyFull`, which requires TLS and validates the server certificate. Keep that default everywhere else. 5. Write the code Create `Library.cs` with the entities and the `DbContext`: Replace the contents of `Program.cs`: 6. Create the database with a migration Create a migration from your model, then apply it: `migrations add` writes C# files to a `Mig"
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "concepts",
-    "summary": "How the EF Core provider maps types, batches SaveChanges, handles transactions and builds migrations.",
-    "keywords": [
-      "concepts",
-      "mapping",
-      "batching",
-      "migrations"
-    ],
-    "order": 12,
-    "listed": true,
-    "title": "EF Core concepts",
-    "sourcePath": "docs/ef-core/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/concepts.md",
-    "headings": [
-      {
-        "id": "ef-core-concepts",
-        "text": "EF Core concepts",
-        "level": 1
-      },
-      {
-        "id": "how-long-should-the-data-source-and-dbcontext-live",
-        "text": "How long should the data source and DbContext live?",
-        "level": 2
-      },
-      {
-        "id": "how-are-net-types-mapped-to-postgresql",
-        "text": "How are .NET types mapped to PostgreSQL?",
-        "level": 2
-      },
-      {
-        "id": "postgresql-enums-need-three-pieces",
-        "text": "PostgreSQL enums need three pieces",
-        "level": 3
-      },
-      {
-        "id": "how-does-savechanges-batch-commands",
-        "text": "How does SaveChanges batch commands?",
-        "level": 2
-      },
-      {
-        "id": "how-do-i-detect-concurrent-updates",
-        "text": "How do I detect concurrent updates?",
-        "level": 2
-      },
-      {
-        "id": "read-the-current-database-values-including-complex-collections",
-        "text": "Read the current database values, including complex collections",
-        "level": 3
-      },
-      {
-        "id": "how-do-transactions-and-retries-work",
-        "text": "How do transactions and retries work?",
-        "level": 2
-      },
-      {
-        "id": "how-do-migrations-work",
-        "text": "How do migrations work?",
-        "level": 2
-      },
-      {
-        "id": "how-do-i-start-from-an-existing-database",
-        "text": "How do I start from an existing database?",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1671,
-    "readMinutes": 8,
-    "searchText": "EF Core concepts This page explains the rules you need to use the BlueTusk EF Core provider well. For the shared vocabulary (data source, pool, type catalogue), read [Core concepts](../getting-started/concepts.md) first. How long should the data source and DbContext live? Create **one `BlueTuskDataSource`** per connection string and keep it for the life of the application. Create **one `DbContext` per unit of work**. `AddDbContext` registers it as scoped, which in ASP.NET Core means one per request. Pass the data source to `UseBlueTusk`. In an app with dependency injection, `AddDataSource` (package `BlueTusk.Data.DependencyInjection`) registers the singleton and a readiness health check: `UseBlueTusk` also accepts a connection string or an open `BlueTuskConnection` (see [Configuration](configuration.md#usebluetusk-overloads)), but avoid them in applications. With a connection string, each context creates its own **unpooled** connection, and enum or composite mappings registered on a data source are not available. See [Dependency injection](../ado-net/dependency-injection.md) for `AddDataSource`. How are .NET types mapped to PostgreSQL? When you do not choose a column type, BlueTusk uses these defaults: .NET type PostgreSQL type `bool` `boolean` `short`, `int`, `long` `smallint`, `integer`, `bigint` `float`, `double` `real`, `double precision` `decimal` `numeric` (`numeric(p,s)` with `HasPrecision`) `string` `text` (`character varying(n)` with `HasMaxLength`) `Guid` `uuid` `byte[]` `bytea` `DateTimeOffset` `timestamp with time zone` `DateTime` `timestamp without time zone` `DateOnly`, `TimeOnly` `date`, `time without time zone` `TimeSpan` `interval` `T[]`, `List<T>` of a supported `T` PostgreSQL array, for example `text[]` `BlueTuskRange<int>` (and `long`, `DateOnly`, `DateTime`, `DateTimeOffset`, `BlueTuskNumeric`) `int4range` (and the matching range type) Owned or complex type with `ToJson()` `jsonb` CLR `enum` its underlying integer type Rules worth knowing: **Use"
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "configuration",
-    "summary": "UseBlueTusk overloads, provider options, model-building extensions and scaffolding options.",
-    "keywords": [
-      "configuration",
-      "UseBlueTusk",
-      "options",
-      "scaffold"
-    ],
-    "order": 13,
-    "listed": true,
-    "title": "EF Core configuration",
-    "sourcePath": "docs/ef-core/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/configuration.md",
-    "headings": [
-      {
-        "id": "ef-core-configuration",
-        "text": "EF Core configuration",
-        "level": 1
-      },
-      {
-        "id": "connection-string",
-        "text": "Connection string",
-        "level": 2
-      },
-      {
-        "id": "usebluetusk-overloads",
-        "text": "UseBlueTusk overloads",
-        "level": 2
-      },
-      {
-        "id": "bluetusk-options",
-        "text": "BlueTusk options",
-        "level": 2
-      },
-      {
-        "id": "extension-package-options",
-        "text": "Extension package options",
-        "level": 3
-      },
-      {
-        "id": "model-configuration",
-        "text": "Model configuration",
-        "level": 2
-      },
-      {
-        "id": "columns-and-keys",
-        "text": "Columns and keys",
-        "level": 3
-      },
-      {
-        "id": "indexes",
-        "text": "Indexes",
-        "level": 3
-      },
-      {
-        "id": "types-extensions-and-other-database-objects",
-        "text": "Types, extensions and other database objects",
-        "level": 3
-      },
-      {
-        "id": "example",
-        "text": "Example",
-        "level": 3
-      },
-      {
-        "id": "design-time-setup",
-        "text": "Design-time setup",
-        "level": 2
-      },
-      {
-        "id": "scaffold-command-options",
-        "text": "Scaffold command options",
-        "level": 2
-      },
-      {
-        "id": "full-reference",
-        "text": "Full reference",
-        "level": 2
-      }
-    ],
-    "wordCount": 1886,
-    "readMinutes": 9,
-    "searchText": "EF Core configuration This page lists every setting you can use to configure the BlueTusk EF Core provider: the `UseBlueTusk` overloads, the provider options, the PostgreSQL-specific model configuration methods, and the scaffold command options. For explanations, see [Concepts](concepts.md). Connection string The provider uses the same connection string as the ADO.NET provider. The keywords you are most likely to change: Keyword Default Meaning `Host`, `Port`, `Database`, `Username`, `Password` `Port=5432` Where and how to connect. `SSL Mode` `VerifyFull` TLS with certificate and host name checks. Use `Disable` only for a local test container. `Timeout` `15` Seconds to wait when opening a connection. `Pooling` `true` Applies to a data source's pool. `Minimum Pool Size`, `Maximum Pool Size` `0`, `100` Pool limits for the data source. See the [ADO.NET guide](../ado-net/README.md) and [connection pooling](../ado-net/pooling.md) for every keyword. UseBlueTusk overloads Call `UseBlueTusk` on a `DbContextOptionsBuilder` (or the generic `DbContextOptionsBuilder<TContext>`). Every overload takes an optional last argument, `Action<BlueTuskDbContextOptionsBuilder>`, for the [provider options](#bluetusk-options). Overload Use it when `UseBlueTusk(BlueTuskDataSource dataSource, ...)` Always, in applications. Contexts share the data source's pool and its enum and composite mappings. You dispose the data source. `UseBlueTusk(string? connectionString, ...)` Tools and tests. Each context opens its own **unpooled** connection. Runtime type mappings are not available. `UseBlueTusk(BlueTuskConnection connection, bool contextOwnsConnection = false, ...)` You manage one connection yourself, for example to share it with ADO.NET code. BlueTusk options These methods are on `BlueTuskDbContextOptionsBuilder`, the object passed to the `UseBlueTusk` callback. `UseAdminDatabase` is BlueTusk-specific; the others are EF Core relational options with BlueTusk's defaults. Method Default Meaning `Max"
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "troubleshooting",
-    "summary": "Fix setup, translation, migration, concurrency and type-mapping problems.",
-    "keywords": [
-      "troubleshooting",
-      "errors",
-      "migrations",
-      "translation"
-    ],
-    "order": 14,
-    "listed": true,
-    "title": "EF Core troubleshooting",
-    "sourcePath": "docs/ef-core/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/troubleshooting.md",
-    "headings": [
-      {
-        "id": "ef-core-troubleshooting",
-        "text": "EF Core troubleshooting",
-        "level": 1
-      },
-      {
-        "id": "setup",
-        "text": "Setup",
-        "level": 2
-      },
-      {
-        "id": "no-database-provider-has-been-configured-for-this-dbcontext",
-        "text": "\"No database provider has been configured for this DbContext\"",
-        "level": 3
-      },
-      {
-        "id": "a-connection-string-is-required",
-        "text": "\"A connection string is required.\"",
-        "level": 3
-      },
-      {
-        "id": "postgresql-runs-out-of-connections-or-every-request-opens-a-new-one",
-        "text": "PostgreSQL runs out of connections, or every request opens a new one",
-        "level": 3
-      },
-      {
-        "id": "dotnet-ef-and-package-versions",
-        "text": "dotnet ef and package versions",
-        "level": 2
-      },
-      {
-        "id": "your-startup-project-doesn-t-reference-microsoft-entityframeworkcore-design",
-        "text": "\"Your startup project '...' doesn't reference Microsoft.EntityFrameworkCore.Design.\"",
-        "level": 3
-      },
-      {
-        "id": "could-not-load-file-or-assembly-bluetusk-entityframeworkcore-design",
-        "text": "\"Could not load file or assembly 'BlueTusk.EntityFrameworkCore.Design'\"",
-        "level": 3
-      },
-      {
-        "id": "the-entity-framework-tools-version-is-older-than-that-of-the-runtime-10-0-11",
-        "text": "\"The Entity Framework tools version '...' is older than that of the runtime '10.0.11'.\"",
-        "level": 3
-      },
-      {
-        "id": "nu1605-detected-package-downgrade-microsoft-entityframeworkcore-relational-from-10-0-11-to",
-        "text": "\"NU1605: Detected package downgrade: Microsoft.EntityFrameworkCore.Relational from 10.0.11 to ...\"",
-        "level": 3
-      },
-      {
-        "id": "unable-to-retrieve-project-metadata-ensure-it-s-an-sdk-style-project",
-        "text": "\"Unable to retrieve project metadata. Ensure it's an SDK-style project.\"",
-        "level": 3
-      },
-      {
-        "id": "queries",
-        "text": "Queries",
-        "level": 2
-      },
-      {
-        "id": "the-linq-expression-could-not-be-translated",
-        "text": "\"The LINQ expression '...' could not be translated.\"",
-        "level": 3
-      },
-      {
-        "id": "bluetusk-postgresql-database-functions-can-only-be-used-in-translated-ef-core-queries",
-        "text": "\"BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.\"",
-        "level": 3
-      },
-      {
-        "id": "enums-and-types",
-        "text": "Enums and types",
-        "level": 2
-      },
-      {
-        "id": "pending-is-not-a-catalogue-label-for-postgresql-enum-app-order-status",
-        "text": "\"'Pending' is not a catalogue label for PostgreSQL enum app.order_status.\"",
-        "level": 3
-      },
-      {
-        "id": "invalid-input-value-for-enum-app-order-status-in-a-query-with-an-enum-constant",
-        "text": "\"invalid input value for enum app.order_status\" in a query with an enum constant",
-        "level": 3
-      },
-      {
-        "id": "postgresql-type-oid-requires-a-registered-codec-or-string-byte-payload",
-        "text": "\"PostgreSQL type OID ... requires a registered codec or string/byte payload.\"",
-        "level": 3
-      },
-      {
-        "id": "postgresql-type-app-order-status-is-not-present-in-the-loaded-type-catalogue",
-        "text": "\"PostgreSQL type app.order_status is not present in the loaded type catalogue.\"",
-        "level": 3
-      },
-      {
-        "id": "values-read-back-as-datetimekind-unspecified",
-        "text": "Values read back as `DateTimeKind.Unspecified`",
-        "level": 3
-      },
-      {
-        "id": "saving",
-        "text": "Saving",
-        "level": 2
-      },
-      {
-        "id": "dbupdateconcurrencyexception-the-database-operation-was-expected-to-affect-1-row-s-but-actually-affected-0-row-s",
-        "text": "DbUpdateConcurrencyException: \"The database operation was expected to affect 1 row(s), but actually affected 0 row(s)\"",
-        "level": 3
-      },
-      {
-        "id": "dbupdateexception-an-error-occurred-while-saving-the-entity-changes",
-        "text": "DbUpdateException: \"An error occurred while saving the entity changes.\"",
-        "level": 3
-      },
-      {
-        "id": "savechanges-behaves-differently-after-upgrading-to-1-1-0",
-        "text": "SaveChanges behaves differently after upgrading to 1.1.0",
-        "level": 3
-      },
-      {
-        "id": "the-configured-execution-strategy-does-not-support-user-initiated-transactions",
-        "text": "\"The configured execution strategy '...' does not support user-initiated transactions.\"",
-        "level": 3
-      },
-      {
-        "id": "migrations",
-        "text": "Migrations",
-        "level": 2
-      },
-      {
-        "id": "bluetusk-virtual-generated-columns-require-postgresql-18-or-later",
-        "text": "\"BlueTusk virtual generated columns require PostgreSQL 18 or later.\"",
-        "level": 3
-      },
-      {
-        "id": "database-update-waits-after-acquiring-an-exclusive-lock-for-migration-application",
-        "text": "`database update` waits after \"Acquiring an exclusive lock for migration application.\"",
-        "level": 3
-      },
-      {
-        "id": "database-update-or-database-drop-cannot-connect-to-create-or-drop-the-database",
-        "text": "`database update` or `database drop` cannot connect to create or drop the database",
-        "level": 3
-      },
-      {
-        "id": "still-stuck",
-        "text": "Still stuck?",
-        "level": 2
-      }
-    ],
-    "wordCount": 1332,
-    "readMinutes": 7,
-    "searchText": "EF Core troubleshooting This page helps you fix common errors with the BlueTusk EF Core provider. Find the message or symptom you see, then apply the fix. For connection, TLS and authentication errors, see the [provider troubleshooting guide](../operations/troubleshooting.md). Setup \"No database provider has been configured for this DbContext\" **Cause:** `UseBlueTusk` was never called for this context, or the context's constructor does not pass `DbContextOptions<TContext>` to the base class. **Fix:** Register the context with `AddDbContext<TContext>((services, options) => options.UseBlueTusk(...))` and give it a constructor such as `MyContext(DbContextOptions<MyContext> options) : DbContext(options)`. \"A connection string is required.\" **Cause:** `UseBlueTusk` received a null or empty connection string, usually because a configuration value or environment variable is not set. **Fix:** Check the configuration key. For example, `GetConnectionString(\"Library\")` reads `ConnectionStrings:Library`, which the environment variable `ConnectionStrings__Library` can supply. PostgreSQL runs out of connections, or every request opens a new one **Cause:** The context uses `UseBlueTusk(connectionString)`, which opens an unpooled connection for each context, or the app builds a new data source per request. **Fix:** Build one `BlueTuskDataSource` as a singleton and pass it to `UseBlueTusk`. See [Concepts](concepts.md#how-long-should-the-data-source-and-dbcontext-live). dotnet ef and package versions \"Your startup project '...' doesn't reference Microsoft.EntityFrameworkCore.Design.\" **Fix:** `dotnet add package Microsoft.EntityFrameworkCore.Design --version 10.0.11`. `BlueTusk.EntityFrameworkCore.Design` does not add it for you. \"Could not load file or assembly 'BlueTusk.EntityFrameworkCore.Design'\" **Cause:** `dotnet ef` found the BlueTusk provider but not its design-time package. **Fix:** `dotnet add package BlueTusk.EntityFrameworkCore.Design` in the startup project, using the sa"
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "slug": "specification-tests",
-    "summary": "Official relational specification coverage and native PostgreSQL gates.",
-    "keywords": [
-      "tests",
-      "1987",
-      "2111"
-    ],
-    "order": 20,
-    "listed": false,
-    "title": "EF Core relational specification tests",
-    "sourcePath": "docs/ef-core/specification-tests.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/specification-tests.md",
-    "headings": [
-      {
-        "id": "ef-core-relational-specification-tests",
-        "text": "EF Core relational specification tests",
-        "level": 1
-      }
-    ],
-    "wordCount": 1663,
-    "readMinutes": 8,
-    "searchText": "EF Core relational specification tests BlueTusk consumes Microsoft's provider-facing EF Core relational specification package directly. The package is pinned to the same `10.0.11` version as the provider's runtime and design dependencies, so an EF upgrade cannot silently move the contract suite independently of the provider. The executable harness lives in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. It currently adopts these official suites: `RelationalServiceCollectionExtensionsTestBase`: all three provider-service registration, idempotency, isolation, and lifetime contracts; `MigrationsSqlGeneratorTestBase`: all inherited generator cases, including provider-specific golden SQL for PostgreSQL column facets, foreign keys, renames, seed insert/update/delete operations, multiline defaults, sequence restart operations, unsupported store-type diagnostics, and PostGIS spatial literals; `MigrationsTestBase`: all 134 live schema-evolution and catalogue round-trip contracts covering tables, columns, keys, indexes, sequences, comments, collations, generated columns, JSON mappings, primitive collections (including the converted required-collection cases EF Core skips), seed data, migration snapshot compilation, and database-model reverse engineering. PostgreSQL's rejection of implicit arbitrary text-to-JSONB casts is asserted explicitly in the three applicable cases rather than skipped; `RelationalModelBuilderTest`: all 748 offline generic model-building contracts covering non-relationship mappings, primitive-collection element facets, complex types and collections, inheritance, one-to-many, many-to-one, one-to-one, many-to-many, and owned types. This includes the cases EF Core skips: shadow properties on reference complex types (`#35613`) and value-type (tuple) complex collections (`#31411`). Two of those run as ported copies because they cannot pass as written: EF Core's tuple-collection test omits the `ToJson()` configuration that every sibling relational comp"
-  },
-  {
-    "category": "ef-core",
-    "categoryLabel": "EF Core",
-    "listed": false,
     "slug": "ef-core-reference",
-    "summary": "BlueTusk.EntityFrameworkCore is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit trans…",
-    "keywords": [
-      "docs",
-      "ef",
-      "core",
-      "reference"
-    ],
-    "order": 1085,
     "title": "Entity Framework Core",
-    "sourcePath": "docs/ef-core/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
+    "summary": "Look up type mappings, query translations, migrations, and provider configuration.",
+    "order": 1,
     "headings": [
-      {
-        "id": "entity-framework-core",
-        "text": "Entity Framework Core",
-        "level": 1
-      },
       {
         "id": "savechanges-batching",
         "text": "SaveChanges batching",
@@ -2589,11 +1032,6 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       {
         "id": "postgresql-query-constructs",
         "text": "PostgreSQL query constructs",
-        "level": 2
-      },
-      {
-        "id": "store-values-for-complex-collections",
-        "text": "Store values for complex collections",
         "level": 2
       },
       {
@@ -2702,8 +1140,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 3
       },
       {
-        "id": "postgresql-19-property-graph-queries",
-        "text": "PostgreSQL 19 property-graph queries",
+        "id": "typed-property-graphs",
+        "text": "Typed property graphs",
         "level": 2
       },
       {
@@ -2712,83 +1150,56 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
-        "id": "validation",
-        "text": "Validation",
+        "id": "verify-database-changes",
+        "text": "Verify database changes",
         "level": 2
       }
     ],
-    "wordCount": 14830,
-    "readMinutes": 68,
-    "searchText": "Entity Framework Core `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings. Microsoft's provider-facing relational test package is consumed by a dedicated test assembly. The exact adopted suites, commands, and completed 1.0 coverage gate are recorded in [EF Core relational specification tests](specification-tests.md). SaveChanges batching Starting with 1.1.0, SaveChanges batches tracked inserts, updates and deletes automatically. One batch normally carries up to **42 modification commands**, not necessarily 42 entities: an entity mapped to several tables can need several commands. EF still chooses command order from relationship and generated-value dependencies; batching never relaxes that ordering. Omit the option for the default, or set `MaxBatchSize(1)` for the former one-command behavior. A larger configured limit does not remove the aggregate bounds: a batch is split before exceeding 65,536 SQL characters or 32,767 parameters. These are aggregation limits, not a maximum entity size. EF permits one unusually wide command to run alone; PostgreSQL's own limits still apply. Each statement has locally bound parameters and a corresponding result in command order. Server-generated IDs, computed columns and concurrency-token checks remain associated with the correct tracked entries, including batches that mix client-generated and server-generated keys. Batches use the normal EF command execution path, including logging and `DbCommandInterceptor` callbacks. An interceptor now observes a batch rather than necessarily one callback per entity. When no command-reader interceptor or custom update SQL generator is registered, writes without server-generated values use PostgreSQL's command-completion count i"
+    "sourcePath": "docs/ef-core/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
+    "categoryLabel": "Real-time data",
     "slug": "platform",
-    "summary": "Pick the real-time product you need: Streams, Sync, Live, Control Plane or Continuous Graph.",
-    "keywords": [
-      "streams",
-      "sync",
-      "live",
-      "contracts"
+    "title": "BlueTusk real-time platform",
+    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane.",
+    "order": 0,
+    "headings": [
+      {
+        "id": "choose-one-starting-point",
+        "text": "Choose one starting point",
+        "level": 2
+      },
+      {
+        "id": "how-the-pieces-connect",
+        "text": "How the pieces connect",
+        "level": 2
+      },
+      {
+        "id": "correctness-contract",
+        "text": "Correctness contract",
+        "level": 2
+      },
+      {
+        "id": "deploy-a-real-time-pipeline",
+        "text": "Deploy a real-time pipeline",
+        "level": 2
+      }
     ],
-    "order": 10,
-    "listed": true,
-    "title": "Choose a real-time product",
     "sourcePath": "docs/realtime-platform/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/README.md",
-    "headings": [
-      {
-        "id": "choose-a-real-time-product",
-        "text": "Choose a real-time product",
-        "level": 1
-      },
-      {
-        "id": "pick-by-outcome",
-        "text": "Pick by outcome",
-        "level": 2
-      },
-      {
-        "id": "how-the-products-connect",
-        "text": "How the products connect",
-        "level": 2
-      },
-      {
-        "id": "what-every-product-guarantees",
-        "text": "What every product guarantees",
-        "level": 2
-      },
-      {
-        "id": "before-production",
-        "text": "Before production",
-        "level": 2
-      }
-    ],
-    "wordCount": 583,
-    "readMinutes": 3,
-    "searchText": "Choose a real-time product BlueTusk's real-time products let your application react after PostgreSQL commits a change. Use this page to pick the product you need. Most applications need only one or two of them. Pick by outcome You want to Use Start with Run .NET code for every committed change, in commit order [Streams](../streams/README.md) [Streams quick start](../streams/quickstart.md) Feed several independent consumers from one replication slot Streams [durable relay](../streams/durable-relay.md) [Durable relay](../streams/durable-relay.md) Keep another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook up to date [Sync](../sync/README.md) [Sync quick start](../sync/quickstart.md) Show users a query result that updates by itself [Live](../live/README.md) [Live quick start](../live/quickstart.md) See and operate the running components [Control Plane](../control-plane/README.md) [Control Plane quick start](../control-plane/quickstart.md) Keep a graph query result current (preview) [Continuous Graph](../continuous-graph/README.md) [Graph guide](../graph/README.md) Not sure? Start with Streams. Sync and Live are built on it, and the Streams quick start teaches the setup every real-time product needs. How the products connect **Streams** is the only product that reads PostgreSQL's replication protocol. It turns the write-ahead log into complete, ordered, committed transactions. **Sync** and **Live** consume Streams. They never read the replication protocol directly. The **durable relay** stores committed transactions in PostgreSQL so several consumers can share one replication slot and acknowledge independently. **Control Plane** does not process changes. It shows the inventory and health of the other products and runs audited operations on them. Build and test your Streams setup first. Add a relay when more than one consumer needs the same changes. Add Sync or Live only for the outcome you need. What every product guarantees All real-time products "
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
+    "categoryLabel": "Real-time data",
     "slug": "contracts",
-    "summary": "What each real-time product delivers, when checkpoints move, and what can be duplicated or lost.",
-    "keywords": [
-      "contract",
-      "delivery",
-      "checkpoint"
-    ],
-    "order": 20,
-    "listed": true,
     "title": "Delivery guarantees in plain language",
-    "sourcePath": "docs/realtime-platform/contracts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/contracts.md",
+    "summary": "Understand checkpoints, idempotency, replay, and delivery guarantees.",
+    "order": 1,
     "headings": [
-      {
-        "id": "delivery-guarantees-in-plain-language",
-        "text": "Delivery guarantees in plain language",
-        "level": 1
-      },
       {
         "id": "choose-the-guarantee-you-need",
         "text": "Choose the guarantee you need",
@@ -2820,411 +1231,56 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 810,
-    "readMinutes": 4,
-    "searchText": "Delivery guarantees in plain language This page explains when BlueTusk considers work complete and what can happen after a crash. Read it before choosing a state store or destination. The shared rule is simple: PostgreSQL commits a source transaction. BlueTusk delivers that transaction without splitting its order. The consumer makes its effect and progress durable. Only then does BlueTusk acknowledge the source position. If a process stops between steps 3 and 4, the last transaction can arrive again. BlueTusk provides stable identities, atomic checkpoints where supported, and connector-specific replay protection. It does not hide these boundaries behind an “exactly once” slogan. Choose the guarantee you need Product Durable completion point Recovery behavior Streams Consumer effect plus checkpoint, then PostgreSQL feedback Last unconfirmed transaction is redelivered. Durable relay Relay append commits, then source acknowledgement Each consumer group replays independently. Sync Destination-specific durable confirmation Atomic or stable-identity replay according to the connector. Live Replay event append and session commit Client resumes with a signed token or receives a reset. Continuous Graph Replay append, graph session commit, then Streams acknowledgement Incremental state is replayed or repaired authoritatively. Streams `IChangeStream` exposes ordered `ChangeTransactionDelivery` values. `ChangeTransaction` and its changes are immutable; only the delivery object can acknowledge progress. Insert, update, delete, and truncate changes carry `ChangeRow<T>` values whose columns distinguish value, database null, not published, unavailable old value, unchanged TOAST, and decoding failure. `ChangedColumnSet` explicitly reports exact or unknown knowledge. `ChangeId` combines source identity, commit-end LSN, transaction ID, and ordinal. Snapshot rows instead combine snapshot epoch, table, and key. A checkpoint records its format version, PostgreSQL system and database ident"
+    "sourcePath": "docs/realtime-platform/contracts.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/contracts.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
+    "categoryLabel": "Real-time data",
     "slug": "streams",
-    "summary": "Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.",
-    "keywords": [
-      "cdc",
-      "stream",
-      "transaction"
-    ],
-    "order": 30,
-    "listed": true,
     "title": "BlueTusk Streams",
+    "summary": "Consume whole committed transactions from PostgreSQL.",
+    "order": 2,
+    "headings": [
+      {
+        "id": "run-the-sample",
+        "text": "Run the sample",
+        "level": 2
+      },
+      {
+        "id": "the-processing-rule",
+        "text": "The processing rule",
+        "level": 2
+      },
+      {
+        "id": "what-streams-provides",
+        "text": "What Streams provides",
+        "level": 2
+      },
+      {
+        "id": "reading-transactions",
+        "text": "Reading transactions",
+        "level": 2
+      },
+      {
+        "id": "failure-behavior",
+        "text": "Failure behavior",
+        "level": 2
+      }
+    ],
     "sourcePath": "docs/streams/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-streams",
-        "text": "BlueTusk Streams",
-        "level": 1
-      },
-      {
-        "id": "when-to-use-streams",
-        "text": "When to use Streams",
-        "level": 2
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "choose-how-to-run-a-consumer",
-        "text": "Choose how to run a consumer",
-        "level": 2
-      },
-      {
-        "id": "what-the-code-looks-like",
-        "text": "What the code looks like",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      },
-      {
-        "id": "reference-records",
-        "text": "Reference records",
-        "level": 2
-      }
-    ],
-    "wordCount": 802,
-    "readMinutes": 4,
-    "searchText": "BlueTusk Streams BlueTusk Streams lets your .NET code react to every committed change in PostgreSQL. It reads the write-ahead log through logical replication and gives you whole transactions, in commit order, that you acknowledge when your work is done. After a restart it carries on from the last acknowledged transaction. When to use Streams Use Streams when you need to run your own code for every committed insert, update, delete or truncate. For example: keep a read model, cache or search index in step with the database; publish integration events after a transaction commits; write an audit trail. Use something else when: You want to Use Copy changes into PostgreSQL, Redis, NATS, Kafka, OpenSearch, S3 or a webhook without writing the apply code [Sync](../sync/README.md) Push live query results to browsers [Live](../live/README.md) Read raw replication protocol messages The [replication API](../replication/README.md) Run a query now The [ADO.NET provider](../ado-net/README.md) Streams delivers each transaction **at least once**. Make your work safe to repeat, or store your progress in the same transaction as your work. See [delivery guarantees](../realtime-platform/contracts.md). Packages Package What it adds `BlueTusk.Streams` Transactions, changes, acknowledgement, checkpoints, snapshot bootstrap and large-transaction spooling. Start here. `BlueTusk.Streams.Storage.PostgreSql` Durable checkpoint and lease store, and the durable relay, in PostgreSQL. `BlueTusk.Streams.DependencyInjection` Hosted snapshot-then-stream consumers and a health check. `BlueTusk.Streams.Storage.File` Checkpoint store on one host's local disk. `BlueTusk.Streams.Storage.Redis` Checkpoint store in Redis. `BlueTusk.Streams.EntityFrameworkCore` Typed change mappings built from an EF Core model. `BlueTusk.Streams.CloudEvents` One CloudEvents JSON event per transaction. `BlueTusk.Streams.Aspire` Wires Streams workers into a .NET Aspire AppHost. `BlueTusk.Streams.Testing` Test deliveries and a co"
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-quickstart",
-    "summary": "Prepare PostgreSQL, run a hosted Streams consumer, and process committed transactions with a durable checkpoint.",
-    "keywords": [
-      "streams",
-      "quickstart",
-      "cdc",
-      "replication"
-    ],
-    "order": 31,
-    "listed": true,
-    "title": "Quick start: stream changes from a table",
-    "sourcePath": "docs/streams/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/quickstart.md",
-    "headings": [
-      {
-        "id": "quick-start-stream-changes-from-a-table",
-        "text": "Quick start: stream changes from a table",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-prepare-postgresql",
-        "text": "1. Prepare PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-project",
-        "text": "2. Create the project",
-        "level": 2
-      },
-      {
-        "id": "3-set-the-connection-string",
-        "text": "3. Set the connection string",
-        "level": 2
-      },
-      {
-        "id": "4-write-the-worker",
-        "text": "4. Write the worker",
-        "level": 2
-      },
-      {
-        "id": "5-run-it",
-        "text": "5. Run it",
-        "level": 2
-      },
-      {
-        "id": "6-make-some-changes",
-        "text": "6. Make some changes",
-        "level": 2
-      },
-      {
-        "id": "7-stop-change-and-restart",
-        "text": "7. Stop, change and restart",
-        "level": 2
-      },
-      {
-        "id": "8-clean-up",
-        "text": "8. Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1089,
-    "readMinutes": 5,
-    "searchText": "Quick start: stream changes from a table In this quick start you build a .NET worker that prints every committed change to a PostgreSQL table, then stop and restart it and watch it carry on from where it stopped. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 test server with `wal_level = logical`. The `bluetusk-postgres` Docker container from [step 1 of the 5-minute first app](../getting-started/quickstart.md#1-start-postgresql) already has `wal_level=logical`. On another server, check with `SHOW wal_level;`; changing it needs `ALTER SYSTEM SET wal_level = logical;` and a restart. 1. Prepare PostgreSQL Open `psql` as the `postgres` superuser: Run this SQL: Type `\\q` to leave `psql`. The [concepts page](../getting-started/concepts.md#two-kinds-of-transaction) explains publications and slots. 2. Create the project 3. Set the connection string On Linux or macOS, use `export BLUETUSK_STREAMS_SOURCE=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, everywhere else. 4. Write the worker Replace the contents of `Program.cs`: The numbered comments: (1) the store keeps one checkpoint row per consumer group in the `bluetusk_streams` schema; (2) the **source identity** names the server, database, slot and publication; (3) the **lease** stops a second copy from taking over, and the observer renews it in the background until it is disposed; (4) Streams assembles complete transactions; (5) `AcknowledgeAsync` saves the checkpoint, then lets the slot release that WAL. 5. Run it `0/0` means there is no checkpoint yet. Leave the worker running. 6. Make some changes In a second terminal: The worker prints one block per transaction. Your transaction IDs and positions will differ: The two inserts arrive together because they were one transaction. The delete shows `<OldValueUnavailable>` because PostgreSQL only logs "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-concepts",
-    "summary": "Transactions, acknowledgement, checkpoints, state stores, spooling, snapshots and redelivery.",
-    "keywords": [
-      "streams",
-      "concepts",
-      "checkpoint",
-      "acknowledge"
-    ],
-    "order": 32,
-    "listed": true,
-    "title": "Streams concepts",
-    "sourcePath": "docs/streams/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/concepts.md",
-    "headings": [
-      {
-        "id": "streams-concepts",
-        "text": "Streams concepts",
-        "level": 1
-      },
-      {
-        "id": "how-a-change-reaches-your-code",
-        "text": "How a change reaches your code",
-        "level": 2
-      },
-      {
-        "id": "transactions-and-changes",
-        "text": "Transactions and changes",
-        "level": 2
-      },
-      {
-        "id": "what-a-column-value-can-be",
-        "text": "What a column value can be",
-        "level": 2
-      },
-      {
-        "id": "acknowledge-after-your-work-is-durable",
-        "text": "Acknowledge after your work is durable",
-        "level": 2
-      },
-      {
-        "id": "how-the-slot-releases-wal",
-        "text": "How the slot releases WAL",
-        "level": 3
-      },
-      {
-        "id": "checkpoints-leases-and-fencing",
-        "text": "Checkpoints, leases and fencing",
-        "level": 2
-      },
-      {
-        "id": "source-identity",
-        "text": "Source identity",
-        "level": 2
-      },
-      {
-        "id": "large-transactions-are-spooled-to-disk",
-        "text": "Large transactions are spooled to disk",
-        "level": 2
-      },
-      {
-        "id": "snapshot-then-stream",
-        "text": "Snapshot, then stream",
-        "level": 2
-      },
-      {
-        "id": "direct-consumers-and-the-relay",
-        "text": "Direct consumers and the relay",
-        "level": 2
-      },
-      {
-        "id": "restarts-and-redelivery",
-        "text": "Restarts and redelivery",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 1602,
-    "readMinutes": 8,
-    "searchText": "Streams concepts This page explains the model behind Streams so you can write a consumer that is correct after crashes and restarts. It builds on the shared [core concepts](../getting-started/concepts.md): logical replication, publications, slots, acknowledgement, checkpoints, source identity, snapshot-then-stream and the relay. Read that page first if those terms are new. How a change reaches your code Transactions and changes Streams never splits a source transaction. Each delivery holds one `ChangeTransaction`: Member Meaning `TransactionId` PostgreSQL transaction ID (xid). `CommitEndPosition` WAL position just after the commit. This is the position a checkpoint stores. `CommitTimestamp`, `Origin` When it committed, and its replication origin if any. `Outcome` `Committed`, or `Prepared` / `RolledBack` for [two-phase transactions](prepared-transactions.md). `Changes` A `ChangeSet` of the changes in commit order. Each change is an `InsertChange`, `UpdateChange`, `DeleteChange`, `TruncateChange` or `LogicalMessageChange`. Every change has a `ChangeId` made of the source identity, commit-end position, transaction ID and ordinal. The ID is the same every time the change is delivered, so use it as the de-duplication key in your destination. `ChangeSet` is an asynchronous sequence. A large transaction is read record by record from disk, so iterate it with `await foreach`. `MaterializeAsync()` loads every change into a list; use it only when you know the transaction is small. `Count`, `EstimatedBytes` and `IsSpooled` are available without reading the changes. What a column value can be A row is a `ChangeRow`: one `ChangeColumnValue` per column, indexed by ordinal or name. PostgreSQL does not always send a value, so each value has an explicit `State`: `ChangeColumnState` When you see it `Value` A real value. `Data` holds the bytes and `Encoding` says `Text` or `Binary`. `DatabaseNull` The column is SQL `NULL`. `NotPublished` The publication's column list excludes this col"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-configuration",
-    "summary": "Streams options, configuration keys, state stores and limits, with defaults.",
-    "keywords": [
-      "streams",
-      "configuration",
-      "options",
-      "slot",
-      "publication"
-    ],
-    "order": 33,
-    "listed": true,
-    "title": "Streams configuration",
-    "sourcePath": "docs/streams/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/configuration.md",
-    "headings": [
-      {
-        "id": "streams-configuration",
-        "text": "Streams configuration",
-        "level": 1
-      },
-      {
-        "id": "configuration-keys",
-        "text": "Configuration keys",
-        "level": 2
-      },
-      {
-        "id": "transaction-assembly-and-spooling",
-        "text": "Transaction assembly and spooling",
-        "level": 2
-      },
-      {
-        "id": "snapshot-bootstrap",
-        "text": "Snapshot bootstrap",
-        "level": 2
-      },
-      {
-        "id": "state-stores",
-        "text": "State stores",
-        "level": 2
-      },
-      {
-        "id": "postgresql-storage-and-relay",
-        "text": "PostgreSQL storage and relay",
-        "level": 2
-      },
-      {
-        "id": "typed-mappings",
-        "text": "Typed mappings",
-        "level": 2
-      },
-      {
-        "id": "cloudevents",
-        "text": "CloudEvents",
-        "level": 2
-      },
-      {
-        "id": "aspire",
-        "text": "Aspire",
-        "level": 2
-      },
-      {
-        "id": "health-and-telemetry",
-        "text": "Health and telemetry",
-        "level": 2
-      },
-      {
-        "id": "replication-options",
-        "text": "Replication options",
-        "level": 2
-      }
-    ],
-    "wordCount": 1606,
-    "readMinutes": 8,
-    "searchText": "Streams configuration This page lists every Streams setting you can change: the configuration keys and environment variables used by the tooling, and each options class with its properties and defaults. All options classes are immutable records. Set them with object initializers; each validates its values when you pass it to the component that uses it and throws `ArgumentException` (or `ArgumentOutOfRangeException`) for invalid values. Configuration keys Streams does **not** bind `IConfiguration` sections by itself. The keys below are a shared convention: the [Aspire integration](aspire.md) sets them, the [`bluetusk-streams` tool](cli.md) and the [sample](sample.md) read some of them, and your worker reads them and passes the values to the options classes (as the [quick start](quickstart.md) does). Environment variable Configuration key Used by Meaning `BLUETUSK_STREAMS_SOURCE` `BLUETUSK_STREAMS_SOURCE` Aspire, tool, sample Source database connection string. `BLUETUSK_STREAMS_CONTROL` `BLUETUSK_STREAMS_CONTROL` Aspire (relay mode), tool Control database for the relay and state store. `BlueTusk__Streams__Slot` `BlueTusk:Streams:Slot` Aspire, sample Replication slot name. `BlueTusk__Streams__Publications__0`, `__1`, ... `BlueTusk:Streams:Publications:0`, ... Aspire, sample Publication names, one key per publication. `BlueTusk__Streams__ConsumerGroup` `BlueTusk:Streams:ConsumerGroup` Aspire Consumer group name. `BlueTusk__Streams__ControlSchema` `BlueTusk:Streams:ControlSchema` Aspire Relay and state schema. Default `bluetusk_streams`. `BlueTusk__Streams__DeliveryMode` `BlueTusk:Streams:DeliveryMode` Aspire `DurableRelay` or `Direct`. `BlueTusk__Streams__Sample__Schema`, `__Table` `BlueTusk:Streams:Sample:Schema`, `:Table` sample Table the sample copies. Defaults `app`, `orders`. The same keys in `appsettings.json`: Keep connection strings in environment variables or a secret store, not in `appsettings.json`. Connection-string keywords are described in [ADO.NET configu"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-troubleshooting",
-    "summary": "Fix replication slot, publication, privilege, source identity, spool and lease problems.",
-    "keywords": [
-      "streams",
-      "troubleshooting",
-      "slot",
-      "wal"
-    ],
-    "order": 34,
-    "listed": true,
-    "title": "Troubleshooting Streams",
-    "sourcePath": "docs/streams/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/troubleshooting.md",
-    "headings": [
-      {
-        "id": "troubleshooting-streams",
-        "text": "Troubleshooting Streams",
-        "level": 1
-      },
-      {
-        "id": "setting-up-the-source",
-        "text": "Setting up the source",
-        "level": 2
-      },
-      {
-        "id": "another-worker-owns-the-consumer-group",
-        "text": "Another worker owns the consumer group",
-        "level": 2
-      },
-      {
-        "id": "the-lease-was-lost",
-        "text": "The lease was lost",
-        "level": 2
-      },
-      {
-        "id": "the-database-was-restored-or-replaced",
-        "text": "The database was restored or replaced",
-        "level": 2
-      },
-      {
-        "id": "the-same-transaction-arrives-twice",
-        "text": "The same transaction arrives twice",
-        "level": 2
-      },
-      {
-        "id": "the-stream-stops-on-a-delivery",
-        "text": "The stream stops on a delivery",
-        "level": 2
-      },
-      {
-        "id": "a-large-transaction-stops-the-stream",
-        "text": "A large transaction stops the stream",
-        "level": 2
-      },
-      {
-        "id": "the-snapshot-does-not-start",
-        "text": "The snapshot does not start",
-        "level": 2
-      },
-      {
-        "id": "wal-keeps-growing-on-the-source-server",
-        "text": "WAL keeps growing on the source server",
-        "level": 2
-      },
-      {
-        "id": "a-new-slot-fails-with-could-not-map-filenumber",
-        "text": "A new slot fails with \"could not map filenumber\"",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 1750,
-    "readMinutes": 8,
-    "searchText": "Troubleshooting Streams This page helps you fix the most common Streams errors. Run [`bluetusk-streams validate`](cli.md) first: it checks the server version, `wal_level`, publications and slot in one go. PostgreSQL errors reach you as `BlueTusk.Client.BlueTuskServerException` with PostgreSQL's own message. Setting up the source Symptom Cause Fix Creating or starting a slot fails with an error that says logical decoding requires `wal_level` >= `logical`; or `ERROR BTS002 wal_level is 'replica'; logical is required.` The server is not configured for logical replication. Run `ALTER SYSTEM SET wal_level = logical;` and restart PostgreSQL. On managed services, use the provider's logical-replication setting. `permission denied to start WAL sender` The login lacks the `REPLICATION` attribute. `ALTER ROLE <login> WITH REPLICATION;` (or grant your provider's replication role). `permission denied for schema bluetusk_streams` The state store or relay schema is owned by another login. Use the login that created the schema, or grant `USAGE` on the schema and rights on its tables. `replication slot \"<name>\" does not exist` The slot was never created, was dropped, or the worker points at another database. Create it (`SELECT pg_create_logical_replication_slot('<name>', 'pgoutput');` or `bluetusk-streams provision`). A snapshot source creates its own slot. `replication slot \"<name>\" is active for PID <pid>` Another connection is reading the slot. A slot has one reader at a time. Stop the other reader, or give each direct consumer its own slot. Use the [relay](durable-relay.md) for several consumers. Find the reader with `SELECT active_pid FROM pg_replication_slots WHERE slot_name = '<name>';`. `publication \"<name>\" does not exist` (PostgreSQL 15 to 17), or no changes arrive and the server log shows `skipped loading publication \"<name>\"` (PostgreSQL 18) The publication name is wrong or the publication was created after the slot position. Create the publication, or fix the name. `blu"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
+    "categoryLabel": "Real-time data",
     "slug": "snapshot-bootstrap",
-    "summary": "A fenced snapshot-then-stream protocol.",
-    "keywords": [
-      "snapshot",
-      "bootstrap",
-      "fence"
-    ],
-    "order": 40,
-    "listed": true,
     "title": "Snapshot and catch-up",
-    "sourcePath": "docs/streams/snapshot-bootstrap.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/snapshot-bootstrap.md",
+    "summary": "Load existing rows and continue from the matching WAL position.",
+    "order": 3,
     "headings": [
-      {
-        "id": "snapshot-and-catch-up",
-        "text": "Snapshot and catch-up",
-        "level": 1
-      },
       {
         "id": "how-it-works",
         "text": "How it works",
@@ -3261,31 +1317,56 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1119,
-    "readMinutes": 6,
-    "searchText": "Snapshot and catch-up This guide shows you how to copy the rows that already exist in your tables and then stream every later change, with no gap and no overlap between the two. Use it when a new consumer needs the current state, for example to build a read model or search index from scratch. If you only need changes from now on, the [quick start](quickstart.md) is enough. How it works Streams opens a replication connection and checks that the server and database match your `ChangeSourceIdentity`. It creates the replication slot with an **exported snapshot**. PostgreSQL returns a consistent WAL position and a snapshot name for that same moment. Each table is copied inside a repeatable-read transaction that imports that snapshot, in key order, using binary `COPY`. When every table is copied, streaming starts from the slot's consistent position. Changes committed during the copy were kept by the slot, so they arrive next. A change committed after the consistent point is never in the copy, and is always the first thing streamed. 1. Describe the tables to copy Streams needs each table's columns, PostgreSQL type OIDs and key. Look them up: Then describe the table. Mark the key columns with `IsKey: true`; they must be non-null and must not change (a primary key is ideal): The copy reads exactly the columns you list, in that order. 2. Write the consumer Implement `IChangeStreamConsumer`. Streams calls it in this order: reset, start, one call per batch of copied rows, complete, then one call per streamed transaction. Make every callback safe to repeat. Copied rows arrive as binary values (`ChangeValueEncoding.Binary`); a [typed mapping](typed-mappings.md#snapshot-rows) can decode them (text columns need a decoder). 3. Copy, then stream, then resume The code below runs the snapshot on the first start. It also saves a checkpoint for each streamed transaction, so later starts resume from the slot instead of copying the table again. `store` is a PostgreSQL state store and `serv"
+    "sourcePath": "docs/streams/snapshot-bootstrap.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/snapshot-bootstrap.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "durable-relay",
-    "summary": "Storage, backup, groups, retention, and relay fan-out.",
-    "keywords": [
-      "relay",
-      "retention",
-      "backup"
-    ],
-    "order": 50,
-    "listed": true,
-    "title": "Durable relay",
-    "sourcePath": "docs/streams/durable-relay.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/durable-relay.md",
+    "categoryLabel": "Real-time data",
+    "slug": "state-stores",
+    "title": "Streams checkpoint and lease stores",
+    "summary": "Choose and configure durable checkpoint and spool storage.",
+    "order": 4,
     "headings": [
       {
-        "id": "durable-relay",
-        "text": "Durable relay",
-        "level": 1
+        "id": "memory",
+        "text": "Memory",
+        "level": 2
       },
+      {
+        "id": "file",
+        "text": "File",
+        "level": 2
+      },
+      {
+        "id": "postgresql",
+        "text": "PostgreSQL",
+        "level": 2
+      },
+      {
+        "id": "custom-stores",
+        "text": "Custom stores",
+        "level": 2
+      },
+      {
+        "id": "redis",
+        "text": "Redis",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/streams/state-stores.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/state-stores.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "durable-relay",
+    "title": "Durable relay",
+    "summary": "Place durable storage between change capture and delivery.",
+    "order": 5,
+    "headings": [
       {
         "id": "when-to-use-the-relay",
         "text": "When to use the relay",
@@ -3342,91 +1423,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1276,
-    "readMinutes": 6,
-    "searchText": "Durable relay This guide shows you how to feed several independent consumers from one replication slot. A source worker stores each committed transaction in PostgreSQL tables (the **relay**), and each **consumer group** reads them back at its own pace. When to use the relay Direct consumers Relay One slot per consumer group. One slot for all groups. Each slot holds WAL until its slowest reader catches up. PostgreSQL releases WAL as soon as the relay has stored a transaction. A stopped consumer makes WAL grow on the source server. A stopped group only keeps rows in the relay tables. A new consumer needs its own slot and snapshot. A new group can start from the oldest retained transaction or from now. Use the relay when you have more than one consumer, or when consumers may be stopped for a while. [Sync](../sync/README.md) pipelines can read from the relay directly. Prepare the relay storage Keep the relay in a **control database** that is separate from the source database. If the relay tables were in a published source table set, the relay would read its own writes. The [`bluetusk-streams` tool](cli.md) creates the publication, slot and relay schema and checks this for you: In code, `InitializeAsync()` creates or upgrades the relay schema (`bluetusk_streams` by default). It is safe to call on every start: `InitializeAsync()` refuses a schema created by a newer BlueTusk version with `ChangeRelaySchemaVersionException`. 1. Run the source worker Run exactly one source worker per slot. It reads the slot like any Streams consumer, but its delivery observer appends each transaction to the relay: Each acknowledgement renews the source lease, then appends the transaction and moves the relay's source watermark in one control-database transaction, and only then sends the position to PostgreSQL. If the worker crashes before the append commits, PostgreSQL sends the transaction again. If it crashes after, the retry finds the identical transaction already stored and does not store"
+    "sourcePath": "docs/streams/durable-relay.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/durable-relay.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "state-stores",
-    "summary": "State-store contracts and supported persistence behavior.",
-    "keywords": [
-      "state",
-      "store"
-    ],
-    "order": 60,
-    "listed": true,
-    "title": "Checkpoint and lease stores",
-    "sourcePath": "docs/streams/state-stores.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/state-stores.md",
-    "headings": [
-      {
-        "id": "checkpoint-and-lease-stores",
-        "text": "Checkpoint and lease stores",
-        "level": 1
-      },
-      {
-        "id": "choose-a-store",
-        "text": "Choose a store",
-        "level": 2
-      },
-      {
-        "id": "use-the-postgresql-store",
-        "text": "Use the PostgreSQL store",
-        "level": 2
-      },
-      {
-        "id": "check-the-slot-before-resuming",
-        "text": "Check the slot before resuming",
-        "level": 2
-      },
-      {
-        "id": "use-the-file-store",
-        "text": "Use the file store",
-        "level": 2
-      },
-      {
-        "id": "use-redis",
-        "text": "Use Redis",
-        "level": 2
-      },
-      {
-        "id": "test-a-custom-store",
-        "text": "Test a custom store",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 807,
-    "readMinutes": 4,
-    "searchText": "Checkpoint and lease stores This guide helps you choose where a Streams consumer keeps its checkpoint and lease, and shows how to set up each store. For what checkpoints and leases are, read [concepts](concepts.md#checkpoints-leases-and-fencing). Choose a store Store Package Use it when `PostgreSqlChangeStreamStateStore` `BlueTusk.Streams.Storage.PostgreSql` Production. The default choice. `FileChangeStreamStateStore` `BlueTusk.Streams.Storage.File` All workers run on one host with a local disk. `RedisChangeStreamStateStore` `BlueTusk.Streams.Storage.Redis` You already run a durable, replicated Redis. `MemoryChangeStreamStateStore` `BlueTusk.Streams` Tests only. State is lost when the process exits. Every store implements `IChangeStreamStateStore` and passes the same conformance suite: compare-and-swap writes, no backward movement, exclusive leases, increasing fencing tokens and lease expiry. Use the PostgreSQL store Give the store a data source for the database that should hold the state, then create its schema: `InitializeAsync()` creates the schema and a `stream_state` table if they do not exist, so the login needs `CREATE` on the database the first time. Lease expiry uses the database clock, so workers with skewed clocks still agree. Then take the lease for your consumer group and wrap the store in a delivery observer: `ownerId` must be unique per running process, for example machine name plus process ID. `mappingFingerprint` is a value you choose. Change it when your consumer's output changes in an incompatible way; an old checkpoint then fails with `ChangeStreamCheckpointMismatchException` instead of being reused. Pass the observer to `PgOutputChangeStream` and start replication at `AcknowledgedCommitPosition`. The [quick start](quickstart.md) shows the whole worker. The observer renews the lease in the background, three times per lease duration, until you dispose it. Disposing it stops renewal and releases the lease, so a clean shutdown lets the next process "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
+    "categoryLabel": "Real-time data",
     "slug": "streams-hosting",
-    "summary": "Hosted services, health checks, metrics, and operational behavior.",
-    "keywords": [
-      "hosting",
-      "health",
-      "metrics"
-    ],
-    "order": 70,
-    "listed": true,
     "title": "Hosting and observability",
-    "sourcePath": "docs/streams/hosting-observability.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/hosting-observability.md",
+    "summary": "Host the consumer and monitor slot lag, retries, and spool use.",
+    "order": 6,
     "headings": [
-      {
-        "id": "hosting-and-observability",
-        "text": "Hosting and observability",
-        "level": 1
-      },
       {
         "id": "run-a-snapshot-consumer-as-a-hosted-service",
         "text": "Run a snapshot consumer as a hosted service",
@@ -3463,2169 +1471,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1165,
-    "readMinutes": 6,
-    "searchText": "Hosting and observability This guide shows you how to run Streams consumers inside a .NET host, expose their health, and collect their metrics and traces. There are two hosted shapes: Shape Registration On restart Snapshot-then-stream consumer `AddBlueTuskStreams().AddHostedConsumer<T>()` Copies the tables again (with `ExistingSlotMode.RestartSnapshot`). Worker that resumes from a checkpoint `AddHostedService<T>()` with your own `BackgroundService` Continues after the last checkpoint. See the [quick start](quickstart.md). Run a snapshot consumer as a hosted service Install `BlueTusk.Streams.DependencyInjection`, then register your consumer and a source factory: `ReadModelConsumer` implements `IChangeStreamConsumer`. Register it in the container yourself; the hosted service resolves it by type. `snapshotOptions` is a `PostgreSqlConsistentSnapshotOptions`, built as in [snapshot and catch-up](snapshot-bootstrap.md). The name (`orders-read-model`) must be unique. It identifies the worker in health data. Registering the same name twice throws `InvalidOperationException`. You can register several consumers. Each runs independently with its own source and slot. If a consumer throws, its worker is marked `Faulted` and the exception reaches the host. By default .NET then stops the host (`BackgroundServiceExceptionBehavior.StopHost`), so your orchestrator can restart it. Resume from a checkpoint as a hosted service A worker that must continue from its durable checkpoint after a restart, rather than take a new snapshot, registers a stream factory instead of a snapshot source. Write the factory as an async iterator: the host calls it once when the worker starts, passes each delivery to the consumer, and disposes the iterator when the worker stops or faults, so everything opened with `await using` inside it is released in reverse order. The slot must be a durable (non-temporary) slot created before the first run. The consumer receives only `ConsumeTransactionAsync` calls and mus"
+    "sourcePath": "docs/streams/hosting-observability.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/hosting-observability.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "streams-endurance",
-    "listed": false,
-    "summary": "The 72-hour endurance gate and evidence contract.",
-    "keywords": [
-      "72h",
-      "endurance",
-      "release"
-    ],
-    "order": 80,
-    "title": "Streams release endurance",
-    "sourcePath": "docs/streams/release-endurance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-endurance.md",
-    "headings": [
-      {
-        "id": "streams-release-endurance",
-        "text": "Streams release endurance",
-        "level": 1
-      },
-      {
-        "id": "local-smoke-run",
-        "text": "Local smoke run",
-        "level": 2
-      },
-      {
-        "id": "release-workflow",
-        "text": "Release workflow",
-        "level": 2
-      }
-    ],
-    "wordCount": 706,
-    "readMinutes": 4,
-    "searchText": "Streams release endurance Streams stable release requires a completed 72-hour fault-injected PostgreSQL relay run. The executable runner is `eng/run-streams-endurance.ps1`; the dedicated workflow is `.github/workflows/streams-release-endurance.yml`. The harness continuously verifies: duplicate source append after a simulated feedback/process boundary returns `AlreadyPresent` with one retained transaction; delivery before group acknowledgement is replayed with the same sequence and stable transaction/change identities; stale compare-and-swap generations conflict without advancing a checkpoint; released group leases are fenced and newly acquired tokens increase; source leases turn over and relay instances are recreated from durable state; both independent groups observe every source transaction in order; retention keeps database storage under the configured hard limit; and final compaction reaches zero retained transactions and bytes after every group is caught up. The runner refuses to start unless the PostgreSQL endpoint is explicit and the launch repository has no tracked changes. It creates a detached Git worktree at the recorded source commit, restores and builds the stress project there, and fingerprints every Release test artifact before and after the run. Other repository builds and commits therefore cannot replace the binaries under test. The format-1 JSON report contains the exact source commit and branch, isolated start/end commits and cleanliness, combined SHA-256 start/end artifact hashes, artifact count, exact candidate package hashes and provenance hash, the digest-pinned PostgreSQL image, worktree cleanup, requested and actual duration, transaction and injected-event counts, maximum relay rows/bytes, final storage bytes, and host/runtime identity. Restore, build, test, harness-report, source-integrity, artifact-integrity, and cleanup failures are distinguished by `failedPhase`. `eng/verify-streams-endurance-report.ps1` is the fail-closed evidence reade"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync",
-    "summary": "Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.",
-    "keywords": [
-      "redis",
-      "nats",
-      "opensearch",
-      "destination"
-    ],
-    "order": 90,
-    "listed": true,
-    "title": "BlueTusk Sync",
-    "sourcePath": "docs/sync/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-sync",
-        "text": "BlueTusk Sync",
-        "level": 1
-      },
-      {
-        "id": "when-should-i-use-sync",
-        "text": "When should I use Sync?",
-        "level": 2
-      },
-      {
-        "id": "destinations",
-        "text": "Destinations",
-        "level": 2
-      },
-      {
-        "id": "what-does-sync-guarantee",
-        "text": "What does Sync guarantee?",
-        "level": 2
-      },
-      {
-        "id": "what-does-it-look-like",
-        "text": "What does it look like?",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 573,
-    "readMinutes": 3,
-    "searchText": "BlueTusk Sync BlueTusk Sync keeps another system up to date with your PostgreSQL data. It reads committed transactions from [Streams](../streams/README.md), turns each row into a keyed document with your code, and writes the result to another PostgreSQL database, Redis, NATS, OpenSearch, Kafka, S3 or a webhook. **Status:** Core family, version 1.1.0. 1.1.0 is not published yet; the current releases are 1.0.0 (stable) and 1.1.0-rc.1. Supports .NET 10 and PostgreSQL 15 to 18. See [Install BlueTusk](../getting-started/install.md). When should I use Sync? Use Sync when a copy of your data must follow the database: a read model in another database, a cache, a search index, an event topic, a data lake or a partner system. Use something else when: you want to run your own code for each change: use [Streams](../streams/README.md) directly; you want to push query results to connected users: use [Live](../live/README.md). Destinations Install `BlueTusk.Sync.DependencyInjection` and the package for your destination. Each destination package brings in `BlueTusk.Sync`. Package Writes Status `BlueTusk.Sync.PostgreSql` Rows in your own tables (with a custom writer) or JSON documents, plus the checkpoint, in one transaction Stable since 1.0.0 `BlueTusk.Sync.Redis` Documents in Redis hashes, plus the checkpoint, in one Lua script Stable since 1.0.0 `BlueTusk.Sync.Nats` One JetStream message per transaction, with a stable message ID Stable since 1.0.0 `BlueTusk.Sync.OpenSearch` Documents in versioned indexes behind aliases; supports zero-downtime rebuilds Stable since 1.0.0 `BlueTusk.Sync.Kafka` One event per transaction plus a checkpoint in a compacted state topic, in one Kafka transaction New in 1.1.0 `BlueTusk.Sync.S3` One immutable Parquet object per transaction, made visible by a commit manifest New in 1.1.0 `BlueTusk.Sync.Webhooks` One signed HTTPS request per transaction New in 1.1.0 Supporting packages: Package Purpose `BlueTusk.Sync` Pipeline, transforms, retries, reconcilia"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-quickstart",
-    "summary": "Copy a PostgreSQL table into another database with Sync and watch inserts, updates and deletes arrive.",
-    "keywords": [
-      "sync",
-      "quickstart",
-      "replicate"
-    ],
-    "order": 91,
-    "listed": true,
-    "title": "Sync quick start: copy a table to another database",
-    "sourcePath": "docs/sync/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/quickstart.md",
-    "headings": [
-      {
-        "id": "sync-quick-start-copy-a-table-to-another-database",
-        "text": "Sync quick start: copy a table to another database",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-create-the-source-database",
-        "text": "1. Create the source database",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-target-database",
-        "text": "2. Create the target database",
-        "level": 2
-      },
-      {
-        "id": "3-create-the-project",
-        "text": "3. Create the project",
-        "level": 2
-      },
-      {
-        "id": "4-set-the-connection-strings",
-        "text": "4. Set the connection strings",
-        "level": 2
-      },
-      {
-        "id": "5-write-the-code",
-        "text": "5. Write the code",
-        "level": 2
-      },
-      {
-        "id": "6-run-it",
-        "text": "6. Run it",
-        "level": 2
-      },
-      {
-        "id": "7-change-the-source-and-watch-the-target",
-        "text": "7. Change the source and watch the target",
-        "level": 2
-      },
-      {
-        "id": "8-restart-the-worker",
-        "text": "8. Restart the worker",
-        "level": 2
-      },
-      {
-        "id": "9-clean-up",
-        "text": "9. Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1492,
-    "readMinutes": 7,
-    "searchText": "Sync quick start: copy a table to another database In this quick start you keep a PostgreSQL table in one database identical to a table in another database. You copy the existing rows, then watch inserts, updates and deletes arrive within a second. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); a PostgreSQL 15, 16, 17 or 18 test server started with `wal_level=logical`. Step 1 of the [first-app quick start](../getting-started/quickstart.md#1-start-postgresql) starts one in Docker as `bluetusk-postgres`. 1. Create the source database The source has an `orders` table, a publication that tells PostgreSQL which tables to stream, and a role allowed to replicate and read them. In bash, pass the SQL with a `<<'SQL'` heredoc instead of `@'...'@ |`. Do not create the replication slot yourself. Sync creates it so that the initial copy and the change stream start at exactly the same point. 2. Create the target database The target gets the same table and a role that can write to it. Sync also creates a small `bluetusk_sync` schema here for its checkpoint, so the role needs `CREATE` on the database. 3. Create the project See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 4. Set the connection strings In bash, use `export SYNC_SOURCE=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default `SSL Mode=VerifyFull` everywhere else. 5. Write the code A pipeline has a Streams **source**, a **transform** that turns rows into keyed documents, and a **destination** that writes them ([concepts](concepts.md)). Replace `Program.cs`: Add `OrdersTransform.cs`. It maps every row to a JSON document keyed by `id`: Add `OrdersTableWriter.cs`. It writes the documents into `public.orders`. Sync runs it inside the same database transaction that saves the checkpoint: 6. Run it After the host start-up lines you see the initial copy: Leave it running. 7. Change "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-concepts",
-    "summary": "Pipelines, whole-transaction apply, idempotency, ordering, checkpoints, rebuilds and retries.",
-    "keywords": [
-      "sync",
-      "concepts",
-      "idempotency",
-      "rebuild"
-    ],
-    "order": 92,
-    "listed": true,
-    "title": "Sync concepts",
-    "sourcePath": "docs/sync/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/concepts.md",
-    "headings": [
-      {
-        "id": "sync-concepts",
-        "text": "Sync concepts",
-        "level": 1
-      },
-      {
-        "id": "what-is-a-pipeline",
-        "text": "What is a pipeline?",
-        "level": 2
-      },
-      {
-        "id": "whole-transactions-one-at-a-time",
-        "text": "Whole transactions, one at a time",
-        "level": 2
-      },
-      {
-        "id": "why-duplicates-are-safe",
-        "text": "Why duplicates are safe",
-        "level": 2
-      },
-      {
-        "id": "ordering",
-        "text": "Ordering",
-        "level": 2
-      },
-      {
-        "id": "where-is-the-checkpoint-stored",
-        "text": "Where is the checkpoint stored?",
-        "level": 2
-      },
-      {
-        "id": "changing-the-transform-rebuild-and-repair",
-        "text": "Changing the transform: rebuild and repair",
-        "level": 2
-      },
-      {
-        "id": "failures-retries-and-poison-data",
-        "text": "Failures, retries and poison data",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1468,
-    "readMinutes": 7,
-    "searchText": "Sync concepts This page gives you the mental model for running a Sync pipeline safely: what a pipeline is, how duplicates and ordering work, where progress is saved, and what happens when something fails. Shared terms such as acknowledgement, checkpoint and source identity are explained in [core concepts](../getting-started/concepts.md); this page does not repeat them. What is a pipeline? A pipeline connects one Streams source to one destination through your transform: Term What it is Pipeline ID `SyncPipelineOptions.PipelineId`. The stable name under which the destination stores its checkpoint and transform version. Source An `IConsistentSnapshotSource` (direct slot) or an `ISyncPipelineSource` (durable relay). See [Streams](../streams/concepts.md). Transform Your `ISyncTransform`. It turns each source transaction or snapshot batch into `SyncMutation` or `SyncSnapshotMutation` values. Mutation `Upsert`, `Delete` or `DeleteCollection` for a `Collection` and `Key`, with `Content`, `ContentType` and an optional `PartitionKey`. Transform version `SyncTransformVersion`: a name plus a SHA-256 fingerprint. The destination stores it on first start. Destination An `ISyncDestination`, such as `PostgreSqlSyncDestination`. It reports what it supports through `SyncDestinationCapabilities`. A pipeline moves through these states (`SyncPipelineState`): `Reconciling` appears while a reconciliation run holds the pipeline. Whole transactions, one at a time Sync never splits a source transaction. Each committed PostgreSQL transaction becomes one `SyncTransactionBatch`. The destination must confirm the exact commit position of that transaction before Sync acknowledges it to Streams. If the destination confirms a different position, Sync stops with `SyncDestinationDurabilityException`. How \"all or nothing\" is achieved depends on the destination: Destination Transaction unit PostgreSQL One database transaction for the writes and the checkpoint. Redis One Lua script for the writes and the"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-configuration",
-    "summary": "Sync options and every destination option, with defaults.",
-    "keywords": [
-      "sync",
-      "configuration",
-      "destinations",
-      "kafka",
-      "s3",
-      "webhooks"
-    ],
-    "order": 93,
-    "listed": true,
-    "title": "Configure Sync",
-    "sourcePath": "docs/sync/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/configuration.md",
-    "headings": [
-      {
-        "id": "configure-sync",
-        "text": "Configure Sync",
-        "level": 1
-      },
-      {
-        "id": "where-does-configuration-go",
-        "text": "Where does configuration go?",
-        "level": 2
-      },
-      {
-        "id": "register-pipelines",
-        "text": "Register pipelines",
-        "level": 2
-      },
-      {
-        "id": "pipeline-options",
-        "text": "Pipeline options",
-        "level": 2
-      },
-      {
-        "id": "retry-transient-destination-errors",
-        "text": "Retry transient destination errors",
-        "level": 2
-      },
-      {
-        "id": "transform-options",
-        "text": "Transform options",
-        "level": 2
-      },
-      {
-        "id": "rebuild-and-reconciliation-options",
-        "text": "Rebuild and reconciliation options",
-        "level": 2
-      },
-      {
-        "id": "destinations",
-        "text": "Destinations",
-        "level": 2
-      },
-      {
-        "id": "postgresql",
-        "text": "PostgreSQL",
-        "level": 3
-      },
-      {
-        "id": "redis",
-        "text": "Redis",
-        "level": 3
-      },
-      {
-        "id": "nats-jetstream",
-        "text": "NATS JetStream",
-        "level": 3
-      },
-      {
-        "id": "opensearch",
-        "text": "OpenSearch",
-        "level": 3
-      },
-      {
-        "id": "kafka",
-        "text": "Kafka",
-        "level": 3
-      },
-      {
-        "id": "s3-and-parquet",
-        "text": "S3 and Parquet",
-        "level": 3
-      },
-      {
-        "id": "webhooks",
-        "text": "Webhooks",
-        "level": 3
-      },
-      {
-        "id": "aspire",
-        "text": "Aspire",
-        "level": 2
-      }
-    ],
-    "wordCount": 2509,
-    "readMinutes": 12,
-    "searchText": "Configure Sync This page lists every option you set for a Sync pipeline and for each destination, with types, defaults and connection settings. All names and defaults come from the 1.1.0 source. For the ideas behind them, read [Sync concepts](concepts.md). Where does configuration go? Sync is configured in code with options records. It does not bind an `appsettings.json` section by itself. Read secrets and endpoints from `IConfiguration` (or a secret store) and pass them into the options, as the examples below do. The only configuration keys Sync writes are the ones `BlueTusk.Sync.Aspire` sets on a worker. See [Aspire](#aspire). Register pipelines `AddBlueTuskSync()` (package `BlueTusk.Sync.DependencyInjection`) registers the hosted worker, a health check named `bluetusk_sync` (tags `bluetusk`, `sync`, `ready`), `IBlueTuskSyncStatusSource` for per-pipeline status, and the `BlueTusk.Sync` meter and activity source. It returns a builder: Method Use it for `AddHostedPipeline<TTransform, TDestination>(options, source, sourceFactory, snapshotOptions, quarantineFactory)` A direct slot. `sourceFactory` returns an `IConsistentSnapshotSource`; `snapshotOptions` is `SnapshotThenStreamOptions` (`MaximumSnapshotAttempts`, default `3`). `AddHostedPipelineSource<TTransform, TDestination>(options, source, sourceFactory, quarantineFactory)` A restart-aware source such as `PostgreSqlRelaySyncPipelineSource` (durable relay). `AddRebuildCutover<TPositionProvider, THandoffHandler>()` Zero-downtime rebuild cutover for a hosted worker. `AddPostgreSqlRelayRebuildCutover<THandoffHandler>()` The same, reading the cutover position from the durable relay. Each `PipelineId` can be registered once. The transform and destination types are resolved from dependency injection as singletons. An `ISyncRetryClassifier` registered in the container is used by every pipeline and replaces the destination's own classification ([retries](#retry-transient-destination-errors)). Source options (`PostgreSqlCons"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-troubleshooting",
-    "summary": "Fix destination, duplicate, mapping, lag and permission problems.",
-    "keywords": [
-      "sync",
-      "troubleshooting",
-      "lag",
-      "retry"
-    ],
-    "order": 94,
-    "listed": true,
-    "title": "Troubleshoot Sync",
-    "sourcePath": "docs/sync/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/troubleshooting.md",
-    "headings": [
-      {
-        "id": "troubleshoot-sync",
-        "text": "Troubleshoot Sync",
-        "level": 1
-      },
-      {
-        "id": "why-did-my-pipeline-stop",
-        "text": "Why did my pipeline stop?",
-        "level": 2
-      },
-      {
-        "id": "the-destination-is-unavailable",
-        "text": "The destination is unavailable",
-        "level": 2
-      },
-      {
-        "id": "i-see-duplicate-rows-or-repeated-events",
-        "text": "I see duplicate rows or repeated events",
-        "level": 2
-      },
-      {
-        "id": "mapping-and-schema-errors",
-        "text": "Mapping and schema errors",
-        "level": 2
-      },
-      {
-        "id": "the-transform-changed-and-a-rebuild-is-needed",
-        "text": "The transform changed and a rebuild is needed",
-        "level": 2
-      },
-      {
-        "id": "lag-keeps-growing",
-        "text": "Lag keeps growing",
-        "level": 2
-      },
-      {
-        "id": "why-does-wal-keep-growing-with-a-direct-pipeline",
-        "text": "Why does WAL keep growing with a direct pipeline?",
-        "level": 2
-      },
-      {
-        "id": "permission-and-start-up-errors",
-        "text": "Permission and start-up errors",
-        "level": 2
-      },
-      {
-        "id": "destination-specific-gotchas",
-        "text": "Destination-specific gotchas",
-        "level": 2
-      }
-    ],
-    "wordCount": 1845,
-    "readMinutes": 9,
-    "searchText": "Troubleshoot Sync This page helps you find out why a Sync pipeline stopped or fell behind, and how to fix it. Each entry lists the symptom, the cause and the fix, with the exception types and messages BlueTusk actually raises. Why did my pipeline stop? When a hosted pipeline hits an error it does not retry, the worker stops that pipeline and logs (event ID 1, `SyncPipelineStopped`): The exception follows on the next lines. The host keeps running and other pipelines continue. A stopped pipeline does not restart by itself: fix the cause, then restart the process. The checkpoint never moves past the failed transaction. In an ASP.NET Core host, expose health and status so you notice: The `bluetusk_sync` check is **Unhealthy** when a pipeline is `Faulted`, `Rebuilding` or has a diagnostic code, and **Degraded** when nothing is applying changes. `BlueTuskSyncWorkerStatus.DiagnosticCode` is one of: Code Meaning `transform-version-mismatch` The transform changed. See [rebuild needed](#the-transform-changed-and-a-rebuild-is-needed). `destination-durability-failure` The destination did not confirm the exact commit position. `worker-fault` Any other exception stopped the worker. Read the log. `worker-cancelled` The worker was cancelled. `pipeline-fault` The pipeline recorded an error (`LastError`). Metrics come from the `BlueTusk.Sync` meter, tagged `sync.pipeline.id`: Metric Unit What it tells you `bluetusk.sync.transactions` `{transaction}` Transactions applied. Flat while the source changes means stuck. `bluetusk.sync.transaction.duration` ms Time per transaction, including retries. `bluetusk.sync.retries` `{attempt}` Retry attempts. `bluetusk.sync.throttle.duration` ms Time spent waiting on `RateLimit`. `bluetusk.sync.snapshot.rows` `{row}` Rows copied by snapshots. `bluetusk.sync.errors` `{error}` Pipelines stopped by an error. Traces use the `BlueTusk.Sync` activity source (`sync.transaction.consume`, `sync.snapshot.consume`). The destination is unavailable Symptom Cause"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "sync-endurance",
-    "listed": false,
-    "summary": "The 24-hour Sync release gate and evidence contract.",
-    "keywords": [
-      "24h",
-      "endurance",
-      "release"
-    ],
-    "order": 100,
-    "title": "Sync release endurance",
-    "sourcePath": "docs/sync/release-endurance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-endurance.md",
-    "headings": [
-      {
-        "id": "sync-release-endurance",
-        "text": "Sync release endurance",
-        "level": 1
-      },
-      {
-        "id": "retained-connector-test-results",
-        "text": "Retained connector test results",
-        "level": 2
-      },
-      {
-        "id": "local-smoke",
-        "text": "Local smoke",
-        "level": 2
-      },
-      {
-        "id": "release-gate",
-        "text": "Release gate",
-        "level": 2
-      }
-    ],
-    "wordCount": 925,
-    "readMinutes": 5,
-    "searchText": "Sync release endurance Sync stable release requires a completed 24-hour run of the same real-destination recovery tests used by normal CI. The executable runner is `eng/run-sync-endurance.ps1`; the confirmed self-hosted workflow is `.github/workflows/sync-release-endurance.yml`. Each cycle runs the core pipeline, in-process hosting, shared conformance kit, and PostgreSQL, NATS JetStream, Redis, OpenSearch, Kafka, S3/Parquet, and signed-webhook suites. The Kafka suite runs against a real broker; webhook protocol/failure boundaries use a deterministic receiver. Those suites exercise snapshot restart, transaction redelivery, destination-instance restart, transform drift, durable quarantine, PostgreSQL rollback, JetStream deduplication, Redis preflight failure, OpenSearch partial-bulk recovery, reconciliation/repair, and zero-downtime alias cutover. Any project failure stops the run and writes a failed evidence report. The runner refuses to start unless all six service endpoints and the S3 test credentials are explicit and the launch repository has no tracked changes. It creates a detached Git worktree at the recorded source commit, restores and builds all nine test projects there, and runs every cycle only from that isolated workspace. Other repository builds and commits therefore cannot replace the binaries under test. The format-4 JSON report records requested and actual test duration, completed cycles, project runs, the slowest cycle, exact source commit and branch, isolated start/end commits and cleanliness, combined SHA-256 start/end hashes of every test artifact, artifact count, isolated-worktree cleanup, the launch repository state at completion, .NET SDK, host OS/architecture, processor count, exact project list, candidate package/provenance hashes, and the digest-pinned PostgreSQL, Redis, NATS, Kafka, MinIO and OpenSearch images. A report is successful only when `completed` is true, the requested duration and minimum cycle count pass, the detached source is un"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live",
-    "summary": "Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.",
-    "keywords": [
-      "websocket",
-      "sse",
-      "replay",
-      "security"
-    ],
-    "order": 110,
-    "listed": true,
-    "title": "BlueTusk Live",
-    "sourcePath": "docs/live/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-live",
-        "text": "BlueTusk Live",
-        "level": 1
-      },
-      {
-        "id": "when-to-use-live",
-        "text": "When to use Live",
-        "level": 2
-      },
-      {
-        "id": "how-it-works",
-        "text": "How it works",
-        "level": 2
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "a-taste-of-the-code",
-        "text": "A taste of the code",
-        "level": 2
-      },
-      {
-        "id": "framework-guides",
-        "text": "Framework guides",
-        "level": 2
-      },
-      {
-        "id": "security-checklist",
-        "text": "Security checklist",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 768,
-    "readMinutes": 4,
-    "searchText": "BlueTusk Live BlueTusk Live keeps query results on a user's screen up to date as PostgreSQL data changes. You register a query on the server; a browser subscribes to it by name and receives the rows, then only the changes. When to use Live Use Live when a connected user should see current data without refreshing: dashboards, order tracking, operations screens, shared lists. The server owns every query. Browsers send a registered query name and typed parameters, never SQL. Each subscriber gets the rows that their own authorization allows. Raw change data never reaches a browser; Live runs the query again and sends the difference. Many users with the same query and scope share one query execution. A dropped connection resumes from where it stopped. Use something else when: the destination is another system, such as a search index or a warehouse: use [Sync](../sync/README.md); your own code must react to each committed change: use [Streams](../streams/README.md); a result is too large to keep in a browser. Every live query has a hard row limit. How it works [Concepts](concepts.md) explains each step. Packages Package Use it for `BlueTusk.Live` Query plans, subscriptions, diffs, replay, resume tokens. `BlueTusk.Live.EntityFrameworkCore` Register live queries from EF Core LINQ. `BlueTusk.Live.DependencyInjection` PostgreSQL invalidation and replay storage, and the Streams consumer that feeds it. `BlueTusk.Live.AspNetCore` The authenticated request and resolver contract shared by all transports. `BlueTusk.Live.ServerSentEvents` Server-sent events endpoint for browsers. `BlueTusk.Live.SignalR` SignalR streaming hub. `BlueTusk.Live.Grpc` gRPC streaming service and its .NET client. `BlueTusk.Live.Aspire` Pass Live settings from an Aspire AppHost. `BlueTusk.Live.Testing` In-memory invalidation log and replay store for tests, and a conformance kit for custom replay stores. `@bluetusk/live` (npm) Framework-neutral browser client. `@bluetusk/live-angular`, `@bluetusk/live-react`"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-quickstart",
-    "summary": "Register an authorized live query in ASP.NET Core and show updating rows in a browser.",
-    "keywords": [
-      "live",
-      "quickstart",
-      "browser",
-      "asp.net core"
-    ],
-    "order": 111,
-    "listed": true,
-    "title": "Live quick start: a browser list that updates itself",
-    "sourcePath": "docs/live/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/quickstart.md",
-    "headings": [
-      {
-        "id": "live-quick-start-a-browser-list-that-updates-itself",
-        "text": "Live quick start: a browser list that updates itself",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-create-the-table-and-publication",
-        "text": "1. Create the table and publication",
-        "level": 2
-      },
-      {
-        "id": "2-create-the-project",
-        "text": "2. Create the project",
-        "level": 2
-      },
-      {
-        "id": "3-write-the-server",
-        "text": "3. Write the server",
-        "level": 2
-      },
-      {
-        "id": "4-write-the-page",
-        "text": "4. Write the page",
-        "level": 2
-      },
-      {
-        "id": "5-run-the-app",
-        "text": "5. Run the app",
-        "level": 2
-      },
-      {
-        "id": "6-change-the-table",
-        "text": "6. Change the table",
-        "level": 2
-      },
-      {
-        "id": "7-clean-up",
-        "text": "7. Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1519,
-    "readMinutes": 7,
-    "searchText": "Live quick start: a browser list that updates itself In this quick start you build an ASP.NET Core app that keeps a browser list of to-do items current. When you insert, update or delete a row in PostgreSQL, the page changes within a moment, and each user sees only their own rows. It takes about 15 minutes. You will: create a table and a publication; register one live query and map the server-sent events (SSE) endpoint; show the result in a small page that uses `@bluetusk/live`; change rows in PostgreSQL and watch the page update. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); [Node.js](https://nodejs.org/) 20 or later, for `npm` and `npx`; a PostgreSQL 15, 16, 17 or 18 server with `wal_level=logical`, and a role that can create replication slots. The Docker container from the [5-minute first app](../getting-started/quickstart.md#1-start-postgresql) has both. 1. Create the table and publication Create a database for this quick start, then the table and a publication that lists it: At the `live_quickstart=#` prompt, run: Leave this `psql` session open. You use it in step 6. 2. Create the project In a second terminal: See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 3. Write the server Replace the contents of `Program.cs`: What the pieces do: **The live query** `my-todos` is compiled at startup. It filters by the `owner` parameter, has a deterministic order that includes the key, and a hard limit of 100 rows. **`TodoSubscriptions`** is the authorization point. It ignores any owner the browser might send and binds the signed-in user's name instead. **Streams** reads committed changes from the `live_todos` publication and records which tables changed. **`LiveRefreshWorker`** re-runs a query only when one of its tables changed, then sends the difference. [Concepts](concepts.md) explains each step. 4. Write the page Create `app.ts` next to `Program.cs`: **Note:** With the published 1.0.0 o"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-concepts",
-    "summary": "Registered queries, subscriber scope, re-query and diff, snapshots, resume, batching and transports.",
-    "keywords": [
-      "live",
-      "concepts",
-      "subscription",
-      "resume"
-    ],
-    "order": 112,
-    "listed": true,
-    "title": "Live concepts",
-    "sourcePath": "docs/live/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/concepts.md",
-    "headings": [
-      {
-        "id": "live-concepts",
-        "text": "Live concepts",
-        "level": 1
-      },
-      {
-        "id": "the-path-from-a-commit-to-the-screen",
-        "text": "The path from a commit to the screen",
-        "level": 2
-      },
-      {
-        "id": "registered-queries",
-        "text": "Registered queries",
-        "level": 2
-      },
-      {
-        "id": "who-may-see-what-scope-and-authorization",
-        "text": "Who may see what: scope and authorization",
-        "level": 2
-      },
-      {
-        "id": "change-signal-re-query-diff",
-        "text": "Change signal, re-query, diff",
-        "level": 2
-      },
-      {
-        "id": "sequences-replay-and-resume-tokens",
-        "text": "Sequences, replay and resume tokens",
-        "level": 2
-      },
-      {
-        "id": "batching-on-the-client",
-        "text": "Batching on the client",
-        "level": 2
-      },
-      {
-        "id": "backpressure-and-limits",
-        "text": "Backpressure and limits",
-        "level": 2
-      },
-      {
-        "id": "transports",
-        "text": "Transports",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1662,
-    "readMinutes": 8,
-    "searchText": "Live concepts This page explains how BlueTusk Live turns a committed PostgreSQL change into an update on a user's screen, so you can design queries, authorization and limits that behave the way you expect. It builds on the shared [core concepts](../getting-started/concepts.md), in particular [Live results are re-queried](../getting-started/concepts.md#live-results-are-re-queried-not-copied-from-the-change-feed). The path from a commit to the screen Live never forwards row data from the change feed. The change only says \"this table changed\". The rows a user sees always come from running the registered query again with that user's parameters and scope. Registered queries A **registered query** is a query plan that trusted server code creates at startup. Clients refer to it by name and cannot send SQL. The plan type is `LiveQueryPlan<TRow, TKey>`. It records the name, the tables it depends on, its typed parameters, a hard result limit, how to run it and how to get each row's key. Most applications create plans from EF Core with `LiveEfQueryCompiler.CompileAsync` (package `BlueTusk.Live.EntityFrameworkCore`). The compiler accepts this shape and rejects anything else with `LiveEfQueryRegistrationException` before any client connects: Rule Example One mapped root entity with a single-column primary key `db.Todos` Simple `Where` predicates over parameters `.Where(t => t.Owner == owner)` `OrderBy`/`ThenBy` that includes the primary key `.OrderBy(t => t.Id)` Exactly one `Take`, between 1 and `maximumResultCount` `.Take(100)` Optional `Include`/`ThenInclude` of one-to-many navigations `.Include(o => o.Lines)` Every table reached through an `Include` becomes a dependency of the plan, so a change to any of them refreshes the query. `CompileProjectionAsync` accepts a separate result type for grouped and joined projections; see the [full reference](reference.md#ef-query-registration). Parameters are declared with `LiveQueryParameter(name, type, allowNull)` and must be scalars: `s"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-configuration",
-    "summary": "Live server options, transport settings and browser client options, with defaults.",
-    "keywords": [
-      "live",
-      "configuration",
-      "options",
-      "client"
-    ],
-    "order": 113,
-    "listed": true,
-    "title": "Configure BlueTusk Live",
-    "sourcePath": "docs/live/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/configuration.md",
-    "headings": [
-      {
-        "id": "configure-bluetusk-live",
-        "text": "Configure BlueTusk Live",
-        "level": 1
-      },
-      {
-        "id": "what-you-configure-and-where",
-        "text": "What you configure, and where",
-        "level": 2
-      },
-      {
-        "id": "postgresqllivestoreoptions",
-        "text": "PostgreSqlLiveStoreOptions",
-        "level": 2
-      },
-      {
-        "id": "query-registration",
-        "text": "Query registration",
-        "level": 2
-      },
-      {
-        "id": "subscriptions-and-limits",
-        "text": "Subscriptions and limits",
-        "level": 2
-      },
-      {
-        "id": "resume-tokens-and-requests",
-        "text": "Resume tokens and requests",
-        "level": 2
-      },
-      {
-        "id": "transports",
-        "text": "Transports",
-        "level": 2
-      },
-      {
-        "id": "browser-client-options",
-        "text": "Browser client options",
-        "level": 2
-      },
-      {
-        "id": "client-query-policies",
-        "text": "Client query policies",
-        "level": 2
-      },
-      {
-        "id": "aspire",
-        "text": "Aspire",
-        "level": 2
-      },
-      {
-        "id": "telemetry",
-        "text": "Telemetry",
-        "level": 2
-      }
-    ],
-    "wordCount": 2017,
-    "readMinutes": 10,
-    "searchText": "Configure BlueTusk Live This page lists every setting you can change in BlueTusk Live, on the server and in the browser client, with its type and default. For what the settings mean together, read [Concepts](concepts.md) first. The [full engineering reference](reference.md) has background detail. Live has no `appsettings.json` section of its own. You set options in code when you create each object. To drive them from configuration, read your own section and pass the values in, as shown in [Aspire](#aspire). What you configure, and where Object Package Purpose [`PostgreSqlLiveStoreOptions`](#postgresqllivestoreoptions) `BlueTusk.Live.DependencyInjection` Invalidation log and replay window in PostgreSQL. [`LiveEfQueryDefinition`](#query-registration) `BlueTusk.Live.EntityFrameworkCore` One registered EF Core query. [`LiveQuerySessionOptions`](#subscriptions-and-limits) `BlueTusk.Live` First result and diff size. [`LiveSharedSubscriptionOptions`](#subscriptions-and-limits) `BlueTusk.Live` Clients, queues and replay per subscription. [`LiveSharedSubscriptionRegistryOptions`](#subscriptions-and-limits) `BlueTusk.Live` Number of shared subscriptions. [`LiveResumeTokenProtector`, `LiveAspNetCoreOptions`](#resume-tokens-and-requests) `BlueTusk.Live` / `BlueTusk.Live.AspNetCore` Token signing, token lifetime, request size. [Transport mapping](#transports) `BlueTusk.Live.ServerSentEvents`, `.SignalR`, `.Grpc` Endpoints and paths. [`LiveClientOptions`](#browser-client-options) `@bluetusk/live` Browser connection, retries and batching. [`BlueTuskLiveAspireOptions`](#aspire) `BlueTusk.Live.Aspire` Settings passed from an Aspire AppHost. PostgreSqlLiveStoreOptions `PostgreSqlLiveInvalidationStore` implements the invalidation log (`ILiveInvalidationLog`), the sink that Streams writes to (`ILiveInvalidationSink`) and the replay store (`ILiveReplayStore`). It creates its tables on first use, or when you call `InitializeAsync`. Option Type Default Meaning `ControlDataSource` `DbDataS"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-troubleshooting",
-    "summary": "Fix missing updates, authorization, reconnect, resume, limit and proxy problems.",
-    "keywords": [
-      "live",
-      "troubleshooting",
-      "sse",
-      "signalr"
-    ],
-    "order": 114,
-    "listed": true,
-    "title": "Troubleshoot BlueTusk Live",
-    "sourcePath": "docs/live/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/troubleshooting.md",
-    "headings": [
-      {
-        "id": "troubleshoot-bluetusk-live",
-        "text": "Troubleshoot BlueTusk Live",
-        "level": 1
-      },
-      {
-        "id": "start-with-one-request-from-the-command-line",
-        "text": "Start with one request from the command line",
-        "level": 2
-      },
-      {
-        "id": "what-each-error-response-means",
-        "text": "What each error response means",
-        "level": 2
-      },
-      {
-        "id": "no-updates-arrive",
-        "text": "No updates arrive",
-        "level": 2
-      },
-      {
-        "id": "every-row-is-sent-again-on-each-change",
-        "text": "Every row is sent again on each change",
-        "level": 3
-      },
-      {
-        "id": "unauthorized-or-forbidden",
-        "text": "Unauthorized or forbidden",
-        "level": 2
-      },
-      {
-        "id": "the-page-says-illegal-invocation",
-        "text": "The page says \"Illegal invocation\"",
-        "level": 2
-      },
-      {
-        "id": "reconnect-loops",
-        "text": "Reconnect loops",
-        "level": 2
-      },
-      {
-        "id": "resume-tokens",
-        "text": "Resume tokens",
-        "level": 2
-      },
-      {
-        "id": "the-client-reloads-everything-after-a-reconnect",
-        "text": "The client reloads everything after a reconnect",
-        "level": 3
-      },
-      {
-        "id": "the-client-stops-with-http-400-after-a-server-restart",
-        "text": "The client stops with HTTP 400 after a server restart",
-        "level": 3
-      },
-      {
-        "id": "http-409-on-a-brand-new-connection",
-        "text": "HTTP 409 on a brand-new connection",
-        "level": 3
-      },
-      {
-        "id": "a-fresh-live-connection-must-establish-an-authoritative-snapshot-before-deltas",
-        "text": "\"A fresh Live connection must establish an authoritative snapshot before deltas.\"",
-        "level": 3
-      },
-      {
-        "id": "too-many-subscriptions-or-clients",
-        "text": "Too many subscriptions or clients",
-        "level": 2
-      },
-      {
-        "id": "proxies-buffer-the-stream",
-        "text": "Proxies buffer the stream",
-        "level": 2
-      },
-      {
-        "id": "cors",
-        "text": "CORS",
-        "level": 2
-      },
-      {
-        "id": "startup-errors",
-        "text": "Startup errors",
-        "level": 2
-      },
-      {
-        "id": "client-exceptions",
-        "text": "Client exceptions",
-        "level": 2
-      }
-    ],
-    "wordCount": 2282,
-    "readMinutes": 11,
-    "searchText": "Troubleshoot BlueTusk Live This page helps you find out why live updates do not arrive, why a client is refused, or why it keeps reconnecting. Each section lists the symptom, the cause and the fix, with the real error text. For background, see [Concepts](concepts.md). Start with one request from the command line Take the browser out of the picture. This request opens the SSE stream the way the client does: Replace the URL, query name and authentication header with yours (for example `-H \"authorization: Bearer ...\"`). In PowerShell 7.3 or later, call `curl.exe` with the same arguments on one line. A healthy stream starts with an `InitialResult` event and stays open: If you get an HTTP status instead, look it up in the next table. What each error response means The SSE endpoint and the gRPC service map each failure to a status. SignalR sends the same failures as a `HubException` with the message shown. SSE gRPC Cause Fix 401 `Unauthenticated` The request has no authenticated user (`An authenticated principal is required for a Live subscription.`), or your resolver threw `LiveTransportAuthorizationException`. Send credentials and run `UseAuthentication()` before the endpoint. See [Unauthorized or forbidden](#unauthorized-or-forbidden). 400 `InvalidArgument` The body is not valid JSON, `parameters` is not an object (`Live subscription parameters must be a JSON object.`), your resolver threw `LiveTransportRequestException`, or the resume token is invalid. Send `{ \"query\": \"...\", \"parameters\": {} }`. For tokens, see [resume tokens](#the-client-stops-with-http-400-after-a-server-restart). 405 A `GET` request, for example from the browser's `EventSource`. Use `@bluetusk/live`, which sends `POST`. 413 `ResourceExhausted` The request is larger than `MaximumRequestBytes` (64 KiB). Send fewer or shorter parameters, or raise the limit. 429 `ResourceExhausted` `QuotaExceeded`: the subscription already has `MaximumSubscribers` clients. See [too many subscriptions](#too-many-subscr"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "live-clients",
-    "summary": "Use Live from Angular, React, Vue, Svelte or plain TypeScript.",
-    "keywords": [
-      "live",
-      "angular",
-      "react",
-      "vue",
-      "svelte",
-      "npm"
-    ],
-    "order": 115,
-    "listed": true,
-    "title": "Framework guides: Angular, React, Vue and Svelte",
-    "sourcePath": "docs/live/clients.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/clients.md",
-    "headings": [
-      {
-        "id": "framework-guides-angular-react-vue-and-svelte",
-        "text": "Framework guides: Angular, React, Vue and Svelte",
-        "level": 1
-      },
-      {
-        "id": "create-one-client",
-        "text": "Create one client",
-        "level": 2
-      },
-      {
-        "id": "angular",
-        "text": "Angular",
-        "level": 2
-      },
-      {
-        "id": "react",
-        "text": "React",
-        "level": 2
-      },
-      {
-        "id": "vue",
-        "text": "Vue",
-        "level": 2
-      },
-      {
-        "id": "svelte",
-        "text": "Svelte",
-        "level": 2
-      },
-      {
-        "id": "plain-typescript",
-        "text": "Plain TypeScript",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 800,
-    "readMinutes": 4,
-    "searchText": "Framework guides: Angular, React, Vue and Svelte This page shows how to bind a live query to a component in Angular, React, Vue or Svelte. Each adapter starts the query with the component and stops it when the component goes away. The examples use the `my-todos` query from the [quick start](quickstart.md). The adapters only handle the framework's lifecycle and change notification. Reconnects, resume tokens and result updates come from the core client, `@bluetusk/live`, which each adapter installs as a dependency. Each adapter also combines rapid updates into one notification per microtask. Package Install Status `@bluetusk/live-angular` `npm install @bluetusk/live-angular` Angular 20 to 22 `@bluetusk/live-react` `npm install @bluetusk/live-react` React 18 or 19 `@bluetusk/live-vue` `npm install @bluetusk/live-vue` New in 1.1.0. Vue 3.4 or later `@bluetusk/live-svelte` `npm install @bluetusk/live-svelte` New in 1.1.0. Svelte 5 Create one client Every example shares one client. Create it once per application, in its own module: All client options are listed in [configuration](configuration.md#browser-client-options). With the published 1.0.0 or 1.1.0-rc.1 client, also pass `fetch: (input, init) => fetch(input, init)`; see [troubleshooting](troubleshooting.md#the-page-says-illegal-invocation). Angular `provideBlueTuskLive(client)` registers the client. Inject `BlueTuskLiveAngular` and call `createQuery`. The returned `AngularLiveQuery` exposes read-only signals: `state`, `rows`, `phase` and `error`. The Angular query does not start by itself: call `start()`. Call `destroy()` when the owner is destroyed; a destroyed query cannot be restarted. Use `stop()` and `start()` for a temporary pause. React `useBlueTuskLiveQuery(client, request)` returns the current `LiveQueryState`: `{ phase, rows, lastSequence, error }`. It starts the query after mount and stops it on unmount. Keep the `request` object and the `client` stable. The hook creates a new query, and a new connection,"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane",
-    "summary": "Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.",
-    "keywords": [
-      "dashboard",
-      "operations",
-      "audit"
-    ],
-    "order": 120,
-    "listed": true,
-    "title": "Control Plane",
-    "sourcePath": "docs/control-plane/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/README.md",
-    "headings": [
-      {
-        "id": "control-plane",
-        "text": "Control Plane",
-        "level": 1
-      },
-      {
-        "id": "what-it-shows",
-        "text": "What it shows",
-        "level": 2
-      },
-      {
-        "id": "what-it-lets-you-do",
-        "text": "What it lets you do",
-        "level": 2
-      },
-      {
-        "id": "use-it-when",
-        "text": "Use it when",
-        "level": 2
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "the-shortest-version",
-        "text": "The shortest version",
-        "level": 2
-      },
-      {
-        "id": "status",
-        "text": "Status",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 693,
-    "readMinutes": 4,
-    "searchText": "Control Plane This page helps you decide whether to use the BlueTusk Control Plane and where to start. The Control Plane is a dashboard and a JSON API that you host inside your own ASP.NET Core application. It shows the health of your Streams, Sync and Live components and lets authorized operators act on them, with every action written to an audit log. What it shows Area What you see Sources and Streams Replication slot state and WAL lag, durable relay storage, consumer groups, direct checkpoints and snapshot runs Sync pipelines Pipeline state, throughput, checkpoint lag, retries, throttling, quarantined transactions and failures Live subscriptions Shared queries, connected clients, fan-out, invalidation lag, replay and resume activity, quota rejections Continuous Graph (preview) Registered graph queries and their limits Managed deployments Placement, desired and observed generation, workloads, requested capacity and delete protection The overview page combines all of these and lists the items that need attention. Every row opens a detail page. The same data is available as versioned JSON under `/bluetusk/api/v1/...` for scripts and agents. The inventory is redacted. It never returns connection strings, credentials, row values, query parameters or dead-letter payloads. What it lets you do Operators can request actions such as retrying, reconciling or rebuilding a Sync pipeline, and pausing, resuming, reconciling, rebuilding or deleting a managed deployment. Every request needs the right role, a typed confirmation and a reason. The Control Plane records the attempt before it calls your code and records the outcome afterwards. BlueTusk ships the handler for managed-deployment actions. For every other action you write the handler, so nothing runs that you did not wire up. See [Enable operator actions](operations.md). **New in 1.1.0:** fleet operations on managed deployments, the `/bluetusk/deployments` pages and `/api/v1/fleet`, and the `BlueTusk.ControlPlane.Kubernete"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-quickstart",
-    "summary": "Host the Control Plane API and dashboard, register a component, and query the inventory.",
-    "keywords": [
-      "control plane",
-      "quickstart",
-      "dashboard"
-    ],
-    "order": 121,
-    "listed": true,
-    "title": "Control Plane quick start",
-    "sourcePath": "docs/control-plane/quickstart.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/quickstart.md",
-    "headings": [
-      {
-        "id": "control-plane-quick-start",
-        "text": "Control Plane quick start",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-start-postgresql",
-        "text": "1. Start PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "2-create-a-replication-slot",
-        "text": "2. Create a replication slot",
-        "level": 2
-      },
-      {
-        "id": "3-create-the-app",
-        "text": "3. Create the app",
-        "level": 2
-      },
-      {
-        "id": "4-set-the-connection-string",
-        "text": "4. Set the connection string",
-        "level": 2
-      },
-      {
-        "id": "5-write-the-code",
-        "text": "5. Write the code",
-        "level": 2
-      },
-      {
-        "id": "6-run-it",
-        "text": "6. Run it",
-        "level": 2
-      },
-      {
-        "id": "7-read-the-inventory",
-        "text": "7. Read the inventory",
-        "level": 2
-      },
-      {
-        "id": "8-clean-up",
-        "text": "8. Clean up",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 885,
-    "readMinutes": 5,
-    "searchText": "Control Plane quick start In this quick start you host the BlueTusk dashboard and its JSON API in an ASP.NET Core app, require sign-in, register a Streams relay source so there is something to see, and read the inventory with `curl`. It takes about 10 minutes. Before you start You need: the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); Docker, or a PostgreSQL 15, 16, 17 or 18 test server with `wal_level=logical`; `curl` (Windows 10 and later include it as `curl.exe`). 1. Start PostgreSQL Skip this step if the container from the [5-minute first app](../getting-started/quickstart.md) is still running. 2. Create a replication slot The dashboard reports the state of each source's logical replication slot. Create one to look at: 3. Create the app See [Install BlueTusk](../getting-started/install.md) to choose and pin a version. 4. Set the connection string On Linux or macOS, use `export BLUETUSK_CONNECTION_STRING=\"...\"`. **Warning:** `SSL Mode=Disable` is only for a local test container. Keep the default, `SSL Mode=VerifyFull`, everywhere else. 5. Write the code Replace the contents of `Program.cs`: What the code does: **Relay source.** The dashboard reads Streams state from the durable relay tables. `InitializeAsync` creates them in the `bluetusk_streams` schema, and the code registers one source and one consumer group. **Authentication.** `/dev/login` signs anyone in as a viewer. It exists only when the app runs in the `Development` environment. Replace it with your real identity provider before you deploy. **Policies.** `MapBlueTuskDashboard` protects every route with a named policy. You must define those policies. **Inventory services.** The overview page asks for every product's inventory. `NotConnected` reports Sync, Live and Continuous Graph as empty. 6. Run it 7. Read the inventory In a second terminal, call the API without signing in: Sign in, keep the cookie, and call it again: On Linux or macOS, use `curl` instead of `curl.exe`. The respons"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-concepts",
-    "summary": "Inventory, components, health, operations, fleet operations, audit and authorization.",
-    "keywords": [
-      "control plane",
-      "concepts",
-      "fleet",
-      "audit"
-    ],
-    "order": 122,
-    "listed": true,
-    "title": "Control Plane concepts",
-    "sourcePath": "docs/control-plane/concepts.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/concepts.md",
-    "headings": [
-      {
-        "id": "control-plane-concepts",
-        "text": "Control Plane concepts",
-        "level": 1
-      },
-      {
-        "id": "how-the-pieces-fit",
-        "text": "How the pieces fit",
-        "level": 2
-      },
-      {
-        "id": "inventory",
-        "text": "Inventory",
-        "level": 2
-      },
-      {
-        "id": "instances-and-sources",
-        "text": "Instances and sources",
-        "level": 2
-      },
-      {
-        "id": "health",
-        "text": "Health",
-        "level": 2
-      },
-      {
-        "id": "operations",
-        "text": "Operations",
-        "level": 2
-      },
-      {
-        "id": "fleet-operations",
-        "text": "Fleet operations",
-        "level": 2
-      },
-      {
-        "id": "audit",
-        "text": "Audit",
-        "level": 2
-      },
-      {
-        "id": "authorization",
-        "text": "Authorization",
-        "level": 2
-      },
-      {
-        "id": "persistence",
-        "text": "Persistence",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1408,
-    "readMinutes": 7,
-    "searchText": "Control Plane concepts This page explains the mental model behind the Control Plane: where its data comes from, how it judges health, how operator actions are checked and audited, and what it stores. For shared terms such as replication slot, checkpoint, source identity and consumer group, read the [core concepts](../getting-started/concepts.md) first. How the pieces fit The Control Plane runs inside your ASP.NET Core app. It has no agent of its own and no background process. Each page or API call asks the inventory services for a fresh view. Inventory The inventory is a read-only, redacted view of what BlueTusk is running. Five services supply it. The dashboard needs all five registered, even if some products are not in use (return an empty overview for those, as the [quick start](quickstart.md) does). Service BlueTusk implementation Reads `IControlPlaneQueryService` `PostgreSqlControlPlaneQueryService` Streams relay tables, plus `pg_replication_slots` on the source server `IControlPlaneSyncQueryService` `HostedSyncControlPlaneQueryService` The status of hosted Sync workers (`IBlueTuskSyncStatusSource`) and the relay head from the query service above `IControlPlaneLiveQueryService` `HostedLiveControlPlaneQueryService` The Live shared-subscription registry and invalidation log `IControlPlaneContinuousGraphQueryService` In the preview `BlueTusk.ContinuousGraph.ControlPlane` package Registered graph queries `IControlPlaneFleetQueryService` `ManagedDeploymentFleetQueryService` The managed-deployment store Redaction is built in. The inventory contains fingerprints, positions, counts and stable diagnostic codes. It never contains connection strings, credentials, lease-owner identities, row values, query parameters, Live security scopes (only a category and a truncated hash), workload settings, secret-reference names or exception messages. Instances and sources A **Control Plane instance** is one `ControlPlanePostgreSqlSource`: a name, a data source for the PostgreSQL ser"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-configuration",
-    "summary": "Control Plane options, endpoints, authorization policies, persistence and Kubernetes settings.",
-    "keywords": [
-      "control plane",
-      "configuration",
-      "options"
-    ],
-    "order": 123,
-    "listed": true,
-    "title": "Control Plane configuration",
-    "sourcePath": "docs/control-plane/configuration.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/configuration.md",
-    "headings": [
-      {
-        "id": "control-plane-configuration",
-        "text": "Control Plane configuration",
-        "level": 1
-      },
-      {
-        "id": "dashboard-options",
-        "text": "Dashboard options",
-        "level": 2
-      },
-      {
-        "id": "authorization-policies",
-        "text": "Authorization policies",
-        "level": 2
-      },
-      {
-        "id": "routes",
-        "text": "Routes",
-        "level": 2
-      },
-      {
-        "id": "pages",
-        "text": "Pages",
-        "level": 3
-      },
-      {
-        "id": "json-api",
-        "text": "JSON API",
-        "level": 3
-      },
-      {
-        "id": "operation-requests",
-        "text": "Operation requests",
-        "level": 3
-      },
-      {
-        "id": "operation-kinds",
-        "text": "Operation kinds",
-        "level": 3
-      },
-      {
-        "id": "json-enum-values",
-        "text": "JSON enum values",
-        "level": 3
-      },
-      {
-        "id": "inventory-sources",
-        "text": "Inventory sources",
-        "level": 2
-      },
-      {
-        "id": "sync-and-live",
-        "text": "Sync and Live",
-        "level": 3
-      },
-      {
-        "id": "storage",
-        "text": "Storage",
-        "level": 2
-      },
-      {
-        "id": "managed-deployments",
-        "text": "Managed deployments",
-        "level": 2
-      },
-      {
-        "id": "kubernetes-reconciler",
-        "text": "Kubernetes reconciler",
-        "level": 2
-      },
-      {
-        "id": "metrics",
-        "text": "Metrics",
-        "level": 2
-      }
-    ],
-    "wordCount": 1812,
-    "readMinutes": 9,
-    "searchText": "Control Plane configuration This page lists every setting you can change in the Control Plane: dashboard options, authorization policies, routes, inventory sources, storage, managed deployments and the Kubernetes reconciler. All configuration is in code; the Control Plane reads no `appsettings.json` section of its own. Dashboard options Pass options to `MapBlueTuskDashboard`: `BlueTuskDashboardOptions`: Property Type Default Meaning `RoutePrefix` `string` `/bluetusk` Base path for every page and API. Must start with `/`, must not end with `/`, and may contain only ASCII letters, digits, `/`, `-`, `_`, `.` and `~` `BrandLabel` `string` `Control plane` Text next to the BlueTusk name in the header. **New in 1.1.0** `DataProvenanceNotice` `string?` `null` Optional banner, for example to say which products this host is not connected to. **New in 1.1.0** `ReadAuthorizationPolicy` `string` `BlueTusk.ControlPlane.Read` Policy required for every route `MutationAuthorizationPolicy` `string` `BlueTusk.ControlPlane.Mutate` Extra policy for `POST .../operations` `GraphExecutionAuthorizationPolicy` `string` `BlueTusk.ControlPlane.GraphExecute` Extra policy for `POST .../graphs/{queryFingerprint}/run`. **New in 1.1.0** `ViewerRole` `string` `BlueTuskViewer` ASP.NET Core role mapped to the Control Plane `Viewer` role `OperatorRole` `string` `BlueTuskOperator` Role mapped to `Operator`. Shows operation buttons `AdministratorRole` `string` `BlueTuskAdministrator` Role mapped to `Administrator`. Shows the deployment **Delete** button `GraphExecutorRole` `string` `BlueTuskOperator` Role that sees the graph **Run** controls. **New in 1.1.0** Every property except `DataProvenanceNotice` must be non-empty. An invalid value throws `ArgumentException` when `MapBlueTuskDashboard` runs. Authorization policies You must register a policy for each of the three policy names. BlueTusk does not create them, and a missing policy fails the request with `The AuthorizationPolicy named: '...' was not fo"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-troubleshooting",
-    "summary": "Fix authorization, missing inventory, stale health, rejected operations and Kubernetes problems.",
-    "keywords": [
-      "control plane",
-      "troubleshooting"
-    ],
-    "order": 124,
-    "listed": true,
-    "title": "Control Plane troubleshooting",
-    "sourcePath": "docs/control-plane/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/troubleshooting.md",
-    "headings": [
-      {
-        "id": "control-plane-troubleshooting",
-        "text": "Control Plane troubleshooting",
-        "level": 1
-      },
-      {
-        "id": "sign-in-and-permissions",
-        "text": "Sign-in and permissions",
-        "level": 2
-      },
-      {
-        "id": "the-app-fails-at-startup",
-        "text": "The app fails at startup",
-        "level": 2
-      },
-      {
-        "id": "components-are-missing-from-the-inventory",
-        "text": "Components are missing from the inventory",
-        "level": 2
-      },
-      {
-        "id": "health-looks-stale-or-wrong",
-        "text": "Health looks stale or wrong",
-        "level": 2
-      },
-      {
-        "id": "operations-are-rejected",
-        "text": "Operations are rejected",
-        "level": 2
-      },
-      {
-        "id": "kubernetes-reconciler",
-        "text": "Kubernetes reconciler",
-        "level": 2
-      }
-    ],
-    "wordCount": 1722,
-    "readMinutes": 8,
-    "searchText": "Control Plane troubleshooting This page helps you fix common Control Plane problems: sign-in errors, startup failures, missing or stale inventory, rejected operations and Kubernetes reconciler issues. Sign-in and permissions Symptom Cause Fix Every route returns `401` The request has no authenticated user Sign in first. Check that `app.UseAuthentication()` and `app.UseAuthorization()` run before `MapBlueTuskDashboard()`. API clients must send your app's credentials (cookie or token) Unauthenticated requests redirect to `/Account/Login` Cookie authentication's default behavior Add a login page, or return `401` as the [quick start](quickstart.md#5-write-the-code) does Pages return `403` The user fails the read policy Give the user a role the read policy accepts. If your identity provider sends roles in a claim such as `roles`, set the authentication handler's role claim type so `IsInRole` sees them `500` with `The AuthorizationPolicy named: 'BlueTusk.ControlPlane.Read' was not found.` The policy is not registered Register all three policies, or set the option names to policies you have. See [Authorization policies](configuration.md#authorization-policies) Startup fails with `Unable to find the required services. Please add all the required services by calling 'IServiceCollection.AddAuthorization'` No authorization services Call `AddAuthorization()` or `AddAuthorizationBuilder()` No operation buttons appear The user is not in `OperatorRole` or `AdministratorRole` Check the role names in [dashboard options](configuration.md#dashboard-options) match your identity's roles `POST .../operations` returns `403` with an empty body The user fails the mutation policy, or has neither a `NameIdentifier` claim nor a name Grant an operator role; make sure the identity has a user ID `403` with `\"code\":\"operation-denied\"` The user passed the policy but lacks the Control Plane role for this kind. `RemoveConsumerGroup`, `RewindCheckpoint`, `DeleteSlot` and `DeleteDeployment` need Admini"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-operations",
-    "summary": "Turn on audited operator actions: pause, resume, rebuild and fleet operations.",
-    "keywords": [
-      "control plane",
-      "operations",
-      "audit",
-      "fleet"
-    ],
-    "order": 125,
-    "listed": true,
-    "title": "Enable operator actions",
-    "sourcePath": "docs/control-plane/operations.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/operations.md",
-    "headings": [
-      {
-        "id": "enable-operator-actions",
-        "text": "Enable operator actions",
-        "level": 1
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-create-the-audit-store",
-        "text": "1. Create the audit store",
-        "level": 2
-      },
-      {
-        "id": "2-write-an-operation-handler",
-        "text": "2. Write an operation handler",
-        "level": 2
-      },
-      {
-        "id": "3-register-the-executor",
-        "text": "3. Register the executor",
-        "level": 2
-      },
-      {
-        "id": "4-give-the-operator-a-role",
-        "text": "4. Give the operator a role",
-        "level": 2
-      },
-      {
-        "id": "5-run-an-operation",
-        "text": "5. Run an operation",
-        "level": 2
-      },
-      {
-        "id": "6-enable-fleet-operations",
-        "text": "6. Enable fleet operations",
-        "level": 2
-      },
-      {
-        "id": "production-checklist",
-        "text": "Production checklist",
-        "level": 2
-      }
-    ],
-    "wordCount": 1278,
-    "readMinutes": 6,
-    "searchText": "Enable operator actions This guide shows you how to let operators act from the dashboard and the API: store an audit log, write the handler that performs each action, and turn on fleet operations for managed deployments. Read [Concepts](concepts.md#operations) for how operations, roles and audit fit together. Before you start Finish the [quick start](quickstart.md). This guide adds to its `Program.cs`. Out of the box, the quick start answers every operation request with `403 Forbidden`, because its user is only a viewer, and it has no executor to run operations. 1. Create the audit store Add this after `var dataSource = ...`: `InitializeAsync` creates the `bluetusk_control` schema, the append-only `audit_log` table and a trigger that rejects updates and deletes. It is safe to run on every start. In production, run it once from a deployment step with a database owner, and give the app's own login only what it needs: The trigger stops changes, but a database owner can still drop the table. Back the database up, and copy the audit log to a separate log system if you must prove that no records were removed. 2. Write an operation handler The handler is the code that actually does the work. BlueTusk calls it only after the role check, the confirmation check and the `Requested` audit record. Add this class at the end of `Program.cs`: Rules for a handler: Throw for any kind you do not support. The executor records `Failed` with the exception type name, and the API returns `operation-failed`. Make each action safe to repeat. A caller that saw a failure may retry the same operation ID. Do not put secrets or row data in exception messages. They are not audited or returned, but they do reach your logs. 3. Register the executor The dashboard's `POST /bluetusk/api/v1/operations` endpoint needs a `ControlPlaneOperationExecutor` in dependency injection. Add this before `var app = builder.Build();`: `RoleControlPlaneAuthorizer` allows an operation when the user has the required role"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "operations",
-    "summary": "Runbook for restarts, crashes, failover, WAL growth, restores and rebuilds of the real-time products.",
-    "keywords": [
-      "operations",
-      "incident",
-      "failover",
-      "checkpoint",
-      "rebuild"
-    ],
-    "order": 125,
-    "listed": true,
-    "title": "Real-time operations",
-    "sourcePath": "docs/realtime-platform/operations.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/operations.md",
-    "headings": [
-      {
-        "id": "real-time-operations",
-        "text": "Real-time operations",
-        "level": 1
-      },
-      {
-        "id": "operational-state",
-        "text": "Operational state",
-        "level": 2
-      },
-      {
-        "id": "normal-startup",
-        "text": "Normal startup",
-        "level": 2
-      },
-      {
-        "id": "delivery-and-acknowledgement",
-        "text": "Delivery and acknowledgement",
-        "level": 2
-      },
-      {
-        "id": "process-failure",
-        "text": "Process failure",
-        "level": 2
-      },
-      {
-        "id": "network-interruption",
-        "text": "Network interruption",
-        "level": 2
-      },
-      {
-        "id": "storage-pressure",
-        "text": "Storage pressure",
-        "level": 2
-      },
-      {
-        "id": "credential-rotation",
-        "text": "Credential rotation",
-        "level": 2
-      },
-      {
-        "id": "primary-failover",
-        "text": "Primary failover",
-        "level": 2
-      },
-      {
-        "id": "clock-movement",
-        "text": "Clock movement",
-        "level": 2
-      },
-      {
-        "id": "postgresql-minor-upgrade",
-        "text": "PostgreSQL minor upgrade",
-        "level": 2
-      },
-      {
-        "id": "reconciliation-and-rebuild",
-        "text": "Reconciliation and rebuild",
-        "level": 2
-      },
-      {
-        "id": "observability",
-        "text": "Observability",
-        "level": 2
-      },
-      {
-        "id": "release-evidence",
-        "text": "Release evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 822,
-    "readMinutes": 4,
-    "searchText": "Real-time operations Operating Streams, Sync, Live and Continuous Graph requires preserving the relationship between PostgreSQL source identity, durable progress and downstream effects. Operational state Inventory and back up: PostgreSQL publication and replication slot definitions; source identity; snapshot and stream checkpoints; schema and mapping fingerprints; durable relay segments, indexes and consumer-group positions; Sync destination version/idempotency metadata; quarantine/dead-letter records; and Control Plane deployment/audit state. A database backup without the corresponding consumer state may not be enough to resume safely. Normal startup Validate configuration and source identity. Open the replication-capable source. Load the durable checkpoint. Validate schema/mapping fingerprints. Recover incomplete relay or destination work. Start reading from the recorded WAL position. Expose readiness only after the component can make safe progress. If no checkpoint exists, choose explicitly between “start now” and the fenced snapshot bootstrap. Delivery and acknowledgement The safe ordering is: The exact atomic boundary differs by destination. When progress and side effect cannot be committed together, use idempotency/version checks and reconciliation. Process failure After an unclean stop: reconnect using the same source identity; resume from the durable checkpoint; re-deliver any transaction not safely acknowledged; let destination idempotency/version checks absorb duplicates; and reconcile partial external work before advancing. Do not skip a transaction merely because part of its effect is visible. Network interruption Distinguish: source connection loss; checkpoint/state-store loss; relay storage loss; and destination connection loss. Back off with bounded jitter, retain cancellation responsiveness and avoid opening unbounded replacement connections. Readiness should reflect whether the component can safely progress, while liveness should reflect process hea"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "control-plane-kubernetes",
-    "summary": "Install and use the BlueTusk Kubernetes operator.",
-    "keywords": [
-      "control plane",
-      "kubernetes",
-      "operator",
-      "crd"
-    ],
-    "order": 126,
-    "listed": true,
-    "title": "Manage deployments with Kubernetes",
-    "sourcePath": "docs/control-plane/kubernetes.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/kubernetes.md",
-    "headings": [
-      {
-        "id": "manage-deployments-with-kubernetes",
-        "text": "Manage deployments with Kubernetes",
-        "level": 1
-      },
-      {
-        "id": "what-the-package-does-and-what-you-write",
-        "text": "What the package does, and what you write",
-        "level": 2
-      },
-      {
-        "id": "before-you-start",
-        "text": "Before you start",
-        "level": 2
-      },
-      {
-        "id": "1-install-the-crd-and-rbac",
-        "text": "1. Install the CRD and RBAC",
-        "level": 2
-      },
-      {
-        "id": "2-write-the-reconciler-host",
-        "text": "2. Write the reconciler host",
-        "level": 2
-      },
-      {
-        "id": "3-run-the-host-in-the-cluster",
-        "text": "3. Run the host in the cluster",
-        "level": 2
-      },
-      {
-        "id": "4-write-a-bluetuskdeployment",
-        "text": "4. Write a BlueTuskDeployment",
-        "level": 2
-      },
-      {
-        "id": "5-apply-it-and-read-the-status",
-        "text": "5. Apply it and read the status",
-        "level": 2
-      },
-      {
-        "id": "6-change-pause-and-delete",
-        "text": "6. Change, pause and delete",
-        "level": 2
-      },
-      {
-        "id": "next-steps",
-        "text": "Next steps",
-        "level": 2
-      }
-    ],
-    "wordCount": 1678,
-    "readMinutes": 8,
-    "searchText": "Manage deployments with Kubernetes This guide shows you how to declare BlueTusk deployments as Kubernetes `BlueTuskDeployment` resources and have the Control Plane reconcile them: install the custom resource definition (CRD) and RBAC, run a reconciler host, apply a resource and read its status. **New in 1.1.0.** The `BlueTusk.ControlPlane.Kubernetes` package is not in `1.0.0` or `1.1.0-rc.1`. What the package does, and what you write The package gives you: the `controlplane.bluetusk.io/v1alpha1` `BlueTuskDeployment` CRD; a ServiceAccount, ClusterRole and ClusterRoleBinding; `KubernetesManagedDeploymentOperator`, which turns each resource into a managed deployment and writes the result to the resource's status; `KubernetesApiManagedDeploymentClient`, a small Kubernetes REST client. You write: a host process that calls the reconciler on a timer; an `IManagedInfrastructureProvider` that creates, updates and deletes the actual workloads. BlueTusk does not ship one. The reconciler never reads Kubernetes Secrets. A resource holds secret *references* only; your provider resolves them with its own identity. Read [Fleet operations](concepts.md#fleet-operations) for the model behind generations, states and leases. Before you start You need: a Kubernetes cluster and `kubectl` with rights to create CRDs and cluster roles; a PostgreSQL database the reconciler can reach, for desired state and leases; a container registry for your reconciler image. 1. Install the CRD and RBAC The manifests are in the repository under [`deploy/kubernetes/operator`](../../deploy/kubernetes/operator/). The NuGet package carries the same files under `contentFiles/any/any/kubernetes/` in its package folder (for example `~/.nuget/packages/bluetusk.controlplane.kubernetes/<version>/`). `rbac.yaml` creates the `bluetusk-control-plane-operator` ServiceAccount in `bluetusk-system`. Its ClusterRole can `get`, `list`, `watch` and `patch` `bluetuskdeployments`, and `get`, `patch` and `update` their status. It "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "slug": "continuous-graph",
-    "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
-    "keywords": [
-      "graph",
-      "projection",
-      "checkpoint"
-    ],
-    "order": 130,
-    "listed": true,
-    "title": "Keep graph query results current",
-    "sourcePath": "docs/continuous-graph/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/README.md",
-    "headings": [
-      {
-        "id": "keep-graph-query-results-current",
-        "text": "Keep graph query results current",
-        "level": 1
-      },
-      {
-        "id": "the-safe-mental-model",
-        "text": "The safe mental model",
-        "level": 2
-      },
-      {
-        "id": "run-a-working-example",
-        "text": "Run a working example",
-        "level": 2
-      },
-      {
-        "id": "1-define-a-bounded-query",
-        "text": "1. Define a bounded query",
-        "level": 2
-      },
-      {
-        "id": "2-start-with-authoritative-maintenance",
-        "text": "2. Start with authoritative maintenance",
-        "level": 2
-      },
-      {
-        "id": "3-make-it-observable",
-        "text": "3. Make it observable",
-        "level": 2
-      },
-      {
-        "id": "production-checklist",
-        "text": "Production checklist",
-        "level": 2
-      }
-    ],
-    "wordCount": 729,
-    "readMinutes": 4,
-    "searchText": "Keep graph query results current **Preview, not part of 1.1.0.** Continuous Graph needs a PostgreSQL server that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this product waits for a PostgreSQL release that ships it. Packages published as `1.0.0` and `1.1.0-rc.1` are for evaluation only. See [product status](../getting-started/install.md#product-status). BlueTusk Continuous Graph runs a bounded PostgreSQL SQL/PGQ query, keeps its result available to Live clients, and updates that result after relevant committed changes. This is a **preview product**. PostgreSQL 19 Beta 4 removed SQL/PGQ; the pinned Beta 3 fixture below is for historical preview development only. Graph will need a supported server with the actual SQL/PGQ capability and its own release evidence. It does not block the five core [release tracks](../releases/release-tracks.md). Use it for fraud paths, dependency maps, network reachability, and other views where relationships change over time. Start with [SQL/PGQ](../graph/README.md) if you have not yet defined and queried a PostgreSQL property graph. The safe mental model PostgreSQL is always authoritative. BlueTusk chooses the cheapest update path whose correctness it can prove: Tier What happens Use Trusted CDC delta Explicitly trusted application code updates known affected results in memory. Fastest; opt in only with a complete trust contract. Authoritative scoped query BlueTusk reruns generated `GRAPH_TABLE` SQL for affected keys. Automatic incremental default. Full authoritative repair BlueTusk reruns the complete registered query and diffs the result. Safety fallback and periodic drift repair. Unknown schemas, incomplete old rows, truncation, two-phase commits, affected-key overflow, unsafe deletes, uncertain top-N ranking, projector uncertainty, and drift checks all force a full repair. That fallback is expected behavior, not silent data loss. Run a working example The fraud and network samples create their schema, com"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "control-plane-api-compatibility",
-    "summary": "The Control Plane V1 candidate has two independently enforced compatibility surfaces:",
-    "keywords": [
-      "docs",
-      "control",
-      "plane",
-      "api",
-      "compatibility"
-    ],
-    "order": 1057,
-    "title": "Control Plane API and format compatibility",
-    "sourcePath": "docs/control-plane/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/api-compatibility.md",
-    "headings": [
-      {
-        "id": "control-plane-api-and-format-compatibility",
-        "text": "Control Plane API and format compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 224,
-    "readMinutes": 2,
-    "searchText": "Control Plane API and format compatibility The Control Plane V1 candidate has two independently enforced compatibility surfaces: compiler public APIs in `BlueTusk.ControlPlane` and `BlueTusk.Dashboard`; and versioned HTTP and PostgreSQL audit formats. The compiler surface is hash-locked by [`eng/control-plane-api-freeze.json`](../../eng/control-plane-api-freeze.json). The normal conformance suite rejects an edited, removed, or silently replaced shipped or candidate signature. Additive APIs first enter `PublicAPI.Unshipped.txt`; after review, their candidate hash is updated without misrepresenting them as shipped. Promotion moves the accepted signatures to the shipped baseline and updates the manifest in the same release change. [`eng/control-plane-formats.json`](../../eng/control-plane-formats.json) registers every persisted or remotely consumed format with its current and minimum readable version. Tests reject registry drift from the implementation. The V1 agent API uses an explicit route version and response envelope. PostgreSQL audit storage uses independently versioned schema and record formats, performs transactional in-place migrations, and refuses a future schema. The original unversioned routes remain compatibility aliases for the V1 payload throughout the 1.x line. They are not a separate compatibility contract. Incompatible changes require a new route/envelope version and a documented migration path. ContinuousGraph integration is deliberately outside the Control Plane core. Applications that install the stable optional adapter add `BlueTusk.ContinuousGraph.ControlPlane`, which supplies the optional graph projection. This keeps graph dependencies out of applications that do not use the feature while allowing both families to retain stable V1 contracts."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "control-plane-reference",
-    "summary": "BlueTusk.ControlPlane and BlueTusk.Dashboard provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control…",
-    "keywords": [
-      "docs",
-      "control",
-      "plane",
-      "reference"
-    ],
-    "order": 1063,
-    "title": "BlueTusk Control Plane and Dashboard",
-    "sourcePath": "docs/control-plane/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/reference.md",
-    "headings": [
-      {
-        "id": "bluetusk-control-plane-and-dashboard",
-        "text": "BlueTusk Control Plane and Dashboard",
-        "level": 1
-      },
-      {
-        "id": "read-only-inventory",
-        "text": "Read-only inventory",
-        "level": 2
-      },
-      {
-        "id": "dashboard",
-        "text": "Dashboard",
-        "level": 2
-      },
-      {
-        "id": "managed-deployment-fleet",
-        "text": "Managed deployment fleet",
-        "level": 2
-      },
-      {
-        "id": "versioned-agent-api",
-        "text": "Versioned agent API",
-        "level": 2
-      },
-      {
-        "id": "mutating-operations-and-audit",
-        "text": "Mutating operations and audit",
-        "level": 2
-      },
-      {
-        "id": "managed-hosting-reconciliation",
-        "text": "Managed hosting reconciliation",
-        "level": 2
-      },
-      {
-        "id": "kubernetes-custom-resources",
-        "text": "Kubernetes custom resources",
-        "level": 3
-      },
-      {
-        "id": "verification-status",
-        "text": "Verification status",
-        "level": 2
-      }
-    ],
-    "wordCount": 2480,
-    "readMinutes": 12,
-    "searchText": "BlueTusk Control Plane and Dashboard `BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train. The coordinated `1.1.0-rc.1` packages are public. Stable `1.1.0` remains blocked until the Sync dependency has archived its required 24-hour endurance evidence and the exact stable-candidate release chain passes. Read-only inventory `PostgreSqlControlPlaneQueryService` reads registered relay sources from each configured control schema and combines them with source-server slot state. Its snapshots cover: source identity and epoch, last relay sequence, and appended commit position; logical-slot existence, activity, output plug-in, restart/confirmed positions, WAL status, and current byte lag; relay transaction count, byte use, retained sequence range, minimum group checkpoint, and oldest unacknowledged age; active and removed relay groups, checkpoints, generations, lease state, fencing history, and retention protection; snapshot epoch/state/progress size; and direct-consumer checkpoint format, output plug-in, mapping fingerprint, acknowledged position, generation, and lease state. Each control-schema projection uses one `REPEATABLE READ` snapshot, so relay sources, groups, snapshots, and checkpoints are mutually coherent. Inventory rejects a missing or non-current relay schema version instead of interpreting columns from an unknown format. Slot state is observed separately on the source server and carries its own reachability signal. `HostedSyncControlPlaneQueryService` combines that relay/source inventory with the immutable hosted-worker status source. Its redacted projection covers pipeline state, sampled transaction throughput, relay-head checkpoint lag, snapshot progress, retries, throttle time, quarantine totals, failure totals, reconciliation/rebuild state, and handoff completion. A miss"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "control-plane-release-notes-0-1-0-preview-1",
-    "summary": "This preview contains the independently versioned BlueTusk.ControlPlane and BlueTusk.Dashboard packages. Its implementation and compatibility gates are complete. The product-family manifest remains non-publishable unt…",
-    "keywords": [
-      "docs",
-      "control",
-      "plane",
-      "release",
-      "notes",
-      "0",
-      "1",
-      "0",
-      "preview",
-      "1"
-    ],
-    "order": 1064,
-    "title": "BlueTusk Control Plane 0.1.0-preview.1 release notes",
-    "sourcePath": "docs/control-plane/release-notes-0.1.0-preview.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-0.1.0-preview.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-control-plane-0-1-0-preview-1-release-notes",
-        "text": "BlueTusk Control Plane 0.1.0-preview.1 release notes",
-        "level": 1
-      },
-      {
-        "id": "included",
-        "text": "Included",
-        "level": 2
-      },
-      {
-        "id": "compatibility-and-upgrade",
-        "text": "Compatibility and upgrade",
-        "level": 2
-      },
-      {
-        "id": "completed-candidate-checks",
-        "text": "Completed candidate checks",
-        "level": 2
-      }
-    ],
-    "wordCount": 383,
-    "readMinutes": 2,
-    "searchText": "BlueTusk Control Plane 0.1.0-preview.1 release notes This preview contains the independently versioned `BlueTusk.ControlPlane` and `BlueTusk.Dashboard` packages. Its implementation and compatibility gates are complete. The product-family manifest remains non-publishable until its Sync dependency completes and archives the required 24-hour endurance report; no package publication is implied by these notes. Included coherent source, slot, WAL, relay, snapshot, consumer-group, checkpoint, Sync, and Live operational projections; a separately packaged optional Continuous Graph projection adapter, keeping preview graph dependencies out of the stable Control Plane core; authorised and HTML-safe dashboard pages; separately authorised, explicitly confirmed operation requests with immutable audit-before-mutation records; redaction of credentials, payloads, result rows, parameters, security scopes, exception messages, and other operator-sensitive values; discoverable version compatibility at `/api/capabilities`; stable v1 read and mutation routes under `/api/v1`; compatibility aliases for the original preview API routes; and a transactionally migrated PostgreSQL audit schema with persisted schema and record-format versions. Compatibility and upgrade The v1 JSON envelope contains `contractVersion` and `data`. Compatible v1 releases may add fields, but must not remove existing fields or change their meaning or JSON type. An incompatible contract requires a new route and envelope version. Agents should query capabilities at startup and fail closed when no supported version overlaps. Run `PostgreSqlControlPlaneAuditStore.InitializeAsync` with a migration owner before starting workers. The migration lock prevents concurrent initializers from interleaving. Schema version 2 imports the legacy pre-metadata audit table, preserves its rows, backfills record format 1, and restores the immutable trigger and lookup index idempotently. A package refuses to initialize a newer schema and refu"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "control-plane-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from control-plane-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "control",
-      "plane",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1065,
-    "title": "BlueTusk Control Plane 1.0.0 release record",
-    "sourcePath": "docs/control-plane/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-control-plane-1-0-0-release-record",
-        "text": "BlueTusk Control Plane 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 176,
-    "readMinutes": 1,
-    "searchText": "BlueTusk Control Plane 1.0.0 release record Status: published on 2026-08-23 from `control-plane-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). Control Plane 1.0.0 stabilises the versioned agent contract, authorised inventory and operation endpoints, immutable audit storage, PostgreSQL migrations, dashboard views, and production health and telemetry contracts. Its public API and durable formats are frozen by [`eng/control-plane-api-freeze.json`](../../eng/control-plane-api-freeze.json) and [`eng/control-plane-formats.json`](../../eng/control-plane-formats.json). The planned standard publication gate required Provider, Streams, Sync, and Live 1.0.0 plus exact-candidate governance, security, operational-rehearsal, website, and approval evidence. The package dependencies were published first; the owner exception records the incomplete external evidence. Support starts with the immutable `control-plane-v1.0.0` packages. Registry availability, contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. All three RC applications include a protected Control Plane surface and operator runbook. RC dashboard and audit observations remain non-formal until the stable governance, operational rehearsal, and approval evidence is bound to the immutable candidate SHA."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "live-api-compatibility",
-    "summary": "The current Live 1.0 candidate surface is locked by two independent gates:",
-    "keywords": [
-      "docs",
-      "live",
-      "api",
-      "compatibility"
-    ],
-    "order": 1109,
-    "title": "Live public API compatibility",
-    "sourcePath": "docs/live/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
-    "headings": [
-      {
-        "id": "live-public-api-compatibility",
-        "text": "Live public API compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 143,
-    "readMinutes": 1,
-    "searchText": "Live public API compatibility The current Live 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Live package; and `eng/live-api-freeze.json` records a platform-independent SHA-256 digest for every Live public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, update the implementation and its API baseline, document source and binary compatibility, run the complete Live NuGet/npm and PostgreSQL transport matrices, and update the freeze manifest in the same commit. The compatibility test scans the source tree so a new Live package cannot omit a frozen baseline. The candidate becomes the Live 1.0 shipped baseline only after its dependency release gates and final format/transport verification pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "live-format-compatibility",
-    "summary": "Every durable or externally visible Live format is registered in eng/live-formats.json. A test binds the registry to implementation constants, the versioned protobuf package, and named compatibility evidence.",
-    "keywords": [
-      "docs",
-      "live",
-      "format",
-      "compatibility"
-    ],
-    "order": 1113,
-    "title": "Live format compatibility",
-    "sourcePath": "docs/live/format-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
-    "headings": [
-      {
-        "id": "live-format-compatibility",
-        "text": "Live format compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 181,
-    "readMinutes": 1,
-    "searchText": "Live format compatibility Every durable or externally visible Live format is registered in `eng/live-formats.json`. A test binds the registry to implementation constants, the versioned protobuf package, and named compatibility evidence. Format Current Minimum readable Upgrade policy gRPC contract 1 1 Protobuf v1; additive fields retain their numbers and incompatible changes require a new package. Replay JSON 1 1 Current media type only; unknown event media types fail closed at the client boundary. Resume token 1 1 Signed current version only; unknown versions cannot authenticate or resume. PostgreSQL Live schema 2 1 Transactional in-place migration from v1; future versions fail closed without being rewritten. Before increasing a version, retain fixtures or a live migration test for every supported older version, add future-version rejection, update the registry, and document client and storage compatibility. Removing a readable version requires an explicit migration or reconnect/reset path and a release note."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "live-reference",
-    "summary": "BlueTusk Live is the authorised real-time query layer built on BlueTusk Streams. Trusted server code registers bounded query plans by default. V1 also provides an explicitly enabled client-query capability for bounded…",
-    "keywords": [
-      "docs",
-      "live",
-      "reference"
-    ],
-    "order": 1115,
-    "title": "BlueTusk Live",
-    "sourcePath": "docs/live/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
-    "headings": [
-      {
-        "id": "bluetusk-live",
-        "text": "BlueTusk Live",
-        "level": 1
-      },
-      {
-        "id": "security-and-sharing-boundary",
-        "text": "Security and sharing boundary",
-        "level": 2
-      },
-      {
-        "id": "core-delivery-contracts",
-        "text": "Core delivery contracts",
-        "level": 2
-      },
-      {
-        "id": "gap-free-initial-delivery",
-        "text": "Gap-free initial delivery",
-        "level": 2
-      },
-      {
-        "id": "ef-query-registration",
-        "text": "EF query registration",
-        "level": 2
-      },
-      {
-        "id": "capability-secured-client-queries",
-        "text": "Capability-secured client queries",
-        "level": 2
-      },
-      {
-        "id": "replay-window",
-        "text": "Replay window",
-        "level": 2
-      },
-      {
-        "id": "shared-subscriptions-and-backpressure",
-        "text": "Shared subscriptions and backpressure",
-        "level": 2
-      },
-      {
-        "id": "asp-net-transports",
-        "text": "ASP.NET transports",
-        "level": 2
-      },
-      {
-        "id": "browser-clients",
-        "text": "Browser clients",
-        "level": 2
-      },
-      {
-        "id": "hosting-and-testing",
-        "text": "Hosting and testing",
-        "level": 2
-      },
-      {
-        "id": "security-and-load-gates",
-        "text": "Security and load gates",
-        "level": 2
-      },
-      {
-        "id": "control-plane-visibility",
-        "text": "Control-plane visibility",
-        "level": 2
-      }
-    ],
-    "wordCount": 2630,
-    "readMinutes": 12,
-    "searchText": "BlueTusk Live BlueTusk Live is the authorised real-time query layer built on BlueTusk Streams. Trusted server code registers bounded query plans by default. V1 also provides an explicitly enabled client-query capability for bounded exploratory SQL and a finite remote LINQ document. Uploaded CLR expression trees and dynamically compiled client code are never accepted. Security and sharing boundary Every shared-subscription identity binds the database identity, query-plan fingerprint, canonical typed parameters, tenant/user security scope, authorisation-policy version, and result limit. A change to any field creates a different subscription. This prevents result and replay sharing across security boundaries. PostgreSQL/EF query results remain authoritative. CDC will be used only to invalidate an affected registration, after which BlueTusk reruns the authorised query and computes a keyed result diff. Core delivery contracts The core package currently provides: exact typed parameter binding for a restricted scalar allowlist; stable plan, parameter, and subscription fingerprints; duplicate-key rejection and keyed initial/add/update/remove/reorder/reset output; a bounded diff budget that falls back to an authoritative reset; signed, expiring, versioned, subscription-bound resume tokens with signing-key rotation. Gap-free initial delivery `LiveQuerySession<T, TKey>` reserves the current durable invalidation cursor before executing the authorised query. It then checks the log through the cursor observed after that query. If an affected table changed, the result is discarded and queried again. Only a result that reaches a quiet cursor boundary is emitted as `InitialResult`; subsequent refreshes start strictly after that cursor. Refreshes coalesce every invalidation since the last cursor into at most one authoritative query. Unrelated-table activity advances the cursor without querying. A backward cursor, an over-limit result, duplicate keys, or perpetual initial churn fails "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "live-release-notes-0-1-0-preview-1",
-    "summary": "This is the first packaging-ready BlueTusk Live preview. It provides trusted, authorised, resumable real-time queries over BlueTusk Streams while preserving PostgreSQL/EF as the source of every client-visible row.",
-    "keywords": [
-      "docs",
-      "live",
-      "release",
-      "notes",
-      "0",
-      "1",
-      "0",
-      "preview",
-      "1"
-    ],
-    "order": 1116,
-    "title": "BlueTusk Live 0.1.0-preview.1",
-    "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-live-0-1-0-preview-1",
-        "text": "BlueTusk Live 0.1.0-preview.1",
-        "level": 1
-      },
-      {
-        "id": "nuget-packages",
-        "text": "NuGet packages",
-        "level": 2
-      },
-      {
-        "id": "npm-packages",
-        "text": "npm packages",
-        "level": 2
-      },
-      {
-        "id": "capabilities-in-this-preview",
-        "text": "Capabilities in this preview",
-        "level": 2
-      },
-      {
-        "id": "preview-boundaries",
-        "text": "Preview boundaries",
-        "level": 2
-      }
-    ],
-    "wordCount": 441,
-    "readMinutes": 3,
-    "searchText": "BlueTusk Live 0.1.0-preview.1 This is the first packaging-ready BlueTusk Live preview. It provides trusted, authorised, resumable real-time queries over BlueTusk Streams while preserving PostgreSQL/EF as the source of every client-visible row. NuGet packages `BlueTusk.Live` `BlueTusk.Live.AspNetCore` `BlueTusk.Live.Aspire` `BlueTusk.Live.DependencyInjection` `BlueTusk.Live.EntityFrameworkCore` `BlueTusk.Live.Grpc` `BlueTusk.Live.ServerSentEvents` `BlueTusk.Live.SignalR` `BlueTusk.Live.Testing` npm packages `@bluetusk/live` `@bluetusk/live-angular` `@bluetusk/live-react` Every package uses the repository's MIT licence and the independent Live `0.1.0-preview.1` version property. Capabilities in this preview trusted startup registration of bounded, deterministic EF query plans; typed scalar parameters with no client SQL, LINQ, or expression trees; security-scoped subscription identities that include tenant/user scope and authorisation-policy version; gap-free initial result delivery across cursor reservation, query, and invalidation replay; authoritative EF requery with keyed add/update/remove/reorder/reset events; signed, expiring, rotating, subscription-bound resume tokens; integrity-checked, sequence-fenced PostgreSQL replay with bounded retention; security-partitioned shared queries, quotas, bounded client buffers, slow-client policy, and load shedding; authenticated SSE, SignalR, and gRPC server streaming; framework-neutral TypeScript state, Angular signals, and React concurrent store adapters; vetted one-to-many includes/projections, grouping, aggregates, and PostgreSQL full-text query shapes; and Aspire configuration, deterministic testing stores, OpenTelemetry, and redacted Control Plane visibility. The release gate covers the complete offline solution suite, all 45 Live tests against PostgreSQL 19, and a PostgreSQL 15–19 acceptance matrix that persists an initial result and affected update in the production replay store, then drives signed disconnect/resume de"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "live-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from live-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "live",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1117,
-    "title": "BlueTusk Live 1.0.0 release record",
-    "sourcePath": "docs/live/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-live-1-0-0-release-record",
-        "text": "BlueTusk Live 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 188,
-    "readMinutes": 1,
-    "searchText": "BlueTusk Live 1.0.0 release record Status: published on 2026-08-23 from `live-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, NuGet/npm inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). Live 1.0.0 stabilises registered authorised query plans, gap-free initial delivery, keyed diffs, replay and signed resume, security-scoped fan-out, quotas, SignalR, server-sent events, gRPC, and the framework-neutral, Angular, and React clients. The public API and durable formats are frozen by [`eng/live-api-freeze.json`](../../eng/live-api-freeze.json) and [`eng/live-formats.json`](../../eng/live-formats.json). The planned standard publication gate required Provider and Streams 1.0.0, exact-candidate performance and recovery evidence, and the two-application pilot set. The package dependencies were published first; the owner exception records the deferred performance, recovery, and pilot evidence. Support starts with the immutable `live-v1.0.0` packages. NuGet/npm availability, contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. The V1 RC applications cover all three browser surfaces: Orders uses the React adapter, Service Topology uses the Angular adapter, and Fraud uses the framework-neutral client directly. Their BFF sessions, replay/resume, fan-out, and browser journeys are staging evidence, not either formal stable pilot."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "realtime-platform-delivery-plan",
-    "summary": "The implementation uses two-week iterations and lands only passing vertical slices. Each slice updates documentation and is committed and pushed on an AI-neutral feature/... branch.",
-    "keywords": [
-      "docs",
-      "realtime",
-      "platform",
-      "delivery",
-      "plan"
-    ],
-    "order": 1151,
-    "title": "Real-time platform delivery plan",
-    "sourcePath": "docs/realtime-platform/delivery-plan.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
-    "headings": [
-      {
-        "id": "real-time-platform-delivery-plan",
-        "text": "Real-time platform delivery plan",
-        "level": 1
-      },
-      {
-        "id": "locked-defaults",
-        "text": "Locked defaults",
-        "level": 2
-      }
-    ],
-    "wordCount": 492,
-    "readMinutes": 3,
-    "searchText": "Real-time platform delivery plan The implementation uses two-week iterations and lands only passing vertical slices. Each slice updates documentation and is committed and pushed on an AI-neutral `feature/...` branch. Phase Scope Release gate 0 ADRs, dependency rules, product versions, release trains, contract documentation contracts reviewed; dependency direction and release-family declarations machine-enforced 1 relation/type cache, dynamic rows, transaction assembly, identities, bounded spool, deliveries PostgreSQL 15–19 DML, tuple-state, abort, reconnect, and streamed-transaction coverage 2 stores, CAS checkpoints, leases, direct groups, PostgreSQL relay, replay and retention crash injection proves redelivery or clean progress without loss 3 typed/EF mappings, exported-snapshot bootstrap, DI, telemetry, Aspire, CloudEvents, CLI, testing concurrent snapshot writes have no gap; restart creates a new epoch; direct and relay modes present 4 prepared transactions, relay operations and migrations, Control Plane foundation, Streams freeze format upgrades pass and 72-hour fault-injected relay endurance completes 5 Sync state machine, transformations, four connectors, reconciliation, rebuilds and dashboard all connectors pass snapshot-plus-stream, recovery, upgrade, repair, and endurance suites 6 registered Live compiler, gap-free initial results, diffs, replay, transports and clients adversarial isolation and reconnect testing plus checked-in load budgets pass 7 bounded SQL/PGQ registration, dependency invalidation, authoritative graph diff and samples PostgreSQL 19 guards, graph correctness, cancellation, and workload benchmarks pass 8 V1 expansion: multiplexing, managed hosting, capability-secured client SQL/LINQ, isolated transformations, and incremental graph evaluation each capability has threat modelling, bounded resource contracts, fault recovery, operations, conformance, benchmarks, and an independently reviewable release gate Every phase additionally requires fo"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-api-compatibility",
-    "summary": "The current Streams 1.0 candidate surface is locked by two independent gates:",
-    "keywords": [
-      "docs",
-      "streams",
-      "api",
-      "compatibility"
-    ],
-    "order": 1173,
-    "title": "Streams public API compatibility",
-    "sourcePath": "docs/streams/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
-    "headings": [
-      {
-        "id": "streams-public-api-compatibility",
-        "text": "Streams public API compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 289,
-    "readMinutes": 2,
-    "searchText": "Streams public API compatibility The current Streams 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Streams package; and `eng/streams-api-freeze.json` records a platform-independent SHA-256 digest for every Streams public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, first update the implementation and its API baseline, document source and binary compatibility, run the full Streams test and package matrices, and then update the freeze manifest in the same commit. The compatibility test also scans the source tree so a new Streams package cannot omit a frozen baseline. The candidate becomes the Streams 1.0 shipped baseline only after the format upgrade suites and the successful 72-hour release-endurance evidence pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published. The published-source lineage proof adds `ChangeDeliveryTestFactory.CreateCommittedWithLineage` to the optional `BlueTusk.Streams.Testing` package. It creates a synthetic delivery carrying the database and publication OIDs used by protected consumers. Existing factory methods and their signatures remain unchanged, so this is a source- and binary-compatible addition. The Streams.Testing API baseline and freeze digest advance together; the runtime Streams public API is unchanged. A reviewed 1.1.0 addition is recorded under `reviewedAdditions` in the freeze manifest with its release, the new baseline digest and the exact added signatures. The candidate digest stays in `files`, and the compatibility test checks that removing the listed signatures reproduces it, so an addition cannot change or remove any part of the frozen surface. The only such addition is the `BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(name, streamFactory)` overload for a hosted consumer that resumes from its checkpoint. "
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-aspire",
-    "summary": "This guide shows you how to pass PostgreSQL connections and Streams settings to a worker project from a .NET Aspire AppHost, without copying secrets into the AppHost.",
-    "keywords": [
-      "docs",
-      "streams",
-      "aspire"
-    ],
-    "order": 1174,
-    "title": "Wire Streams into .NET Aspire",
-    "sourcePath": "docs/streams/aspire.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
-    "headings": [
-      {
-        "id": "wire-streams-into-net-aspire",
-        "text": "Wire Streams into .NET Aspire",
-        "level": 1
-      },
-      {
-        "id": "use-the-durable-relay-default",
-        "text": "Use the durable relay (default)",
-        "level": 2
-      },
-      {
-        "id": "read-from-a-slot-directly",
-        "text": "Read from a slot directly",
-        "level": 2
-      },
-      {
-        "id": "what-the-worker-receives",
-        "text": "What the worker receives",
-        "level": 2
-      },
-      {
-        "id": "errors-you-may-see",
-        "text": "Errors you may see",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 437,
-    "readMinutes": 2,
-    "searchText": "Wire Streams into .NET Aspire This guide shows you how to pass PostgreSQL connections and Streams settings to a worker project from a .NET Aspire AppHost, without copying secrets into the AppHost. Add the package to your AppHost project, together with Aspire's PostgreSQL hosting package: `BlueTusk.Streams.Aspire` builds on `Aspire.Hosting` 13.5.4. Use the durable relay (default) `WithBlueTuskStreams` connects a worker to a source database and a separate control database for the [durable relay](durable-relay.md): In an AppHost created from the Aspire template you can use the generated `builder.AddProject<Projects.SearchProjector>(\"search-projector\")` instead of the path. Read from a slot directly For a consumer that owns its own slot, without relay storage, call `WithBlueTuskStreamsDirect` and set `DeliveryMode` to `Direct`: Give every direct consumer its own slot. See [direct consumers and the relay](concepts.md#direct-consumers-and-the-relay). What the worker receives The AppHost sets these environment variables on the worker. Connection strings are passed as Aspire connection-string expressions, so the AppHost never resolves or stores the secret values. Environment variable Configuration key Value `BLUETUSK_STREAMS_SOURCE` `BLUETUSK_STREAMS_SOURCE` Source database connection string. `BLUETUSK_STREAMS_CONTROL` `BLUETUSK_STREAMS_CONTROL` Control database connection string (relay mode only). `BlueTusk__Streams__Slot` `BlueTusk:Streams:Slot` `Slot` `BlueTusk__Streams__Publications__0`, `__1`, ... `BlueTusk:Streams:Publications:0`, ... One entry per publication. `BlueTusk__Streams__ConsumerGroup` `BlueTusk:Streams:ConsumerGroup` `ConsumerGroup` `BlueTusk__Streams__ControlSchema` `BlueTusk:Streams:ControlSchema` `ControlSchema` (default `bluetusk_streams`) `BlueTusk__Streams__DeliveryMode` `BlueTusk:Streams:DeliveryMode` `DurableRelay` or `Direct` Each publication is a separate indexed key, so publication names never need escaping. Streams does not read these keys by it"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-cli",
-    "summary": "This guide shows you how to use the bluetusk-streams command to check that a PostgreSQL database is ready for Streams, and to create the publication, slot and relay storage a worker needs.",
-    "keywords": [
-      "docs",
-      "streams",
-      "cli"
-    ],
-    "order": 1175,
-    "title": "Validate and provision PostgreSQL with `bluetusk-streams`",
-    "sourcePath": "docs/streams/cli.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
-    "headings": [
-      {
-        "id": "validate-and-provision-postgresql-with-bluetusk-streams",
-        "text": "Validate and provision PostgreSQL with `bluetusk-streams`",
-        "level": 1
-      },
-      {
-        "id": "install-the-tool",
-        "text": "Install the tool",
-        "level": 2
-      },
-      {
-        "id": "set-the-connections",
-        "text": "Set the connections",
-        "level": 2
-      },
-      {
-        "id": "check-a-database",
-        "text": "Check a database",
-        "level": 2
-      },
-      {
-        "id": "provision-for-the-durable-relay",
-        "text": "Provision for the durable relay",
-        "level": 2
-      },
-      {
-        "id": "provision-for-a-direct-consumer",
-        "text": "Provision for a direct consumer",
-        "level": 2
-      },
-      {
-        "id": "keep-the-relay-in-the-source-database-not-recommended",
-        "text": "Keep the relay in the source database (not recommended)",
-        "level": 2
-      },
-      {
-        "id": "all-options",
-        "text": "All options",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 951,
-    "readMinutes": 5,
-    "searchText": "Validate and provision PostgreSQL with `bluetusk-streams` This guide shows you how to use the `bluetusk-streams` command to check that a PostgreSQL database is ready for Streams, and to create the publication, slot and relay storage a worker needs. Install the tool See [Install BlueTusk](../getting-started/install.md) to pin a version. Run `bluetusk-streams --help` or `bluetusk-streams <command> --help` for usage. Set the connections The tool reads connection strings from environment variables, which keeps them out of your shell history: On Linux or macOS, use `export NAME=\"...\"`. You can pass `--connection` and `--control-connection` instead, for example in automation. Error messages never include either connection string. `BLUETUSK_STREAMS_SOURCE` is the database you capture changes from. The login needs the `REPLICATION` attribute to create a slot, and must own the tables (and have `CREATE` on the database) to create a publication. `BLUETUSK_STREAMS_CONTROL` is the separate database that holds the [durable relay](durable-relay.md); it is needed only for relay setups. Check a database Each line is `OK`, `WARNING` or `ERROR`, a stable code and a message: Code Checks Fix when it fails `BTS001` The server is PostgreSQL 15 to 19. Upgrade the server. `BTS002` `wal_level` is `logical`. Set `wal_level = logical` and restart PostgreSQL. `BTS003` Each `--publication` exists. Run `provision` with `--table`, or `CREATE PUBLICATION`. `BTS004` The publications include at least one table. Add tables to the publication. `BTS005` The slot exists, uses `pgoutput` and belongs to this database. Reports whether it is active. Run `provision`, or drop and recreate a slot that uses another plug-in or database. `BTS006` Relay storage is in a separate database (or sharing was allowed). A `WARNING` means no control connection was given. Pass `--control-connection`, or `--direct-only` for direct consumers. `BTS007` No publication includes the relay's own schema. Remove the control schema fr"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
+    "categoryLabel": "Real-time data",
     "slug": "streams-cloudevents",
-    "summary": "This guide shows you how to turn each committed transaction into one CloudEvents 1.0 structured JSON event, for example to send it to a message broker or an HTTP endpoint.",
-    "keywords": [
-      "docs",
-      "streams",
-      "cloudevents"
-    ],
-    "order": 1176,
     "title": "Publish transactions as CloudEvents",
-    "sourcePath": "docs/streams/cloudevents.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
+    "summary": "Encode committed change deliveries as CloudEvents.",
+    "order": 7,
     "headings": [
-      {
-        "id": "publish-transactions-as-cloudevents",
-        "text": "Publish transactions as CloudEvents",
-        "level": 1
-      },
       {
         "id": "write-one-event-per-transaction",
         "text": "Write one event per transaction",
@@ -5647,254 +1504,41 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 444,
-    "readMinutes": 3,
-    "searchText": "Publish transactions as CloudEvents This guide shows you how to turn each committed transaction into one [CloudEvents 1.0](https://cloudevents.io/) structured JSON event, for example to send it to a message broker or an HTTP endpoint. Install the package: Write one event per transaction Inside your read loop, format the transaction, send it, and acknowledge only after the destination has accepted it: `destination` is any writable `Stream`. To get the bytes instead, call `ToStructuredJsonAsync(transaction)`, which returns a `ReadOnlyMemory<byte>`. The formatter never acknowledges for you. If the process stops before `AcknowledgeAsync`, the same transaction is formatted and sent again with the same event ID. What the event contains A whole transaction becomes one event, never one event per row: Attribute Value `specversion` `1.0` `id` `<source fingerprint>:<commit-end LSN as 16 hex digits>:<transaction ID>`. The same on every redelivery. `source` `urn:bluetusk:postgresql:<source fingerprint>` `type` `io.bluetusk.streams.transaction.v1` `subject` `slot/<slot>/transaction/<transaction ID>` `time` The PostgreSQL commit timestamp. `datacontenttype` `application/vnd.bluetusk.change-transaction+binary;version=1` `bluetusklsn`, `bluetuskxid`, `bluetuskchanges`, `bluetuskformat` Commit-end position, transaction ID, change count and envelope format version. `data_base64` The transaction in BlueTusk's binary envelope format. For example (shortened): The envelope is the same versioned, checksummed format the [durable relay](durable-relay.md) stores. It keeps table and column metadata, change order, every [column state](concepts.md#what-a-column-value-can-be) and logical messages. Use the event `id` for de-duplication in brokers that support it; delivery is still at least once. To read the attributes without writing the event: Change the event type or size limits Option Default `EventType` `io.bluetusk.streams.transaction.v1` `DataContentType` `application/vnd.bluetusk.change-tra"
+    "sourcePath": "docs/streams/cloudevents.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-format-compatibility",
-    "summary": "BlueTusk records every durable or externally visible Streams format in eng/streams-formats.json. A test binds that registry to the constants used by the implementation and verifies that its named compatibility evidenc…",
-    "keywords": [
-      "docs",
-      "streams",
-      "format",
-      "compatibility"
-    ],
-    "order": 1180,
-    "title": "Streams format compatibility",
-    "sourcePath": "docs/streams/format-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
+    "categoryLabel": "Real-time data",
+    "slug": "streams-prepared-transactions",
+    "title": "Prepared and two-phase transactions",
+    "summary": "Understand two-phase changes and settlement behavior.",
+    "order": 8,
     "headings": [
       {
-        "id": "streams-format-compatibility",
-        "text": "Streams format compatibility",
-        "level": 1
+        "id": "lifecycle-deliveries",
+        "text": "Lifecycle deliveries",
+        "level": 2
+      },
+      {
+        "id": "relay-compatibility",
+        "text": "Relay compatibility",
+        "level": 2
       }
     ],
-    "wordCount": 412,
-    "readMinutes": 2,
-    "searchText": "Streams format compatibility BlueTusk records every durable or externally visible Streams format in `eng/streams-formats.json`. A test binds that registry to the constants used by the implementation and verifies that its named compatibility evidence still exists. A format version cannot be changed silently. Format Current Minimum readable Upgrade policy Transaction envelope 2 1 Readers accept v1 and v2; writers emit v2. Checkpoint 1 1 Backward-readable identity and position record. File state store 1 1 Current version only; unknown versions fail closed. PostgreSQL relay schema 2 1 Transactional in-place migration from v1 to v2. Relay backup 1 1 Current version only; restore validates format, schema, framing, and integrity before replacing data. Relay snapshot run 1 1 Current version only; SHA-256 integrity failure or incompatible bootstrap identity fails closed. Transaction CloudEvent 1 1 Current event contract containing the independently versioned transaction envelope. Transaction spool 1 1 Current process only; unknown versions and damaged records fail closed. The transaction spool bounds memory while assembling a transaction. It is not a durable resume log and a `.ready` file is owned by its live reader. After a worker/session failure, BlueTusk abandons the incomplete transaction assembly and obtains safe redelivery from PostgreSQL or the durable relay. Artifacts found at startup still consume the configured disk budget, so a restart cannot bypass the storage ceiling. An operator may delete confirmed-orphan artifacts only while that worker is stopped. BlueTusk never claims that a spool file can replace a checkpoint. The version 1 spool checksum remains CRC-32/IEEE, not CRC-32C. Its optimized implementation uses `System.IO.Hashing` 10.0.11 without changing stored bytes. Byte-for-byte compatibility tests cover small and large records, offset payloads, alternating segments, per-record checksum reset, and custom protectors. The same compatibility checks run with har"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-prepared-transactions",
-    "summary": "This guide shows you how to receive PostgreSQL prepared transactions (PREPARE TRANSACTION) as separate prepare, commit and rollback deliveries, so a destination can stage changes before they are final.",
-    "keywords": [
-      "docs",
-      "streams",
-      "prepared",
-      "transactions"
-    ],
-    "order": 1182,
-    "title": "Prepared (two-phase) transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
-    "headings": [
-      {
-        "id": "prepared-two-phase-transactions",
-        "text": "Prepared (two-phase) transactions",
-        "level": 1
-      },
-      {
-        "id": "turn-it-on",
-        "text": "Turn it on",
-        "level": 2
-      },
-      {
-        "id": "handle-the-three-lifecycle-deliveries",
-        "text": "Handle the three lifecycle deliveries",
-        "level": 2
-      },
-      {
-        "id": "expect-ordinary-commits-too",
-        "text": "Expect ordinary commits too",
-        "level": 2
-      },
-      {
-        "id": "make-every-step-safe-to-repeat",
-        "text": "Make every step safe to repeat",
-        "level": 2
-      },
-      {
-        "id": "relay-and-stored-formats",
-        "text": "Relay and stored formats",
-        "level": 2
-      },
-      {
-        "id": "related-pages",
-        "text": "Related pages",
-        "level": 2
-      }
-    ],
-    "wordCount": 647,
-    "readMinutes": 3,
-    "searchText": "Prepared (two-phase) transactions This guide shows you how to receive PostgreSQL prepared transactions (`PREPARE TRANSACTION`) as separate prepare, commit and rollback deliveries, so a destination can stage changes before they are final. **Note:** This is a preview feature. It is off by default. Without two-phase decoding (the default), PostgreSQL sends a prepared transaction only when it commits, as an ordinary transaction. If two-phase messages arrive while `PreparedTransactionMode` is `Fail` (the default), Streams stops with `PreparedTransactionNotSupportedException`. Turn staging on only if your destination can store changes durably without making them visible, and later publish or discard them. Turn it on Set the mode on the transaction assembly options: With the [snapshot source](snapshot-bootstrap.md), pass these options as `PostgreSqlConsistentSnapshotOptions.TransactionAssembly`. The source then creates the slot with two-phase decoding and uses pgoutput protocol 3. If you read a slot yourself, the slot must have two-phase decoding enabled, and the replication request and decoder must agree: The source server also needs `max_prepared_transactions` above 0, or applications cannot run `PREPARE TRANSACTION` at all. Handle the three lifecycle deliveries A two-phase transaction arrives as two deliveries: the prepare, then either a commit or a rollback. Check `Outcome`: `Outcome` `Changes` What your destination must do before acknowledging `Prepared` All of the transaction's changes Store them durably under the `GlobalTransactionId`, hidden. `Committed` with `IsTwoPhase == true` Empty Make the staged changes visible, atomically. `RolledBack` Empty Discard the staged changes, atomically. `Committed` with `IsTwoPhase == false` All changes An ordinary transaction. Apply it as usual. `GlobalTransactionId` is the name given to `PREPARE TRANSACTION`, and is `null` for ordinary transactions. Each lifecycle delivery is acknowledged and checkpointed on its own, following t"
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-release-notes-0-1-0-preview-1",
-    "summary": "This is the first packaging-ready Streams preview. It establishes the public transaction, checkpoint, lease, snapshot, typed-mapping, hosting, and relay contracts needed by the later Sync and Live product families.",
-    "keywords": [
-      "docs",
-      "streams",
-      "release",
-      "notes",
-      "0",
-      "1",
-      "0",
-      "preview",
-      "1"
-    ],
-    "order": 1185,
-    "title": "BlueTusk Streams 0.1.0-preview.1",
-    "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-streams-0-1-0-preview-1",
-        "text": "BlueTusk Streams 0.1.0-preview.1",
-        "level": 1
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "guarantees-in-this-preview",
-        "text": "Guarantees in this preview",
-        "level": 2
-      },
-      {
-        "id": "preview-boundaries",
-        "text": "Preview boundaries",
-        "level": 2
-      }
-    ],
-    "wordCount": 442,
-    "readMinutes": 3,
-    "searchText": "BlueTusk Streams 0.1.0-preview.1 This is the first packaging-ready Streams preview. It establishes the public transaction, checkpoint, lease, snapshot, typed-mapping, hosting, and relay contracts needed by the later Sync and Live product families. Packages `BlueTusk.Streams` `BlueTusk.Streams.Aspire` `BlueTusk.Streams.CloudEvents` `BlueTusk.Streams.DependencyInjection` `BlueTusk.Streams.EntityFrameworkCore` `BlueTusk.Streams.Storage.File` `BlueTusk.Streams.Storage.PostgreSql` `BlueTusk.Streams.Storage.Redis` `BlueTusk.Streams.Testing` `BlueTusk.Streams.Tool` All packages use the repository's MIT licence and the independent Streams `0.1.0-preview.1` version property. Guarantees in this preview transaction-preserving, ordered, at-least-once delivery; explicit partial-column states and conservative changed-column accuracy; stable source, transaction, change, snapshot-row, schema, and mapping IDs; bounded changes, transaction bytes, spool storage, relay storage, acknowledgement age, and WAL lag; versioned, integrity-checked disk spool, relay, checkpoint, and CloudEvent envelopes; monotonic compare-and-swap checkpoints, exclusive leases, fencing, and checkpoint-before-feedback acknowledgement; direct slot-per-group delivery and one-slot PostgreSQL relay fan-out with independently checkpointed groups; exported-snapshot keyset binary COPY and matching-position CDC, including explicit cross-process new-epoch restart; and schema/decoding pause defaults, typed conventions/overrides, EF-derived mappings, DI hosting, health checks, OpenTelemetry, Aspire, CLI, and testing integrations. The test gate covers fake pgoutput sequences, crash boundaries, spool limits, state-store conformance, relay replay/retention, and a live PostgreSQL 15-19 matrix. Every supported server passed no-gap concurrent snapshot writes, cross-process snapshot restart, PostgreSQL state storage, and relay fan-out. The hosted sample additionally completed a real snapshot and consumed a later CDC insert as one"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from streams-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "streams",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1186,
-    "title": "BlueTusk Streams 1.0.0 release record",
-    "sourcePath": "docs/streams/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-streams-1-0-0-release-record",
-        "text": "BlueTusk Streams 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 165,
-    "readMinutes": 1,
-    "searchText": "BlueTusk Streams 1.0.0 release record Status: published on 2026-08-23 from `streams-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). Streams 1.0.0 stabilises transaction-preserving CDC, typed and dynamic change rows, snapshot-to-stream handoff, direct and durable-relay delivery, state stores, CloudEvents, hosted integration, Aspire, testing helpers, and tooling. The public API and durable formats are frozen by [`eng/streams-api-freeze.json`](../../eng/streams-api-freeze.json) and [`eng/streams-formats.json`](../../eng/streams-formats.json). The planned standard publication gate required Provider 1.0.0 and the exact-candidate 72-hour Streams endurance report. The Provider dependency was published first; the owner exception records the deferred endurance evidence. Support starts with the immutable `streams-v1.0.0` packages. Registry availability, contents, hashes, SBOMs, provenance, tests, and Provider dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. The Orders, Topology, and Fraud RC applications exercise durable relay, replay/invalidation, worker restart, cancellation, and corruption/recovery contracts from exact `1.0.0-rc.1` packages. These staging observations do not replace the exact-candidate 72-hour gate."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "streams-sample",
-    "summary": "This page shows you how to run BlueTusk.Samples.Streams, a hosted worker in this repository that copies an existing table and then prints every committed change to it.",
-    "keywords": [
-      "docs",
-      "streams",
-      "sample"
-    ],
-    "order": 1187,
-    "title": "Run the snapshot-then-stream sample",
-    "sourcePath": "docs/streams/sample.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
-    "headings": [
-      {
-        "id": "run-the-snapshot-then-stream-sample",
-        "text": "Run the snapshot-then-stream sample",
-        "level": 1
-      },
-      {
-        "id": "1-create-the-table-and-publication",
-        "text": "1. Create the table and publication",
-        "level": 2
-      },
-      {
-        "id": "2-run-the-sample",
-        "text": "2. Run the sample",
-        "level": 2
-      },
-      {
-        "id": "3-make-a-change",
-        "text": "3. Make a change",
-        "level": 2
-      },
-      {
-        "id": "settings",
-        "text": "Settings",
-        "level": 2
-      },
-      {
-        "id": "what-happens-when-you-restart-it",
-        "text": "What happens when you restart it",
-        "level": 2
-      },
-      {
-        "id": "before-you-copy-this-into-an-application",
-        "text": "Before you copy this into an application",
-        "level": 2
-      },
-      {
-        "id": "clean-up",
-        "text": "Clean up",
-        "level": 2
-      }
-    ],
-    "wordCount": 638,
-    "readMinutes": 3,
-    "searchText": "Run the snapshot-then-stream sample This page shows you how to run `BlueTusk.Samples.Streams`, a hosted worker in this repository that copies an existing table and then prints every committed change to it. The sample uses `AddBlueTuskStreams().AddHostedConsumer<T>()` with a `PostgreSqlConsistentSnapshotSource`, the path described in [snapshot and catch-up](snapshot-bootstrap.md) and [hosting](hosting-observability.md). You need the .NET 10 SDK, a clone of this repository, and a PostgreSQL 15 to 18 test server with `wal_level = logical` (the `bluetusk-postgres` container from the [5-minute first app](../getting-started/quickstart.md#1-start-postgresql) works). 1. Create the table and publication In `psql`: The sample's column list is fixed to this shape: `id bigint`, `description text`, `updated_at timestamptz`. Create the publication, but not the slot. The snapshot source must create the slot itself to get a matching snapshot. With the [`bluetusk-streams` tool](cli.md): Or in SQL: `CREATE PUBLICATION app_changes FOR TABLE app.orders;`. **Warning:** This uses the `postgres` superuser and `SSL Mode=Disable`, which is only acceptable for a local test container. Elsewhere use a login with `REPLICATION` and `SELECT` on the table, and keep the default `SSL Mode=VerifyFull`. 2. Run the sample From the repository root, in the same terminal: On Linux or macOS, use `export` for each variable. The worker copies the existing rows, then waits for changes: 3. Make a change In a second terminal, insert a row: The sample prints each change's full `ChangeId`, then a summary line: Settings Setting Default Meaning `BLUETUSK_STREAMS_SOURCE` (required) Source connection string. `BlueTusk__Streams__Slot` (required) Slot the sample creates. `BlueTusk__Streams__Publications__0` (required) Publication to read. `BlueTusk__Streams__Sample__Schema` `app` Schema of the table to copy. `BlueTusk__Streams__Sample__Table` `orders` Table to copy. Without the three required settings the sample prints"
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
+    "categoryLabel": "Real-time data",
     "slug": "streams-typed-mappings",
-    "summary": "This guide shows you how to turn the rows in a change into instances of your own classes, either by convention, with explicit column bindings, or from an EF Core model.",
-    "keywords": [
-      "docs",
-      "streams",
-      "typed",
-      "mappings"
-    ],
-    "order": 1191,
     "title": "Typed change mappings",
-    "sourcePath": "docs/streams/typed-mappings.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
+    "summary": "Decode change rows into generated or hand-written types.",
+    "order": 9,
     "headings": [
-      {
-        "id": "typed-change-mappings",
-        "text": "Typed change mappings",
-        "level": 1
-      },
       {
         "id": "map-a-table-to-a-class",
         "text": "Map a table to a class",
@@ -5931,85 +1575,154 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 894,
-    "readMinutes": 5,
-    "searchText": "Typed change mappings This guide shows you how to turn the rows in a change into instances of your own classes, either by convention, with explicit column bindings, or from an EF Core model. A mapping is an optional layer over the dynamic `ChangeRow`. The original row, with every [column state](concepts.md#what-a-column-value-can-be), is always still available, and a mapping never invents a complete object from an incomplete row. Map a table to a class Start with a class that has a public parameterless constructor and public settable properties: Build the mapping from the table (`ChangeTable`) that Streams reports for the change, for example `insert.NewRow.Table`. Map by convention: `Id` binds to `id`, `Description` to `description`, and so on (PascalCase to snake_case): Or bind columns explicitly and check their PostgreSQL type OIDs: `Map` returns `InsertChange<T>`, `UpdateChange<T>`, `DeleteChange<T>` or `TruncateChange<T>` for the mapped table, and returns any other change unchanged. Build the mapping once and reuse it; property setters and decoders are prepared when you call `Build`. The default decoders handle these .NET types: Value encoding Decoded by default `Text` (streamed changes, by default) `string`, `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `DateTime`, `DateTimeOffset`, enums `Binary` (snapshot rows) `byte[]`, `bool`, `short`, `int`, `long`, `float`, `double`, `Guid` For anything else, pass a `decoder` (`ChangeColumnDecoder<TProperty>`) to `Property`. A failed decode throws `TypedChangeDecodingException`. Handle partial rows `ChangeRow<T>.HasValue` is `true` only when every mapped column had a value. It is `false` when any mapped column is not published, missing from an old row, or an unchanged TOASTed value. In that case `Value` is not set; use `ChangeRow<T>.Columns` to read the raw row instead. A database `NULL` in a non-nullable property is a decoding failure, not a default value. Use nullable property types for"
+    "sourcePath": "docs/streams/typed-mappings.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "sync-api-compatibility",
-    "summary": "The current Sync 1.0 candidate surface is locked by two independent gates:",
-    "keywords": [
-      "docs",
-      "sync",
-      "api",
-      "compatibility"
-    ],
-    "order": 1194,
-    "title": "Sync public API compatibility",
-    "sourcePath": "docs/sync/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
-    "headings": [
-      {
-        "id": "sync-public-api-compatibility",
-        "text": "Sync public API compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 142,
-    "readMinutes": 1,
-    "searchText": "Sync public API compatibility The current Sync 1.0 candidate surface is locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in every Sync package; and `eng/sync-api-freeze.json` records a platform-independent SHA-256 digest for every Sync public API baseline. This makes an API edit deliberate and reviewable even when it is technically additive. To change the candidate, update the implementation and its API baseline, document source and binary compatibility, run the complete Sync connector and packaging matrices, and update the freeze manifest in the same commit. The compatibility test scans the source tree so a new Sync package cannot omit a frozen baseline. The candidate becomes the Sync 1.0 shipped baseline only after the 24-hour endurance gate and final connector verification pass. Until then, this is an engineering freeze rather than a claim that 1.0 was published."
+    "categoryLabel": "Real-time data",
+    "slug": "streams-cli",
+    "title": "Streams validation and provisioning CLI",
+    "summary": "Inspect logical streams, run samples, and diagnose configuration.",
+    "order": 10,
+    "headings": [],
+    "sourcePath": "docs/streams/cli.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "sync-format-compatibility",
-    "summary": "Every durable or externally visible Sync format is registered in eng/sync-formats.json. A test binds the registry to implementation constants and named compatibility evidence.",
-    "keywords": [
-      "docs",
-      "sync",
-      "format",
-      "compatibility"
-    ],
-    "order": 1197,
-    "title": "Sync format compatibility",
-    "sourcePath": "docs/sync/format-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
+    "categoryLabel": "Real-time data",
+    "slug": "streams-aspire",
+    "title": "Wire Streams into .NET Aspire",
+    "summary": "Configure Streams resources in a .NET Aspire host.",
+    "order": 11,
     "headings": [
       {
-        "id": "sync-format-compatibility",
-        "text": "Sync format compatibility",
-        "level": 1
-      }
-    ],
-    "wordCount": 206,
-    "readMinutes": 1,
-    "searchText": "Sync format compatibility Every durable or externally visible Sync format is registered in `eng/sync-formats.json`. A test binds the registry to implementation constants and named compatibility evidence. Format Current Minimum readable Upgrade policy NATS envelope 1 1 Current integrity-checked binary envelope only; unknown versions fail closed. OpenSearch storage 2 2 Current generation/control format only; incompatible changes require an explicit rebuild. PostgreSQL Sync schema 2 1 Transactional in-place migration from v1; future versions fail closed without being rewritten. Redis document 1 1 Current integrity-checked binary document only; unknown versions fail closed. Redis storage 2 2 Current pipeline storage format only; incompatible changes require an explicit rebuild. Transform fingerprint 1 1 Canonical length-prefixed SHA-256 input; the checked fixture prevents silent identity drift. Before increasing a version, retain fixtures or a live migration test for every supported older version, add future-version rejection, update the registry, and document destination compatibility. Removing a readable version requires an explicit migration, rebuild, or replay boundary and a release note."
-  },
-  {
-    "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "sync-reference",
-    "summary": "BlueTusk Sync materialises transaction-preserving Streams deliveries into external destinations. It consumes BlueTusk.Streams only; it never reaches logical-replication wire messages.",
-    "keywords": [
-      "docs",
-      "sync",
-      "reference"
-    ],
-    "order": 1199,
-    "title": "BlueTusk Sync",
-    "sourcePath": "docs/sync/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
-    "headings": [
-      {
-        "id": "bluetusk-sync",
-        "text": "BlueTusk Sync",
-        "level": 1
+        "id": "use-the-durable-relay-default",
+        "text": "Use the durable relay (default)",
+        "level": 2
       },
+      {
+        "id": "read-from-a-slot-directly",
+        "text": "Read from a slot directly",
+        "level": 2
+      },
+      {
+        "id": "what-the-worker-receives",
+        "text": "What the worker receives",
+        "level": 2
+      },
+      {
+        "id": "errors-you-may-see",
+        "text": "Errors you may see",
+        "level": 2
+      },
+      {
+        "id": "related-pages",
+        "text": "Related pages",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/streams/aspire.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "streams-sample",
+    "title": "Run the snapshot-then-stream sample",
+    "summary": "Run a sample replication consumer and observe committed changes.",
+    "order": 12,
+    "headings": [
+      {
+        "id": "1-create-the-table-and-publication",
+        "text": "1. Create the table and publication",
+        "level": 2
+      },
+      {
+        "id": "2-run-the-sample",
+        "text": "2. Run the sample",
+        "level": 2
+      },
+      {
+        "id": "3-make-a-change",
+        "text": "3. Make a change",
+        "level": 2
+      },
+      {
+        "id": "settings",
+        "text": "Settings",
+        "level": 2
+      },
+      {
+        "id": "what-happens-when-you-restart-it",
+        "text": "What happens when you restart it",
+        "level": 2
+      },
+      {
+        "id": "before-you-copy-this-into-an-application",
+        "text": "Before you copy this into an application",
+        "level": 2
+      },
+      {
+        "id": "clean-up",
+        "text": "Clean up",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/streams/sample.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "sync",
+    "title": "BlueTusk Sync",
+    "summary": "Deliver change transactions to a destination with replay-safe identities.",
+    "order": 13,
+    "headings": [
+      {
+        "id": "when-should-i-use-sync",
+        "text": "When should I use Sync?",
+        "level": 2
+      },
+      {
+        "id": "destinations",
+        "text": "Destinations",
+        "level": 2
+      },
+      {
+        "id": "what-does-sync-guarantee",
+        "text": "What does Sync guarantee?",
+        "level": 2
+      },
+      {
+        "id": "what-does-it-look-like",
+        "text": "What does it look like?",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/sync/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/README.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "sync-reference",
+    "title": "BlueTusk Sync",
+    "summary": "Configure destination adapters, checkpoint behavior, and data mappings.",
+    "order": 14,
+    "headings": [
       {
         "id": "the-delivery-guarantee",
         "text": "The delivery guarantee",
@@ -6086,62 +1799,568 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 4997,
-    "readMinutes": 23,
-    "searchText": "BlueTusk Sync BlueTusk Sync materialises transaction-preserving Streams deliveries into external destinations. It consumes `BlueTusk.Streams` only; it never reaches logical-replication wire messages. Release compatibility is specified in the [public API compatibility](api-compatibility.md) and [durable format compatibility](format-compatibility.md) contracts. The [release-endurance guide](release-endurance.md) defines the mandatory 24-hour four-connector gate. The core pipeline owns the provisioning, snapshotting, catching-up, running, paused, rebuilding, reconciling, faulted, and stopped states. A source transaction is transformed and offered to a destination as one immutable batch. The Streams delivery is acknowledged only after the destination returns the exact commit-end position as durably handled. Duplicate delivery is safe when a destination reports the same position as already applied. The delivery guarantee BlueTusk guarantees that an acknowledged source transaction is never skipped. If a worker stops after writing a destination but before saving source progress, the last unconfirmed transaction is delivered again with the same source, transaction, commit-position, and change identities. Every official Sync connector provides a tested replay-safety mechanism, but the durable boundary depends on the destination. For NATS, the downstream consumer must retain the stable identity beyond JetStream's configured deduplication window: Destination Guarantee What happens during recovery PostgreSQL Atomic state and checkpoint The complete mutation and checkpoint commit in one PostgreSQL transaction. Recovery sees both or neither. Redis Atomic state and checkpoint One same-slot Lua operation validates and writes the complete mutation plus checkpoint. Recovery sees both or neither. OpenSearch Replay-safe materialisation A failed or ambiguous bulk is replayed with the same external versions. Older source versions cannot replace newer materialized state, and the checkpoin"
+    "sourcePath": "docs/sync/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
+    "keywords": []
   },
   {
     "category": "real-time",
-    "categoryLabel": "Real time",
-    "listed": false,
-    "slug": "sync-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from sync-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "sync",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1201,
-    "title": "BlueTusk Sync 1.0.0 release record",
-    "sourcePath": "docs/sync/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
+    "categoryLabel": "Real-time data",
+    "slug": "live",
+    "title": "Push live updates to applications",
+    "summary": "Register authorized, bounded queries and stream results to clients.",
+    "order": 15,
     "headings": [
       {
-        "id": "bluetusk-sync-1-0-0-release-record",
-        "text": "BlueTusk Sync 1.0.0 release record",
-        "level": 1
+        "id": "how-live-works",
+        "text": "How Live works",
+        "level": 2
+      },
+      {
+        "id": "1-register-a-bounded-query",
+        "text": "1. Register a bounded query",
+        "level": 2
+      },
+      {
+        "id": "2-expose-one-transport",
+        "text": "2. Expose one transport",
+        "level": 2
+      },
+      {
+        "id": "3-connect-a-browser",
+        "text": "3. Connect a browser",
+        "level": 2
+      },
+      {
+        "id": "security-checklist",
+        "text": "Security checklist",
+        "level": 2
       }
     ],
-    "wordCount": 163,
-    "readMinutes": 1,
-    "searchText": "BlueTusk Sync 1.0.0 release record Status: published on 2026-08-23 from `sync-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). Sync 1.0.0 stabilises the mutation pipeline, transforms, quarantine and replay, reconciliation and repair, rebuild and cutover, hosting, telemetry, and the PostgreSQL, Redis, NATS, and OpenSearch destinations. The public API and durable formats are frozen by [`eng/sync-api-freeze.json`](../../eng/sync-api-freeze.json) and [`eng/sync-formats.json`](../../eng/sync-formats.json). The planned standard publication gate required Provider and Streams 1.0.0 plus an exact-candidate 24-hour Sync endurance report. The package dependencies were published first; the owner exception records the deferred endurance evidence. Support starts with the immutable `sync-v1.0.0` packages. Registry availability, contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. Order Fulfilment Operations exercises the PostgreSQL read-model projection, reconciliation, rebuild, and cutover runbooks from exact `1.0.0-rc.1` packages. RC staging does not replace the exact-candidate 24-hour multi-destination endurance gate."
+    "sourcePath": "docs/live/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/README.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "live-reference",
+    "title": "BlueTusk Live",
+    "summary": "Configure query plans, diffing, replay stores, transports, and browser clients.",
+    "order": 16,
+    "headings": [
+      {
+        "id": "security-and-sharing-boundary",
+        "text": "Security and sharing boundary",
+        "level": 2
+      },
+      {
+        "id": "core-delivery-contracts",
+        "text": "Core delivery contracts",
+        "level": 2
+      },
+      {
+        "id": "gap-free-initial-delivery",
+        "text": "Gap-free initial delivery",
+        "level": 2
+      },
+      {
+        "id": "ef-query-registration",
+        "text": "EF query registration",
+        "level": 2
+      },
+      {
+        "id": "capability-secured-client-queries",
+        "text": "Capability-secured client queries",
+        "level": 2
+      },
+      {
+        "id": "replay-window",
+        "text": "Replay window",
+        "level": 2
+      },
+      {
+        "id": "shared-subscriptions-and-backpressure",
+        "text": "Shared subscriptions and backpressure",
+        "level": 2
+      },
+      {
+        "id": "aspnet-transports",
+        "text": "ASP.NET transports",
+        "level": 2
+      },
+      {
+        "id": "browser-clients",
+        "text": "Browser clients",
+        "level": 2
+      },
+      {
+        "id": "hosting-and-testing",
+        "text": "Hosting and testing",
+        "level": 2
+      },
+      {
+        "id": "verify-a-deployment",
+        "text": "Verify a deployment",
+        "level": 2
+      },
+      {
+        "id": "control-plane-visibility",
+        "text": "Control-plane visibility",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/live/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "live-format-compatibility",
+    "title": "Live format compatibility",
+    "summary": "Understand versioned Live envelopes and replay store formats.",
+    "order": 17,
+    "headings": [],
+    "sourcePath": "docs/live/format-compatibility.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "continuous-graph",
+    "title": "Keep graph query results current",
+    "summary": "Keep an authorized graph result up to date after relevant commits.",
+    "order": 18,
+    "headings": [
+      {
+        "id": "how-results-are-maintained",
+        "text": "How results are maintained",
+        "level": 2
+      },
+      {
+        "id": "run-a-working-example",
+        "text": "Run a working example",
+        "level": 2
+      },
+      {
+        "id": "1-define-a-bounded-query",
+        "text": "1. Define a bounded query",
+        "level": 2
+      },
+      {
+        "id": "2-start-with-authoritative-maintenance",
+        "text": "2. Start with authoritative maintenance",
+        "level": 2
+      },
+      {
+        "id": "3-make-it-observable",
+        "text": "3. Make it observable",
+        "level": 2
+      },
+      {
+        "id": "watch-a-bounded-traversal",
+        "text": "Watch a bounded traversal",
+        "level": 2
+      },
+      {
+        "id": "production-checklist",
+        "text": "Production checklist",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/continuous-graph/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/README.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "continuous-graph-reference",
+    "title": "BlueTusk Continuous Graph",
+    "summary": "Configure graph query plans, dependencies, maintenance, and replay.",
+    "order": 19,
+    "headings": [
+      {
+        "id": "registration",
+        "text": "Registration",
+        "level": 2
+      },
+      {
+        "id": "expanded-graph-patterns-in-12",
+        "text": "Expanded graph patterns in 1.2",
+        "level": 3
+      },
+      {
+        "id": "capability-and-correctness",
+        "text": "Capability and correctness",
+        "level": 2
+      },
+      {
+        "id": "incremental-maintenance",
+        "text": "Incremental maintenance",
+        "level": 2
+      },
+      {
+        "id": "opting-in-to-connection-scoped-reads",
+        "text": "Opting in to connection-scoped reads",
+        "level": 3
+      },
+      {
+        "id": "opting-in-to-direct-cdc-projection",
+        "text": "Opting in to direct CDC projection",
+        "level": 3
+      },
+      {
+        "id": "ordered-mutation-and-fallbacks",
+        "text": "Ordered mutation and fallbacks",
+        "level": 3
+      },
+      {
+        "id": "samples",
+        "text": "Samples",
+        "level": 2
+      },
+      {
+        "id": "operations",
+        "text": "Operations",
+        "level": 2
+      },
+      {
+        "id": "diagnose-maintenance",
+        "text": "Diagnose maintenance",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/continuous-graph/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "control-plane",
+    "title": "Control Plane",
+    "summary": "Manage registered database instances, pipelines, and operational resources.",
+    "order": 20,
+    "headings": [
+      {
+        "id": "what-it-shows",
+        "text": "What it shows",
+        "level": 2
+      },
+      {
+        "id": "what-it-lets-you-do",
+        "text": "What it lets you do",
+        "level": 2
+      },
+      {
+        "id": "use-it-when",
+        "text": "Use it when",
+        "level": 2
+      },
+      {
+        "id": "packages",
+        "text": "Packages",
+        "level": 2
+      },
+      {
+        "id": "the-shortest-version",
+        "text": "The shortest version",
+        "level": 2
+      },
+      {
+        "id": "status",
+        "text": "Status",
+        "level": 2
+      },
+      {
+        "id": "next-steps",
+        "text": "Next steps",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/control-plane/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/README.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "control-plane-reference",
+    "title": "BlueTusk Control Plane and Dashboard",
+    "summary": "Configure inventory providers, operations, permissions, and dashboard APIs.",
+    "order": 21,
+    "headings": [
+      {
+        "id": "read-only-inventory",
+        "text": "Read-only inventory",
+        "level": 2
+      },
+      {
+        "id": "dashboard",
+        "text": "Dashboard",
+        "level": 2
+      },
+      {
+        "id": "bounded-deployment-inventory",
+        "text": "Bounded deployment inventory",
+        "level": 3
+      },
+      {
+        "id": "managed-deployment-fleet",
+        "text": "Managed deployment fleet",
+        "level": 2
+      },
+      {
+        "id": "versioned-agent-api",
+        "text": "Versioned agent API",
+        "level": 2
+      },
+      {
+        "id": "mutating-operations-and-audit",
+        "text": "Mutating operations and audit",
+        "level": 2
+      },
+      {
+        "id": "managed-hosting-reconciliation",
+        "text": "Managed hosting reconciliation",
+        "level": 2
+      },
+      {
+        "id": "kubernetes-custom-resources",
+        "text": "Kubernetes custom resources",
+        "level": 3
+      }
+    ],
+    "sourcePath": "docs/control-plane/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real-time data",
+    "slug": "operations",
+    "title": "Real-time operations",
+    "summary": "Deploy and recover the real-time data pipeline.",
+    "order": 22,
+    "headings": [
+      {
+        "id": "operational-state",
+        "text": "Operational state",
+        "level": 2
+      },
+      {
+        "id": "normal-startup",
+        "text": "Normal startup",
+        "level": 2
+      },
+      {
+        "id": "delivery-and-acknowledgement",
+        "text": "Delivery and acknowledgement",
+        "level": 2
+      },
+      {
+        "id": "process-failure",
+        "text": "Process failure",
+        "level": 2
+      },
+      {
+        "id": "network-interruption",
+        "text": "Network interruption",
+        "level": 2
+      },
+      {
+        "id": "storage-pressure",
+        "text": "Storage pressure",
+        "level": 2
+      },
+      {
+        "id": "credential-rotation",
+        "text": "Credential rotation",
+        "level": 2
+      },
+      {
+        "id": "primary-failover",
+        "text": "Primary failover",
+        "level": 2
+      },
+      {
+        "id": "clock-movement",
+        "text": "Clock movement",
+        "level": 2
+      },
+      {
+        "id": "postgresql-minor-upgrade",
+        "text": "PostgreSQL minor upgrade",
+        "level": 2
+      },
+      {
+        "id": "reconciliation-and-rebuild",
+        "text": "Reconciliation and rebuild",
+        "level": 2
+      },
+      {
+        "id": "observability",
+        "text": "Observability",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/realtime-platform/operations.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/operations.md",
+    "keywords": []
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "property-graphs",
+    "title": "Query a property graph",
+    "summary": "Map vertex and edge tables and run typed, portable graph patterns.",
+    "order": 0,
+    "headings": [
+      {
+        "id": "1-map-existing-tables",
+        "text": "1. Map existing tables",
+        "level": 2
+      },
+      {
+        "id": "2-query-a-directed-hop",
+        "text": "2. Query a directed hop",
+        "level": 2
+      },
+      {
+        "id": "3-index-the-direction-you-traverse",
+        "text": "3. Index the direction you traverse",
+        "level": 2
+      },
+      {
+        "id": "choose-the-next-operation",
+        "text": "Choose the next operation",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/README.md",
+    "keywords": []
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "graph-reference",
+    "title": "BlueTusk Graphs reference",
+    "summary": "Look up graph metadata, path semantics, migration options, and native SQL/PGQ.",
+    "order": 1,
+    "headings": [
+      {
+        "id": "native-raw-sql-example",
+        "text": "Native raw SQL example",
+        "level": 2
+      },
+      {
+        "id": "typed-schema-discovery",
+        "text": "Typed schema discovery",
+        "level": 2
+      },
+      {
+        "id": "ef-model-migrations-and-reverse-engineering",
+        "text": "EF model, migrations, and reverse engineering",
+        "level": 2
+      },
+      {
+        "id": "typed-ef-graph-queries",
+        "text": "Typed EF graph queries",
+        "level": 2
+      },
+      {
+        "id": "supported-typed-patterns",
+        "text": "Supported typed patterns",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
+    "keywords": []
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "traversals",
+    "title": "Run a bounded traversal",
+    "summary": "Run neighbors, reachability, and shortest-path queries with bounded work.",
+    "order": 2,
+    "headings": [
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "find-upstream-dependencies",
+        "text": "Find upstream dependencies",
+        "level": 2
+      },
+      {
+        "id": "set-traversal-limits",
+        "text": "Set traversal limits",
+        "level": 2
+      },
+      {
+        "id": "choose-an-execution-path",
+        "text": "Choose an execution path",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/traversals.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/traversals.md",
+    "keywords": []
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graphs",
+    "slug": "engine",
+    "title": "BlueTusk PostgreSQL graph engine",
+    "summary": "Install and operate the optional PostgreSQL server extension.",
+    "order": 3,
+    "headings": [
+      {
+        "id": "install-and-register",
+        "text": "Install and register",
+        "level": 2
+      },
+      {
+        "id": "query",
+        "text": "Query",
+        "level": 2
+      },
+      {
+        "id": "additional-sql-operations",
+        "text": "Additional SQL operations",
+        "level": 2
+      },
+      {
+        "id": "ef-core-and-continuous-graph",
+        "text": "EF Core and Continuous Graph",
+        "level": 2
+      },
+      {
+        "id": "upgrade-and-recover",
+        "text": "Upgrade and recover",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/graph/engine.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/engine.md",
+    "keywords": []
   },
   {
     "category": "extensions",
     "categoryLabel": "Extensions",
     "slug": "catalog",
-    "summary": "Choose and configure typed support for PostGIS, pgvector, TimescaleDB, citext, and other extensions.",
-    "keywords": [
-      "postgis",
-      "pgvector",
-      "timescaledb",
-      "citext"
-    ],
-    "order": 10,
-    "listed": true,
     "title": "Use PostgreSQL extensions",
-    "sourcePath": "docs/extensions/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/README.md",
+    "summary": "Choose client integrations for PostgreSQL extensions and register their codecs.",
+    "order": 0,
     "headings": [
-      {
-        "id": "use-postgresql-extensions",
-        "text": "Use PostgreSQL extensions",
-        "level": 1
-      },
       {
         "id": "choose-the-smallest-integration",
         "text": "Choose the smallest integration",
@@ -6149,7 +2368,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       },
       {
         "id": "example-use-citext",
-        "text": "Example: use `citext`",
+        "text": "Example: use citext",
         "level": 2
       },
       {
@@ -6168,31 +2387,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 466,
-    "readMinutes": 3,
-    "searchText": "Use PostgreSQL extensions PostgreSQL extensions can add functions, operators, index methods, and types. BlueTusk can call ordinary extension SQL immediately; install a BlueTusk extension package only when you want a strongly typed wire value, EF mapping, or LINQ translation. Choose the smallest integration You need What to install An extension function or operator in SQL No BlueTusk extension package; use a parameterized command. A domain, enum, composite, array, range, or multirange over known types Core provider catalogue discovery usually handles it. `citext` CLR values and EF mappings `BlueTusk.Extensions.Citext` plus the optional EF package. Vector similarity search `BlueTusk.Extensions.PgVector` plus the optional EF package. Spatial values and LINQ `BlueTusk.Extensions.PostGIS` plus the optional EF package. TimescaleDB helpers `BlueTusk.Extensions.TimescaleDb` and its EF integration. A new extension-defined base type Install or build a codec package. Server installation is separate from client integration. Your database operator must install the extension and approve its privileges, preload needs, and upgrade policy. Example: use `citext` Create the extension through a migration or controlled database operation: Register its codec before building the long-lived data source: For EF Core, register both the data-source codec and the provider integration: Example: nearest neighbours with pgvector Create the appropriate vector index in a migration and verify the query plan; client-side typing does not guarantee index use. Build an integration for another extension Install the template and generate a package outside BlueTusk core: The generated project includes codec tests and the public extension conformance checks. Production checklist Pin the server extension version alongside PostgreSQL and BlueTusk. Install extensions before application startup or migrations that use them. Register codecs before building the data source. Register EF mappings separately when the"
+    "sourcePath": "docs/extensions/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/README.md",
+    "keywords": []
   },
   {
     "category": "extensions",
     "categoryLabel": "Extensions",
-    "listed": false,
-    "slug": "extensions-reference",
-    "summary": "Extensions register types and immutable feature descriptors through BlueTusk.Extensions.Abstractions. BlueTuskDataSourceBuilder.Build() snapshots both registries into the resulting data source. Later builder changes d…",
-    "keywords": [
-      "docs",
-      "extensions",
-      "reference"
-    ],
-    "order": 1091,
+    "slug": "reference",
     "title": "Extension SDK",
-    "sourcePath": "docs/extensions/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
+    "summary": "Look up package names, supported types, and EF Core mappings.",
+    "order": 1,
     "headings": [
-      {
-        "id": "extension-sdk",
-        "text": "Extension SDK",
-        "level": 1
-      },
       {
         "id": "what-supports-postgresql-extensions-means",
         "text": "What “supports PostgreSQL extensions” means",
@@ -6224,12 +2430,12 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
-        "id": "pg-trgm",
+        "id": "pgtrgm",
         "text": "pg_trgm",
         "level": 2
       },
       {
-        "id": "pg-durable",
+        "id": "pgdurable",
         "text": "pg_durable",
         "level": 2
       },
@@ -6244,149 +2450,256 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2192,
-    "readMinutes": 10,
-    "searchText": "Extension SDK Extensions register types and immutable feature descriptors through `BlueTusk.Extensions.Abstractions`. `BlueTuskDataSourceBuilder.Build()` snapshots both registries into the resulting data source. Later builder changes do not mutate an existing data source, and optional packages remain independently deployable without extension-specific dependencies in BlueTusk core packages. What “supports PostgreSQL extensions” means BlueTusk does not use a closed server-extension allowlist. Any extension installed on the connected PostgreSQL server can be called through normal, parameterized commands, and EF Core can own any extension's installation with `modelBuilder.HasExtension(\"extension_name\")`. Runtime catalogue discovery loads extension-provided OIDs instead of assuming a compiled-in type list. The level of convenience depends on what an extension contributes: Extension surface BlueTusk behavior Functions, procedures, operators, access methods, and background workers Available through normal SQL without a BlueTusk-specific package. Domains, enums, composites, arrays, ranges, and multiranges over known types Catalogue-discovered and composed automatically. A new base wire type Preserved as `BlueTuskUnknownValue` until an extension package registers a semantic codec. Provider-specific CLR values, helpers, or LINQ translation Supplied by an optional first-party or third-party BlueTusk package. This makes “all extensions” an interoperability contract, not a promise that every PostgreSQL extension has a bespoke CLR API. Server installation, binary compatibility, preloading, privileges, and operational safety remain properties of PostgreSQL and the extension itself. The extension-authoring seam is compatibility-stable: the public surfaces of `BlueTusk.Extensions.Abstractions`, `BlueTusk.Extensions.Testing`, `BlueTusk.TypeSystem`, and the ADO.NET integration points have compiler-enforced shipped API/nullability baselines. `BlueTusk.Extensions.Citext` supplied the f"
+    "sourcePath": "docs/extensions/reference.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "slug": "sql-pgq",
-    "summary": "Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.",
-    "keywords": [
-      "sql/pgq",
-      "property graph",
-      "postgresql 19"
-    ],
-    "order": 10,
-    "listed": true,
-    "title": "Query a PostgreSQL property graph",
-    "sourcePath": "docs/graph/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/README.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "overview",
+    "title": "Choose a data service",
+    "summary": "Choose a BlueTusk data service for your application.",
+    "order": 0,
     "headings": [
       {
-        "id": "query-a-postgresql-property-graph",
-        "text": "Query a PostgreSQL property graph",
-        "level": 1
-      },
-      {
-        "id": "run-the-complete-example",
-        "text": "Run the complete example",
+        "id": "store-and-project-data",
+        "text": "Store and project data",
         "level": 2
       },
       {
-        "id": "1-check-capability",
-        "text": "1. Check capability",
+        "id": "execute-durable-work",
+        "text": "Execute durable work",
         "level": 2
       },
       {
-        "id": "2-define-a-graph-over-relational-tables",
-        "text": "2. Define a graph over relational tables",
+        "id": "manage-schema-and-query-access",
+        "text": "Manage schema and query access",
         "level": 2
       },
       {
-        "id": "3-query-it-safely",
-        "text": "3. Query it safely",
-        "level": 2
-      },
-      {
-        "id": "4-inspect-an-existing-graph",
-        "text": "4. Inspect an existing graph",
-        "level": 2
-      },
-      {
-        "id": "what-to-use-next",
-        "text": "What to use next",
+        "id": "provision-and-verify",
+        "text": "Provision and verify",
         "level": 2
       }
     ],
-    "wordCount": 512,
-    "readMinutes": 3,
-    "searchText": "Query a PostgreSQL property graph **Preview, not part of 1.1.0.** Graph needs a PostgreSQL server that provides SQL/PGQ. PostgreSQL removed SQL/PGQ in PostgreSQL 19 Beta 4, so this feature waits for a PostgreSQL release that ships it. Do not use it in production. See [product status](../getting-started/install.md#product-status). PostgreSQL SQL/PGQ lets you describe vertices and edges over ordinary tables and query relationships with `GRAPH_TABLE`. BlueTusk supports raw parameterized SQL, typed schema discovery, EF model/migrations, and a bounded typed EF query builder. This feature requires the server to report SQL/PGQ capability. Do not enable it from a PostgreSQL version string alone. SQL/PGQ was removed in PostgreSQL 19 Beta 4. This is preview functionality on the pinned historical Beta 3 fixture, not a production PostgreSQL 19 feature. Keep it on the separate [Graph release track](../releases/release-tracks.md); other products do not wait for its future availability. Run the complete example The sample creates temporary tables and a temporary graph, queries one edge, prints `Ada knows Grace`, and removes the graph. TLS is disabled only for the isolated local container. 1. Check capability BlueTusk probes PostgreSQL's documented information-schema graph views. A major version check is not sufficient. 2. Define a graph over relational tables The relational tables remain authoritative. A property graph defines how their keys, labels, endpoints, and properties form a graph view. 3. Query it safely Parameters are bound outside the SQL text. Graph names and labels are schema identifiers and should come from trusted application configuration, not user input. 4. Inspect an existing graph Use discovery for diagnostics, tooling, or validation. Define production graph changes through reviewed migrations. What to use next Use EF graph configuration when the application owns graph migrations. Use the typed EF graph builder when you need compile-time entity/property selectio"
+    "sourcePath": "docs/ecosystem/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/README.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-api-compatibility",
-    "summary": "The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates:",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "api",
-      "compatibility"
-    ],
-    "order": 1049,
-    "title": "ContinuousGraph public API compatibility",
-    "sourcePath": "docs/continuous-graph/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/api-compatibility.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "documents",
+    "title": "BlueTusk.Documents",
+    "summary": "Store JSONB documents, metadata, and streamed attachments.",
+    "order": 1,
     "headings": [
       {
-        "id": "continuousgraph-public-api-compatibility",
-        "text": "ContinuousGraph public API compatibility",
-        "level": 1
+        "id": "storage-and-concurrency",
+        "text": "Storage and concurrency",
+        "level": 2
+      },
+      {
+        "id": "explicit-large-content",
+        "text": "Explicit large content",
+        "level": 2
+      },
+      {
+        "id": "reads-patches-and-evolution",
+        "text": "Reads, patches and evolution",
+        "level": 2
+      },
+      {
+        "id": "indexes-and-deployment",
+        "text": "Indexes and deployment",
+        "level": 2
+      },
+      {
+        "id": "streams-and-live-integration",
+        "text": "Streams and Live integration",
+        "level": 2
+      },
+      {
+        "id": "operator-readiness",
+        "text": "Operator readiness",
+        "level": 2
+      },
+      {
+        "id": "recover-document-content",
+        "text": "Recover document content",
+        "level": 2
       }
     ],
-    "wordCount": 164,
-    "readMinutes": 1,
-    "searchText": "ContinuousGraph public API compatibility The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates: Roslyn PublicApiAnalyzers reject undeclared additions and incompatible removals in both ContinuousGraph packages while allowing reviewed additive 1.1 APIs; and [`eng/continuous-graph-api-freeze.json`](../../eng/continuous-graph-api-freeze.json) records a platform-independent SHA-256 digest for every public API baseline. To change the candidate, prove that every 1.0 member remains source and binary compatible, update the implementation and API baseline, run the complete ContinuousGraph and PostgreSQL 19 suite, and update the freeze manifest in the same reviewed commit. The reviewed 1.1 additions cover automatic incremental sessions, immutable impact/capability metadata, maintenance tiers, the trusted CDC projector contract, and per-tier status. Any signature change after candidate freeze invalidates every exact-SHA result. The 1.0 packages remain unchanged. The 1.1 candidate becomes publishable only after PostgreSQL 19 GA, the 24-hour ContinuousGraph endurance gate, dependency publication, performance evidence, and final protected release verification pass. Until then, the 1.1 freeze is an engineering contract, not a release claim."
+    "sourcePath": "docs/documents/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/README.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-reference",
-    "summary": "BlueTusk.ContinuousGraph is the published stable graph family. Trusted server code registers bounded typed SQL/PGQ queries; the compiler validates the query against EF property-graph metadata and then delegates gap-free",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "reference"
-    ],
-    "order": 1050,
-    "title": "BlueTusk Continuous Graph",
-    "sourcePath": "docs/continuous-graph/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "events",
+    "title": "BlueTusk.Events",
+    "summary": "Append ordered events and load application state by stream.",
+    "order": 2,
     "headings": [
       {
-        "id": "bluetusk-continuous-graph",
-        "text": "BlueTusk Continuous Graph",
-        "level": 1
-      },
-      {
-        "id": "registration",
-        "text": "Registration",
+        "id": "transactional-publishing",
+        "text": "Transactional publishing",
         "level": 2
       },
       {
-        "id": "expanded-graph-patterns-in-1-2",
-        "text": "Expanded graph patterns in 1.2",
-        "level": 3
-      },
-      {
-        "id": "capability-and-correctness",
-        "text": "Capability and correctness",
+        "id": "ordering-and-scale",
+        "text": "Ordering and scale",
         "level": 2
       },
       {
-        "id": "three-tier-incremental-maintenance-in-1-1",
-        "text": "Three-tier incremental maintenance in 1.1",
+        "id": "inbox-and-replay",
+        "text": "Inbox and replay",
         "level": 2
       },
       {
-        "id": "opting-in-to-direct-cdc-projection",
-        "text": "Opting in to direct CDC projection",
-        "level": 3
+        "id": "streams-delivery-adapter",
+        "text": "Streams delivery adapter",
+        "level": 2
       },
       {
-        "id": "ordered-mutation-and-fallbacks",
-        "text": "Ordered mutation and fallbacks",
-        "level": 3
+        "id": "local-only-archive-and-retention",
+        "text": "Local-only archive and retention",
+        "level": 2
       },
       {
-        "id": "samples",
-        "text": "Samples",
+        "id": "operate-an-event-stream",
+        "text": "Operate an event stream",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/events/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
+    "keywords": []
+  },
+  {
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "event-retention",
+    "title": "Published outbox retention: required protocol",
+    "summary": "Manage event retention with registered consumers and safe watermarks.",
+    "order": 3,
+    "headings": [],
+    "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
+    "keywords": []
+  },
+  {
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "projections",
+    "title": "BlueTusk.Projections",
+    "summary": "Build queryable views of event streams with durable progress.",
+    "order": 4,
+    "headings": [
+      {
+        "id": "definition-and-destination-contract",
+        "text": "Definition and destination contract",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-ordering",
+        "text": "Bounds and ordering",
+        "level": 2
+      },
+      {
+        "id": "consistent-bootstrap-and-rebuild",
+        "text": "Consistent bootstrap and rebuild",
+        "level": 2
+      },
+      {
+        "id": "published-live-reads-metrics-and-retirement",
+        "text": "Published Live reads, metrics and retirement",
+        "level": 2
+      },
+      {
+        "id": "verify-recovery",
+        "text": "Verify recovery",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/projections/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
+    "keywords": []
+  },
+  {
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "projection-recovery",
+    "title": "Explicit source recovery and controlled DDL",
+    "summary": "Recover projections after reconnect, restart, or failover.",
+    "order": 5,
+    "headings": [
+      {
+        "id": "verify-physical-promotion",
+        "text": "Verify physical promotion",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/projections/RECOVERY.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
+    "keywords": []
+  },
+  {
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "projection-live",
+    "title": "Published projections in Live",
+    "summary": "Publish projection changes to authorized Live subscribers.",
+    "order": 6,
+    "headings": [
+      {
+        "id": "atomic-invalidation-and-authorized-reads",
+        "text": "Atomic invalidation and authorized reads",
+        "level": 2
+      },
+      {
+        "id": "bounded-pages-and-filters",
+        "text": "Bounded pages and filters",
+        "level": 2
+      },
+      {
+        "id": "cutover-reconnect-and-restart",
+        "text": "Cutover, reconnect and restart",
+        "level": 2
+      },
+      {
+        "id": "deployable-example-and-evidence",
+        "text": "Deployable example and evidence",
+        "level": 2
+      }
+    ],
+    "sourcePath": "docs/projections/LIVE.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
+    "keywords": []
+  },
+  {
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs",
+    "title": "BlueTusk.Jobs",
+    "summary": "Enqueue, lease, retry, and complete durable background work.",
+    "order": 7,
+    "headings": [
+      {
+        "id": "usage",
+        "text": "Usage",
+        "level": 2
+      },
+      {
+        "id": "delivery-and-ownership",
+        "text": "Delivery and ownership",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-scheduling",
+        "text": "Bounds and scheduling",
         "level": 2
       },
       {
@@ -6395,1010 +2708,348 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
-        "id": "release-state",
-        "text": "Release state",
+        "id": "check-a-worker-deployment",
+        "text": "Check a worker deployment",
         "level": 2
       }
     ],
-    "wordCount": 2053,
-    "readMinutes": 10,
-    "searchText": "BlueTusk Continuous Graph `BlueTusk.ContinuousGraph` is the published stable graph family. Trusted server code registers bounded typed SQL/PGQ queries; the compiler validates the query against EF property-graph metadata and then delegates gap-free invalidation, authoritative requery, and keyed result diffs to BlueTusk Live. It never reads replication or pgoutput messages. Registration Configure the property graph in the EF model first, then register the specific element-table aliases used by the query: The alias declaration is deliberately explicit. The compiler resolves each alias through the configured `BlueTuskPropertyGraphDefinition` and records only the corresponding relational tables as Live invalidation dependencies. A change to an unrelated graph element therefore does not rerun this query. Unknown and duplicate aliases fail during registration. The V1 query envelope permits outer `Where`, `Select`, deterministic `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include the direct result key. The ordinary typed graph builder remains responsible for safe graph-pattern and projection translation, and EF must produce `GRAPH_TABLE` SQL at registration. Unsupported query operators, translation failures, unbounded results, and unstable ordering fail before clients can subscribe. Expanded graph patterns in 1.2 The typed builder supports the PostgreSQL 19 SQL/PGQ shapes needed by larger relationship models: `Undirected` matches either edge direction using PostgreSQL's native `-[...]-` syntax. `Outgoing` and `Incoming` remain directional. `LabelsAnyOf` emits the SQL/PGQ `label-a|label-b` OR expression. Every selected label must exist on the resolved element table, and projected properties must be identical across those labels. `OutgoingPath`, `IncomingPath`, and `UndirectedPath` accept a bounded range of one to eight hops. PostgreSQL 19 does not provide native variable-length path syntax, so BlueTusk compiles the range into fixed-hop `GRAPH_TA"
+    "sourcePath": "docs/jobs/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-release-notes-0-1-0-preview-1",
-    "summary": "This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exp…",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "release",
-      "notes",
-      "0",
-      "1",
-      "0",
-      "preview",
-      "1"
-    ],
-    "order": 1051,
-    "title": "BlueTusk Continuous Graph 0.1.0-preview.1",
-    "sourcePath": "docs/continuous-graph/release-notes-0.1.0-preview.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-0.1.0-preview.1.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs-hosting",
+    "title": "Scoped Jobs and Workflows host readiness",
+    "summary": "Operate the job worker and configure leases and concurrency.",
+    "order": 8,
     "headings": [
       {
-        "id": "bluetusk-continuous-graph-0-1-0-preview-1",
-        "text": "BlueTusk Continuous Graph 0.1.0-preview.1",
-        "level": 1
-      },
-      {
-        "id": "packages",
-        "text": "Packages",
-        "level": 2
-      },
-      {
-        "id": "capabilities-in-this-preview",
-        "text": "Capabilities in this preview",
-        "level": 2
-      },
-      {
-        "id": "preview-boundaries",
-        "text": "Preview boundaries",
+        "id": "credential-rotation-rehearsal",
+        "text": "Credential rotation rehearsal",
         "level": 2
       }
     ],
-    "wordCount": 429,
-    "readMinutes": 2,
-    "searchText": "BlueTusk Continuous Graph 0.1.0-preview.1 This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exposing replication internals to applications. Packages `BlueTusk.ContinuousGraph` `BlueTusk.ContinuousGraph.ControlPlane` Both packages use the repository's MIT licence and the independent Continuous Graph `0.1.0-preview.1` version property. Capabilities in this preview trusted typed graph-query registration against EF property-graph metadata; a production capability probe that requires negotiated PostgreSQL 19 SQL/PGQ support; explicit graph-element aliases resolved to exact relational invalidation dependencies; fail-closed query-shape validation with deterministic key ordering and one bounded `Take`; stable registration fingerprints and result-free operational descriptors; gap-free Live cursor reservation, authoritative `GRAPH_TABLE` requery, and keyed add/update/remove/reorder/reset events; security-scoped subscription identities and normal Live cancellation; authorised, HTML-safe Control Plane dashboard and API inventory; executable fraud-transfer and network-health PostgreSQL 19 samples; and checked-in live registration, 999-path requery, invalidation/diff, and allocation budgets. The candidate verification gate includes a zero-warning repository Release build, the complete offline solution suite, all eight Continuous Graph tests including the pinned PostgreSQL 19 Beta 2 acceptance test, public API and dependency conformance, documentation validation, allocation budgets, and an inspected NuGet pack. The gated pack is reproducible with `./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore`; candidate mode emits verification artifacts but does not open the publication gate. Preview boundaries PostgreSQL 15–18 and PostgreSQL 19 servers without negotiated SQL/PGQ capability fail during reg"
+    "sourcePath": "docs/jobs/hosting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "continuous-graph-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from continuous-graph-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "continuous",
-      "graph",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1052,
-    "title": "BlueTusk ContinuousGraph 1.0.0 release record",
-    "sourcePath": "docs/continuous-graph/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-continuousgraph-1-0-0-release-record",
-        "text": "BlueTusk ContinuousGraph 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 187,
-    "readMinutes": 1,
-    "searchText": "BlueTusk ContinuousGraph 1.0.0 release record Status: published on 2026-08-23 from `continuous-graph-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). ContinuousGraph 1.0.0 stabilises capability-guarded registered SQL/PGQ plans, dependency-aware invalidation, bounded affected-key incremental evaluation, authoritative repair, replay/checkpoint restart, and the optional Control Plane adapter. Its public API is frozen by [`eng/continuous-graph-api-freeze.json`](../../eng/continuous-graph-api-freeze.json). The planned standard publication gate required PostgreSQL 19 GA, Provider, Streams, Live, and Control Plane 1.0.0 plus a successful exact-candidate 24-hour endurance run and an independent application pilot. The package dependencies were published first; the owner exception records the deferred GA, endurance, and pilot evidence. Support starts with the immutable `continuous-graph-v1.0.0` packages. Registry availability, contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Defects use rollback or pinning and a new fixed version. Service Topology Centre and Fraud Graph Investigator exercise repair, checkpoint/restart, disconnect recovery, cancellation, path analysis, and ordered result handling from exact RC packages. They also use readable fluent property-graph migrations. This is PostgreSQL 19 Beta 3 staging coverage; neither application is yet an independent stable pilot."
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs-maintenance",
+    "title": "Durable storage maintenance contract",
+    "summary": "Clean up completed jobs and maintain queue health.",
+    "order": 9,
+    "headings": [],
+    "sourcePath": "docs/jobs/maintenance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
+    "keywords": []
   },
   {
-    "category": "graph",
-    "categoryLabel": "Graph",
-    "listed": false,
-    "slug": "graph-reference",
-    "summary": "The cross-milestone test and publication cadence is documented in the PostgreSQL 19 compatibility programme.",
-    "keywords": [
-      "docs",
-      "graph",
-      "reference"
-    ],
-    "order": 1098,
-    "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
-    "sourcePath": "docs/graph/reference.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs-failover",
+    "title": "Recover jobs after PostgreSQL failover",
+    "summary": "Prepare for database failover and recover leased jobs.",
+    "order": 10,
     "headings": [
       {
-        "id": "postgresql-19-sql-pgq-v1-candidate",
-        "text": "PostgreSQL 19 SQL/PGQ V1 candidate",
-        "level": 1
-      },
-      {
-        "id": "raw-sql-example",
-        "text": "Raw SQL example",
+        "id": "prepare-the-worker",
+        "text": "Prepare the worker",
         "level": 2
       },
       {
-        "id": "typed-schema-discovery",
-        "text": "Typed schema discovery",
+        "id": "promote-and-reconnect",
+        "text": "Promote and reconnect",
         "level": 2
       },
       {
-        "id": "ef-model-migrations-and-reverse-engineering",
-        "text": "EF model, migrations, and reverse engineering",
-        "level": 2
-      },
-      {
-        "id": "typed-ef-graph-queries",
-        "text": "Typed EF graph queries",
-        "level": 2
-      },
-      {
-        "id": "exact-v1-typed-subset-boundary",
-        "text": "Exact V1 typed-subset boundary",
+        "id": "verify-recovery",
+        "text": "Verify recovery",
         "level": 2
       }
     ],
-    "wordCount": 1117,
-    "readMinutes": 6,
-    "searchText": "PostgreSQL 19 SQL/PGQ V1 candidate The cross-milestone test and publication cadence is documented in the [PostgreSQL 19 compatibility programme](../postgresql19-programme.md). BlueTusk's published `1.0.0` Provider family exposes PostgreSQL 19 SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only property-graph schema discovery. Stable support remains gated on PostgreSQL 19 GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET sessions enable `SupportsSqlPgq` only after probing the documented `information_schema.property_graphs` view; a major-version check alone is not used as evidence. The live PostgreSQL 19 Beta 3 acceptance tests cover: `CREATE PROPERTY GRAPH`, `CREATE TEMP PROPERTY GRAPH`, `ALTER PROPERTY GRAPH`, and `DROP PROPERTY GRAPH`; `GRAPH_TABLE` vertex and directed-edge patterns; prepared and typed value parameters applied to graph results; field metadata, batches, mixed relational/graph statements, and data-source pooling; typed discovery of graphs, vertex and edge tables, key columns, labels, element properties, edge endpoints, column mappings, and property data types; typed EF model configuration, migration diffing/scaffolding, and database-first graph retention; live capability-guarded and centrally quoted EF migration SQL for graph creation, rename/schema alteration, and removal; typed EF linear-path matching, parameterized predicates, DTO and tracked-entity materialization, and relational composition; capability-guarded empty discovery results on PostgreSQL 15–18; and the normal provider suite, including cancellation, pipeline mode, types, COPY, replication, and EF regression coverage. The discovery API reads only PostgreSQL 19's documented information-schema views: [`property_graphs`](https://www.postgresql.org/docs/19/infoschema-property-graphs.html), [`pg_element_tables`](https://www.postgresql.org/docs/19/infoschema-pg-element-tables.html), [`pg_element_table_key_columns`](https://www.postgresql.org/docs/19/infoschema-pg-"
+    "sourcePath": "docs/jobs/failover.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-allocation-discipline",
-    "summary": "BlueTusk treats low allocation as a measured engineering constraint, not as a blanket “allocation-free” claim. Returned strings, arrays, records, and buffered large fields own managed memory by design. The provider in…",
-    "keywords": [
-      "docs",
-      "architecture",
-      "allocation",
-      "discipline"
-    ],
-    "order": 1027,
-    "title": "Allocation discipline",
-    "sourcePath": "docs/architecture/allocation-discipline.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/allocation-discipline.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs-durable-format",
+    "title": "Jobs and Workflows durable formats",
+    "summary": "Understand the job database schema and durable data format.",
+    "order": 11,
     "headings": [
       {
-        "id": "allocation-discipline",
-        "text": "Allocation discipline",
-        "level": 1
+        "id": "initialize-the-store",
+        "text": "Initialize the store",
+        "level": 2
+      },
+      {
+        "id": "migrate-a-workflow-definition",
+        "text": "Migrate a workflow definition",
+        "level": 2
+      },
+      {
+        "id": "recover-from-a-format-mismatch",
+        "text": "Recover from a format mismatch",
+        "level": 2
       }
     ],
-    "wordCount": 1372,
-    "readMinutes": 7,
-    "searchText": "Allocation discipline BlueTusk treats low allocation as a measured engineering constraint, not as a blanket “allocation-free” claim. Returned strings, arrays, records, and buffered large fields own managed memory by design. The provider instead targets bounded temporary storage, typed access without incidental boxing, and reusable per-session protocol buffers where ownership is unambiguous. The `CommandPathBenchmarks` fixture measures named-parameter rewriting, parameter encoding, physical-session dispatch, and scalar or reader materialization together. Its physical session is in-memory so network scheduling does not hide provider bookkeeping. `ProtocolWritePathBenchmarks` separately measures complete simple and extended frontend writes through `BlueTuskProtocolConnection`. The Windows/Ryzen 7 5800X/.NET 10 short baseline currently records: Workload Allocated per operation Ownership represented Synchronous binary `int4` parameter and scalar 1,048 B command plan, parameter vector/payload, timeout, boxed `DbCommand` scalar Text parameter and scalar 1,424 B command path plus UTF-8 parameter and returned CLR string Buffered reader over 100 binary `int4` values 2,560 B reader/command objects; typed values do not allocate individually Asynchronous binary `int4` parameter and scalar 1,352 B command path plus async cancellation/timeout infrastructure Warm simple or extended protocol write 0 B reusable session writer after warm-up Structured `int4[]` / composite parameter encoding 384 B / 56 B exact caller-owned wire payloads; temporary composite sizing storage is pooled Incremental one-megabyte backend payload drain 176 B bounded streaming state, not field materialization One-kilobyte WAL decode / bounded WAL pull 64 B decoded envelope; WAL payload remains a zero-copy slice Buffered one-megabyte `bytea` 1,049,117 B the caller-owned byte array is inherent Buffered one-megabyte text 2,097,447 B the caller-owned UTF-16 string is inherent EF compile plus first execution of a pa"
+    "sourcePath": "docs/jobs/durable-format.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0001-layered-dependency-direction",
-    "summary": "- Status: Accepted - Date: 2026-07-21",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0001",
-      "layered",
-      "dependency",
-      "direction"
-    ],
-    "order": 1028,
-    "title": "ADR 0001: Enforce layered dependency direction",
-    "sourcePath": "docs/architecture/decisions/0001-layered-dependency-direction.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0001-layered-dependency-direction.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "jobs-upgrade",
+    "title": "Upgrade Jobs storage and workers",
+    "summary": "Upgrade queues and workers without losing durable work.",
+    "order": 12,
     "headings": [
       {
-        "id": "adr-0001-enforce-layered-dependency-direction",
-        "text": "ADR 0001: Enforce layered dependency direction",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
+        "id": "rehearse",
+        "text": "Rehearse",
         "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
+        "id": "deploy-and-verify",
+        "text": "Deploy and verify",
         "level": 2
       }
     ],
-    "wordCount": 99,
-    "readMinutes": 1,
-    "searchText": "ADR 0001: Enforce layered dependency direction Status: Accepted Date: 2026-07-21 Context The provider spans byte transport, PostgreSQL protocol semantics, ADO.NET, replication, EF Core, and optional extensions. Mixing these concerns would make wire behaviour hard to test and force low-level packages to inherit volatile dependencies. Decision Use the dependency direction in `docs/architecture/overview.md`. Protocol code cannot expose ADO.NET concepts; Data cannot expose EF Core concepts. Optional extensions integrate through `BlueTusk.Extensions.Abstractions`. Consequences Some operations require orchestration types in `BlueTusk.Client` even when most of their implementation is lower-level. Cross-layer convenience APIs belong in the highest applicable layer."
+    "sourcePath": "docs/jobs/upgrade.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0002-postgresql-is-the-specification",
-    "summary": "- Status: Accepted - Date: 2026-07-21",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0002",
-      "postgresql",
-      "is",
-      "the",
-      "specification"
-    ],
-    "order": 1029,
-    "title": "ADR 0002: Treat PostgreSQL as the specification",
-    "sourcePath": "docs/architecture/decisions/0002-postgresql-is-the-specification.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0002-postgresql-is-the-specification.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "workflows",
+    "title": "BlueTusk.Workflows",
+    "summary": "Coordinate persistent steps and signals with explicit recovery policies.",
+    "order": 13,
     "headings": [
       {
-        "id": "adr-0002-treat-postgresql-as-the-specification",
-        "text": "ADR 0002: Treat PostgreSQL as the specification",
-        "level": 1
+        "id": "define-and-execute",
+        "text": "Define and execute",
+        "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
+        "id": "durable-execution-contract",
+        "text": "Durable execution contract",
+        "level": 2
+      },
+      {
+        "id": "failure-cancellation-and-recovery",
+        "text": "Failure, cancellation and recovery",
+        "level": 2
+      },
+      {
+        "id": "history-replay-and-migration",
+        "text": "History, replay and migration",
+        "level": 2
+      },
+      {
+        "id": "bounds-and-operations",
+        "text": "Bounds and operations",
         "level": 2
       }
     ],
-    "wordCount": 72,
-    "readMinutes": 1,
-    "searchText": "ADR 0002: Treat PostgreSQL as the specification Status: Accepted Date: 2026-07-21 Decision PostgreSQL protocol documentation, SQL documentation, system catalogues, source code where necessary, and reproducible server behaviour are authoritative. Npgsql and libpq may be used for differential testing, but neither defines correct behaviour for BlueTusk. Every protocol or catalogue feature should cite the relevant PostgreSQL major-version documentation in its design notes or tests when behaviour is not obvious."
+    "sourcePath": "docs/workflows/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0003-catalogue-driven-types",
-    "summary": "- Status: Accepted - Date: 2026-07-21",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0003",
-      "catalogue",
-      "driven",
-      "types"
-    ],
-    "order": 1030,
-    "title": "ADR 0003: Discover types from catalogues",
-    "sourcePath": "docs/architecture/decisions/0003-catalogue-driven-types.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0003-catalogue-driven-types.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "schema",
+    "title": "BlueTusk Schema",
+    "summary": "Compare PostgreSQL schemas and apply controlled schema changes.",
+    "order": 14,
     "headings": [
       {
-        "id": "adr-0003-discover-types-from-catalogues",
-        "text": "ADR 0003: Discover types from catalogues",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
+        "id": "command-line-snapshots-and-drift",
+        "text": "Command-line snapshots and drift",
         "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
+        "id": "expanded-catalogue-contracts",
+        "text": "Expanded catalogue contracts",
         "level": 2
       },
       {
-        "id": "consequences",
-        "text": "Consequences",
+        "id": "deployment-sequencing",
+        "text": "Deployment sequencing",
+        "level": 2
+      },
+      {
+        "id": "concurrent-index-additions",
+        "text": "Concurrent index additions",
         "level": 2
       }
     ],
-    "wordCount": 90,
-    "readMinutes": 1,
-    "searchText": "ADR 0003: Discover types from catalogues Status: Accepted Date: 2026-07-21 Context PostgreSQL databases can contain user-defined and extension-provided types unknown when BlueTusk was compiled. Decision OID is the connection-local type identity. Load descriptors from PostgreSQL catalogues, bind codecs separately, and preserve unknown values with their descriptor, format, and bytes. Built-in OIDs are bootstrap information, not a closed type list. Consequences Pools require catalogue cache invalidation. Values cannot be interpreted by OID alone across unrelated servers. Extension codecs use the same registry as built-in codecs."
+    "sourcePath": "docs/schema/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0004-protocol-conformance-testing",
-    "summary": "- Status: Accepted - Date: 2026-07-21",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0004",
-      "protocol",
-      "conformance",
-      "testing"
-    ],
-    "order": 1031,
-    "title": "ADR 0004: Test protocol framing independently",
-    "sourcePath": "docs/architecture/decisions/0004-protocol-conformance-testing.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0004-protocol-conformance-testing.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "schema-attestation",
+    "title": "Catalogue consistency attestation",
+    "summary": "Check database catalogue state against an expected schema.",
+    "order": 15,
     "headings": [
       {
-        "id": "adr-0004-test-protocol-framing-independently",
-        "text": "ADR 0004: Test protocol framing independently",
-        "level": 1
+        "id": "narrow-permissions",
+        "text": "Narrow permissions",
+        "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
+        "id": "evidence",
+        "text": "Evidence",
         "level": 2
       }
     ],
-    "wordCount": 71,
-    "readMinutes": 1,
-    "searchText": "ADR 0004: Test protocol framing independently Status: Accepted Date: 2026-07-21 Decision Protocol tests must exercise fragmentation at every byte boundary, multiple frames in one read, asynchronous frames between operation frames, malformed lengths, unknown identifiers, cancellation races, and mid-frame disconnects. The in-process fake server and message-stream utilities are test infrastructure, not an alternate PostgreSQL implementation. Real-server and differential tests remain mandatory for behaviours that depend on server semantics."
+    "sourcePath": "docs/schema/catalogue-attestation.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0005-postgresql-pipeline-mode-and-transport-pipelines",
-    "summary": "- Status: Accepted; retain the ArrayPool/Span/Memory transport - Date: 2026-08-01",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0005",
-      "postgresql",
-      "pipeline",
-      "mode",
-      "and",
-      "transport",
-      "pipelines"
-    ],
-    "order": 1032,
-    "title": "ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines",
-    "sourcePath": "docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "sql",
+    "title": "BlueTusk Sql",
+    "summary": "Build and validate typed SQL catalogs.",
+    "order": 16,
     "headings": [
       {
-        "id": "adr-0005-separate-postgresql-pipeline-mode-from-transport-pipelines",
-        "text": "ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "measurement-gate",
-        "text": "Measurement gate",
-        "level": 2
-      },
-      {
-        "id": "measurements",
-        "text": "Measurements",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
+        "id": "deploy-a-validated-sql-catalog",
+        "text": "Deploy a validated SQL catalog",
+        "level": 3
       }
     ],
-    "wordCount": 826,
-    "readMinutes": 4,
-    "searchText": "ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines Status: Accepted; retain the ArrayPool/Span/Memory transport Date: 2026-08-01 Context PostgreSQL pipeline mode batches extended-query operations between explicit `Sync` boundaries and returns ordered result groups without waiting after every operation. `System.IO.Pipelines` is a .NET buffering and asynchronous I/O abstraction. A similarly named API does not implement PostgreSQL's protocol semantics, and adopting it would affect BlueTusk's genuine synchronous transport promise. Decision Implement PostgreSQL pipeline mode in the Client layer over the existing protocol and transport abstractions. Its public contract must define operation ordering, explicit synchronization boundaries, aborted-group errors, cancellation, early disposal, and recovery to `ReadyForQuery` before a session can be reused. Capability flags alone do not constitute support. Keep the current ArrayPool/Span/Memory transport. The checked-in bounded `System.IO.Pipelines` prototype does not clear the adoption gate across representative synchronous and asynchronous workloads. `System.IO.Pipelines` remains confined to the benchmark project and is not a production dependency. Measurement gate The comparison must use checked-in, reproducible benchmarks for: backend frames fragmented at representative and adversarial boundaries; many small rows and large fields; COPY streaming and cancellation recovery; plain TCP and TLS; synchronous and asynchronous commands; and throughput, tail latency, allocated bytes, retained buffers, and implementation complexity. Adoption requires a meaningful measured benefit without regressing synchronous behavior, bounded-memory guarantees, cancellation safety, or protocol-test clarity. Otherwise the current transport remains the accepted implementation. Measurements `TransportPipelineBenchmarks` compares warm, reusable readers over identical PostgreSQL frames. Its prototype uses a 2 MiB pause threshold and 64 "
+    "sourcePath": "docs/sql/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0006-streams-delivery-semantics",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0006",
-      "streams",
-      "delivery",
-      "semantics"
-    ],
-    "order": 1033,
-    "title": "ADR 0006: Make Streams the application CDC boundary",
-    "sourcePath": "docs/architecture/decisions/0006-streams-delivery-semantics.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0006-streams-delivery-semantics.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "search",
+    "title": "BlueTusk.Search",
+    "summary": "Index data and query search or vector backends.",
+    "order": 17,
     "headings": [
       {
-        "id": "adr-0006-make-streams-the-application-cdc-boundary",
-        "text": "ADR 0006: Make Streams the application CDC boundary",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
+        "id": "durable-ingestion-and-deletion",
+        "text": "Durable ingestion and deletion",
         "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
+        "id": "durable-embedding-checkpoints",
+        "text": "Durable embedding checkpoints",
+        "level": 3
+      },
+      {
+        "id": "retrieval-ranking-and-pagination",
+        "text": "Retrieval, ranking and pagination",
         "level": 2
       },
       {
-        "id": "consequences",
-        "text": "Consequences",
+        "id": "opensearch-adapter",
+        "text": "OpenSearch adapter",
+        "level": 2
+      },
+      {
+        "id": "operator-readiness",
+        "text": "Operator readiness",
+        "level": 2
+      },
+      {
+        "id": "operate-a-search-index",
+        "text": "Operate a search index",
         "level": 2
       }
     ],
-    "wordCount": 182,
-    "readMinutes": 1,
-    "searchText": "ADR 0006: Make Streams the application CDC boundary Status: Accepted Date: 2026-08-03 Context The replication packages expose PostgreSQL wire messages. Applications need a durable contract that preserves transactions and remains stable as pgoutput evolves. Allowing each product to interpret wire messages would duplicate transaction assembly, schema handling, restart logic, and failure semantics. Decision `BlueTusk.Streams` is the only application-level CDC abstraction. Sync, Live, Control Plane, and Continuous Graph must not reference `BlueTusk.Replication` or `BlueTusk.Replication.PgOutput` directly; an architecture test enforces the boundary. Streams delivers immutable, ordered transactions at least once. It does not claim exactly-once delivery. A delivery can be acknowledged, negatively acknowledged, or disposed without acknowledgement. Only the delivery object can advance durable progress. Direct consumer groups initially own independent PostgreSQL slots. The first preview also includes a durable PostgreSQL relay so multiple independently checkpointed groups can share one slot. Consequences All application products inherit one ordering, identity, checkpoint, schema, and retry model. Duplicate delivery remains possible and consumers must be idempotent. Lower-level replication packages remain public for specialist wire-level users, but are not an application-product dependency."
+    "sourcePath": "docs/search/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0007-checkpoint-ordering-and-fencing",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0007",
-      "checkpoint",
-      "ordering",
-      "and",
-      "fencing"
-    ],
-    "order": 1034,
-    "title": "ADR 0007: Persist checkpoints before replication feedback",
-    "sourcePath": "docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "edge",
+    "title": "BlueTusk.Edge",
+    "summary": "Synchronize client data through intermittent connections.",
+    "order": 18,
     "headings": [
       {
-        "id": "adr-0007-persist-checkpoints-before-replication-feedback",
-        "text": "ADR 0007: Persist checkpoints before replication feedback",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
+        "id": "cache-snapshots-and-changes",
+        "text": "Cache, snapshots and changes",
         "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
+        "id": "durable-mutations-and-conflicts",
+        "text": "Durable mutations and conflicts",
         "level": 2
       },
       {
-        "id": "consequences",
-        "text": "Consequences",
+        "id": "durable-server-and-authenticated-transport",
+        "text": "Durable server and authenticated transport",
+        "level": 2
+      },
+      {
+        "id": "operator-health-and-telemetry",
+        "text": "Operator health and telemetry",
+        "level": 2
+      },
+      {
+        "id": "storage-and-bounds",
+        "text": "Storage and bounds",
         "level": 2
       }
     ],
-    "wordCount": 150,
-    "readMinutes": 1,
-    "searchText": "ADR 0007: Persist checkpoints before replication feedback Status: Accepted Date: 2026-08-03 Context PostgreSQL may recycle WAL after receiving replication feedback. Reporting progress before the application checkpoint is durable can create an unrecoverable loss window. Concurrent owners can also corrupt progress without an ownership fence. Decision An acknowledgement completes in this order: durable downstream handling, monotonic compare-and-swap checkpoint persistence, then PostgreSQL replication feedback. A failure before checkpoint persistence causes safe redelivery. A failure after persistence but before feedback may also redeliver, but cannot lose acknowledged work. Checkpoint stores reject backward movement and compare the expected store generation. Lease stores grant exclusive ownership with monotonically increasing fencing tokens. Every checkpoint mutation and relay group acknowledgement carries the active token. Consequences Delivery is at least once. Store implementations must pass a shared crash-injection and fencing conformance kit. Operational diagnostics distinguish destination, checkpoint, feedback, lease-expiry, and source-identity failures."
+    "sourcePath": "docs/edge/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
+    "keywords": []
   },
   {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0008-snapshot-then-stream-protocol",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0008",
-      "snapshot",
-      "then",
-      "stream",
-      "protocol"
-    ],
-    "order": 1035,
-    "title": "ADR 0008: Bootstrap with an exported consistent snapshot",
-    "sourcePath": "docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
+    "category": "services",
+    "categoryLabel": "Data services",
+    "slug": "studio",
+    "title": "BlueTusk Studio",
+    "summary": "Inspect PostgreSQL data through capability-authorized client queries.",
+    "order": 19,
     "headings": [
       {
-        "id": "adr-0008-bootstrap-with-an-exported-consistent-snapshot",
-        "text": "ADR 0008: Bootstrap with an exported consistent snapshot",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
+        "id": "operational-adapters",
+        "text": "Operational adapters",
         "level": 2
       },
       {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
+        "id": "operate-studio",
+        "text": "Operate Studio",
         "level": 2
       }
     ],
-    "wordCount": 181,
-    "readMinutes": 1,
-    "searchText": "ADR 0008: Bootstrap with an exported consistent snapshot Status: Accepted Date: 2026-08-03 Context A source snapshot and subsequent CDC must cover concurrent writes without a gap. PostgreSQL exported snapshots exist only while their exporting transaction remains alive, so an interrupted exporter cannot be resumed honestly. Decision Streams creates a replication-consistent point and exported snapshot, keeps the exporter transaction alive, and lets bounded parallel readers import that snapshot. Readers use keyset-paged binary COPY. CDC starts at the matching consistent position and is held until snapshot completion. Snapshot delivery has explicit reset, start, batch, and complete lifecycle calls. Rows use a snapshot epoch plus table/key identity rather than pretending to have WAL change identities. If the exporter or any required session is lost, the epoch is abandoned. A new exported snapshot and epoch restart the idempotent snapshot from the beginning; an expired snapshot is never presented as resumable. Consequences Consumers must support idempotent snapshot replay and an explicit reset. The protocol prefers correctness over partial snapshot continuation and permits parallelism only while the exporter lifetime is guaranteed."
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0009-bounded-transaction-spooling",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0009",
-      "bounded",
-      "transaction",
-      "spooling"
-    ],
-    "order": 1036,
-    "title": "ADR 0009: Bound transaction memory and spill to a versioned spool",
-    "sourcePath": "docs/architecture/decisions/0009-bounded-transaction-spooling.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0009-bounded-transaction-spooling.md",
-    "headings": [
-      {
-        "id": "adr-0009-bound-transaction-memory-and-spill-to-a-versioned-spool",
-        "text": "ADR 0009: Bound transaction memory and spill to a versioned spool",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 247,
-    "readMinutes": 2,
-    "searchText": "ADR 0009: Bound transaction memory and spill to a versioned spool Status: Accepted Date: 2026-08-03 Context Logical replication can stream transactions larger than process memory. Bounds on channel capacity alone do not constrain a single transaction, and partial delivery would break the transaction-preserving contract. Decision Streams accounts for queued transactions, changes, bytes, individual transaction size, spool storage, acknowledgement age, and WAL lag. Transaction assembly remains in memory up to configured limits and then spills to an internal disk spool. Spool records use a versioned binary envelope, integrity checks, atomic completion markers, bounded storage, and encryption-at-rest hooks. Aborted transactions remove their staged records. The spool is not a durable restart log: safe redelivery comes from PostgreSQL or the durable relay. Existing spool artifacts count against the storage limit after restart; an operator removes confirmed orphans only while the worker is stopped. Version 1 keeps its CRC-32/IEEE checksum, little-endian framing, completion footer, and flush-to-disk boundary. The implementation uses the pinned `System.IO.Hashing` library's optimized checksum paths, with a compatible fallback when hardware acceleration is unavailable. One incremental hasher is reused for a writer's segmented records and reset between records; payload ownership and custom protector behavior are unchanged. CRC detects corruption, not malicious modification or disclosure; it does not replace an authenticated protector. Consequences Large transactions remain one delivery unit without unbounded managed memory. Spool exhaustion pauses reading and surfaces health diagnostics rather than silently dropping data. The spool format receives upgrade tests before releases."
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0010-postgresql-durable-relay",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0010",
-      "postgresql",
-      "durable",
-      "relay"
-    ],
-    "order": 1037,
-    "title": "ADR 0010: Use PostgreSQL for the first durable relay",
-    "sourcePath": "docs/architecture/decisions/0010-postgresql-durable-relay.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0010-postgresql-durable-relay.md",
-    "headings": [
-      {
-        "id": "adr-0010-use-postgresql-for-the-first-durable-relay",
-        "text": "ADR 0010: Use PostgreSQL for the first durable relay",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 163,
-    "readMinutes": 1,
-    "searchText": "ADR 0010: Use PostgreSQL for the first durable relay Status: Accepted Date: 2026-08-03 Context Slot-per-group consumption is simple but multiplies source slots and retained WAL. A durable fan-out layer lets one replication slot serve independent groups while preserving replay and acknowledgement state. Decision The first Streams preview includes a PostgreSQL-backed relay. It uses a separate control data source by default and owns a configurable schema named `bluetusk_streams`. Configuration rejects publications that contain the relay control schema. The relay stores source registrations and epochs, versioned transaction envelopes, groups, checkpoints, fencing leases, snapshot progress, quarantine records, and retention watermarks. An append becomes visible atomically. A transaction is retained until every applicable group has acknowledged beyond it and the configured resume-retention window has elapsed. Consequences PostgreSQL is the production-default checkpoint and relay backend. Operators must capacity-plan relay storage independently from source WAL. File storage remains single-node only; Redis is an alternative checkpoint and lease store, not the initial relay store."
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0011-live-authoritative-requery-security",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0011",
-      "live",
-      "authoritative",
-      "requery",
-      "security"
-    ],
-    "order": 1038,
-    "title": "ADR 0011: Treat CDC as Live invalidation, not client-visible truth",
-    "sourcePath": "docs/architecture/decisions/0011-live-authoritative-requery-security.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0011-live-authoritative-requery-security.md",
-    "headings": [
-      {
-        "id": "adr-0011-treat-cdc-as-live-invalidation-not-client-visible-truth",
-        "text": "ADR 0011: Treat CDC as Live invalidation, not client-visible truth",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 237,
-    "readMinutes": 2,
-    "searchText": "ADR 0011: Treat CDC as Live invalidation, not client-visible truth Status: Accepted Date: 2026-08-03 Context Replication tuples do not carry application authorisation context and may omit columns or old values. Projecting them directly to clients risks bypassing row-level security, tenant filters, and current policy decisions. Decision Live queries are registered by trusted server code. Clients provide typed parameters only and cannot submit SQL or expression trees. CDC invalidates affected subscriptions; the engine coalesces changes, reruns the bounded authorised EF query, and diffs keyed results. ADR 0015 adds a separate, explicitly enabled client-query capability for V1. It does not change the authoritative-requery decision: an application-issued database capability, PostgreSQL RLS/read-only role, bounded execution, and the same security-scoped subscription identity are required. ADR 0016 permits bounded incremental Continuous Graph maintenance, but only from authorised affected-key database queries. Uncertainty, removal, worsening rank, two-phase commit, and configured repair intervals return to a full authoritative query. CDC tuples remain invalidation and key-discovery inputs, not client-visible truth. Shared-subscription identity includes database, plan fingerprint, parameters, tenant/security scope, authorisation-policy version, and result limit. Resume tokens are signed, expiring, versioned, and bound to that identity. Subscriptions never share results or replay across security scopes. Consequences PostgreSQL and EF remain the source of truth for data visible to a client. Live trades some query work for a much smaller security and correctness surface. Unsupported query shapes fail at startup registration with diagnostics."
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0012-sync-connector-delivery-contract",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0012",
-      "sync",
-      "connector",
-      "delivery",
-      "contract"
-    ],
-    "order": 1039,
-    "title": "ADR 0012: Keep source transactions as the Sync delivery unit",
-    "sourcePath": "docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
-    "headings": [
-      {
-        "id": "adr-0012-keep-source-transactions-as-the-sync-delivery-unit",
-        "text": "ADR 0012: Keep source transactions as the Sync delivery unit",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 221,
-    "readMinutes": 2,
-    "searchText": "ADR 0012: Keep source transactions as the Sync delivery unit Status: Accepted Date: 2026-08-03 Context Destinations offer different transactional and idempotency guarantees. Flattening source transactions into unrelated records would obscure partial failures and permit checkpoints to pass work that was not durably applied. Decision `ISyncDestination` declares transactional batches, idempotent upserts, deletes, checkpoint co-location, reconciliation, and alias-swap capabilities. A pipeline checkpoint advances only after the destination confirms durable handling of the whole source transaction. The official connector contract is deliberately specific: atomic state and checkpoint for PostgreSQL and Redis, replay-safe materialisation for OpenSearch, and durable publication with a stable identity for NATS JetStream. The public capability flags expose the mechanics available to each connector without changing the existing destination interface. Transform definitions have stable version fingerprints. A changed fingerprint requires an explicit rebuild or migration. Poison records pause by default; quarantine-and-advance is an explicit operator policy. PostgreSQL, NATS JetStream, Redis, and OpenSearch ship together after passing one destination conformance suite. Consequences Connectors may implement durability differently but expose one state machine and recovery contract. The shared conformance suite verifies same-process and restart redelivery, and each official connector's live tests cover its own atomicity, partial-write, versioning, or broker-deduplication boundary. Operators can therefore see the durable outcome each connector proves instead of inferring it from a broad slogan."
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0013-bounded-statement-multiplexing",
-    "summary": "- Status: Accepted - Date: 2026-08-04",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0013",
-      "bounded",
-      "statement",
-      "multiplexing"
-    ],
-    "order": 1040,
-    "title": "ADR 0013: Use bounded, session-neutral statement multiplexing",
-    "sourcePath": "docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
-    "headings": [
-      {
-        "id": "adr-0013-use-bounded-session-neutral-statement-multiplexing",
-        "text": "ADR 0013: Use bounded, session-neutral statement multiplexing",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 406,
-    "readMinutes": 2,
-    "searchText": "ADR 0013: Use bounded, session-neutral statement multiplexing Status: Accepted Date: 2026-08-04 Context High-concurrency applications should not need one physical PostgreSQL session for every logical command. Multiplexing arbitrary commands is unsafe, however, because transactions, temporary objects, settings, listeners, cursors, advisory locks, COPY, and prepared-statement state belong to a physical session. Decision Multiplexing is opt-in on `BlueTuskDataSource`. A bounded channel feeds a fixed number of persistent physical worker lanes. The automatic worker count uses at most half of the configured pool, capped at four, so ordinary session-affine checkouts retain capacity. Queue size, commands per lease, commands per pipeline flush, and graceful shutdown time all have explicit bounds. Only commands created directly from the data source are eligible. Explicit connections and transactions remain session-affine. A conservative SQL classifier routes known stateful statements and routines away from multiplexing. `Auto`, `Require`, and `Disable` let a caller accept fallback, fail closed, or pin a command deliberately. `Require` is a strict contract: explicit connections, transactions, prepared commands, sequential readers, and classified session-state SQL fail before execution. The classifier covers transaction/cursor/preparation commands, temporary schemas and objects, settings and sequence-session readers, notifications, advisory locks, large-object routines, `CALL`, and `DO`. It cannot prove an arbitrary user function is pure, so callers remain responsible for disabling multiplexing around trusted stateful routines. Each eligible command is its own PostgreSQL pipeline synchronization group. Errors, cancellation, and timeouts therefore cannot advance or poison adjacent commands. Scalar responses retain only their first value; repeated row descriptions and statement shapes are reused; transient batch storage is pooled. Text result format remains the safe default becau"
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0014-managed-hosting-reconciliation",
-    "summary": "- Status: accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0014",
-      "managed",
-      "hosting",
-      "reconciliation"
-    ],
-    "order": 1041,
-    "title": "ADR 0014: managed hosting uses fenced desired-state reconciliation",
-    "sourcePath": "docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
-    "headings": [
-      {
-        "id": "adr-0014-managed-hosting-uses-fenced-desired-state-reconciliation",
-        "text": "ADR 0014: managed hosting uses fenced desired-state reconciliation",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 507,
-    "readMinutes": 3,
-    "searchText": "ADR 0014: managed hosting uses fenced desired-state reconciliation Status: accepted Date: 2026-08-03 Context Managed hosting must provision and operate Streams, Sync, Live, the Control Plane, the Dashboard, and Continuous Graph across more than one infrastructure provider. Embedding one cloud SDK or accepting raw provider credentials in the core would couple the product lifecycle to a vendor, broaden the secret exposure boundary, and make failover between reconcilers unsafe. A production controller can also be interrupted after provider mutation but before status persistence. At-least-once reconciliation is therefore unavoidable. An unversioned mutable deployment document, an unfenced leader lock, or a provider action without a stable plan identity could turn that redelivery into duplicate infrastructure or allow an expired controller to overwrite a newer owner. Decision Managed hosting is a Control Plane capability built around these contracts: `ManagedDeploymentSpec` is versioned desired state. Its generation advances by exactly one through compare-and-swap storage. tenant, provider, and region are immutable placement identity. Moving a deployment is an explicit new deployment and cutover, not an in-place field edit; workloads carry bounded replica, CPU, memory, and storage requests. Tenant quota is enforced before a plan can reach a provider; workloads contain only `ManagedSecretReference` values. The Control Plane never accepts, resolves, serializes, logs, or returns secret material; canonical desired-state and provider-plan fingerprints make retries and drift decisions stable across process restarts and dictionary order; one exclusive lease owns reconciliation. Every acquisition advances a monotonically increasing fencing token, renews while provider work is in flight, and supplies that token to every provider mutation; provider adapters plan, apply, and delete through `IManagedInfrastructureProvider`. They must make apply/delete idempotent for deployment, gene"
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0015-capability-secured-client-queries",
-    "summary": "- Status: Accepted - Date: 2026-08-03",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0015",
-      "capability",
-      "secured",
-      "client",
-      "queries"
-    ],
-    "order": 1042,
-    "title": "ADR 0015: Gate client-authored queries with database capabilities",
-    "sourcePath": "docs/architecture/decisions/0015-capability-secured-client-queries.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0015-capability-secured-client-queries.md",
-    "headings": [
-      {
-        "id": "adr-0015-gate-client-authored-queries-with-database-capabilities",
-        "text": "ADR 0015: Gate client-authored queries with database capabilities",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 388,
-    "readMinutes": 2,
-    "searchText": "ADR 0015: Gate client-authored queries with database capabilities Status: Accepted Date: 2026-08-03 Context ADR 0011 made trusted server query registration the only Live query path. V1 also needs authenticated applications to offer controlled exploratory queries without turning the Live endpoint into an unrestricted database proxy. SQL text cannot be made safe by keyword matching alone. A read-only PostgreSQL transaction blocks database writes but cannot prevent every external side effect of a user-defined or extension function. Uploaded CLR expression trees, dynamic compilation, and provider-side client evaluation also create code execution, trimming, denial-of-service, and policy-bypass risks. Decision Trusted registration remains the default. Client-authored queries are a separate opt-in capability: the application authorizes every request and returns a complete `LiveClientQueryGrant`; the grant selects an application-owned `DbDataSource`, immutable policy, and caller-specific `LiveSecurityScope`; raw SQL is enabled only when the policy requires both PostgreSQL row-level security and a dedicated read-only, non-owner, non-superuser, non-`BYPASSRLS` role; operators revoke function execution from `PUBLIC` and grant only the side-effect-free functions that capability needs; SQL runs as one parameterized query inside a read-only transaction with `row_security` enabled, statement/lock/idle timeouts, cancellation, and bounded result rows, columns, and bytes; comments, multiple statements, positional parameters, state-changing commands, row locks, and known side-effecting server functions are rejected before execution as defense in depth; remote LINQ is a finite JSON relational document over policy-allowlisted relations, columns, filters, projections, deterministic ordering, and a mandatory result bound; CLR expression trees and dynamically compiled code are never accepted; SQL invalidation conservatively covers every relation in the grant. Remote LINQ records its exact "
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0016-authoritative-incremental-graph-maintenance",
-    "summary": "- Status: Accepted - Date: 2026-08-04; extended for 1.1 on 2026-08-28",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0016",
-      "authoritative",
-      "incremental",
-      "graph",
-      "maintenance"
-    ],
-    "order": 1043,
-    "title": "ADR 0016: Use bounded incremental graph maintenance with authoritative repair",
-    "sourcePath": "docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
-    "headings": [
-      {
-        "id": "adr-0016-use-bounded-incremental-graph-maintenance-with-authoritative-repair",
-        "text": "ADR 0016: Use bounded incremental graph maintenance with authoritative repair",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 581,
-    "readMinutes": 3,
-    "searchText": "ADR 0016: Use bounded incremental graph maintenance with authoritative repair Status: Accepted Date: 2026-08-04; extended for 1.1 on 2026-08-28 Context Rerunning every registered `GRAPH_TABLE` query for every affected transaction is correct but can waste database work when a transaction touches a small, known set of result keys. Replication row images cannot safely replace query results: they may omit columns and old values, do not carry the caller's security context, and cannot reveal which hidden row should enter a bounded top-N result when a visible row disappears or becomes less competitive. An incremental engine must also preserve Streams' transaction ordering and at-least-once contract. Publishing a graph event after acknowledging its source transaction would create an unrecoverable loss window. Decision A compiled graph plan retains an immutable impact plan and uses three ordered maintenance tiers: explicitly trusted CDC delta, compiler-generated authoritative scoped delta, then complete authoritative repair. The scoped query is the automatic incremental default. The existing custom `IContinuousGraphIncrementalEvaluator<TResult,TKey>` remains supported. A CDC projector is eligible only when it is explicitly registered and presents a matching schema/impact fingerprint plus complete old/new values, exact changed-column knowledge, sufficient replica identity, and enforcement of the original Live security scope. Otherwise it is not invoked. Scoped and complete queries execute the registered `GRAPH_TABLE` query under the original permissions and RLS boundary. The session can update its materialised result without a full query only when the evaluator declares exact coverage and all of these conditions hold: every returned row belongs to the declared affected-key set; the affected-key count stays within its configured bound; an affected visible row remains visible; and an affected visible row keeps or improves its deterministic rank. A new candidate can safely enter"
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-decisions-0017-internal-ef-data-provider-spi",
-    "summary": "- Status: accepted - Date: 2026-08-04",
-    "keywords": [
-      "docs",
-      "architecture",
-      "decisions",
-      "0017",
-      "internal",
-      "ef",
-      "data",
-      "provider",
-      "spi"
-    ],
-    "order": 1044,
-    "title": "ADR 0017: Keep the EF-to-Data provider SPI internal and minimal",
-    "sourcePath": "docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
-    "headings": [
-      {
-        "id": "adr-0017-keep-the-ef-to-data-provider-spi-internal-and-minimal",
-        "text": "ADR 0017: Keep the EF-to-Data provider SPI internal and minimal",
-        "level": 1
-      },
-      {
-        "id": "context",
-        "text": "Context",
-        "level": 2
-      },
-      {
-        "id": "decision",
-        "text": "Decision",
-        "level": 2
-      },
-      {
-        "id": "consequences",
-        "text": "Consequences",
-        "level": 2
-      }
-    ],
-    "wordCount": 393,
-    "readMinutes": 2,
-    "searchText": "ADR 0017: Keep the EF-to-Data provider SPI internal and minimal Status: accepted Date: 2026-08-04 Context The EF provider needs provider-owned behavior that `DbConnection` and `DbDataSource` do not expose: unredacted lifecycle configuration, immutable runtime type-registry snapshots, negotiated server capabilities, diagnostics, unpooled administration connections, pool clearing and type-catalogue reload. Using concrete casts and construction throughout EF duplicated policy and made the implementation boundary difficult to test. There is no demonstrated third-party provider requirement for this seam. Publishing it would freeze security- and lifecycle-sensitive implementation details before usability evidence exists. Decision Data owns four assembly-internal contracts in `BlueTusk.Data.Internal`: `IProviderServices` creates and validates provider connections and data sources and derives safe database-lifecycle settings; `IProviderConnection` supplies connection identity, unredacted internal configuration, type and Data-owned capability snapshots, diagnostics, administration connections and catalogue reload; and `IProviderDataSource` supplies source identity, configuration/type/diagnostic snapshots, logical and administration connections, and pool clearing; and `IProviderUpdateResult` supplies a completed statement's DML row count, without changing ADO.NET's public batch-total `RecordsAffected` property. The EF consumer reads through statement completion before requesting the count. The contracts are exposed to the EF assembly only through `InternalsVisibleTo`. Concrete `BlueTuskConnection` and `BlueTuskDataSource` implement them explicitly, so no public API is added. EF's public `UseBlueTusk` overloads remain the only concrete-type boundary. `BlueTuskDataReader` explicitly implements the update-result contract. This lets ordinary tracked writes consume PostgreSQL's command-completion metadata rather than fabricate a returned constant row. For command-reader intercepto"
-  },
-  {
-    "category": "architecture",
-    "categoryLabel": "Architecture",
-    "listed": false,
-    "slug": "architecture-transport",
-    "summary": "BlueTusk.Transport owns byte movement and connection establishment. It has no PostgreSQL authentication, SQL, type-system, pooling, or ADO.NET knowledge.",
-    "keywords": [
-      "docs",
-      "architecture",
-      "transport"
-    ],
-    "order": 1046,
-    "title": "Transport contract",
-    "sourcePath": "docs/architecture/transport.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/transport.md",
-    "headings": [
-      {
-        "id": "transport-contract",
-        "text": "Transport contract",
-        "level": 1
-      },
-      {
-        "id": "endpoints-and-address-attempts",
-        "text": "Endpoints and address attempts",
-        "level": 2
-      },
-      {
-        "id": "socket-and-stream-behavior",
-        "text": "Socket and stream behavior",
-        "level": 2
-      },
-      {
-        "id": "connection-failure-classification",
-        "text": "Connection failure classification",
-        "level": 2
-      },
-      {
-        "id": "tls-and-buffering-decision",
-        "text": "TLS and buffering decision",
-        "level": 2
-      }
-    ],
-    "wordCount": 428,
-    "readMinutes": 2,
-    "searchText": "Transport contract `BlueTusk.Transport` owns byte movement and connection establishment. It has no PostgreSQL authentication, SQL, type-system, pooling, or ADO.NET knowledge. Endpoints and address attempts TCP endpoints accept a DNS name or numeric address. Sync and async connections resolve the name once, preserve the platform resolver's IPv4/IPv6 preference, and try every returned address in order. The configured connect timeout is one deadline shared by all address attempts rather than a fresh timeout for every address. Asynchronous DNS resolution is included in that deadline and observes caller cancellation. The dedicated synchronous path uses the platform's synchronous DNS resolver and never blocks on an asynchronous operation. Unix-domain endpoints bypass DNS. TCP-only `NoDelay` and keepalive options are not applied to Unix sockets; their bounded send and receive buffers still are. Both endpoint families have real synchronous and asynchronous connection tests. Socket and stream behavior TCP keepalive and `NoDelay` are enabled by default. Send and receive socket buffers are bounded and configurable through `BlueTuskTransportOptions`. The defaults use a 32 KiB send window and a 256 KiB receive window: commands are normally small writes, while measured sequential reads benefit from enough kernel-side capacity to keep the protocol consumer supplied. Applications with very large pools can reduce the receive value when native per-socket memory is more important than bulk-read throughput. Protocol-level framing uses pooled, bounded buffers above the socket. Reads and writes operate directly on caller-provided `Span<T>` or `Memory<T>`. Awaited writes provide network backpressure instead of creating an unbounded transport queue. Async connect, read, write, flush, and TLS operations pass cancellation to the underlying .NET network operation. A caller cancellation remains an `OperationCanceledException`. Expiration of the connect deadline is instead reported as a classif"
+    "sourcePath": "docs/studio/README.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "production-checklist",
-    "summary": "Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.",
-    "keywords": [
-      "production",
-      "checklist",
-      "deployment",
-      "security",
-      "slo",
-      "rollback",
-      "runbook"
-    ],
-    "order": 2,
-    "listed": true,
     "title": "Production checklist",
-    "sourcePath": "docs/operations/production-checklist.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-checklist.md",
+    "summary": "Review access, capacity, observability, recovery, and rollback before deployment.",
+    "order": 0,
     "headings": [
-      {
-        "id": "production-checklist",
-        "text": "Production checklist",
-        "level": 1
-      },
       {
         "id": "1-record-the-deployment-contract",
         "text": "1. Record the deployment contract",
@@ -7440,8 +3091,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       },
       {
-        "id": "9-run-the-release-acceptance-suite",
-        "text": "9. Run the release acceptance suite",
+        "id": "9-test-the-application-under-load",
+        "text": "9. Test the application under load",
         "level": 2
       },
       {
@@ -7450,33 +3101,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1291,
-    "readMinutes": 6,
-    "searchText": "Production checklist This checklist turns a successful BlueTusk application build into an operable deployment. It applies to stable packages and to production-like evaluation of `1.1.0-rc.1`. A public RC is not a substitute for an application owner’s load, security, recovery, and change-management evidence. 1. Record the deployment contract Before provisioning, record the following in the application repository: exact BlueTusk, .NET, EF Core, PostgreSQL, server-extension, and browser-client versions; package lockfiles and container image digests; source commit and deployment manifest revision; supported regions, failure domains, database endpoints, and destination services; expected traffic, concurrency, payload, transaction, result-set, and fan-out envelopes; accepted SLOs, RTO, RPO, error-budget policy, and incident owner; and rollback binary, database/schema compatibility, and persisted-format limits. Use one BlueTusk version across the coordinated family graph. Never mix stable and RC packages in the same deployment. 2. Apply the security baseline Require TLS with normal certificate and hostname validation. Prefer SCRAM, managed cloud identity, GSSAPI/Kerberos, or SSPI according to the environment; avoid legacy cleartext/MD5 compatibility paths. Use distinct least-privilege roles for application queries, migrations, replication, operational control, and backup/restore. Keep row-level security and the original `LiveSecurityScope` active for Live and Continuous Graph authoritative queries. Store connection strings, tokens, client certificates, and exporter credentials in the deployment secret manager, never configuration files or telemetry. Set secret rotation ownership and test rotation without process-wide restarts where the configured credential provider supports it. Keep SQL text, parameter values, result rows, CDC payloads, resume tokens, tenant identifiers, and exception messages out of metrics and normal logs. Run dependency advisory, SBOM, provenance, imag"
+    "sourcePath": "docs/operations/production-checklist.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-checklist.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "deployment",
-    "summary": "Design production topology, security roles, pool capacity, migrations, rolling deployment, and real-time persistence.",
-    "keywords": [
-      "deployment",
-      "configuration",
-      "roles",
-      "migrations",
-      "rolling"
-    ],
-    "order": 5,
-    "listed": true,
     "title": "Deployment and configuration",
-    "sourcePath": "docs/operations/deployment.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/deployment.md",
+    "summary": "Deploy BlueTusk with PostgreSQL and configure its runtime dependencies.",
+    "order": 1,
     "headings": [
-      {
-        "id": "deployment-and-configuration",
-        "text": "Deployment and configuration",
-        "level": 1
-      },
       {
         "id": "deployment-topology",
         "text": "Deployment topology",
@@ -7526,76 +3162,151 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "rolling-deployment",
         "text": "Rolling deployment",
         "level": 2
+      }
+    ],
+    "sourcePath": "docs/operations/deployment.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/deployment.md",
+    "keywords": []
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "security",
+    "title": "Secure a BlueTusk application",
+    "summary": "Configure TLS, least privilege, tenant isolation, and safe telemetry.",
+    "order": 2,
+    "headings": [
+      {
+        "id": "verify-the-database-server",
+        "text": "Verify the database server",
+        "level": 2
       },
       {
-        "id": "release-boundary",
-        "text": "Release boundary",
+        "id": "separate-database-responsibilities",
+        "text": "Separate database responsibilities",
+        "level": 2
+      },
+      {
+        "id": "preserve-tenant-isolation",
+        "text": "Preserve tenant isolation",
+        "level": 2
+      },
+      {
+        "id": "protect-credentials-and-telemetry",
+        "text": "Protect credentials and telemetry",
         "level": 2
       }
     ],
-    "wordCount": 739,
-    "readMinutes": 4,
-    "searchText": "Deployment and configuration This guide describes the application-level deployment contract for BlueTusk. It does not enable package publication or replace the product-family release process. Deployment topology Typical request/response application: Real-time application: Keep each ownership boundary independently observable and recoverable. Connection configuration Provide connection strings through the host’s secret/configuration mechanism, not source control. At minimum, decide: host list and ports; database and role; TLS mode and certificate validation; channel binding; pool minimum/maximum size; command and connection timeouts; target session attributes for multi-host routing; and application name for PostgreSQL observability. Production deployments should not disable TLS or channel binding merely because local test containers do. Data-source lifetime Create one data source per distinct connection and type configuration. Register it as a singleton in the application host. Logical connections are cheap, short-lived leases and should be disposed deterministically. Multiple data sources are appropriate when: applications use separate security principals; read and write traffic have intentionally different topologies; extension/type registries differ; or isolation policy requires separate pools. Do not use multiple data sources as an ad hoc substitute for pool sizing. Database roles Use least-privilege roles: application query/write role; migration role with schema-change permission; replication role with only the required publication/slot rights; operational read role for dashboards where applicable. Avoid running ordinary requests as the database owner or a superuser. Row-level security, default privileges and `search_path` should be deliberate deployment decisions. Migrations Run EF Core migrations as a controlled deployment step or a single elected startup task. Do not let every horizontally scaled instance race to apply migrations. Before applying: back up the"
+    "sourcePath": "docs/security.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/security.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "observability",
-    "summary": "Metrics, traces, and slow-command events.",
-    "keywords": [
-      "metrics",
-      "tracing",
-      "opentelemetry"
-    ],
-    "order": 10,
-    "listed": true,
-    "title": "Diagnostics and observability",
-    "sourcePath": "docs/observability.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md",
+    "title": "Production observability and SLOs",
+    "summary": "Instrument commands, pooling, logical replication, and real-time processing.",
+    "order": 3,
     "headings": [
       {
-        "id": "diagnostics-and-observability",
-        "text": "Diagnostics and observability",
-        "level": 1
-      },
-      {
-        "id": "metrics",
-        "text": "Metrics",
+        "id": "meter-inventory",
+        "text": "Meter inventory",
         "level": 2
       },
       {
-        "id": "slow-command-events",
-        "text": "Slow-command events",
+        "id": "application-registration",
+        "text": "Application registration",
+        "level": 2
+      },
+      {
+        "id": "reference-deployment-pack",
+        "text": "Reference deployment pack",
+        "level": 2
+      },
+      {
+        "id": "reference-slo-profile",
+        "text": "Reference SLO profile",
+        "level": 2
+      },
+      {
+        "id": "error-budget-policy",
+        "text": "Error-budget policy",
+        "level": 2
+      },
+      {
+        "id": "cardinality-policy",
+        "text": "Cardinality policy",
+        "level": 2
+      },
+      {
+        "id": "alert-runbooks",
+        "text": "Alert runbooks",
+        "level": 2
+      },
+      {
+        "id": "provider-command-failures",
+        "text": "Provider command failures",
+        "level": 3
+      },
+      {
+        "id": "pool-saturation",
+        "text": "Pool saturation",
+        "level": 3
+      },
+      {
+        "id": "replication-and-streams-lag",
+        "text": "Replication and Streams lag",
+        "level": 3
+      },
+      {
+        "id": "streams-delivery-failures",
+        "text": "Streams delivery failures",
+        "level": 3
+      },
+      {
+        "id": "sync-failures-and-throttling",
+        "text": "Sync failures and throttling",
+        "level": 3
+      },
+      {
+        "id": "live-replay-and-slow-clients",
+        "text": "Live replay and slow clients",
+        "level": 3
+      },
+      {
+        "id": "continuous-graph-repair",
+        "text": "Continuous Graph repair",
+        "level": 3
+      },
+      {
+        "id": "control-plane-reconciliation",
+        "text": "Control Plane reconciliation",
+        "level": 3
+      },
+      {
+        "id": "recovery-objectives",
+        "text": "Recovery objectives",
+        "level": 2
+      },
+      {
+        "id": "telemetry-failure",
+        "text": "Telemetry failure",
         "level": 2
       }
     ],
-    "wordCount": 706,
-    "readMinutes": 4,
-    "searchText": "Diagnostics and observability BlueTusk exposes .NET-native tracing, metrics, and redacted slow-command events without requiring an OpenTelemetry runtime dependency. Register the activity source and meter named `BlueTusk.Diagnostics` with the application's chosen exporter. This guide defines the Provider-level contract. The complete six-family meter inventory, reference SLOs, Collector configuration, alert rules, dashboard and incident procedures are in [Production observability and SLOs](operations/observability.md). The provider follows the stable OpenTelemetry database-client conventions for command spans and `db.client.operation.duration`. PostgreSQL command spans use `ActivityKind.Client` and low-cardinality names such as `SELECT app`. They can carry: `db.system.name=postgresql`; `db.namespace`; `db.operation.name` and `db.query.summary`; the selected `server.address` and `server.port`; `error.type` on failure; and bounded `bluetusk.query.tags` from leading `--` comments. Connection opens create `CONNECT host:port` client activities. Buffered, sequential, synchronous, asynchronous, data-source-owned, and batch command paths all use the same contract. A sequential-reader span ends after the portal is established; later network consumption remains under the reader's lifetime and cancellation rules. BlueTusk never emits `db.query.text`, parameter values, a connection string, an exception message, a password, or an access token. SQL can contain literals, so omitting command text is deliberate rather than a missing configuration switch. Leading line comments are explicit telemetry tags: use short, low-cardinality labels and never place user data or credentials in a query tag. At most eight tags of 256 characters each are exported. PostgreSQL block comments are skipped and are not treated as tags. Metrics The process-wide `BlueTusk.Diagnostics` meter publishes: Instrument Unit Meaning `db.client.operation.duration` `s` Stable database command duration with endpoint, d"
+    "sourcePath": "docs/operations/observability.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "troubleshooting",
-    "summary": "Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.",
-    "keywords": [
-      "troubleshooting",
-      "errors",
-      "diagnostics",
-      "pool",
-      "replication"
-    ],
-    "order": 15,
-    "listed": true,
     "title": "Troubleshooting",
-    "sourcePath": "docs/operations/troubleshooting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/troubleshooting.md",
+    "summary": "Diagnose connection, query, type mapping, and change-delivery issues.",
+    "order": 4,
     "headings": [
-      {
-        "id": "troubleshooting",
-        "text": "Troubleshooting",
-        "level": 1
-      },
       {
         "id": "capture-the-minimum-useful-context",
         "text": "Capture the minimum useful context",
@@ -7722,89 +3433,18 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 825,
-    "readMinutes": 4,
-    "searchText": "Troubleshooting Troubleshoot BlueTusk from the lowest failing boundary upward: transport, authentication, protocol, pool, command, type mapping, EF translation, then real-time delivery. Capture the minimum useful context Record: BlueTusk commit or package version; .NET runtime and operating system; PostgreSQL version and relevant extension versions; connection topology without credentials; whether pooling, multiplexing, pipeline mode or PgBouncer is involved; the exception type, SQLSTATE and inner exception chain; a minimal parameterized query or reproduction; and focused logs/traces with secrets removed. Do not post connection strings, passwords, tokens, certificates or captured production row data. Connection and authentication Connection refused or timeout Resolve the hostname from the application environment. Confirm the port is reachable. Inspect PostgreSQL readiness and `pg_hba.conf`. Verify the target host role when multi-host routing is enabled. Compare connection timeout with DNS and network failure duration. Pool acquisition timeout is different from socket connection timeout. Inspect pool waiting/active counts before assuming the network is responsible. TLS or channel binding failure Confirm: TLS mode matches server policy; certificate hostname and trust chain are valid; client certificate/key files are readable by the process; channel binding is supported by both sides; and a proxy is not terminating TLS in an unexpected place. Never “fix” production certificate errors by disabling validation. SCRAM, OAuth, GSSAPI or cloud identity failure Identify the selected mechanism and credential source. Check token expiry, service principal/hostname agreement, clock skew and environment identity. Cloud SDK default credential chains can select a different identity locally and in deployment. Pool and session behavior Connections remain busy Look for undisposed readers, transactions, COPY streams, notification listeners or replication sessions. Session-affine operati"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "security",
-    "summary": "Apply secure connection, identity, secret-handling, and diagnostics defaults before production.",
-    "keywords": [
-      "security",
-      "threat",
-      "secrets"
-    ],
-    "order": 20,
-    "listed": true,
-    "title": "Security review",
-    "sourcePath": "docs/security.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/security.md",
-    "headings": [
-      {
-        "id": "security-review",
-        "text": "Security review",
-        "level": 1
-      },
-      {
-        "id": "minimum-production-setup",
-        "text": "Minimum production setup",
-        "level": 2
-      },
-      {
-        "id": "threat-model-and-controls",
-        "text": "Threat model and controls",
-        "level": 2
-      },
-      {
-        "id": "intentional-test-credentials-and-external-scanner-triage",
-        "text": "Intentional test credentials and external scanner triage",
-        "level": 2
-      },
-      {
-        "id": "findings-closed-by-this-review",
-        "text": "Findings closed by this review",
-        "level": 2
-      },
-      {
-        "id": "accepted-application-boundaries",
-        "text": "Accepted application boundaries",
-        "level": 2
-      },
-      {
-        "id": "repeatable-release-checks",
-        "text": "Repeatable release checks",
-        "level": 2
-      }
-    ],
-    "wordCount": 1371,
-    "readMinutes": 7,
-    "searchText": "Security review Review date: 2026-08-07 Reviewed version: release-prepared `1.0.0` source candidate Scope: BlueTusk provider, EF/design tooling, first-party extensions and identity adapters, build dependencies, and checked-in test infrastructure. This is the repository's 1.0 security-gate review record. It is a maintainer code/configuration review backed by deterministic and live tests; it is not a claim of independent penetration testing or a production support SLA. Minimum production setup Use this checklist before an application handles real data: Create a PostgreSQL role for the application. Grant only the database, schema, table, sequence, function, and replication permissions that its features need. Do not connect as `postgres` or a migration owner at runtime. Store the connection string in your deployment platform's secret store. Do not commit it, bake it into an image, or send it to logs or traces. Keep server identity verification enabled. A typical production connection string ends with: Use a separate, more privileged identity for migrations. Run migrations as a controlled deployment step, then start the application with its restricted runtime identity. Leave SQL values parameterized. Treat raw SQL fragments, identifiers, migration bodies, and custom certificate callbacks as trusted-code-only boundaries. Export BlueTusk metrics and traces, but keep SQL text, parameter values, credentials, tokens, and captured payloads disabled unless a short-lived, access-controlled diagnostic session requires them. Exercise connection loss, credential rotation, cancellation, retry, and restore procedures in a production-like environment before launch. For deployment topology and readiness checks, continue with the [deployment guide](operations/deployment.md). For authentication methods and credential lifecycle details, use the [authentication guide](ado-net/authentication.md). The rest of this page records the complete reviewed threat model, evidence, accepted applicatio"
+    "sourcePath": "docs/operations/troubleshooting.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/troubleshooting.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "performance",
-    "summary": "Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.",
-    "keywords": [
-      "performance",
-      "benchmark",
-      "latency",
-      "allocation",
-      "throughput"
-    ],
-    "order": 25,
-    "listed": true,
     "title": "Performance engineering",
-    "sourcePath": "docs/operations/performance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance.md",
+    "summary": "Measure and tune application workloads using realistic database access patterns.",
+    "order": 5,
     "headings": [
-      {
-        "id": "performance-engineering",
-        "text": "Performance engineering",
-        "level": 1
-      },
       {
         "id": "start-with-the-workload",
         "text": "Start with the workload",
@@ -7849,164 +3489,20 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "production-investigation",
         "text": "Production investigation",
         "level": 2
-      },
-      {
-        "id": "performance-gates",
-        "text": "Performance gates",
-        "level": 2
       }
     ],
-    "wordCount": 634,
-    "readMinutes": 3,
-    "searchText": "Performance engineering BlueTusk performance work is evidence-driven. A benchmark result describes one named workload, machine, runtime, PostgreSQL image and source commit; it is not a universal claim about every application. Start with the workload Record: query and result shape; concurrency and request rate; connection/pool topology; transaction and session-affinity requirements; network distance; PostgreSQL plan and server time; payload sizes; latency percentiles; and allocation/GC behavior. Optimizing a loopback scalar query does not prove improvement for a remote analytical workload. Data-source and pool sizing Create long-lived data sources and size the pool against database capacity. More connections can reduce queueing until PostgreSQL begins spending more time on process, memory, lock and cache contention. Measure: pool wait duration; active versus idle sessions; connection creation rate; command latency excluding and including pool wait; and PostgreSQL backend saturation. Command preparation and reuse Parameterize SQL. Reuse stable command/query shapes when the application lifecycle permits it. Preparation can reduce repeated parse/plan overhead, but session-level prepared state affects PgBouncer and multiplexing compatibility. Compare cold and warm behavior separately. Multiplexing Bounded statement multiplexing can reduce physical-session demand for independent, non-session-affine commands. It is not appropriate for: explicit transactions; COPY; replication; notifications; temporary objects; session settings or advisory locks; and commands whose correctness depends on one server session. Measure fairness, queueing and tail latency, not only mean throughput. Readers and large values Default readers may buffer result data for convenient random access. `SequentialAccess` uses the incremental portal reader for bounded processing of large values. Choose it when payload size makes buffering undesirable, and follow its forward-only access rules. For bulk moveme"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "npgsql-performance-comparison",
-    "listed": false,
-    "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
-    "keywords": [
-      "npgsql",
-      "comparison",
-      "benchmark",
-      "multiplexing",
-      "pooling"
-    ],
-    "order": 26,
-    "title": "BlueTusk V1 performance report: BlueTusk versus Npgsql",
-    "sourcePath": "docs/operations/npgsql-performance-comparison.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/npgsql-performance-comparison.md",
-    "headings": [
-      {
-        "id": "bluetusk-v1-performance-report-bluetusk-versus-npgsql",
-        "text": "BlueTusk V1 performance report: BlueTusk versus Npgsql",
-        "level": 1
-      },
-      {
-        "id": "executive-verdict",
-        "text": "Executive verdict",
-        "level": 2
-      },
-      {
-        "id": "complete-16-feature-result",
-        "text": "Complete 16-feature result",
-        "level": 2
-      },
-      {
-        "id": "what-fixed-allocation",
-        "text": "What fixed allocation",
-        "level": 2
-      },
-      {
-        "id": "saturated-pooling-result",
-        "text": "Saturated pooling result",
-        "level": 2
-      },
-      {
-        "id": "method-and-fairness-controls",
-        "text": "Method and fairness controls",
-        "level": 2
-      },
-      {
-        "id": "validation-and-evidence",
-        "text": "Validation and evidence",
-        "level": 2
-      },
-      {
-        "id": "production-interpretation",
-        "text": "Production interpretation",
-        "level": 2
-      }
-    ],
-    "wordCount": 1764,
-    "readMinutes": 9,
-    "searchText": "BlueTusk V1 performance report: BlueTusk versus Npgsql **Report date:** 25 August 2026 This is retained **historical V1 baseline evidence**, not a verdict on the current 1.2 candidate. Later COPY, EF batching and request-level measurements must be evaluated at their own exact commits. The V1 parity allowances below do not replace the stricter workload-leadership contract. See [request-level performance captures](provider-request-capture.md). **Candidate branch:** `codex/v1-owner-release` **Measured source commit:** `ac702d7c74d984faf375367016b77f9155695679` **Reference provider:** Npgsql 10.0.3 **Runtime:** .NET 10.0.11, SDK 10.0.303, Release, x64 **Database:** PostgreSQL 18, local Docker, loopback TCP Executive verdict The V1 provider-comparison gate passes for both latency and managed allocation. All **16/16 feature pairs** pass their paired mean, P95 and P99 latency budgets: **48/48 latency checks pass**. All **16/16 feature pairs allocate less managed memory than Npgsql** in the same final-source BenchmarkDotNet run. BlueTusk has the lower paired mean in 14 of 16 workloads. COPY import is 0.21% slower and EF update is 0.80% slower; both are inside the declared 5% parity band and both allocate less than Npgsql. Allocation savings range from 1.1% for COPY export to 95.4% for an empty begin/rollback transaction. The largest practical payload win is the 1 MiB sequential `bytea` read at 91.4% less allocation. The repository verifier independently recomputed all ratios from raw samples and reported: `Provider performance gate passed for 16 workloads`. The accurate V1 claim is: On the named PostgreSQL 18 loopback fixtures, BlueTusk passes the complete 16-workload latency gate and allocates less managed memory than Npgsql in every measured feature pair. This is not a claim that every BlueTusk operation is faster at every percentile on every machine. Three measured tail ratios are slightly above 1.0, with the highest being EF insert P99 at 1.0452. All remain inside the p"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "release-readiness",
-    "listed": false,
-    "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
-    "keywords": [
-      "release",
-      "gates",
-      "artifacts"
-    ],
-    "order": 30,
-    "title": "Runtime release readiness",
-    "sourcePath": "docs/release-readiness.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-readiness.md",
-    "headings": [
-      {
-        "id": "runtime-release-readiness",
-        "text": "Runtime release readiness",
-        "level": 1
-      },
-      {
-        "id": "publication-gate",
-        "text": "Publication gate",
-        "level": 2
-      },
-      {
-        "id": "connection-pooling",
-        "text": "Connection pooling",
-        "level": 2
-      },
-      {
-        "id": "cancellation",
-        "text": "Cancellation",
-        "level": 2
-      },
-      {
-        "id": "postgresql-native-data-paths",
-        "text": "PostgreSQL-native data paths",
-        "level": 2
-      },
-      {
-        "id": "ef-core-design-tooling-and-extensions",
-        "text": "EF Core, design tooling, and extensions",
-        "level": 2
-      },
-      {
-        "id": "release-artifacts-and-documentation",
-        "text": "Release artifacts and documentation",
-        "level": 2
-      },
-      {
-        "id": "automated-gates",
-        "text": "Automated gates",
-        "level": 2
-      }
-    ],
-    "wordCount": 2448,
-    "readMinutes": 12,
-    "searchText": "Runtime release readiness BlueTusk records production-readiness decisions as executable subsystem gates, not as synonyms for package version. The 2026-08-07 V1 hardening review closes the implementation gates for the ADO.NET provider, EF Core and design tooling, PostgreSQL-specific schema/query support, native data paths, replication, extensions, parser reliability, security, performance, API governance, supply-chain provenance, stress, compatibility and documentation. The six stable `1.0.0` families were published on 2026-08-23 under an explicit repository-owner exception. Completing publication does not substitute for exact-candidate endurance, PostgreSQL 19 GA, independent production experience, or reference-performance evidence. The exact release facts and accepted risks are in the [V1 publication record](releases/1.0.0-publication-record.md); the concise evidence status remains in [V1 release readiness](v1-release-readiness.md). The coordinated `1.1.0-rc.1` package train is now public from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`; its 65 registry artifacts and clean consumers were verified. Stable `1.1.0` remains a separate fail-closed candidate. See the [RC release record](releases/1.1.0-rc.1.md). Publication gate All six product-family stable policies are disabled while `1.1.0` is prepared. Manual workflow dispatches still create candidate artifacts only; stable publication requires the exact family tag and protected production environment. Provider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain independently versioned. After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`. That resulting SHA is the immutable candidate. It must have no stable `1.1.0` release tags or stable packages and must pass seven exact-SHA workflows. A manifest-bound public RC does not satisfy any stable gate. The workflows are: build, security, fuzzing, performance, Streams endurance, Sync endurance, and ContinuousGraph endurance. Th"
+    "sourcePath": "docs/operations/performance.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "upgrade-guide",
-    "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
-    "keywords": [
-      "upgrade",
-      "migration",
-      "rollback",
-      "format",
-      "version"
-    ],
-    "order": 35,
-    "listed": true,
     "title": "Upgrade guide",
-    "sourcePath": "docs/operations/upgrade-guide.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/upgrade-guide.md",
+    "summary": "Plan compatible upgrades across packages, PostgreSQL, and persisted state.",
+    "order": 6,
     "headings": [
-      {
-        "id": "upgrade-guide",
-        "text": "Upgrade guide",
-        "level": 1
-      },
       {
         "id": "before-upgrading",
         "text": "Before upgrading",
@@ -8058,3346 +3554,81 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 748,
-    "readMinutes": 4,
-    "searchText": "Upgrade guide BlueTusk product families are independently versioned. Upgrade the lowest dependency first and keep package versions consistent with the family manifest. Before upgrading Record: current and target BlueTusk versions; .NET and EF Core versions; PostgreSQL major/minor version; installed extension versions; persisted Streams/Sync/Live formats; database migrations to apply; and rollback target. Read the relevant stable release notes and API/format compatibility document. The 1.x line follows semantic versioning; an incompatible public contract change requires a new major version. Dependency order The release/dependency order is: Provider Streams Sync Live Control Plane ContinuousGraph EF Core and extension packages must use compatible Provider-family versions. Do not mix an arbitrary set of locally built packages because they share a similar version string. The current public package RC uses exact `1.1.0-rc.1` versions across all six families and three npm clients. Do not mix RC and stable family packages, and do not treat an RC deployment as stable migration or pilot evidence. Current package-consumer application source and image workflows pin `1.1.0-rc.1`. Historical `1.0.0-rc.1` application observations remain immutable records, not a version recommendation or reusable evidence for a new deployment. Provider upgrade Review: connection-string option changes; public API baseline changes; type inference and catalogue behavior; pooling/reset behavior; multiplexing or pipeline compatibility; authentication defaults; and NativeAOT/trimming annotations. Run focused compatibility tests against every PostgreSQL major used by the application. EF Core upgrade Upgrade the matching EF Core runtime/design packages together. Before applying migrations: Inspect changes to PostgreSQL-specific annotations, generated DDL, extension requirements and transaction-suppressed operations. Re-run representative LINQ queries and compiled queries. Property-graph migrations generat"
+    "sourcePath": "docs/operations/upgrade-guide.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/upgrade-guide.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
-    "slug": "api-compatibility",
-    "listed": false,
-    "summary": "Public API baselines and compatibility expectations.",
-    "keywords": [
-      "api",
-      "compatibility",
-      "freeze"
-    ],
-    "order": 40,
-    "title": "API compatibility",
-    "sourcePath": "docs/api-compatibility.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/api-compatibility.md",
+    "slug": "application-platform-health",
+    "title": "Diagnose deployment health",
+    "summary": "Check application, worker, and database health.",
+    "order": 7,
     "headings": [
       {
-        "id": "api-compatibility",
-        "text": "API compatibility",
-        "level": 1
-      },
-      {
-        "id": "baseline-scope",
-        "text": "Baseline scope",
+        "id": "check-the-database-path",
+        "text": "Check the database path",
         "level": 2
       },
       {
-        "id": "change-policy",
-        "text": "Change policy",
+        "id": "check-real-time-workers",
+        "text": "Check real-time workers",
         "level": 2
       },
       {
-        "id": "verification",
-        "text": "Verification",
+        "id": "check-the-hosting-platform",
+        "text": "Check the hosting platform",
+        "level": 2
+      },
+      {
+        "id": "recover-a-degraded-deployment",
+        "text": "Recover a degraded deployment",
         "level": 2
       }
     ],
-    "wordCount": 624,
-    "readMinutes": 3,
-    "searchText": "API compatibility BlueTusk protects every publishable Provider-family library with compiler-enforced public API contracts. This includes the wire stack, ADO.NET, replication, EF Core and design tooling, optional PostgreSQL extensions, and cloud identity adapters. The analyzer is a private build dependency; it does not become a runtime or package dependency of BlueTusk. The [public API naming policy](api-naming.md) keeps the product brand at framework/product boundaries while requiring natural domain and fluent member names inside the provider. Baseline scope The V1 candidate budget records 8,308 public and protected signatures across 28 Provider-family API-governed libraries, including nullable annotations and compiler-generated record members. Across all six product families, the exact machine-enforced budget is 12,991 signatures. Surface Projects Shipped signatures Contract role Core wire, security, type, client, ADO.NET, and DI 8 3,024 Transport through pooled ADO.NET, schema discovery, hosting, and native data paths Replication and pgoutput 2 847 Physical/logical replication, decoding, slots, and feedback EF Core and design tooling 2 3,890 Runtime provider, PostgreSQL features, migrations, and scaffolding Extension SDK and testing 2 62 Immutable plug-in and compatibility seams Optional extension packages and EF adapters 11 457 Citext, hstore, ltree, pg_trgm, pgvector, PostGIS, and TimescaleDB Cloud identity adapters 3 12 AWS, Azure, and Google Cloud token contracts The source generator is governed by Roslyn analyzer-release tracking. Executable tools and content-only template packages do not expose a reusable library API. The Provider package manifest names the template package project explicitly, so its embedded sample projects cannot be mistaken for release projects. Change policy Each covered project owns `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`: Shipped entries are the compatibility floor. Removing a symbol, changing its signature/accessibility,"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "testing",
-    "listed": false,
-    "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
-    "keywords": [
-      "testing",
-      "postgresql",
-      "docker"
-    ],
-    "order": 50,
-    "title": "Testing",
-    "sourcePath": "docs/contributing/testing.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/contributing/testing.md",
-    "headings": [
-      {
-        "id": "testing",
-        "text": "Testing",
-        "level": 1
-      },
-      {
-        "id": "test-levels",
-        "text": "Test levels",
-        "level": 2
-      },
-      {
-        "id": "dedicated-extension-image-gates",
-        "text": "Dedicated extension-image gates",
-        "level": 2
-      },
-      {
-        "id": "pgbouncer-locales-and-time-zones",
-        "text": "PgBouncer, locales, and time zones",
-        "level": 2
-      },
-      {
-        "id": "primary-standby-topology",
-        "text": "Primary/standby topology",
-        "level": 2
-      },
-      {
-        "id": "postgresql-19-nightly-snapshot",
-        "text": "PostgreSQL 19 nightly snapshot",
-        "level": 2
-      }
-    ],
-    "wordCount": 2258,
-    "readMinutes": 11,
-    "searchText": "Testing Test levels Unit tests cover deterministic framing, codecs, state transitions, and configuration. Conformance tests use a scriptable fake server to force network and protocol edge cases. Integration tests run against every supported PostgreSQL major version. Compatibility tests compare selected outcomes with libpq or other providers, then resolve differences against PostgreSQL behaviour. Stress tests cover cancellation, pool churn, concurrent readers, pipeline recovery, and dedicated replication cancellation/disposal. The replication durability matrix exercises persistent-slot feedback and resume across independent sessions. Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output. Test cases within a project may execute concurrently against the configured database. Live tests must therefore use unique object names or otherwise scope database-wide effects to their own schema. In particular, event-trigger fixtures filter `pg_event_trigger_ddl_commands()` by schema so unrelated concurrent DDL cannot change their assertions. The normal local release gate mirrors CI: Provider-core trimming and NativeAOT are separate publish gates because an ordinary build does not run the linker or native compiler. On Windows x64: The verifier executes both published applications, applies the checked-in deployable-size, cold-start and second-pass managed-allocation budgets, and writes an evidence report under `artifacts/provider-core-smoke/win-x64/report.json`. Deployable size excludes optional PDB and XML documentation files while the report retains their bytes separately. Use `-SkipPublish` only to remeasure already published outputs; CI always publishes from source. The required CI matrix runs both `win-x64` and `linux-x64`. The documentation check validates every repository-local link in every tracked Markdown file on both Windows and Linux. External"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "repository-layout",
-    "listed": false,
-    "summary": "Repository projects and dependency boundaries.",
-    "keywords": [
-      "repository",
-      "projects",
-      "dependencies"
-    ],
-    "order": 60,
-    "title": "Repository and solution layout",
-    "sourcePath": "docs/contributing/repository-layout.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/contributing/repository-layout.md",
-    "headings": [
-      {
-        "id": "repository-and-solution-layout",
-        "text": "Repository and solution layout",
-        "level": 1
-      },
-      {
-        "id": "physical-directories",
-        "text": "Physical directories",
-        "level": 2
-      },
-      {
-        "id": "solution-integrity",
-        "text": "Solution integrity",
-        "level": 2
-      },
-      {
-        "id": "generated-output-cleanup",
-        "text": "Generated-output cleanup",
-        "level": 2
-      }
-    ],
-    "wordCount": 454,
-    "readMinutes": 3,
-    "searchText": "Repository and solution layout BlueTusk is one monorepo with independently versioned Provider, Streams, Sync, Live, Control Plane, and Continuous Graph product families. Physical directories answer where a file lives; solution folders answer which product and role it belongs to. Physical directories Directory Purpose `src` Runtime packages for every product family `tests` Unit, conformance, integration, stress, and compatibility suites `extensions` PostgreSQL extension packages and EF adapters `identity` Cloud identity integrations `clients` TypeScript and framework clients `tooling` CLI and inspection tools `samples` Executable product examples `templates` Packaged project templates `benchmarks` BenchmarkDotNet projects and checked-in baselines `eng` CI, release, verification, Compose, and maintenance tooling `docs` Architecture, operations, compatibility, and release evidence The root `BlueTusk.slnx` contains all 114 buildable repository projects. Its folders are deliberately product-oriented: `Provider` contains the wire stack, ADO.NET, EF Core, replication, extensibility, extension packages, identity, tools, samples, templates, and their focused tests. `Streams`, `Sync`, and `Live` each separate core, integrations, storage or destinations, testing packages, transports, samples, tools, and tests. `Operations` contains the Control Plane and Dashboard. `ContinuousGraph` contains its runtime, samples, and tests. `Tests` contains genuinely cross-product integration and stress suites. `Benchmarks` contains the cross-product performance harness. The two sample projects under `templates/BlueTusk.Extension/content` are template payloads, not repository build projects, and are intentionally absent from the root solution. Solution integrity Run: The validator rejects missing, duplicate, nonexistent, escaping, unsorted, or misclassified project entries and generic `/src/` or `/tests/` solution folders. It also rejects project-local `Nullable=enable` or `ImplicitUsings=enabl"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "roadmap",
-    "listed": false,
-    "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
-    "keywords": [
-      "roadmap",
-      "milestone"
-    ],
-    "order": 70,
-    "title": "Roadmap",
-    "sourcePath": "docs/roadmap.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/roadmap.md",
-    "headings": [
-      {
-        "id": "roadmap",
-        "text": "Roadmap",
-        "level": 1
-      },
-      {
-        "id": "real-time-platform-release-trains",
-        "text": "Real-time platform release trains",
-        "level": 2
-      },
-      {
-        "id": "0-0-1-foundation-complete",
-        "text": "0.0.1 — Foundation (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-2-authentication-and-simple-queries-complete",
-        "text": "0.0.2 — Authentication and simple queries (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-3-extended-queries-and-parameters-complete",
-        "text": "0.0.3 — Extended queries and parameters (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-4-transactions-and-cancellation-complete",
-        "text": "0.0.4 — Transactions and cancellation (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-5-connection-pooling-and-data-sources-complete",
-        "text": "0.0.5 — Connection pooling and data sources (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-6-core-binary-type-codecs-complete",
-        "text": "0.0.6 — Core binary type codecs (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-7-advanced-dynamic-and-structured-types-complete",
-        "text": "0.0.7 — Advanced, dynamic, and structured types (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-8-copy-and-notifications-complete",
-        "text": "0.0.8 — COPY and notifications (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-0-9-replication-preview-complete",
-        "text": "0.0.9 — Replication preview (complete)",
-        "level": 2
-      },
-      {
-        "id": "0-1-0-first-public-ado-net-preview",
-        "text": "0.1.0 — First public ADO.NET preview",
-        "level": 2
-      },
-      {
-        "id": "0-2-0-ef-core-crud-preview-milestone-5-complete",
-        "text": "0.2.0 — EF Core CRUD preview (Milestone 5, complete)",
-        "level": 2
-      },
-      {
-        "id": "cross-cutting-architecture-gates-required-before-1-0",
-        "text": "Cross-cutting architecture gates (required before 1.0)",
-        "level": 2
-      },
-      {
-        "id": "data-source-first-application-model",
-        "text": "Data-source-first application model",
-        "level": 3
-      },
-      {
-        "id": "postgresql-pipeline-mode-and-transport-evaluation",
-        "text": "PostgreSQL pipeline mode and transport evaluation",
-        "level": 3
-      },
-      {
-        "id": "transport-contract",
-        "text": "Transport contract",
-        "level": 3
-      },
-      {
-        "id": "allocation-discipline",
-        "text": "Allocation discipline",
-        "level": 3
-      },
-      {
-        "id": "enforced-package-boundaries-and-provider-contract",
-        "text": "Enforced package boundaries and provider contract",
-        "level": 3
-      },
-      {
-        "id": "diagnostics-and-observability",
-        "text": "Diagnostics and observability",
-        "level": 3
-      },
-      {
-        "id": "extension-seam",
-        "text": "Extension seam",
-        "level": 3
-      },
-      {
-        "id": "replication-preview-gate",
-        "text": "Replication preview gate",
-        "level": 3
-      },
-      {
-        "id": "release-truthfulness",
-        "text": "Release truthfulness",
-        "level": 3
-      },
-      {
-        "id": "0-3-0-postgresql-specific-ef-translations-milestone-6-query-surface",
-        "text": "0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)",
-        "level": 2
-      },
-      {
-        "id": "0-4-0-advanced-migrations-and-scaffolding-milestone-6-schema-surface",
-        "text": "0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)",
-        "level": 2
-      },
-      {
-        "id": "0-5-0-postgresql-19-sql-pgq-graph-preview-milestone-7",
-        "text": "0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)",
-        "level": 2
-      },
-      {
-        "id": "extension-ecosystem-milestone-8-pre-1-0",
-        "text": "Extension ecosystem (Milestone 8, pre-1.0)",
-        "level": 2
-      },
-      {
-        "id": "1-0-0-engineering-gate-milestone-9-complete",
-        "text": "1.0.0 engineering gate (Milestone 9, complete)",
-        "level": 2
-      },
-      {
-        "id": "v1-platform-expansion",
-        "text": "V1 platform expansion",
-        "level": 2
-      }
-    ],
-    "wordCount": 8352,
-    "readMinutes": 38,
-    "searchText": "Roadmap This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution. The post-development V1 [hardening programme](hardening-programme.md) is implemented. The internal EF↔Data SPI, NativeAOT/trimming, multiplexing, coverage-guided parser fuzzing, ADO.NET compatibility, API budgets, supply-chain provenance and PostgreSQL 19 milestone programme all have code, tests, documentation and fail-closed verification. Version `1.0.0` was published on 2026-08-23 under the documented repository-owner exception. The remaining hardening path still contains PostgreSQL 19 GA, the 72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph runs, the in-window operational disturbance recoveries, exact-SHA fuzz and reference performance, independent review, two pilots covering all six families, the 28-day website field window, backup/restore and rollback rehearsal, and maintainer sign-off. The coordinated `1.1.0-rc.1` package train was published on 2026-08-29 from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed registry availability and clean consumer verification. Stable `1.1.0` keeps the remaining hardening path above, except the two independent pilots: on 2026-10-04 the repository owner delegated dropping them as a 1.1.0 gate. Backup/restore and rollback rehearsals stay required. Public RC availability does not mark those gates complete. The three-application V1 RC suite, exact prerelease manifest and pack verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent property-graph migration API, and local browser/PostgreSQL acceptance are implemented. Package RC publication is complete. The application-image and homelab rollout remain separate external operations requiring healthy infrastructure, protected credentials, operators, Secrets, and exact image evidence. See the [V1 application suite](v1-applications.md). Real-t"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "slug": "contributing",
-    "listed": false,
-    "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
-    "keywords": [
-      "contribute",
-      "issues",
-      "pull request"
-    ],
-    "order": 80,
-    "title": "Contributing to BlueTusk",
-    "sourcePath": "CONTRIBUTING.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/CONTRIBUTING.md",
-    "headings": [
-      {
-        "id": "contributing-to-bluetusk",
-        "text": "Contributing to BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "development-workflow",
-        "text": "Development workflow",
-        "level": 2
-      }
-    ],
-    "wordCount": 280,
-    "readMinutes": 2,
-    "searchText": "Contributing to BlueTusk BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, and observed server behaviour as the source of truth. Compatibility with another provider is useful evidence, not a specification. Development workflow Start with [the contributor setup and focused commands](docs/contributing/development.md). Run `./eng/dev.ps1` to check your tools, then `./eng/dev.ps1 -Task Check -Family Live` (or the family you are changing) to validate the relevant code and repository contracts. Database checks are explicit through `-RequireDatabase`, and every run retains its test results. Create or reference an issue that states the PostgreSQL behaviour being implemented. Keep dependencies flowing in the direction documented in `docs/architecture/overview.md`. Keep every project in the product-oriented solution hierarchy documented in [repository and solution layout](docs/contributing/repository-layout.md). Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary. Run the solution-layout, formatting, build, and test gates. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions. EF provider changes must also preserve the official relational specification gate in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. New inherited migration-generator cases require a BlueTusk override with an exact PostgreSQL SQL baseline; do not satisfy EF Core's override check without asserting the result. Live official fixtures require `BLUETUSK_TEST_CONNECTION_STRING` and a test role allowed to create and drop isolated databases. The current adopted suites and the broader coverage backlog are documented in [EF Core relational specification tests](docs/ef-core/specification-tests.md). Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values de"
+    "sourcePath": "docs/operations/application-platform-health.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "report-security",
-    "listed": false,
-    "summary": "Report vulnerabilities privately through the repository hosting platform.",
-    "keywords": [
-      "vulnerability",
-      "reporting"
-    ],
-    "order": 90,
-    "title": "Security policy",
+    "title": "Report a security issue",
+    "summary": "Report a suspected security vulnerability privately.",
+    "order": 8,
+    "headings": [],
     "sourcePath": "SECURITY.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/SECURITY.md",
-    "headings": [
-      {
-        "id": "security-policy",
-        "text": "Security policy",
-        "level": 1
-      }
-    ],
-    "wordCount": 125,
-    "readMinutes": 1,
-    "searchText": "Security policy Please do not report vulnerabilities in public issues. Until a private project security contact is published, contact the repository maintainers privately through the hosting platform. BlueTusk considers credential disclosure, certificate-validation bypass, protocol desynchronisation, unsafe message-length handling, and cross-tenant pool leakage security-sensitive. Reports should include affected versions, impact, and a minimal reproduction when safe. After V1 publication, the latest stable patch in the 1.x line is serviced. The release-prepared 1.0.0 candidate is not published or supported until its protected publication gate completes. Published package versions are immutable; security fixes produce a new version and may require rollback or pinning while that version is prepared. The repository's current threat model, reviewed controls, accepted boundaries, and repeatable dependency-audit command are recorded in the [security review](docs/security.md)."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "versioning",
-    "summary": "PostgreSQL 15–18 are the released-server compatibility baseline. PostgreSQL 19 is currently exercised with the pinned postgres:19beta3-alpine image and is explicitly beta-sensitive: SQL/PGQ syntax, catalogues, and cap…",
-    "keywords": [
-      "VERSIONING"
-    ],
-    "order": 1003,
-    "title": "Compatibility and versioning",
-    "sourcePath": "VERSIONING.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/VERSIONING.md",
-    "headings": [
-      {
-        "id": "compatibility-and-versioning",
-        "text": "Compatibility and versioning",
-        "level": 1
-      },
-      {
-        "id": "current-support-matrix",
-        "text": "Current support matrix",
-        "level": 2
-      },
-      {
-        "id": "compatibility-policy",
-        "text": "Compatibility policy",
-        "level": 2
-      }
-    ],
-    "wordCount": 380,
-    "readMinutes": 2,
-    "searchText": "Compatibility and versioning Current support matrix BlueTusk package line Target framework EF Core PostgreSQL `1.0.0` stable (published) .NET 10 (`net10.0`) 10.0.11 15, 16, 17, and 18; PostgreSQL 19 features are capability guarded `1.1.0-rc.1` prerelease (published) .NET 10 (`net10.0`) 10.0.11 15, 16, 17, and 18; PostgreSQL 19 SQL/PGQ evaluation requires a negotiated prerelease capability PostgreSQL 15–18 are the released-server compatibility baseline. PostgreSQL 19 is currently exercised with the pinned `postgres:19beta3-alpine` image and is explicitly beta-sensitive: SQL/PGQ syntax, catalogues, and capability thresholds may need to change before GA. Stable `1.1.0` requires a digest-pinned PostgreSQL 19 GA image and exact-candidate 15–19 evidence. The live CI matrix runs the complete solution against every listed major version; feature-specific documentation records narrower extension-server combinations where an extension image sets the server version. The `1.1.0-rc.1` train is immutable and was published from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All coordinated BlueTusk NuGet and npm dependencies must use that exact version. A corrected prerelease receives a new suffix such as `rc.2`; an existing package is never overwritten. As of 2026-08-29, the official PostgreSQL project lists PostgreSQL 19 Beta 3 and plans the major release for September 2026. Its [beta guidance](https://www.postgresql.org/developer/beta/) explicitly advises against production use of beta releases. BlueTusk keeps SQL/PGQ capability guards and the stable 1.1 GA gate for that reason. Compatibility policy Before `1.0.0`, public APIs may change between minor releases. Patch releases should remain source- and binary-compatible unless a security or correctness defect makes that unsafe. The shipped API/nullability baselines make accidental changes fail compilation in covered core, replication, and extension-authoring assemblies. Beginning with `1.0.0`, removals and incompatible signat"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "api-naming",
-    "summary": "BlueTusk names should read naturally after the caller has already selected a BlueTusk package or entered a PostgreSQL-specific domain. Repeating the product name in every fluent member obscures the operation without a…",
-    "keywords": [
-      "docs",
-      "api",
-      "naming"
-    ],
-    "order": 1026,
-    "title": "Public API naming",
-    "sourcePath": "docs/api-naming.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/api-naming.md",
-    "headings": [
-      {
-        "id": "public-api-naming",
-        "text": "Public API naming",
-        "level": 1
-      },
-      {
-        "id": "v1-rule",
-        "text": "V1 rule",
-        "level": 2
-      }
-    ],
-    "wordCount": 262,
-    "readMinutes": 2,
-    "searchText": "Public API naming BlueTusk names should read naturally after the caller has already selected a BlueTusk package or entered a PostgreSQL-specific domain. Repeating the product name in every fluent member obscures the operation without adding useful context. V1 rule Keep `BlueTusk` on primary product types where ownership or collision avoidance matters, such as `BlueTuskDataSource`, `BlueTuskConnection`, and `IBlueTuskCodec`. Keep the brand on neutral framework entry points that select or compose a product, such as `UseBlueTusk`, `AddBlueTuskStreams`, `MapBlueTuskDashboard`, and Aspire `WithBlueTusk...` methods. Keep it on explicit conversions whose result is a branded value type, such as `ToBlueTuskGeometry`. Do not repeat it inside an operation after the receiver and namespace already establish the domain. Examples from the V1 cleanup: Preview name V1 name `HasBlueTuskExtension` `HasExtension` `CreateBlueTuskPublication` `CreatePublication` `UseBlueTuskIndexMethod` `UseIndexMethod` `IsBlueTuskConcurrent` `IsConcurrent` `EnsureBlueTuskPgVector` `EnsurePgVector` `RegisterBlueTuskCodec` `RegisterCodec` `GetBlueTuskTriggers` `GetTriggerDefinitions` Migration-operation types follow the same rule inside the `BlueTusk.EntityFrameworkCore.Migrations.Operations` namespace: `CreateExtensionOperation`, not `CreateBlueTuskExtensionOperation`. This is an intentional pre-V1 source break. The redundant preview names are not retained as obsolete aliases because doing so would permanently pollute IntelliSense and the V1 compatibility floor. Normal compiler errors point directly to the natural replacement, and samples, tests, generated code, and documentation use only the V1 names. `PublicApiNamingTests` scans every compiler-enforced API baseline. A new public method with `BlueTusk` embedded in its operation name fails the normal conformance suite unless it is an explicitly reviewed framework boundary."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "completion-audit",
-    "summary": "This record maps the original BlueTusk product specification and the subsequent architecture-gap review to concrete repository evidence. “Complete” here means the engineering surface is implemented, documented, and co…",
-    "keywords": [
-      "docs",
-      "completion",
-      "audit"
-    ],
-    "order": 1047,
-    "title": "Specification completion audit",
-    "sourcePath": "docs/completion-audit.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/completion-audit.md",
-    "headings": [
-      {
-        "id": "specification-completion-audit",
-        "text": "Specification completion audit",
-        "level": 1
-      },
-      {
-        "id": "original-product-specification",
-        "text": "Original product specification",
-        "level": 2
-      },
-      {
-        "id": "architecture-gap-closure",
-        "text": "Architecture-gap closure",
-        "level": 2
-      },
-      {
-        "id": "real-time-platform-phased-plan",
-        "text": "Real-time platform phased plan",
-        "level": 2
-      },
-      {
-        "id": "current-verification-snapshot",
-        "text": "Current verification snapshot",
-        "level": 2
-      },
-      {
-        "id": "explicit-release-boundaries",
-        "text": "Explicit release boundaries",
-        "level": 2
-      }
-    ],
-    "wordCount": 2215,
-    "readMinutes": 11,
-    "searchText": "Specification completion audit This record maps the original BlueTusk product specification and the subsequent architecture-gap review to concrete repository evidence. “Complete” here means the engineering surface is implemented, documented, and covered by an executable gate. All six families were published at `1.0.0` under the [documented owner exception](releases/1.0.0-publication-record.md), but this record does not replace external production experience or declare every PostgreSQL deployment suitable without application-specific validation. Those release boundaries remain in [Runtime release readiness](release-readiness.md). Original product specification Specification area Engineering state Primary evidence 1–5. Vision, layers, repository, package family, and branding Implemented and published as six layered stable 1.0.0 product families; later publication remains gated. [Architecture overview](architecture/overview.md), [layering ADR](architecture/decisions/0001-layered-dependency-direction.md), [roadmap](roadmap.md), and the Release packaging gate in [CI](../.github/workflows/build.yml). 6. Transport Implemented with genuine sync/async socket and TLS paths, cancellation-safe lifetimes, bounded buffers, and multi-host endpoints. [Transport architecture](architecture/transport.md), [transport tests](../tests/BlueTusk.Transport.Tests/BlueTuskSocketTransportTests.cs), and [TLS tests](../tests/BlueTusk.Transport.Tests/BlueTuskTlsTransportTests.cs). 7. PostgreSQL protocol engine Implemented independently of ADO.NET and EF, including framing, state transitions, extended query, streaming payloads, cancellation, and capture tooling. [Protocol guide](protocol/README.md), [state-machine tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolStateMachineTests.cs), [streaming tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolConnectionStreamingTests.cs), and [fake-server conformance](../tests/BlueTusk.ConformanceTests/FakePostgreSqlServerTests.cs). 8. Authenticatio"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "contributing-development",
-    "summary": "Start with the product you are changing. The contributor command checks your tools, runs a focused test set, and keeps each run's build and test results in its own directory under artifacts/dev.",
-    "keywords": [
-      "docs",
-      "contributing",
-      "development"
-    ],
-    "order": 1053,
-    "title": "Work on BlueTusk",
-    "sourcePath": "docs/contributing/development.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/contributing/development.md",
-    "headings": [
-      {
-        "id": "work-on-bluetusk",
-        "text": "Work on BlueTusk",
-        "level": 1
-      },
-      {
-        "id": "set-up-your-tools",
-        "text": "Set up your tools",
-        "level": 2
-      },
-      {
-        "id": "make-a-change-and-test-it",
-        "text": "Make a change and test it",
-        "level": 2
-      },
-      {
-        "id": "validate-against-postgresql",
-        "text": "Validate against PostgreSQL",
-        "level": 2
-      },
-      {
-        "id": "work-on-clients-and-documentation",
-        "text": "Work on clients and documentation",
-        "level": 2
-      },
-      {
-        "id": "review-and-hand-off",
-        "text": "Review and hand off",
-        "level": 2
-      }
-    ],
-    "wordCount": 635,
-    "readMinutes": 3,
-    "searchText": "Work on BlueTusk Start with the product you are changing. The contributor command checks your tools, runs a focused test set, and keeps each run's build and test results in its own directory under `artifacts/dev`. Set up your tools Install Git, PowerShell 7, the .NET SDK selected by `global.json`, and a Node.js version supported by the repository's Angular packages. Run this from the repository root: The doctor reports missing tools and whether database configuration exists. It does not print credentials, install software, or change infrastructure. Make a change and test it Choose `Provider`, `Streams`, `Sync`, `Live`, `ControlPlane`, or `ContinuousGraph`. These are focused contributor sets. The Provider set covers the wire stack and ADO.NET; it does not replace EF specifications, extensions, integration, stress, or release gates. Use the [testing guide](testing.md) for those broader checks. PostgreSQL Sync destination tests live in `BlueTusk.Sync.Tests`; dashboard tests live in `BlueTusk.ControlPlane.Tests`. The doctor verifies the registered project paths so a renamed or missing suite cannot disappear silently. A test run must produce a nonempty TRX result to count as successful. The final summary records passed and skipped cases, TRX hashes, the HEAD commit and whether the worktree is clean. Each run uses a fresh SDK artifacts directory so another build's outputs cannot silently substitute for it. Validate against PostgreSQL The [testing guide](testing.md) lists isolated Compose fixtures and the required server capabilities. Use a disposable test database: these tests create and remove their own schemas and some suites create databases. Set `BLUETUSK_TEST_CONNECTION_STRING` using your local secret mechanism, then run: This mode refuses missing database configuration and skipped tests. The usual mode allows database-dependent cases to skip and reports that fact explicitly. Do not interpret an offline run as database compatibility evidence. Work on clients and docu"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "documents",
-      "README"
-    ],
-    "order": 1067,
-    "title": "BlueTusk.Documents",
-    "sourcePath": "docs/documents/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-documents",
-        "text": "BlueTusk.Documents",
-        "level": 1
-      },
-      {
-        "id": "storage-and-concurrency",
-        "text": "Storage and concurrency",
-        "level": 2
-      },
-      {
-        "id": "explicit-large-content",
-        "text": "Explicit large content",
-        "level": 2
-      },
-      {
-        "id": "reads-patches-and-evolution",
-        "text": "Reads, patches and evolution",
-        "level": 2
-      },
-      {
-        "id": "indexes-and-deployment",
-        "text": "Indexes and deployment",
-        "level": 2
-      },
-      {
-        "id": "streams-and-live-integration",
-        "text": "Streams and Live integration",
-        "level": 2
-      },
-      {
-        "id": "operator-readiness",
-        "text": "Operator readiness",
-        "level": 2
-      },
-      {
-        "id": "verification-and-production-qualification",
-        "text": "Verification and production qualification",
-        "level": 2
-      }
-    ],
-    "wordCount": 2942,
-    "readMinutes": 14,
-    "searchText": "BlueTusk.Documents **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Documents `0.1.0-preview.1` provides typed PostgreSQL JSONB documents and optimistic atomic write sessions. The core accepts `DbDataSource`, depends on neither Npgsql nor EF Core, and requires explicit `JsonTypeInfo<T>` metadata for serialization and deserialization. BlueTusk's native data source works directly. The application supplies its `OrderJsonContext` using System.Text.Json source generation. Every document must serialize to a JSON object. Schemas, collection names, identifiers and tenant identifiers are separate from type names; no reflection-based serializer fallback is available. Storage and concurrency The primary key is `(tenant, collection, id)`, using PostgreSQL `C` collation for stable key ordering. Every read and write includes all required tenant and collection predicates. This is an application isolation contract, not a database privilege boundary: configure PostgreSQL privileges or RLS separately when untrusted callers can execute SQL. A store borrows its data source by default. Pass `DocumentDataSourceOwnership.Owned` to transfer disposal responsibility. Store disposal invalidates its sessions. Sessions exclusively own the connection and transaction for each save. An application cannot attach an externally owned transaction to a session. Inserts use `ON CONFLICT DO NOTHING`, replacements and deletes use revision compare-and-swap, and every failed precondition raises `DocumentConcurrencyException`. The exception contains tenant, collection, ID, expected revision and the observed current revision (or null when missing). All staged operations roll back when any operation conflicts, including writes completed in an earlier batch. Failed sessions retain their pending write"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence-2026-09-27-allocation-pair",
-    "summary": "BenchmarkDotNet 0.15.8 ShortRun, in-process emit, one launch, three warmups and three measured iterations. The six cases used source-generated JSON and staged eight documents without database I/O. The original and opt…",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "2026",
-      "09",
-      "27",
-      "allocation",
-      "pair",
-      "README"
-    ],
-    "order": 1068,
-    "title": "Retained-binary Documents allocation comparison",
-    "sourcePath": "docs/documents/evidence/2026-09-27-allocation-pair/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-allocation-pair/README.md",
-    "headings": [
-      {
-        "id": "retained-binary-documents-allocation-comparison",
-        "text": "Retained-binary Documents allocation comparison",
-        "level": 1
-      }
-    ],
-    "wordCount": 407,
-    "readMinutes": 2,
-    "searchText": "Retained-binary Documents allocation comparison BenchmarkDotNet 0.15.8 ShortRun, in-process emit, one launch, three warmups and three measured iterations. The six cases used source-generated JSON and staged eight documents without database I/O. The original and optimized executables were run from separate retained dependency directories; all 34 dependency DLL hashes in each directory were rechecked after measurement. No provider/project restore or compilation occurred in this quiet repository CPU phase. Windows Ryzen 7 5800X, .NET 10.0.12, x64 RyuJIT. Other operating-system activity was not controlled. Benchmark Source payload Baseline B/op Optimized B/op Saved B/op Saved StageEightDocuments 1 KiB 40,400 30,992 9,408 23.29% StageEightDocuments 64 KiB 3,418,218 2,850,288 567,930 16.61% StageEightDocuments 1 MiB 54,273,630 45,228,975 9,044,655 16.66% The unchanged SourceGeneratedSerialize control allocated exactly 1,176 / 71,032 / 1,130,740 B/op for 1 KiB / 64 KiB / 1 MiB in both runs. The implementation removes the completed UTF8 buffer copy in DocumentSession.Serialize, parses the stream-owned written memory while its stream is alive, then creates an owned string. The native smoke and all 30 Documents unit/live PostgreSQL tests passed after the change. Type bounds, invalid root rejection, and mixed large/small owned JSON roundtrips are exercised. Staging means do not establish a speed gain. At 1 MiB, baseline mean 28.200 ms (99.9% CI 20.816–35.585) and optimized mean 26.545 ms (CI 23.845–29.245) overlap. ShortRun has only three measured iterations per case. The same applies to the 1 KiB and 64 KiB mean intervals. None of these cases saves to PostgreSQL, predicts database throughput, resolves long write tails, or addresses physical TOAST growth. The old Documents DLL SHA-256 was `592C14C8BC951E230DB15E6A4BDBF20A651DC8148B9F5DF4548984255BFF5075`; the optimized DLL was `8AAA7912591EE0CDA86BC23A2E8ACCA296D9DB799F58B3F8A74A201D8BA3C31E`. Data also changed between the ret"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence-2026-09-27-maintenance-diagnostics",
-    "summary": "The updated Documents load harness was built in Release with zero warnings and run against four separate, labelled PostgreSQL 18 Docker fixtures on 27 September 2026. Every fixture used a unique database volume and ge…",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "2026",
-      "09",
-      "27",
-      "maintenance",
-      "diagnostics",
-      "README"
-    ],
-    "order": 1069,
-    "title": "Documents TOAST maintenance profiler diagnostics",
-    "sourcePath": "docs/documents/evidence/2026-09-27-maintenance-diagnostics/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-maintenance-diagnostics/README.md",
-    "headings": [
-      {
-        "id": "documents-toast-maintenance-profiler-diagnostics",
-        "text": "Documents TOAST maintenance profiler diagnostics",
-        "level": 1
-      }
-    ],
-    "wordCount": 554,
-    "readMinutes": 3,
-    "searchText": "Documents TOAST maintenance profiler diagnostics The updated Documents load harness was built in Release with zero warnings and run against four separate, labelled PostgreSQL 18 Docker fixtures on 27 September 2026. Every fixture used a unique database volume and generated schema; each run ended with zero owned schemas and no labelled Documents container or volume. The two successful diagnostics each verified all 15 payload/tenant/concurrency cells and the sustained cell, including a hard-killed transaction child and exact acknowledged-write recovery. These are short functional and instrumentation checks, not a storage-performance comparison. Whole-tree candidate source changed during each run as other product work proceeded; the before/after scoped Documents, Data, TypeSystem and harness sources stayed unchanged according to each [binding report](maintenance-diagnostic-default/bindings.json). Profile, sustained cell Parent bytes after writes Direct TOAST bytes after writes Database bytes after writes Minimum observed filesystem free Idle observations [PackageDefaults](maintenance-diagnostic-default/documents-load.json) 55,984,128 55,812,096 64,403,135 1,005,507,047,424 2 [ToastVacuumFast](maintenance-diagnostic-tuned/documents-load.json) 226,320,384 226,148,352 234,714,815 1,005,454,245,888 2 The direct TOAST size is contained in the parent relation's `pg_total_relation_size`; these columns must not be added. The tuned fixture reported both actual parent and TOAST reloptions (`autovacuum_vacuum_scale_factor=0.01`, `autovacuum_vacuum_threshold=50`, `autovacuum_vacuum_cost_delay=0`, `autovacuum_vacuum_cost_limit=2000`). These are experimental settings applied only to a generated fixture table and its TOAST child. BlueTusk package and PostgreSQL defaults remain unchanged. The short diagnostics had different write counts and whole-tree activity, so their throughput, latency and byte totals do not establish a tuned benefit. The default fixture recorded one TOAST autovac"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence-2026-09-27-pg18-baseline",
-    "summary": "This bounded campaign verified all fifteen payload/tenant/concurrency cells, a 600-second mixed-write phase, and actual child-process recovery. It exposed substantial physical TOAST",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "2026",
-      "09",
-      "27",
-      "pg18",
-      "baseline",
-      "README"
-    ],
-    "order": 1070,
-    "title": "Exploratory PostgreSQL 18 baseline, 27 September 2026",
-    "sourcePath": "docs/documents/evidence/2026-09-27-pg18-baseline/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-27-pg18-baseline/README.md",
-    "headings": [
-      {
-        "id": "exploratory-postgresql-18-baseline-27-september-2026",
-        "text": "Exploratory PostgreSQL 18 baseline, 27 September 2026",
-        "level": 1
-      },
-      {
-        "id": "measurement-defect-retained-in-the-raw-report",
-        "text": "Measurement defect retained in the raw report",
-        "level": 2
-      },
-      {
-        "id": "ten-second-requested-sweep-cells",
-        "text": "Ten-second requested sweep cells",
-        "level": 2
-      },
-      {
-        "id": "sustained-mixed-writes-and-storage-finding",
-        "text": "Sustained mixed writes and storage finding",
-        "level": 2
-      },
-      {
-        "id": "process-recovery-and-cleanup",
-        "text": "Process recovery and cleanup",
-        "level": 2
-      }
-    ],
-    "wordCount": 1084,
-    "readMinutes": 5,
-    "searchText": "Exploratory PostgreSQL 18 baseline, 27 September 2026 This bounded campaign verified all fifteen payload/tenant/concurrency cells, a 600-second mixed-write phase, and actual child-process recovery. It exposed substantial physical TOAST growth and long latency tails. It does **not** establish production qualification, stable physical storage, an immutable release candidate, or an isolated hardware performance result. The run used Windows 11 build 26200, a Ryzen 7 5800X with sixteen logical processors, .NET 10.0.12, and the pinned PostgreSQL 18.6 Alpine image recorded in the raw report. The dedicated loopback Docker fixture had four CPUs, 2 GiB memory, 128 MiB shared buffers, synchronous commit, full-page writes, I/O timing, and forty maximum connections. Application connections were capped at eight, with a separate two-connection observer. All payloads were synthetic seeded random base64. No customer payloads or credentials appear in these reports. Fixture setup began at 21:32:07 UTC; the sustained phase began at approximately 21:36:12 UTC; the final report completed at 21:46:17 UTC. A root solution compilation overlapped around 21:37 UTC and a short diagnostic Projections fixture may have overlapped early setup. Other agents changed twenty-three global candidate paths, while the recorded Documents, Data, TypeSystem, harness, and common build inputs had zero before/after changes. These conditions make CPU, allocation, memory and latency observations exploratory shared-host evidence. Scoped correctness, owned relation sizes and dedicated-fixture WAL observations remain useful within their stated measurement limits. [documents-load.json](documents-load.json) is unchanged raw output, SHA-256 `3AE336F6A42F8654C021246F8732E5D3FECDF65432087819D84789B8C6CC7D09`. [bindings.json](bindings.json) retains the global/scoped inventories and dependency hashes; [run-notes.json](run-notes.json) records contention and the invalid activity measurements. The runnable old dependency set "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence-2026-09-28-attached-content-600s",
-    "summary": "The clean checkout of commit a837001a8d38cfca1817ee716d1dc7072ce68dd5 ran eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild on 28 September 20…",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "2026",
-      "09",
-      "28",
-      "attached",
-      "content",
-      "600s",
-      "README"
-    ],
-    "order": 1071,
-    "title": "Attached-content 600-second local capacity run",
-    "sourcePath": "docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-attached-content-600s/README.md",
-    "headings": [
-      {
-        "id": "attached-content-600-second-local-capacity-run",
-        "text": "Attached-content 600-second local capacity run",
-        "level": 1
-      }
-    ],
-    "wordCount": 450,
-    "readMinutes": 3,
-    "searchText": "Attached-content 600-second local capacity run The clean checkout of commit `a837001a8d38cfca1817ee716d1dc7072ce68dd5` ran `eng/run-documents-load.ps1 -CellSeconds 10 -SustainedSeconds 600 -IdleDrainSeconds 120 -StorageMode AttachedContent -NoBuild` on 28 September 2026. The dedicated, digest-pinned PostgreSQL 18 fixture ran on a shared Windows Ryzen 7 5800X development host. The 15 inline-JSONB sweep cells and the attached-content sustained scenario all passed exact-state checks. The runner then verified hard-killed writer recovery, source/binary bindings and owned-resource cleanup. [`documents-load.json`](documents-load.json) is the full raw report; [`bindings.json`](bindings.json) records the unchanged source fingerprint and measured assembly hashes. The [before](candidate-inputs.sha256) and [after](candidate-inputs-final.sha256) candidate-input inventories, [workload log](workload.log) and [cleanup record](owned-resource-cleanup.json) are retained with it. The sustained scenario kept 256 documents across eight tenants. Each had a distinct, stable 64 KiB content blob; the JSONB metadata changed through replacement, patch and delete/reinsert cycles. The verifier counted exactly 256 content rows and 256 links after the run, read and hashed every retained blob, checked revisions and hot-key increments, and found no orphan to collect. Measured signal Result Committed transitions / measured duration 1,326,904 / 600.102 s Transitions per second / save p99 2,211.1 / 100.352 ms Peak owned relations, including content TOAST and indexes 19,038,208 bytes Owned relations after writes / final-half endpoint growth 18,939,904 bytes / -6,663 bytes per minute Peak whole database / after 120-second idle drain 27,719,359 / 27,317,951 bytes Cluster WAL delta / bytes per transition 375,238,632 / 282.8 Database and owned-storage samples during writes / idle observations 120 / 24 Acknowledged recovery batches and documents / kill-to-verification 16 and 32 / 143 ms `eng/verify-documents"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence-2026-09-28-maintenance-pair",
-    "summary": "Two fresh, owned PostgreSQL 18.6 fixtures ran the same 15-cell payload/concurrency sweep, followed by 600 seconds of 64 KiB mixed document churn, 120 seconds idle, and a hard-killed writer recovery check. The second f…",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "2026",
-      "09",
-      "28",
-      "maintenance",
-      "pair"
-    ],
-    "order": 1072,
-    "title": "Documents fixed-cardinality maintenance comparison, 28 September 2026",
-    "sourcePath": "docs/documents/evidence/2026-09-28-maintenance-pair.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/2026-09-28-maintenance-pair.md",
-    "headings": [
-      {
-        "id": "documents-fixed-cardinality-maintenance-comparison-28-september-2026",
-        "text": "Documents fixed-cardinality maintenance comparison, 28 September 2026",
-        "level": 1
-      }
-    ],
-    "wordCount": 513,
-    "readMinutes": 3,
-    "searchText": "Documents fixed-cardinality maintenance comparison, 28 September 2026 Two fresh, owned PostgreSQL 18.6 fixtures ran the same 15-cell payload/concurrency sweep, followed by 600 seconds of 64 KiB mixed document churn, 120 seconds idle, and a hard-killed writer recovery check. The second fixture changed only the experimental table and TOAST autovacuum reloptions (`ToastVacuumFast`). Each fixture had four Docker CPUs, 2 GiB memory, an eight-connection application pool, a 24 GiB database stop guard, and an 8 GiB filesystem-free guard. The payloads contain seeded random base64 rather than repeated compressible text. Sustained result Package defaults Fast TOAST vacuum Verified logical transitions 271,228 230,476 Measured write window 608.81 s 600.16 s Transitions per second 445.5 384.0 Documents relation before writes 17.65 MB 17.65 MB Documents relation after writes 16.204 GB 9.060 GB Documents relation after 120 s idle 16.204 GB 9.060 GB TOAST relation after writes 16.204 GB 9.060 GB TOAST autovacuums after writes / idle 1 / 1 3 / 4 WAL bytes during writes 22.701 GB 24.821 GB Save p99, upper histogram bound 1,056.8 ms 1,286.1 ms Whole-operation p99, upper histogram bound 2,768.9 ms 4,358.1 ms Database observation timeouts 0 0 Maximum observation gap 11.91 s 11.95 s All 16 scenarios in each fixture passed logical state checks. The 32-tenant, 32-writer, 1 MiB cell is a notable counterexample to treating the tuning as a free capacity gain: its save p99 was 6.13 s with package defaults and 28.31 s with fast TOAST vacuum. In sustained churn, each of eight tenants continued to make progress. Both fixtures verified acknowledged two-document batches after hard-killing a blocked writer and found no partial batch. Each left zero owned schemas and removed its label-checked container and volume. The tuning reduced observed relation size in this run, but neither profile demonstrated a stable physical bound. Both relations grew after temporary flat intervals, and neither shrank during"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "documents-evidence",
-    "summary": "eng/run-documents-load.ps1 provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, trackiotiming=on and 40 server connections.",
-    "keywords": [
-      "docs",
-      "documents",
-      "evidence",
-      "README"
-    ],
-    "order": 1073,
-    "title": "Documents workload and process recovery",
-    "sourcePath": "docs/documents/evidence/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/documents/evidence/README.md",
-    "headings": [
-      {
-        "id": "documents-workload-and-process-recovery",
-        "text": "Documents workload and process recovery",
-        "level": 1
-      }
-    ],
-    "wordCount": 1361,
-    "readMinutes": 7,
-    "searchText": "Documents workload and process recovery `eng/run-documents-load.ps1` provisions a dedicated labelled PostgreSQL 18 fixture on loopback port 55818 with four Docker CPUs, a 2 GiB memory limit, `track_io_timing=on` and 40 server connections. Its container/volume names are unique. Cleanup checks both ownership labels before removing either resource. It does not inject failures into the ordinary shared test databases. The runner restores its process environment and retains reports under ignored `artifacts/documents-load` by default. The [27 September PostgreSQL 18 baseline](2026-09-27-pg18-baseline/README.md) retains a 600-second completed campaign, actual hard-killed writer recovery, and its unresolved physical TOAST growth. Shared-host contention and invalid baseline database activity fields are disclosed; the raw baseline is not production qualification. The [separate corrected-activity diagnostic](2026-09-27-activity-diagnostic/run-notes.json) verified nonzero server client peaks equal to the provider's one/eight connection pool caps in all sixteen scenarios, plus hard-killed writer recovery and owned fixture cleanup. It is an instrumentation check; its short, shared-host timings are not an optimization comparison. The [retained-binary allocation pair](2026-09-27-allocation-pair/README.md) measures six BenchmarkDotNet staging and source-generated serialization cases on the original and optimized Documents executables. It supports a lower staging allocation claim, not a database throughput or latency improvement. The [TOAST maintenance profiler diagnostics](2026-09-27-maintenance-diagnostics/README.md) verify direct parent/TOAST observations, actual fixture-only vacuum settings, Docker filesystem headroom sampling, intentional resource-stop evidence and cleanup. They are too short and contended to establish whether tuning controls the sustained physical growth. The [28 September source-frozen 600-second comparison](2026-09-28-maintenance-pair.md) records successful de"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "ecosystem-failover-qualification",
-    "summary": "Each expansion family has a manual exact-candidate failover workflow named in eng/expansion-release-policy.json. This page covers the shared gate used by every expansion family except Jobs.",
-    "keywords": [
-      "docs",
-      "ecosystem",
-      "failover",
-      "qualification"
-    ],
-    "order": 1074,
-    "title": "Expansion failover qualification",
-    "sourcePath": "docs/ecosystem/failover-qualification.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/failover-qualification.md",
-    "headings": [
-      {
-        "id": "expansion-failover-qualification",
-        "text": "Expansion failover qualification",
-        "level": 1
-      },
-      {
-        "id": "gate-shape",
-        "text": "Gate shape",
-        "level": 2
-      },
-      {
-        "id": "disturbances",
-        "text": "Disturbances",
-        "level": 2
-      },
-      {
-        "id": "families",
-        "text": "Families",
-        "level": 2
-      },
-      {
-        "id": "recovery-ceilings",
-        "text": "Recovery ceilings",
-        "level": 2
-      },
-      {
-        "id": "not-qualified",
-        "text": "Not qualified",
-        "level": 2
-      },
-      {
-        "id": "local-diagnostic-runs",
-        "text": "Local diagnostic runs",
-        "level": 2
-      }
-    ],
-    "wordCount": 1365,
-    "readMinutes": 7,
-    "searchText": "Expansion failover qualification Each expansion family has a manual exact-candidate failover workflow named in [`eng/expansion-release-policy.json`](../../eng/expansion-release-policy.json). This page covers the shared gate used by every expansion family except Jobs. Jobs keeps its own [physical promotion gate](../jobs/failover.md). Adding a workflow records no passing run. Only a successful `workflow_dispatch` run at the candidate SHA, with its retained `expansion-<family>-failover-<sha>` artifact, can count as release evidence. Gate shape Every workflow runs on `[self-hosted, windows, x64, bluetusk-benchmark]` and shares the `bluetusk-reference-host` concurrency group. It takes the full candidate SHA and an exact typed confirmation, checks out that commit, and runs [`eng/verify-expansion-release-failover.ps1`](../../eng/verify-expansion-release-failover.ps1) in three modes: `Preflight` requires the clean exact candidate and a fresh evidence directory. `Run` executes [`eng/run-expansion-failover.ps1`](../../eng/run-expansion-failover.ps1). That script provisions three fresh PostgreSQL 18 synchronous primary/standby pairs, one per repetition, from the digest-pinned image. Each pair has its own labelled network and volumes, `fsync=on`, `full_page_writes=on`, `synchronous_commit=remote_apply` and a verified streaming synchronous standby. The script runs the family's steps in policy order, captures the candidate source before and after, and hashes every step binary before and after each step. Run mode then archives the binaries and writes a file-hash manifest. `Verify` re-checks the archived artifact offline. Readiness uses the same mode through `Get-ExpansionRoleVerifier`. [`eng/verify-expansion-failover-report.ps1`](../../eng/verify-expansion-failover-report.ps1) judges the evidence against [`eng/expansion-failover-policy.json`](../../eng/expansion-failover-policy.json). It requires the exact clean candidate, three distinct fresh fixtures and PostgreSQL systems, the "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "ecosystem-implementation-programme",
-    "summary": "The requested outcome is ten complete ecosystem products, built for large production workloads and qualified with measured efficiency and recovery evidence. Code, a successful build, and a production qualification are…",
-    "keywords": [
-      "docs",
-      "ecosystem",
-      "implementation",
-      "programme"
-    ],
-    "order": 1075,
-    "title": "BlueTusk ecosystem expansion",
-    "sourcePath": "docs/ecosystem/implementation-programme.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/implementation-programme.md",
-    "headings": [
-      {
-        "id": "bluetusk-ecosystem-expansion",
-        "text": "BlueTusk ecosystem expansion",
-        "level": 1
-      },
-      {
-        "id": "product-requirements",
-        "text": "Product requirements",
-        "level": 2
-      },
-      {
-        "id": "shared-architecture",
-        "text": "Shared architecture",
-        "level": 2
-      },
-      {
-        "id": "verification-and-production-qualification",
-        "text": "Verification and production qualification",
-        "level": 2
-      },
-      {
-        "id": "work-sequence",
-        "text": "Work sequence",
-        "level": 2
-      }
-    ],
-    "wordCount": 807,
-    "readMinutes": 4,
-    "searchText": "BlueTusk ecosystem expansion The requested outcome is ten complete ecosystem products, built for large production workloads and qualified with measured efficiency and recovery evidence. Code, a successful build, and a production qualification are separate milestones. None of the new products is currently production qualified. Product requirements Product Required behavior Events Typed and versioned domain events; atomic business-write/outbox transactions; tenant and stream ordering; stable event identity; inbox deduplication atomic with consumer effects; bounded delivery and replay; consumer checkpoints; EF integration; event contract evolution. Jobs Durable transactional enqueue; delayed and recurring scheduling; bounded fair workers; database-clock leases and fencing; heartbeat, cancellation, retries and terminal failure; idempotency; bounded history and retention; typed handlers; operational controls. Documents Typed JSONB sessions and source-generated serialization; tenant isolation; revision-based concurrency; atomic multi-document saves; patching; bounded keyset queries; declarative indexes; document schema evolution; Streams and Live integration. Projections Durable multi-source read models; joined and aggregate projections; ordered transactional application with colocated checkpoints; versioned definitions; no-gap rebuilds and cutover; replay, reconciliation and repair; bounded dependencies; Live integration. Search PostgreSQL full-text, vector and hybrid retrieval; versioned ingestion and chunking; bounded embedding workers; tenant and permission filtering; stable rank/pagination; deletion propagation; ranking extensions; pgvector and OpenSearch adapters. Schema Consistent catalogue snapshots; canonical fingerprints; structural compatibility and consumer-impact checks; migration plans and safe deployment sequencing; drift checks; bounded discovery; declarative indexes and schema contract evolution. Sql Typed query methods generated from SQL files; schema-va"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "ecosystem-performance",
-    "summary": "ecosystem-performance.yml is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character candidatesha that already contains this workflo…",
-    "keywords": [
-      "docs",
-      "ecosystem",
-      "performance"
-    ],
-    "order": 1076,
-    "title": "Ecosystem performance qualification",
-    "sourcePath": "docs/ecosystem/performance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/performance.md",
-    "headings": [
-      {
-        "id": "ecosystem-performance-qualification",
-        "text": "Ecosystem performance qualification",
-        "level": 1
-      }
-    ],
-    "wordCount": 807,
-    "readMinutes": 4,
-    "searchText": "Ecosystem performance qualification `ecosystem-performance.yml` is a manually dispatched, exact-commit local capacity gate for Jobs, Workflows, Projections and Documents. Dispatch it with a full 40-character `candidate_sha` that already contains this workflow, the budget contract and verifier, and type `RUN-ECOSYSTEM-PERFORMANCE`. It requires a clean checkout on the dedicated Windows Ryzen 7 5800X benchmark runner, Docker in Linux-container mode, Python and .NET from `global.json`. The workflow has read-only repository permissions and performs no packaging, release or publication step. The gate runs **two independent campaigns** of each workload. Each Jobs/Workflows storage campaign offers 30 minutes per product with seeded high-entropy payloads. Projections runs separate 30-minute steady-load and overload profiles per repetition; Documents fixed-cardinality churn also runs for 30 minutes. The wall time is several hours because campaigns are sequential and include setup, drain, recovery and verification. Each harness uses a dedicated disposable PostgreSQL fixture. The gate checks each completed campaign immediately and rejects missing runs, wrong payload mode, failed logical/recovery checks, insufficient measurement time or sparse storage/service observations. A successful pass means only that this workload and runner met the explicit local thresholds below. It does not establish production capacity, indefinite storage bounds or performance leadership. Workload Minimum throughput Maximum p99 Storage ceiling Jobs 20 durable completions/s 10 s hot, 3 s cold 64 MiB runtime relations; 2 MiB/min late net growth; 64 KiB cluster WAL/accepted Workflows 5 durable completions/s 30 s hot, 12 s cold 128 MiB runtime relations; 4 MiB/min late net growth; 256 KiB cluster WAL/accepted Projections steady load 20 scheduled offers/s; 19 accepted/s; 18 inbox effects/s during offering; ≥99% admission and ≥95% inbox coverage by offer end 1 s commit, 2 s projection/inbox, 3 s Live coverag"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "ecosystem-progress",
-    "summary": "Working branch: codex/ecosystem-products. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent 0.1.0-preview.1 packages. Publication is disabled for all ten families.",
-    "keywords": [
-      "docs",
-      "ecosystem",
-      "progress"
-    ],
-    "order": 1077,
-    "title": "Ecosystem expansion evidence ledger",
-    "sourcePath": "docs/ecosystem/progress.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/progress.md",
-    "headings": [
-      {
-        "id": "ecosystem-expansion-evidence-ledger",
-        "text": "Ecosystem expansion evidence ledger",
-        "level": 1
-      },
-      {
-        "id": "current-local-gates",
-        "text": "Current local gates",
-        "level": 2
-      },
-      {
-        "id": "production-qualification-still-required",
-        "text": "Production qualification still required",
-        "level": 2
-      }
-    ],
-    "wordCount": 1419,
-    "readMinutes": 7,
-    "searchText": "Ecosystem expansion evidence ledger Working branch: `codex/ecosystem-products`. Events, Jobs, Documents, Projections, Search, Schema, Sql, Studio, Edge, and Workflows have independent `0.1.0-preview.1` packages. Publication is disabled for all ten families. Implemented paths and passing local gates are substantial, but no family is production qualified. The [expansion release contract](release-qualification.md) keeps their tagged publication path closed until product-specific evidence, governance and independent approval exist for an exact candidate. Family Implemented and directly exercised Material work still open Events Transactional outbox/inbox, typed routing, replay and Streams adapter; guarded local-only archive/prune with durable ID fence; 50 live tests per PostgreSQL version, native execution, 100,000-event Projections/Events campaign Published-outbox retention, large producer/consumer fleets, upgrades and disaster recovery Jobs Durable admissions, leases, fences, typed workers, scheduling and effects; 36 live tests per version, 600-second storage/fault campaign and physical promotion Representative multi-day retention/capacity and operations under repeated failure Documents Typed JSONB, opt-in immutable-content sidecar, atomic CAS sessions, patches, indexes, Streams/Live adapters and host health; 38 live tests per PostgreSQL version 15–18, 16-cell load and killed-writer recovery Longer physical storage/WAL qualification, tail latency, sustained hot keys and operational limits Projections Durable joins/aggregates, snapshot/WAL checkpoint and cutover, fenced Live updates; selective dependency reconciliation; 35 live PostgreSQL 17 tests, 100,000-effect exact-state campaign, 600-second overload and physical promotion Longer independent-host steady/overload load, retention/format upgrades and wider failure distributions Search Full-text/vector/hybrid, ACLs, pgvector, OpenSearch ANN and embedding jobs; 53 live tests per version and native execution Scale limits,"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "ecosystem-release-qualification",
-    "summary": "Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at 0.1.0-preview.1. Their publication flags are disabled. The tagged release workflow recognizes t…",
-    "keywords": [
-      "docs",
-      "ecosystem",
-      "release",
-      "qualification"
-    ],
-    "order": 1078,
-    "title": "Expansion release qualification",
-    "sourcePath": "docs/ecosystem/release-qualification.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ecosystem/release-qualification.md",
-    "headings": [
-      {
-        "id": "expansion-release-qualification",
-        "text": "Expansion release qualification",
-        "level": 1
-      }
-    ],
-    "wordCount": 1354,
-    "readMinutes": 7,
-    "searchText": "Expansion release qualification Events, Jobs, Documents, Schema, Projections, Search, Sql, Studio, Edge and Workflows are implemented preview products at `0.1.0-preview.1`. Their publication flags are disabled. The tagged release workflow recognizes their names so a future qualified candidate can use the same package, SBOM, provenance and protected-publication machinery as the established families. Recognizing a tag is not authority to publish it. `eng/verify-expansion-release-policy.ps1` is the fail-closed source contract. It checks all ten preview entries while disabled. If a future candidate arms a family, it requires a stable version of at least `1.0.0`, the complete exact manual workflow set in its family manifest, a protected independent `expansion-candidate-readiness` environment, and the exact versioned tag pattern in the `package-production` governance contract. The tagged workflow also runs `verify-release-gates.ps1`, which requires successful manual runs whose `head_sha` equals the tag commit, a readiness artifact bound to the exact family, commit, tag, version and qualification artifact digests, and verifies that exact-version release dependencies are already public. The protected publish job checks the live repository and environment settings before any registry write. A source-only governance declaration cannot substitute for those live settings. Source policy checks neither run outcomes nor report contents. The release verifier checks workflow identity, event, conclusion, commit and the readiness artifact's references to the exact qualification runs and their retained artifact digests. The future qualification workflows and protected candidate aggregator must validate their own raw measurements before a successful run can count. Each family must have its own capacity, failover and durable-format upgrade qualification. The required workflow identities are fixed in `eng/expansion-release-policy.json`. Jobs needs a dedicated `expansion-release-capacity.y"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "edge",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "edge",
-      "README"
-    ],
-    "order": 1079,
-    "title": "BlueTusk.Edge",
-    "sourcePath": "docs/edge/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-edge",
-        "text": "BlueTusk.Edge",
-        "level": 1
-      },
-      {
-        "id": "cache-snapshots-and-changes",
-        "text": "Cache, snapshots and changes",
-        "level": 2
-      },
-      {
-        "id": "durable-mutations-and-conflicts",
-        "text": "Durable mutations and conflicts",
-        "level": 2
-      },
-      {
-        "id": "durable-server-and-authenticated-transport",
-        "text": "Durable server and authenticated transport",
-        "level": 2
-      },
-      {
-        "id": "operator-health-and-telemetry",
-        "text": "Operator health and telemetry",
-        "level": 2
-      },
-      {
-        "id": "storage-and-bounds",
-        "text": "Storage and bounds",
-        "level": 2
-      },
-      {
-        "id": "verification-and-remaining-product-gates",
-        "text": "Verification and remaining product gates",
-        "level": 2
-      }
-    ],
-    "wordCount": 3999,
-    "readMinutes": 19,
-    "searchText": "BlueTusk.Edge **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Edge `0.1.0-preview.1` supplies offline synchronization contracts and a bounded coordinator. BlueTusk.Edge.Sqlite provides a durable file cache and queued mutations. BlueTusk.Edge.Server supplies a PostgreSQL record repository with an atomic mutation inbox, consistent snapshots and a retained change feed. BlueTusk.Edge.Http and BlueTusk.Edge.AspNetCore connect that repository through authenticated HTTP. `@bluetusk/edge` supplies durable IndexedDB storage, an interoperable HTTP client and a bounded reconnect helper. The host obtains tenant, selective scope identity and increasing epoch from an authenticated server contract. A scope may represent a user, permission set and selection filter; changing any access boundary should rotate its epoch. The client cannot authorize its own arbitrary scope ID or epoch. Local persistence is not an authentication boundary or encryption mechanism; the host owns local file/browser profile access and logout/revocation handling. Cache, snapshots and changes SQLite keys include tenant, scope and epoch. IndexedDB uses the same composite identity. Activating a newer epoch atomically purges prior cached/staged state and receipts, resets its checkpoint, and invalidates older-epoch reads. Pending writes make rotation fail by default. The host must explicitly choose `DiscardPending`/`discard` after its pending-write policy is resolved; the library does not silently discard offline user changes. A host detecting authorization revocation must stop using the old scope while resolving that policy. Snapshots use stable identities, stage bounded batches separately from the active cache, and publish their full selective record set plus checkpoint in one transaction. Reopening/"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "edge-capacity",
-    "summary": "eng/run-edge-capacity.ps1 prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript",
-    "keywords": [
-      "docs",
-      "edge",
-      "capacity"
-    ],
-    "order": 1080,
-    "title": "Edge ordered offline capacity campaign",
-    "sourcePath": "docs/edge/capacity.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/edge/capacity.md",
-    "headings": [
-      {
-        "id": "edge-ordered-offline-capacity-campaign",
-        "text": "Edge ordered offline capacity campaign",
-        "level": 1
-      }
-    ],
-    "wordCount": 803,
-    "readMinutes": 4,
-    "searchText": "Edge ordered offline capacity campaign `eng/run-edge-capacity.ps1` prepares a clean exact-commit local measurement. It builds the .NET harness and locked browser client, snapshots every executable dependency and the JavaScript modules, then runs two fresh digest-pinned PostgreSQL 18 fixtures. Each fixture has four Docker CPUs, 2 GiB of memory and its own database volume. A real Kestrel endpoint serves seven SQLite clients and one persistent-profile Chromium-family IndexedDB client. The runner labels and removes only its own PostgreSQL container and volume and generates a fresh random database credential per fixture. It retains raw JSON, workload logs, local SQLite files, browser profile, source captures, binary snapshots and SHA-256 manifest under `artifacts/`. The eight isolated tenant scopes each begin with 256 distinct 4 KiB records and an empty ordered client stream. Each client schedules one 4 KiB high-entropy update every 200 ms for 30 minutes: 40 planned writes/s across the fixture. The monotonic scheduler counts every slot as offered or skipped, including slots remaining after a slow operation crosses the deadline, and never creates an unbounded client request queue. The offline verifier requires exact planned-slot accounting for each client. The same key cannot have two pending writes. Each client holds at most 512 local mutations and receipts; the server caps each scope at 512 receipts and 1024 feed entries. Successful reconnect passes durably acknowledge results, confirm original mutations, advance gapless ordered horizons and prune only a feed prefix behind the active client's durable checkpoint. An intentionally lagging read verifies HTTP 410 and a fresh snapshot after the floor advances. Each run includes two 30-second offline windows, one response dropped **after** the server's business transaction commits for every client, a local SQLite reopen or real browser-profile restart, and a Kestrel restart. The response drop is injected by a client-side tran"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "events-published-retention",
-    "summary": "ArchiveNextAsync can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE,",
-    "keywords": [
-      "docs",
-      "events",
-      "PUBLISHED",
-      "RETENTION"
-    ],
-    "order": 1088,
-    "title": "Published outbox retention: required protocol",
-    "sourcePath": "docs/events/PUBLISHED-RETENTION.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/PUBLISHED-RETENTION.md",
-    "headings": [
-      {
-        "id": "published-outbox-retention-required-protocol",
-        "text": "Published outbox retention: required protocol",
-        "level": 1
-      }
-    ],
-    "wordCount": 2107,
-    "readMinutes": 10,
-    "searchText": "Published outbox retention: required protocol `ArchiveNextAsync` can already copy a published stream's immutable events into an external archive. It never authorizes physical deletion. The current Events.Streams decoder rejects every outbox DELETE, and a Projections source may include the same outbox table in its publication. A source slot position only states how far that transport has acknowledged WAL; it does not prove that every target inbox, projection version, independent subscription or recovery candidate has committed the event effects. No source-only API can safely infer those remote obligations from the present contracts. Published pruning needs a distinct, opt-in protocol, with the following durable order: The Events schema v3 adds `published_retention_intents` and `PostgreSqlEventStore.PublishRetentionIntentAsync` as a **preparation stage only**. The method re-reads at most 256 archive segments (64 by default) and 64 MiB of total event payload while holding the stream and relation locks, verifies their contiguous sequence ranges, counts and immutable event digests, and hashes their manifest identities into a chained digest. It then inserts an append-only row into the same PostgreSQL transaction log as the outbox. The row records a unique epoch, source system identifier, database and OID, timeline, logical slot, publication and OID, and exact tenant/stream range. A prior intent must end at the caller's expected sequence and have the same lineage. The method checks the connected PostgreSQL control identity and logical slot, and refuses to emit a marker unless **every** publication currently containing the outbox also publishes complete, unfiltered inserts from the control relation. Deployment must add that relation to explicit outbox publications before using the API and **freeze publication DDL** throughout the protocol; a schema-wide or all-tables publication covers it automatically. Archive read latency extends the lock hold, so operators should use sma"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "events",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "events",
-      "README"
-    ],
-    "order": 1089,
-    "title": "BlueTusk.Events",
-    "sourcePath": "docs/events/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/events/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-events",
-        "text": "BlueTusk.Events",
-        "level": 1
-      },
-      {
-        "id": "transactional-publishing",
-        "text": "Transactional publishing",
-        "level": 2
-      },
-      {
-        "id": "ordering-and-scale",
-        "text": "Ordering and scale",
-        "level": 2
-      },
-      {
-        "id": "inbox-and-replay",
-        "text": "Inbox and replay",
-        "level": 2
-      },
-      {
-        "id": "streams-delivery-adapter",
-        "text": "Streams delivery adapter",
-        "level": 2
-      },
-      {
-        "id": "local-only-archive-and-retention",
-        "text": "Local-only archive and retention",
-        "level": 2
-      },
-      {
-        "id": "validation-and-remaining-release-gates",
-        "text": "Validation and remaining release gates",
-        "level": 2
-      }
-    ],
-    "wordCount": 2346,
-    "readMinutes": 11,
-    "searchText": "BlueTusk.Events **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Events is an independent `0.1.0-preview.1` family targeting .NET 10. It records typed, versioned business intent in the same PostgreSQL transaction as business data, deduplicates database effects in a consumer inbox, and replays an ordered tenant stream with durable fenced checkpoints. The runtime uses ADO.NET and BlueTusk.Data. Npgsql and EF Core are not runtime dependencies of the core. Transactional publishing Define a stable contract name/version and generate JSON metadata for each historical wire version: Generate event identity and occurrence time once, outside a retry loop. A retry of the same tenant/event identity must contain identical stream, contract, timestamp (at PostgreSQL microsecond precision), and payload bytes. A conflicting identity fails. The tenant is part of identity: the same UUID in two tenants identifies two separate events. Cross-stream races for the same tenant/event identity can fail with PostgreSQL's unique constraint; roll back the transaction and correct the publisher. The optional `BlueTusk.Events.EntityFrameworkCore` adapter exposes `context.AppendEventsAsync(...)`. Begin an explicit relational transaction, save business changes, append events, then commit. The adapter requires that transaction; it does not start one, call SaveChanges, or commit on the caller's behalf. The caller owns the data source, connection and transaction lifetime. Call `InitializeAsync` during controlled deployment. Schema version 1 is installed transactionally under an advisory lock. Unknown versions are rejected. No hot path automatically migrates schemas. Ordering and scale There is no global sequence. The primary key is `(tenant_id, stream_id, sequence)`. Appending locks that strea"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "fuzzing",
-    "summary": "BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain:",
-    "keywords": [
-      "docs",
-      "fuzzing"
-    ],
-    "order": 1092,
-    "title": "Parser reliability and coverage-guided fuzzing",
-    "sourcePath": "docs/fuzzing.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
-    "headings": [
-      {
-        "id": "parser-reliability-and-coverage-guided-fuzzing",
-        "text": "Parser reliability and coverage-guided fuzzing",
-        "level": 1
-      },
-      {
-        "id": "deterministic-replay",
-        "text": "Deterministic replay",
-        "level": 2
-      },
-      {
-        "id": "coverage-guided-runs",
-        "text": "Coverage-guided runs",
-        "level": 2
-      }
-    ],
-    "wordCount": 547,
-    "readMinutes": 3,
-    "searchText": "Parser reliability and coverage-guided fuzzing BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain: Target Boundary `protocol-frames` Segmented PostgreSQL backend frames and backend-message decoders `authentication` PostgreSQL authentication messages and SCRAM server exchanges `pgoutput` pgoutput protocol versions 1–4, streaming and two-phase messages `binary-copy` Binary COPY field decoding through the built-in type registry `array-codec` Binary and text PostgreSQL arrays `range-codec` Binary and text ranges and multiranges `composite-codec` Binary and text composite/record values `streams-envelope` Integrity-protected Streams transaction envelopes `live-resume-token` Raw, signed-malformed and structurally valid Live resume tokens The harness accepts at most 64 KiB. A protocol input may yield at most 512 messages. Collection decoders reject counts that exceed either their remaining payload capacity or the 4,096-item parser ceiling. Streams decoding uses separate limits of 512 changes, 128 tables, 256 columns per table and 4 KiB per string. CI gives each execution 2 seconds and the .NET managed heap 1 GiB. AFL's virtual-address-space limit is disabled because the .NET runtime reserves more address space than it commits; the GC heap hard limit supplies the bounded managed-memory control instead. The machine-readable source contract is [`eng/fuzzing-contract.json`](../eng/fuzzing-contract.json). It prevents the target registry, runner, workflow matrix, encoded corpus directories and resource limits from silently drifting apart: Structured codecs reject declared array-element and record-field lengths before slicing the remaining payload. Text arrays enforce the same six-dimension ceiling as binary arrays, CLR array-bound translation is range checked, and binary timestamps outside the representable .NET range are rejected as malformed values. Deterministic replay Every seed and minimized regression is stored as Base64 in `tests/fuzz-"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "hardening-programme",
-    "summary": "The Provider → Streams → Sync → Live → Continuous Graph development chain is feature-complete for V1. Version 1.0.0 was published on 2026-08-23 under the documented repository-owner exception.",
-    "keywords": [
-      "docs",
-      "hardening",
-      "programme"
-    ],
-    "order": 1099,
-    "title": "V1 hardening programme",
-    "sourcePath": "docs/hardening-programme.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
-    "headings": [
-      {
-        "id": "v1-hardening-programme",
-        "text": "V1 hardening programme",
-        "level": 1
-      },
-      {
-        "id": "gap-to-evidence-matrix",
-        "text": "Gap-to-evidence matrix",
-        "level": 2
-      },
-      {
-        "id": "phased-implementation",
-        "text": "Phased implementation",
-        "level": 2
-      },
-      {
-        "id": "completed-slice-verification",
-        "text": "Completed slice verification",
-        "level": 2
-      }
-    ],
-    "wordCount": 1134,
-    "readMinutes": 6,
-    "searchText": "V1 hardening programme The Provider → Streams → Sync → Live → Continuous Graph development chain is feature-complete for V1. Version `1.0.0` was published on 2026-08-23 under the documented [repository-owner exception](releases/1.0.0-publication-record.md). The incomplete evidence below remains incomplete; publication and internal tests are not, by themselves, a production-readiness claim. Gap-to-evidence matrix Priority Current position Evidence required to close Status 1. Minimal EF↔Data SPI EF now consumes an internal Data-owned contract for connection/data-source creation, ownership, immutable type-registry snapshots, capabilities, admin connections, catalogue reload and diagnostics. Concrete types remain only at the public configuration boundary. Contract tests, a source architecture guard, EF ownership tests, zero-warning build and documentation. Complete 2. NativeAOT and trimming Transport through Data plus the required extension-abstraction dependency now pass full-trim and NativeAOT publishes. Runtime-selected shapes have explicit boundaries. `PublishTrimmed` and `PublishAot` smoke applications, correct annotations/source generation, unsupported-feature diagnostics, Windows/Linux CI, startup/allocation/deployable-size baselines. Complete 3. Multiplexing hardening Bounded multiplexing now fails closed for every known session-affine surface, exposes bounded scheduler telemetry, and has deterministic fairness/failure/recovery coverage. Fairness, exhaustion, admission cancellation, timeout, pipeline isolation, disposal, forced shutdown, session recovery, stateful SQL, PgBouncer session/transaction modes, and a commit-bound MediumRun against both non-multiplexed BlueTusk and Npgsql. Complete 4. Coverage-guided fuzzing Nine bounded SharpFuzz/AFL++ targets cover protocol frames, authentication, pgoutput, binary COPY, arrays, ranges, composites, Streams envelopes and Live resume tokens. Replayable Base64 corpus cases, deterministic tests, CI smoke, scheduled runs, "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "improvement-audit",
-    "summary": "Audited on 27 September 2026. This record covers the whole product and developer experience. A completed implementation needs its stated validation; older benchmarks and narrow test runs do not certify a later release…",
-    "keywords": [
-      "docs",
-      "improvement",
-      "audit"
-    ],
-    "order": 1100,
-    "title": "BlueTusk improvement audit and action record",
-    "sourcePath": "docs/improvement-audit.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/improvement-audit.md",
-    "headings": [
-      {
-        "id": "bluetusk-improvement-audit-and-action-record",
-        "text": "BlueTusk improvement audit and action record",
-        "level": 1
-      },
-      {
-        "id": "current-decisions",
-        "text": "Current decisions",
-        "level": 2
-      },
-      {
-        "id": "work-and-acceptance-evidence",
-        "text": "Work and acceptance evidence",
-        "level": 2
-      },
-      {
-        "id": "first-implementation-evidence",
-        "text": "First implementation evidence",
-        "level": 2
-      },
-      {
-        "id": "browser-reduction-evidence",
-        "text": "Browser reduction evidence",
-        "level": 2
-      },
-      {
-        "id": "execution-order",
-        "text": "Execution order",
-        "level": 2
-      }
-    ],
-    "wordCount": 2211,
-    "readMinutes": 11,
-    "searchText": "BlueTusk improvement audit and action record Audited on 27 September 2026. This record covers the whole product and developer experience. A completed implementation needs its stated validation; older benchmarks and narrow test runs do not certify a later release candidate. Current decisions Continuous Graph remains in the product. The owner has directed that its later availability must not block the other product lines. PostgreSQL 19 Beta 4 removed SQL/PGQ, including the engine used by BlueTusk's `GRAPH_TABLE` queries. Graph's Beta 3 fixtures remain preview evidence; a PostgreSQL 19 GA milestone alone will not establish Graph compatibility. Its release policy must depend on a supported server providing the required capability and its own evidence. The [official Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/) also records fixes for native `REPACK`. The [roadmap](https://www.postgresql.org/developer/roadmap/) now targets October 2026. Update current support claims without rewriting historical measurements. Work and acceptance evidence Work State Evidence required to close it Separate Graph release readiness from the other families Policy, scoped evidence, stable core CI/endurance and isolated Graph application/database/config implemented; final candidate aggregation pending Core helper self-tests, actual package/SBOM checks and separate local application captures; exact 1.2 remote candidate aggregation still required Live refresh/replay recovery Implemented; Windows PostgreSQL validation passed 78 tests pass with zero skips, including real PostgreSQL stores and SSE/SignalR/gRPC transports; final-candidate platform and endurance gates remain Contributor setup and focused validation Implemented; local command validation passed Doctor/project registration, missing-database refusal, hashed TRX summary, focused Check, five client builds/53 client tests, diagnostic fixture self-tests, generated guides and production website bu"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "jobs",
-      "README"
-    ],
-    "order": 1101,
-    "title": "BlueTusk.Jobs",
-    "sourcePath": "docs/jobs/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-jobs",
-        "text": "BlueTusk.Jobs",
-        "level": 1
-      },
-      {
-        "id": "usage",
-        "text": "Usage",
-        "level": 2
-      },
-      {
-        "id": "delivery-and-ownership",
-        "text": "Delivery and ownership",
-        "level": 2
-      },
-      {
-        "id": "bounds-and-scheduling",
-        "text": "Bounds and scheduling",
-        "level": 2
-      },
-      {
-        "id": "operations",
-        "text": "Operations",
-        "level": 2
-      },
-      {
-        "id": "verification",
-        "text": "Verification",
-        "level": 2
-      }
-    ],
-    "wordCount": 1435,
-    "readMinutes": 7,
-    "searchText": "BlueTusk.Jobs **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Jobs is a PostgreSQL durable execution library built on BlueTusk.Data. The current package version is `0.1.0-preview.1`, targeting .NET 10. It is an implemented preview; production qualification and performance leadership are not established by the current test results. Usage The caller owns the data source. Store methods borrow and return pooled connections. Enqueue in a caller transaction borrows no second connection and never commits that transaction. A duplicate key returns the original identity only when type, bytes, and maximum-attempt contract match. A changed contract fails explicitly. The first enqueue establishes the availability deadline; repeated enqueue does not reschedule it. Keys are scoped by tenant and queue. Delivery and ownership Jobs are at least once. A handler can perform an external effect, lose its connection before acknowledging it, and execute again after recovery. External systems must enforce idempotency, or enforce a fence keyed by job identity. PostgreSQL acknowledgement fencing cannot undo an already performed external effect. A business effect performed in PostgreSQL should use its own atomic inbox/effect transaction. ExecuteFencedAsync guards colocated database effects and downstream enqueue. Its callback receives a borrowed BlueTusk connection and transaction, checks the database deadline before entering and again before commit, and rolls everything back on cancellation, failure or expiry. The typed handler context includes its lease capability. Keep callbacks short: their locked job row prevents heartbeat extension through the transaction. External effects cannot be rolled back and do not belong in that callback. Every claim increments a durable monotonic tok"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-durable-format",
-    "summary": "Both products currently support durable schema format 1 only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate f…",
-    "keywords": [
-      "docs",
-      "jobs",
-      "durable",
-      "format"
-    ],
-    "order": 1102,
-    "title": "Durable-format support and rehearsal",
-    "sourcePath": "docs/jobs/durable-format.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/durable-format.md",
-    "headings": [
-      {
-        "id": "durable-format-support-and-rehearsal",
-        "text": "Durable-format support and rehearsal",
-        "level": 1
-      }
-    ],
-    "wordCount": 471,
-    "readMinutes": 3,
-    "searchText": "Durable-format support and rehearsal Both products currently support durable schema format **1** only. There is no previous released Jobs/Workflows format, format-two migration or downgrade implementation. Definition versions inside a workflow are separate from the store format; `MigrateAsync` does not migrate database storage formats. `InitializeAsync` is deployment work. It serializes schema setup, checks the persisted format and durable admission fingerprint/limits, and rejects a mismatch. Do not start workers when initialization fails. Jobs persists payload and history limits; Workflows persists its definition/input/result/signal/node/ history admission bounds. Operational batch, aggregate-read/claim and command deadline tuning may change within the same durable limits. An incompatible initializer does not automatically widen constraints or rewrite existing work. The live `JobDurableFormatTests` and `WorkflowDurableFormatTests` rehearse a format-one store reopening with different operational tuning, then restoring its initial configuration. They preserve queued identity/deduplication, failed-attempt history, fencing and completion. A workflow pauses after one committed activity, reopens, receives a signal, rolls its process configuration back, and resumes its timer/final activity without repeating the earlier activity; replay must match. The manual [Jobs binary upgrade gate](upgrade.md) is separate from these same-binary tests. It requires distinct old-preview and candidate Jobs DLLs, overlapping old/new processes and an old-binary rollback on unchanged format-one state. No passing cross-binary run has yet been retained. A separate live rehearsal exercises an actual supported definition boundary: version one commits an activity and waits for a signal, migrates quiescently to version two with an additional blocked node, reopens the store, then migrates back to version one at the current revision. The completed activity contract, result and original start/deduplic"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-failover",
-    "summary": "Select Jobs in the manual Expansion release failover workflow to run this rehearsal for one clean full candidate SHA. It requires three",
-    "keywords": [
-      "docs",
-      "jobs",
-      "failover"
-    ],
-    "order": 1103,
-    "title": "Jobs and Workflows physical promotion rehearsal",
-    "sourcePath": "docs/jobs/failover.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/failover.md",
-    "headings": [
-      {
-        "id": "jobs-and-workflows-physical-promotion-rehearsal",
-        "text": "Jobs and Workflows physical promotion rehearsal",
-        "level": 1
-      },
-      {
-        "id": "lease-and-connection-selection-budget",
-        "text": "Lease and connection-selection budget",
-        "level": 2
-      },
-      {
-        "id": "retained-baseline-two-passes-one-failure",
-        "text": "Retained baseline: two passes, one failure",
-        "level": 2
-      },
-      {
-        "id": "frozen-optimized-provider-campaign-three-passes",
-        "text": "Frozen optimized-provider campaign: three passes",
-        "level": 2
-      },
-      {
-        "id": "separate-real-wire-post-cooldown-boundary",
-        "text": "Separate real-wire post-cooldown boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 2652,
-    "readMinutes": 13,
-    "searchText": "Jobs and Workflows physical promotion rehearsal Select `Jobs` in the manual [Expansion release failover workflow](../../.github/workflows/expansion-release-failover.yml) to run this rehearsal for one clean full candidate SHA. It requires three fresh synchronous pairs, verifies the exact Jobs effects and stale-owner fences against retained raw reports and binary hashes, then uploads a product-specific artifact only after independent archive verification. Adding the workflow does not supply a passing run. Credential replacement during promotion, prolonged silent network partitions, persistent storage loss, asynchronous replication, split brain, old-primary rejoin and independent-host operation remain separate release evidence. `eng/jobs-physical-recovery.ps1` creates fresh labelled PostgreSQL 18 primary and physical standby containers, private network and separate data volumes. Default loopback ports are 55625/55626, independent of the shared 55415–55418 fixtures and the Projections recovery lab. The image is pinned by digest. It takes a physical base backup and verifies streaming synchronous replication before running the dedicated `BlueTusk.Workflows.PhysicalRecoveryTests` project. Three repetitions each receive a new pair and durable state. Cleanup verifies both owner and fixture labels before removing any container, network or volume. Each C# rehearsal has a 180-second work deadline and finite admission: two tenant scopes, 66 Jobs and six workflows. It creates the real fixture explicitly; missing configuration fails. The project is outside the ordinary `*.Tests.csproj` selector so a normal PostgreSQL test run cannot silently treat an absent failover lab as a passing scenario. The wrapper rejects skipped tests, preserves per-run TRX and PostgreSQL logs under `artifacts/jobs-physical-recovery`, and retains compact raw JSON plus fixture CPU/memory/I/O samples next to the selected report. Worker/probe shutdown and schema cleanup have separate bounded deadlines. Failed"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-hosting",
-    "summary": "BlueTusk.Jobs.DependencyInjection and BlueTusk.Workflows.DependencyInjection are optional host adapters. The core stores remain independent of Microsoft hosting. Install the adapter for each product used by your host…",
-    "keywords": [
-      "docs",
-      "jobs",
-      "hosting"
-    ],
-    "order": 1104,
-    "title": "Scoped Jobs and Workflows host readiness",
-    "sourcePath": "docs/jobs/hosting.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/hosting.md",
-    "headings": [
-      {
-        "id": "scoped-jobs-and-workflows-host-readiness",
-        "text": "Scoped Jobs and Workflows host readiness",
-        "level": 1
-      },
-      {
-        "id": "credential-rotation-rehearsal",
-        "text": "Credential rotation rehearsal",
-        "level": 2
-      },
-      {
-        "id": "local-verification-evidence",
-        "text": "Local verification evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 1088,
-    "readMinutes": 5,
-    "searchText": "Scoped Jobs and Workflows host readiness `BlueTusk.Jobs.DependencyInjection` and `BlueTusk.Workflows.DependencyInjection` are optional host adapters. The core stores remain independent of Microsoft hosting. Install the adapter for each product used by your host and register a trusted, fixed tenant and queue: The host supplies logging as usual. Factories resolve caller-owned singleton stores and must perform no I/O. Registration does not initialize schemas, start workers, or dispose the supplied source. Each registration resolves one keyed singleton check per host service provider. Distinct providers have independent checks. Names must be unique across the host, at most 64 characters; each adapter permits at most 128 registrations. The factory and options are explicit to make the operational tenant boundary reviewable. Never derive a scope, check name or store factory from an untrusted request. Authenticate health endpoints and authorize access to the configured scope. Returned counts and ages are operational data even though identity, payload, schema and connection settings are omitted. A public liveness endpoint should not expose these reports. Scope predicates enforce query separation; they are not a substitute for PostgreSQL grants or row-level security. A read-only health role needs schema `USAGE` and `SELECT` on Jobs `jobs` and Workflows `instances`. Neither check needs write permissions, definition reads, history scans or DDL. Configure row-level policies separately when the database role must also enforce a tenant boundary. Superusers and owners can bypass RLS. Counts are observed with a ceiling of 1–100,000 and carry saturation flags. Pressure thresholds may be zero but cannot exceed the observation ceiling. Saturation is `Degraded`, even when the reported count equals a threshold, because the true count may be larger. Jobs checks pending count, expired leases and database-clock age of ready work. Workflows checks running/compensating instances and the same "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-maintenance",
-    "summary": "Jobs and Workflows bound admitted payloads, in-memory claims, attempt/history entries and individual pruning batches. Those bounds do not impose a physical database or WAL disk limit. The host owns admission/backlog q…",
-    "keywords": [
-      "docs",
-      "jobs",
-      "maintenance"
-    ],
-    "order": 1105,
-    "title": "Durable storage maintenance contract",
-    "sourcePath": "docs/jobs/maintenance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/maintenance.md",
-    "headings": [
-      {
-        "id": "durable-storage-maintenance-contract",
-        "text": "Durable storage maintenance contract",
-        "level": 1
-      }
-    ],
-    "wordCount": 627,
-    "readMinutes": 3,
-    "searchText": "Durable storage maintenance contract Jobs and Workflows bound admitted payloads, in-memory claims, attempt/history entries and individual pruning batches. Those bounds do not impose a physical database or WAL disk limit. The host owns admission/backlog quotas and a regular retention loop for every tenant/queue; PostgreSQL operators own page reuse, autovacuum, transaction-age and WAL/disk budgets. Deleting rows is only the first stage of storage maintenance. Choose terminal retention longer than upstream retry/redelivery and external idempotency windows. Pruning releases deduplication identities, so a later redelivery can create new work. Workflows prune their completed instances and cascaded nodes/history/signals; their dispatch Jobs require their own pruning. Definitions and recurring schedules are durable configuration and have separate operator-managed lifetimes. Waiting signals/timers and permanently running instances need an explicit application lifetime/cancellation policy; terminal retention cannot delete them. Run bounded `PruneAsync` batches with a finite per-scope/time budget and reschedule scopes fairly. Observe returned counts, capped active counts and ready age, terminal age, durable throughput and rejected offers. Never increase admission indefinitely to conceal overload. A deleted row can remain physically needed by an older database snapshot. Check long transactions, replication slots and other vacuum blockers when live counts fall but dead rows or relation files grow. Standard vacuum makes dead table/index space reusable. It usually keeps files allocated; this is useful when subsequent work reuses those pages. A physical plateau therefore means a stable relation-byte range across repeated cleanup cycles under sustained arrivals, rather than zero retained rows or file shrinkage. Keep autovacuum enabled. Supplement or tune it based on measured churn and dead rows; the tested cadence below is a reference workload policy, not a universal setting. Postgr"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-performance",
-    "summary": "benchmarks/BlueTusk.Workflows.LoadHarness is a repeatable executable that measures the durable Jobs runtime and six-node Workflows DAG on a disposable PostgreSQL database. It verifies every admitted item reaches durab…",
-    "keywords": [
-      "docs",
-      "jobs",
-      "performance"
-    ],
-    "order": 1106,
-    "title": "Jobs and Workflows capacity and recovery harness",
-    "sourcePath": "docs/jobs/performance.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/performance.md",
-    "headings": [
-      {
-        "id": "jobs-and-workflows-capacity-and-recovery-harness",
-        "text": "Jobs and Workflows capacity and recovery harness",
-        "level": 1
-      },
-      {
-        "id": "run",
-        "text": "Run",
-        "level": 2
-      },
-      {
-        "id": "workloads-and-bounds",
-        "text": "Workloads and bounds",
-        "level": 2
-      },
-      {
-        "id": "measurements",
-        "text": "Measurements",
-        "level": 2
-      },
-      {
-        "id": "injected-failures",
-        "text": "Injected failures",
-        "level": 2
-      },
-      {
-        "id": "evidence-and-remaining-gates",
-        "text": "Evidence and remaining gates",
-        "level": 2
-      },
-      {
-        "id": "offered-overload-and-retention",
-        "text": "Offered overload and retention",
-        "level": 2
-      },
-      {
-        "id": "reference-operator-thresholds",
-        "text": "Reference operator thresholds",
-        "level": 2
-      },
-      {
-        "id": "network-partition-boundary",
-        "text": "Network partition boundary",
-        "level": 2
-      },
-      {
-        "id": "sustained-physical-storage-campaign",
-        "text": "Sustained physical storage campaign",
-        "level": 2
-      },
-      {
-        "id": "durable-format-rehearsal-boundary",
-        "text": "Durable-format rehearsal boundary",
-        "level": 2
-      },
-      {
-        "id": "ten-minute-physical-storage-result",
-        "text": "Ten-minute physical storage result",
-        "level": 2
-      }
-    ],
-    "wordCount": 4618,
-    "readMinutes": 21,
-    "searchText": "Jobs and Workflows capacity and recovery harness `benchmarks/BlueTusk.Workflows.LoadHarness` is a repeatable executable that measures the durable Jobs runtime and six-node Workflows DAG on a disposable PostgreSQL database. It verifies every admitted item reaches durable success, every tenant is delivered its own payload, there is one ledger effect per item, all workflow histories replay to the persisted state, both health inspections report a drained scope, and bounded pruning removes all expected terminal rows. Measurement failure exits nonzero. This is local engineering evidence; the production qualification gates remain open. Run Use a disposable database. The connection environment variable is inherited by the child process and is never included in command arguments or reports. Each scenario creates unique schemas and drops them in a `finally` block. The process-kill test kills only the child process created by this harness. The wire-fault proxy binds an ephemeral loopback port, accepts one faulted connection and one healthy pool replacement, forwards at most one MiB per protocol frame, and expires after 30 seconds. It requires `SSL Mode=Disable;Channel Binding=Disable` for this local fault test. Run from the repository root when invoking the executable directly. Build with `dotnet build ... -c Release -nr:false`, then use `dotnet run --project ... -c Release --no-build -- matrix`. `-nr:false` is a build option. The wrapper uses the appropriate build and application argument boundaries. Workloads and bounds The quick profile drains 512 Jobs with 1 KiB of padding beside 4,000 terminal rows, 64 Workflows with two parallel activities, join, buffered signal, 10 ms timer and transactional effect, then a three-second Jobs admission loop. The matrix varies Jobs padding through 64 B, 4 KiB and 64 KiB and per-tenant concurrency through two and eight; it uses four tenants and 10,000 retained terminal rows. It also runs a ten-to-one hot-tenant allocation and a pool of 12 c"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "jobs-upgrade",
-    "summary": "Select Jobs in the manual Expansion release upgrade workflow. The rehearsal uses two immutable full commit SHAs, an earlier Jobs preview source commit",
-    "keywords": [
-      "docs",
-      "jobs",
-      "upgrade"
-    ],
-    "order": 1107,
-    "title": "Jobs binary upgrade and rollback gate",
-    "sourcePath": "docs/jobs/upgrade.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/jobs/upgrade.md",
-    "headings": [
-      {
-        "id": "jobs-binary-upgrade-and-rollback-gate",
-        "text": "Jobs binary upgrade and rollback gate",
-        "level": 1
-      }
-    ],
-    "wordCount": 346,
-    "readMinutes": 2,
-    "searchText": "Jobs binary upgrade and rollback gate Select `Jobs` in the manual [Expansion release upgrade workflow](../../.github/workflows/expansion-release-upgrade.yml). The rehearsal uses two immutable full commit SHAs, an earlier Jobs preview source commit reachable from the candidate and the exact candidate commit. It builds and archives both Jobs packages and separate probe executables from those source trees. The executed `BlueTusk.Jobs.dll` must match its archived package and **differ** between old and candidate. A same-binary configuration reopen does not satisfy this gate. The old process initializes a fresh format-one schema, persists a running lease, a failed attempt ready for retry, and pending work. While the old process remains alive and holds its lease, the candidate process opens the same store, confirms deduplication identities, completes the retry and pending work, and signals the old process to complete its held lease. The candidate verifies that completion. After both processes exit, the old binary reopens the store, checks all states and attempt histories, then admits and completes a new job. Each phase rejects a duplicate completion. The store header must remain format 1 with unchanged payload and history admission limits throughout. This is the only supported rollback boundary; there is no format migration or downgrade procedure. The successful artifact includes the old Git source archive, both package files, both executable snapshots, phase records and process logs, and a manifest of SHA-256 hashes. Its verifier ties the source trees, probe, packages, executable Jobs DLLs and exact effect counts to the candidate and old commits. A partial or failed run uses a separate artifact name and never satisfies release readiness. This workflow has not run and creates no qualification merely by existing. An earlier preview commit such as `14b212e` is reachable from this branch. The candidate's claim-ordering correction changes the Jobs assembly while preserving for"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-application-platform-health",
-    "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
-    "keywords": [
-      "docs",
-      "operations",
-      "application",
-      "platform",
-      "health"
-    ],
-    "order": 1120,
-    "title": "Application platform health and rollout acceptance",
-    "sourcePath": "docs/operations/application-platform-health.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
-    "headings": [
-      {
-        "id": "application-platform-health-and-rollout-acceptance",
-        "text": "Application platform health and rollout acceptance",
-        "level": 1
-      },
-      {
-        "id": "commands",
-        "text": "Commands",
-        "level": 2
-      },
-      {
-        "id": "what-the-verifier-proves",
-        "text": "What the verifier proves",
-        "level": 2
-      },
-      {
-        "id": "failure-interpretation",
-        "text": "Failure interpretation",
-        "level": 2
-      },
-      {
-        "id": "api-pods-are-absent-from-the-kubelet",
-        "text": "API Pods are absent from the kubelet",
-        "level": 3
-      },
-      {
-        "id": "a-backend-image-lacks-a-shared-framework",
-        "text": "A backend image lacks a shared framework",
-        "level": 3
-      },
-      {
-        "id": "storage-or-database-health-fails",
-        "text": "Storage or database health fails",
-        "level": 3
-      },
-      {
-        "id": "a-deployment-pod-or-migration-fails",
-        "text": "A deployment, Pod or migration fails",
-        "level": 3
-      },
-      {
-        "id": "recovery-and-acceptance-sequence",
-        "text": "Recovery and acceptance sequence",
-        "level": 2
-      },
-      {
-        "id": "2026-08-18-rc-audit-finding",
-        "text": "2026-08-18 RC audit finding",
-        "level": 2
-      }
-    ],
-    "wordCount": 1124,
-    "readMinutes": 6,
-    "searchText": "Application platform health and rollout acceptance BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show `Running` and a stale EndpointSlice can continue to show `ready: true` after a kubelet or datastore has stopped reconciling that object. Application rollout acceptance therefore uses independent control-plane, node-runtime, storage, database and workload checks. This gate is required before either reference application can begin a formal V1 pilot. It is read-only: it does not restart nodes, delete Pods, repair volumes, change Secrets, or deploy images. Commands Run the infrastructure preflight before rendering or applying an RC release: After the digest-pinned Helm rollout, require the complete application state: `deploy-applications-rc.ps1` runs the first form before its server-side dry run and the second form after every `-Apply` rollout. Running the deployment command without `-Apply` still exercises the live infrastructure preflight and cannot produce a misleading render-only success against an unreconciled cluster. What the verifier proves Surface Fail-closed requirement Why Kubernetes status alone is insufficient Context Current context is exactly `proxmox-homelab` Prevents validating or changing the wrong cluster Nodes At least the requested number are `Ready` Capacity claims need an explicit minimum Node pressure No Ready node reports disk, memory, PID or network pressure A Ready heartbeat does not mean the node can safely admit or retain workloads API/kubelet parity Every non-terminal API Pod assigned to a Ready node appears in that kubelet's runtime Pod list by UID Detects stale API objects, split datastore state and broken kubelet reconciliation Longhorn Every volume reports `healthy` robustness Attached or cached PVC status does not prove replica integrity CloudNativePG Every cluster reports a hea"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-approval-evidence",
-    "summary": "BlueTusk treats operational acceptance as measured release evidence, not a collection of unchecked signatures. Every record is SHA-256-bound by the candidate manifest and validated against a gate-specific schema befor…",
-    "keywords": [
-      "docs",
-      "operations",
-      "approval",
-      "evidence"
-    ],
-    "order": 1121,
-    "title": "V1 operational approval evidence",
-    "sourcePath": "docs/operations/approval-evidence.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
-    "headings": [
-      {
-        "id": "v1-operational-approval-evidence",
-        "text": "V1 operational approval evidence",
-        "level": 1
-      },
-      {
-        "id": "common-envelope",
-        "text": "Common envelope",
-        "level": 2
-      },
-      {
-        "id": "independent-release-review",
-        "text": "Independent release review",
-        "level": 2
-      },
-      {
-        "id": "security-review",
-        "text": "Security review",
-        "level": 2
-      },
-      {
-        "id": "application-pilots",
-        "text": "Application pilots",
-        "level": 2
-      },
-      {
-        "id": "website-deployment-acceptance",
-        "text": "Website deployment acceptance",
-        "level": 2
-      },
-      {
-        "id": "backup-and-restore-rehearsal",
-        "text": "Backup and restore rehearsal",
-        "level": 2
-      },
-      {
-        "id": "rollback-rehearsal",
-        "text": "Rollback rehearsal",
-        "level": 2
-      },
-      {
-        "id": "incident-response-game-day",
-        "text": "Incident-response game day",
-        "level": 2
-      },
-      {
-        "id": "slo-owner-approval",
-        "text": "SLO owner approval",
-        "level": 2
-      },
-      {
-        "id": "maintainer-sign-off",
-        "text": "Maintainer sign-off",
-        "level": 2
-      },
-      {
-        "id": "protected-archive",
-        "text": "Protected archive",
-        "level": 2
-      }
-    ],
-    "wordCount": 1789,
-    "readMinutes": 9,
-    "searchText": "V1 operational approval evidence BlueTusk treats operational acceptance as measured release evidence, not a collection of unchecked signatures. Every record is SHA-256-bound by the candidate manifest and validated against a gate-specific schema before stable publication can be authorised. The contract defines ten gate schemas. How many a release must bind depends on its track, declared in the contract's `releaseTracks` lists: Track Required approval records Waived Legacy (historical 1.0.0 V1) All ten None Core (1.1.0) Eight: independent review, security review, website acceptance, backup/restore rehearsal, rollback rehearsal, incident game day, SLO owner approval and maintainer sign-off `application-pilot-a`, `application-pilot-b` Independent pilots are not a 1.1.0 gate. The repository owner delegated release decision 3 to option (b) on 2026-10-04T00:43:03+01:00 (\"do what needs to be done\"): engineering cannot produce independent pilots and no pilot approval may be fabricated. The waiver is recorded once, in `eng/v1.1-release-contract.json` `waivedReleaseGates`. The backup/restore and rollback rehearsals stay required and must be run for real. The Core verifiers reject pilot files, and they fail if the approval-track lists and the recorded waiver disagree. The authoritative assets are: `eng/v1-approval-evidence-contract.json`, which declares the exact fields, types, minimums and pass values for all ten gates, and the gates each release track requires; `eng/approval-release-tracks.psm1`, which resolves a track's required gates and checks them against the waiver in `eng/v1.1-release-contract.json`; `eng/v1-approval-evidence.examples.json`, which contains one complete structural example per gate; `eng/verify-v1-workflow-evidence.ps1`, which validates the seven unique GitHub run IDs, attempts, URLs and completion times that establish the approval cutoff; `eng/verify-v1-approval-evidence.ps1`, which validates one record; and `eng/verify-v1-approval-evidence-set.ps1`, whi"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-core-performance-evidence",
-    "summary": "This pipeline produces performance/performance-leadership-evidence.json (schema 3). Core readiness binds it as performanceManifest, from producer core-performance-evidence.yml. It",
-    "keywords": [
-      "docs",
-      "operations",
-      "core",
-      "performance",
-      "evidence"
-    ],
-    "order": 1122,
-    "title": "Core performance-leadership evidence pipeline",
-    "sourcePath": "docs/operations/core-performance-evidence.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/core-performance-evidence.md",
-    "headings": [
-      {
-        "id": "core-performance-leadership-evidence-pipeline",
-        "text": "Core performance-leadership evidence pipeline",
-        "level": 1
-      },
-      {
-        "id": "data-flow",
-        "text": "Data flow",
-        "level": 2
-      },
-      {
-        "id": "family-pluggable-inputs",
-        "text": "Family-pluggable inputs",
-        "level": 2
-      },
-      {
-        "id": "statistics",
-        "text": "Statistics",
-        "level": 2
-      },
-      {
-        "id": "guards",
-        "text": "Guards",
-        "level": 2
-      },
-      {
-        "id": "capture-profiles-and-fixtures",
-        "text": "Capture profiles and fixtures",
-        "level": 2
-      },
-      {
-        "id": "runners",
-        "text": "Runners",
-        "level": 2
-      },
-      {
-        "id": "running-it",
-        "text": "Running it",
-        "level": 2
-      },
-      {
-        "id": "host-time-estimate-qualification-30-trials-5-s-warm-up-10-s-window",
-        "text": "Host-time estimate (qualification, 30 trials, 5 s warm-up, 10 s window)",
-        "level": 2
-      }
-    ],
-    "wordCount": 1921,
-    "readMinutes": 9,
-    "searchText": "Core performance-leadership evidence pipeline This pipeline produces `performance/performance-leadership-evidence.json` (schema 3). Core readiness binds it as `performanceManifest`, from producer `core-performance-evidence.yml`. It measures the contract in [`eng/performance-leadership-contract.json`](../../eng/performance-leadership-contract.json) **as written**. The contract is not relaxed anywhere in the pipeline. **Status:** pipeline implemented; evidence not yet producible. Provider capture works for the same-OS, TLS and constrained-network variants. The cross-OS Provider variants are unresolved (see the [proposal](../../eng/performance-cross-os-proposal.md)). The Streams, Sync, Live, Control Plane and primary hot-path harnesses are planned legs that fail closed. Until all of these exist, a qualification run fails and the verifier reports the missing workloads. That is the intended outcome. Qualification planning reports every missing producer and fails before starting measurement jobs. Provider jobs are split by concurrency level, each with a separate raw input directory; assembly still requires every original workload key exactly once. Data flow Each OS directory is laid out as `performance/<os>/{summary,raw-samples,check-report,environment-manifest}.json`. The raw files stay under `<evidence store>/<run>/<os>/raw/`. `raw-samples.json` binds every raw file by path, size and SHA-256. The checker rejects any file that is unbound, missing or changed. Family-pluggable inputs Each `raw/<input-id>/` directory holds exactly one index: Format Index Raw file per trial Used by `provider-request-capture-index/1` `capture-index.json` Provider request capture Provider variants `performance-trial-index/1` `trial-index.json` `bluetusk-performance-trial` Streams, Sync, Live, Control Plane, primary hot paths To add a family, write a harness that emits the family-neutral format. The generator, checker and assembler need no change. A `trial-index.json` has `schemaVersion: 1`, `e"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-core-recovery-rehearsals",
-    "summary": "The 1.1.0 Core release contract keeps two operational rehearsals as required gates: backup/restore and rollback (backupRestoreRehearsal and rollbackRehearsal in eng/v1.1-release-contract.json). Independent pilots are",
-    "keywords": [
-      "docs",
-      "operations",
-      "core",
-      "recovery",
-      "rehearsals"
-    ],
-    "order": 1123,
-    "title": "Core recovery rehearsals",
-    "sourcePath": "docs/operations/core-recovery-rehearsals.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/core-recovery-rehearsals.md",
-    "headings": [
-      {
-        "id": "core-recovery-rehearsals",
-        "text": "Core recovery rehearsals",
-        "level": 1
-      },
-      {
-        "id": "what-runs",
-        "text": "What runs",
-        "level": 2
-      },
-      {
-        "id": "backup-and-restore",
-        "text": "Backup and restore",
-        "level": 3
-      },
-      {
-        "id": "rollback",
-        "text": "Rollback",
-        "level": 3
-      },
-      {
-        "id": "run-it",
-        "text": "Run it",
-        "level": 2
-      },
-      {
-        "id": "evidence",
-        "text": "Evidence",
-        "level": 2
-      },
-      {
-        "id": "verify-it",
-        "text": "Verify it",
-        "level": 2
-      },
-      {
-        "id": "from-evidence-to-approval",
-        "text": "From evidence to approval",
-        "level": 2
-      }
-    ],
-    "wordCount": 985,
-    "readMinutes": 5,
-    "searchText": "Core recovery rehearsals The 1.1.0 Core release contract keeps two operational rehearsals as required gates: backup/restore and rollback (`backupRestoreRehearsal` and `rollbackRehearsal` in `eng/v1.1-release-contract.json`). Independent pilots are not a 1.1.0 gate; see [approval evidence](approval-evidence.md). This page shows how to run both rehearsals for real against the exact candidate, what they produce, and how the result is checked. A rehearsal is evidence for the approval record, not the approval. The accountable approver still signs `backup-restore-rehearsal.json` and `rollback-rehearsal.json`, citing the retained evidence. What runs `eng/run-core-recovery-rehearsal.ps1` drives a probe application, `eng/CoreRecoveryProbe`, that uses Core durable state in one PostgreSQL database: Provider: an `orders` table written one acknowledged row at a time; Streams: a PostgreSQL checkpoint store with a fenced lease; Live: the PostgreSQL replay store, a shared subscription and signed resume tokens; Control Plane: managed desired state with fenced reconciliation leases; Sync: a PostgreSQL destination checkpoint and idempotent redelivery. Each probe phase is a separate process. It reads back everything the previous phase acknowledged, proves the previous owner is fenced, then writes more. Every value in a phase report is read from PostgreSQL. The probe is restored from exact packages only. The candidate build uses the 1.1.0 packages from `build-v1-candidate-packages.ps1`; the runner checks that every resolved `BlueTusk.*` package has the same SHA-512 as the verified candidate nupkg. The rollback build uses the published 1.0.0 packages from nuget.org. Each build has its own package folder, so a cached package cannot stand in. PostgreSQL is the digest-pinned Core image from `eng/v1.1-candidate-readiness.json` (`endurancePostgreSqlImage`). Containers are labelled `bluetusk.owner` and `bluetusk.run`. The runner removes only its own containers. Backup and restore The candidate"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-endurance-disturbance-evidence",
-    "summary": "V1 requires more than a long-running green test process. The exact 72-hour Streams run and exact 24-hour Sync run must each survive the seven operational disturbances in eng/v1-endurance-disturbance-contract.json. Tha…",
-    "keywords": [
-      "docs",
-      "operations",
-      "endurance",
-      "disturbance",
-      "evidence"
-    ],
-    "order": 1125,
-    "title": "Endurance disturbance evidence",
-    "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
-    "headings": [
-      {
-        "id": "endurance-disturbance-evidence",
-        "text": "Endurance disturbance evidence",
-        "level": 1
-      },
-      {
-        "id": "required-matrix",
-        "text": "Required matrix",
-        "level": 2
-      },
-      {
-        "id": "evidence-directory",
-        "text": "Evidence directory",
-        "level": 2
-      },
-      {
-        "id": "timing-and-candidate-binding",
-        "text": "Timing and candidate binding",
-        "level": 2
-      },
-      {
-        "id": "verification",
-        "text": "Verification",
-        "level": 2
-      }
-    ],
-    "wordCount": 799,
-    "readMinutes": 4,
-    "searchText": "Endurance disturbance evidence V1 requires more than a long-running green test process. The exact 72-hour Streams run and exact 24-hour Sync run must each survive the seven operational disturbances in `eng/v1-endurance-disturbance-contract.json`. That produces 14 separately observed recoveries for one immutable candidate. The native endurance reports remain responsible for duration, workload, package provenance, runtime, operating system, container images, source cleanliness and test-artifact integrity. The operational-disturbance report adds contemporaneous injection, detection, recovery and continuity evidence inside those exact report windows. Neither layer can substitute for the other. Required matrix Scenario Required observation Process death Ungraceful termination, different before/after process identities, durable restart, duplicate-safe progress and no loss Network interruption Measured non-zero outage, detection, bounded reconnection, at least one recovered connection and resumed progress Storage exhaustion Controlled hard limit at 95% or greater utilisation, explicit exhaustion signal, fail-closed behaviour, recovered free capacity and resumed progress Credential rotation Non-secret old/new credential versions, retired credential rejection, replacement credential acceptance and resumed progress Primary failover Different old/new primary identities, role-compatible routing, source-identity continuity, checkpoint continuity and resumed progress Clock movement Both backward and forward movement through an injected `TimeProvider` or isolated runtime clock, followed by expiry, lease, retention, ordering and UTC-report checks PostgreSQL minor upgrade Two distinct digest-pinned images, a higher minor release of the same supported major, state and checkpoint continuity, capability rediscovery and lag recovery Run every row once during Streams and once during Sync. A unit test, smoke run, earlier commit, different package set, event outside the recorded endurance "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-fuzz-finding-handoff",
-    "summary": "This record preserves the release-relevant outcome of the 2026-08-04 coverage-guided run without placing triggering inputs in public documentation. It is a defensive review handoff, not approval to publish.",
-    "keywords": [
-      "docs",
-      "operations",
-      "fuzz",
-      "finding",
-      "handoff"
-    ],
-    "order": 1126,
-    "title": "V1 fuzz-finding review handoff",
-    "sourcePath": "docs/operations/fuzz-finding-handoff.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
-    "headings": [
-      {
-        "id": "v1-fuzz-finding-review-handoff",
-        "text": "V1 fuzz-finding review handoff",
-        "level": 1
-      },
-      {
-        "id": "evidence-identity",
-        "text": "Evidence identity",
-        "level": 2
-      },
-      {
-        "id": "defensive-triage",
-        "text": "Defensive triage",
-        "level": 2
-      },
-      {
-        "id": "local-validation-of-the-remediation",
-        "text": "Local validation of the remediation",
-        "level": 2
-      },
-      {
-        "id": "independent-review-procedure",
-        "text": "Independent review procedure",
-        "level": 2
-      },
-      {
-        "id": "closure-criteria",
-        "text": "Closure criteria",
-        "level": 2
-      }
-    ],
-    "wordCount": 636,
-    "readMinutes": 3,
-    "searchText": "V1 fuzz-finding review handoff This record preserves the release-relevant outcome of the 2026-08-04 coverage-guided run without placing triggering inputs in public documentation. It is a defensive review handoff, not approval to publish. Evidence identity Field Value Source commit exercised `06d3a7ee3654930a60a5420d0d2bc17e95087960` Coverage-guided workflow [Run 30921849042](https://github.com/jphgardner/BlueTusk/actions/runs/30921849042) Build workflow [Run 30921843607](https://github.com/jphgardner/BlueTusk/actions/runs/30921843607), 23 executed jobs passed Security workflow [Run 30921843012](https://github.com/jphgardner/BlueTusk/actions/runs/30921843012), both jobs passed Fuzz result Six targets passed; three targets failed closed Timeouts saved Zero Initial source-only remediation Local commit `0032329` The failing jobs retained their private GitHub Actions artifacts for independent security review. Raw findings are intentionally absent from this record and from the release evidence bundle. AFL's saved-crash count is a triage count, not proof of the same number of distinct defects or vulnerabilities. Defensive triage Target Saved crashes Source-level boundary reviewed Initial remediation `binary-copy` 6 Binary timestamp values outside the CLR-representable range Reject out-of-range finite timestamps as malformed values before `DateTime` construction `array-codec` 7 Declared element length, text nesting depth and PostgreSQL-to-CLR array-bound translation Check remaining payload before slicing, enforce six dimensions and range-check CLR bounds `composite-codec` 1 Declared record-field length Check the declared field length against the remaining record payload before slicing The same remediation also repairs finding archival so SHA-256 names are generated with valid PowerShell static-method syntax and zero/one/many finding sets behave consistently under strict mode. Local validation of the remediation The source-only remediation was validated without recovering or"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-observability",
-    "summary": "BlueTusk V1 exposes one OpenTelemetry meter per product area and treats telemetry as a versioned operational contract. Metrics are low-overhead when no listener is attached, exporter-neutral, and deliberately avoid SQ…",
-    "keywords": [
-      "docs",
-      "operations",
-      "observability"
-    ],
-    "order": 1128,
-    "title": "Production observability and SLOs",
-    "sourcePath": "docs/operations/observability.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
-    "headings": [
-      {
-        "id": "production-observability-and-slos",
-        "text": "Production observability and SLOs",
-        "level": 1
-      },
-      {
-        "id": "meter-inventory",
-        "text": "Meter inventory",
-        "level": 2
-      },
-      {
-        "id": "application-registration",
-        "text": "Application registration",
-        "level": 2
-      },
-      {
-        "id": "reference-deployment-pack",
-        "text": "Reference deployment pack",
-        "level": 2
-      },
-      {
-        "id": "reference-slo-profile",
-        "text": "Reference SLO profile",
-        "level": 2
-      },
-      {
-        "id": "error-budget-policy",
-        "text": "Error-budget policy",
-        "level": 2
-      },
-      {
-        "id": "cardinality-policy",
-        "text": "Cardinality policy",
-        "level": 2
-      },
-      {
-        "id": "alert-runbooks",
-        "text": "Alert runbooks",
-        "level": 2
-      },
-      {
-        "id": "provider-command-failures",
-        "text": "Provider command failures",
-        "level": 3
-      },
-      {
-        "id": "pool-saturation",
-        "text": "Pool saturation",
-        "level": 3
-      },
-      {
-        "id": "replication-and-streams-lag",
-        "text": "Replication and Streams lag",
-        "level": 3
-      },
-      {
-        "id": "streams-delivery-failures",
-        "text": "Streams delivery failures",
-        "level": 3
-      },
-      {
-        "id": "sync-failures-and-throttling",
-        "text": "Sync failures and throttling",
-        "level": 3
-      },
-      {
-        "id": "live-replay-and-slow-clients",
-        "text": "Live replay and slow clients",
-        "level": 3
-      },
-      {
-        "id": "continuous-graph-repair",
-        "text": "Continuous Graph repair",
-        "level": 3
-      },
-      {
-        "id": "control-plane-reconciliation",
-        "text": "Control Plane reconciliation",
-        "level": 3
-      },
-      {
-        "id": "recovery-objectives",
-        "text": "Recovery objectives",
-        "level": 2
-      },
-      {
-        "id": "telemetry-failure",
-        "text": "Telemetry failure",
-        "level": 2
-      }
-    ],
-    "wordCount": 1484,
-    "readMinutes": 7,
-    "searchText": "Production observability and SLOs BlueTusk V1 exposes one OpenTelemetry meter per product area and treats telemetry as a versioned operational contract. Metrics are low-overhead when no listener is attached, exporter-neutral, and deliberately avoid SQL text, parameter values, tenant security scopes, resume tokens, payloads and deployment identifiers. The authoritative inventory is [`eng/telemetry-contract.json`](../../eng/telemetry-contract.json). The repository verifier fails when a runtime instrument is missing from that contract, a declared instrument does not exist, an instrument type changes, a tag is not emitted, or a new metric has no cardinality review. Meter inventory Meter Instruments Operational boundary `BlueTusk.Diagnostics` 27 Commands, connections, COPY, replication, pools, prepared statements and multiplexing `BlueTusk.Streams` 9 Transaction volume, snapshot rows, spooling, active deliveries, settlement outcome and duration `BlueTusk.Sync` 6 Transactions, errors, retries, throttling, snapshot rows and destination duration `BlueTusk.Live` 11 Authoritative query and refresh duration, rows/events, connections, active clients, fan-out, replay, resume validation and slow clients `BlueTusk.ContinuousGraph` 6 Active/prepared evaluations, settlement outcome, event count, affected keys, authoritative query count and lifecycle duration `BlueTusk.ControlPlane` 3 Active operations, reconcile/delete outcomes and operation duration The 62-instrument count is a minimum gate, not an invitation to add arbitrary metrics. Every new series consumes memory, storage and query cost. Application registration Register every meter used by the deployed product families and export OTLP to an internal Collector: Install and configure the OpenTelemetry hosting, runtime-instrumentation and OTLP-exporter packages in the application. BlueTusk remains exporter-neutral and does not add those dependencies to provider packages. Set at least `service.name`, `service.version`, `service.in"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-package-evidence",
-    "summary": "The manual build.yml candidate run produces one canonical, evidence-only package set for all six BlueTusk product families. The set is the package input to release review. It is not a publication path and receives no…",
-    "keywords": [
-      "docs",
-      "operations",
-      "package",
-      "evidence"
-    ],
-    "order": 1129,
-    "title": "Canonical V1 package evidence",
-    "sourcePath": "docs/operations/package-evidence.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
-    "headings": [
-      {
-        "id": "canonical-v1-package-evidence",
-        "text": "Canonical V1 package evidence",
-        "level": 1
-      },
-      {
-        "id": "build-the-package-set",
-        "text": "Build the package set",
-        "level": 2
-      },
-      {
-        "id": "verify-downloaded-evidence",
-        "text": "Verify downloaded evidence",
-        "level": 2
-      },
-      {
-        "id": "exact-candidate-binding",
-        "text": "Exact-candidate binding",
-        "level": 2
-      },
-      {
-        "id": "publication-separation",
-        "text": "Publication separation",
-        "level": 2
-      }
-    ],
-    "wordCount": 630,
-    "readMinutes": 3,
-    "searchText": "Canonical V1 package evidence The manual `build.yml` candidate run produces one canonical, evidence-only package set for all six BlueTusk product families. The set is the package input to release review. It is not a publication path and receives no NuGet or npm credentials. This closes an important integrity boundary: a successful build alone does not prove which archives were reviewed, and separate family artifacts do not prove that the complete V1 product set came from the same source commit. The canonical artifact binds the complete archive inventory, package metadata, source commit, CycloneDX and SPDX documents, and build provenance into one retained unit. Build the package set Run from a clean checkout: The command: requires a full commit SHA, the matching checkout and a clean tracked tree; restores the complete solution; packs Provider, Streams, Sync, Live, Control Plane and Continuous Graph into isolated family directories with publication still disabled; verifies each exact family archive set, version, repository commit, dependency version, license, README, symbol package and safe archive path; verifies the three Live npm archives, compiled distributions, dependency versions, public metadata and absence of install lifecycle scripts; copies the verified family outputs into one collision-checked canonical package directory; creates CycloneDX 1.6 and SPDX 2.3 SBOMs plus build provenance; verifies every package and SBOM hash; and writes the package manifest and removes intermediate family copies. Output is restricted to `artifacts/` and is replaced on each run: `package-manifest.json` records the exact source commit, every family, every archive path, byte length and SHA-256, per-family counts and bytes, aggregate counts and bytes, and integrity records for all three supply-chain documents. The build provenance independently records every package hash and hashes both SBOMs. Verify downloaded evidence After downloading the artifact, run: The verifier is intentiona"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-performance-leadership-1-1",
-    "summary": "Historical 1.1 RC basis: 2e735ed46aec11d5009158a00ca7b862f9ec12af",
-    "keywords": [
-      "docs",
-      "operations",
-      "performance",
-      "leadership",
-      "1",
-      "1"
-    ],
-    "order": 1130,
-    "title": "BlueTusk 1.2 performance leadership programme",
-    "sourcePath": "docs/operations/performance-leadership-1.1.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-2-performance-leadership-programme",
-        "text": "BlueTusk 1.2 performance leadership programme",
-        "level": 1
-      },
-      {
-        "id": "current-verdict",
-        "text": "Current verdict",
-        "level": 2
-      },
-      {
-        "id": "implemented-hot-paths",
-        "text": "Implemented hot paths",
-        "level": 2
-      },
-      {
-        "id": "required-measurement-matrix",
-        "text": "Required measurement matrix",
-        "level": 2
-      },
-      {
-        "id": "non-negotiable-gates",
-        "text": "Non-negotiable gates",
-        "level": 2
-      },
-      {
-        "id": "remaining-evidence-before-release",
-        "text": "Remaining evidence before release",
-        "level": 2
-      },
-      {
-        "id": "evidence-artifact-validation",
-        "text": "Evidence artifact validation",
-        "level": 2
-      }
-    ],
-    "wordCount": 1232,
-    "readMinutes": 6,
-    "searchText": "BlueTusk 1.2 performance leadership programme **Historical 1.1 RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Target release:** 1.2.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Stable publication:** disabled until every exact-candidate 1.2 gate passes, including digest-pinned PostgreSQL 19 GA. Earlier RC artifacts and measurements retain their original identities; they are not recertified as 1.2 evidence. This page keeps its original URL so existing links continue to work. The programme's thresholds and workload matrix carry forward unchanged into 1.2. Current verdict Earlier Provider evidence passed the legacy 16-pair and saturated-pool budgets. That does not establish the stricter programme target for the current 1.2 candidate. The complete leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Local diagnostic improvements are not a substitute for those release gates. Implemented hot paths Family Implementation carried forward from 1.1 Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-production-readiness",
-    "summary": "BlueTusk has two deliberately different readiness states:",
-    "keywords": [
-      "docs",
-      "operations",
-      "production",
-      "readiness"
-    ],
-    "order": 1133,
-    "title": "V1 production readiness",
-    "sourcePath": "docs/operations/production-readiness.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
-    "headings": [
-      {
-        "id": "v1-production-readiness",
-        "text": "V1 production readiness",
-        "level": 1
-      },
-      {
-        "id": "what-v1-measures",
-        "text": "What V1 measures",
-        "level": 2
-      },
-      {
-        "id": "deterministic-engineering-gates",
-        "text": "Deterministic engineering gates",
-        "level": 2
-      },
-      {
-        "id": "github-governance-gate",
-        "text": "GitHub governance gate",
-        "level": 2
-      },
-      {
-        "id": "reference-performance-gate",
-        "text": "Reference performance gate",
-        "level": 2
-      },
-      {
-        "id": "production-observability-acceptance",
-        "text": "Production observability acceptance",
-        "level": 2
-      },
-      {
-        "id": "immutable-candidate-evidence",
-        "text": "Immutable candidate evidence",
-        "level": 2
-      },
-      {
-        "id": "operational-acceptance",
-        "text": "Operational acceptance",
-        "level": 2
-      },
-      {
-        "id": "pre-pilot-platform-acceptance",
-        "text": "Pre-pilot platform acceptance",
-        "level": 3
-      },
-      {
-        "id": "application-pilots",
-        "text": "Application pilots",
-        "level": 3
-      },
-      {
-        "id": "website-deployment-acceptance",
-        "text": "Website deployment acceptance",
-        "level": 3
-      },
-      {
-        "id": "backup-and-restore",
-        "text": "Backup and restore",
-        "level": 3
-      },
-      {
-        "id": "rollback",
-        "text": "Rollback",
-        "level": 3
-      },
-      {
-        "id": "incident-game-day",
-        "text": "Incident game day",
-        "level": 3
-      },
-      {
-        "id": "publication-and-rollback-authority",
-        "text": "Publication and rollback authority",
-        "level": 2
-      },
-      {
-        "id": "current-v1-boundary",
-        "text": "Current V1 boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 3138,
-    "readMinutes": 15,
-    "searchText": "V1 production readiness BlueTusk has two deliberately different readiness states: **engineering ready** means the repository, packages, tests, public API, security controls, telemetry contract, benchmark corpus and operational assets pass deterministic checks; and **candidate ready** means one immutable commit has also completed the real release workflows, endurance runs, reference-machine performance run, PostgreSQL 19 GA verification and accountable human/operational acceptance. Engineering readiness is necessary but does not authorise stable publication. The machine-readable contract is [`eng/v1-production-readiness.json`](../../eng/v1-production-readiness.json), and the verifier defaults to the safe engineering mode: The command must finish with every publication switch disabled. Candidate mode instead requires all six stable policies armed in the immutable reviewed `origin/main` commit, with no stable release tags or stable packages published. A manifest-bound public prerelease such as `1.1.0-rc.1` is allowed but cannot satisfy a stable exact-SHA gate. It is intentionally impossible to pass with the checked-in example evidence. What V1 measures The V1 evidence set covers five different questions. They must not be collapsed into one number. Evidence Question answered Authority Correctness and compatibility Does the implementation satisfy its declared contract? Unit, integration, specification, fuzz, stress and package tests Reference-machine benchmarks Did a known code path regress on the controlled machine? 120 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons Website delivery Is the documentation and evidence surface bounded and deployable? Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report Production SLOs Is one deployed application meeting its reliability objectives? 62 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry Release acceptance"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-provider-request-capture",
-    "summary": "This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3, plus four optional pool-contention probes. It supports Windows x64 and Linux x64, configurable concurrency",
-    "keywords": [
-      "docs",
-      "operations",
-      "provider",
-      "request",
-      "capture"
-    ],
-    "order": 1134,
-    "title": "Provider request-level performance capture",
-    "sourcePath": "docs/operations/provider-request-capture.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
-    "headings": [
-      {
-        "id": "provider-request-level-performance-capture",
-        "text": "Provider request-level performance capture",
-        "level": 1
-      },
-      {
-        "id": "run-a-matrix",
-        "text": "Run a matrix",
-        "level": 2
-      },
-      {
-        "id": "counters-and-measurement-boundaries",
-        "text": "Counters and measurement boundaries",
-        "level": 2
-      },
-      {
-        "id": "measure-pool-saturation-and-multiplexing",
-        "text": "Measure pool saturation and multiplexing",
-        "level": 2
-      },
-      {
-        "id": "tls",
-        "text": "TLS",
-        "level": 2
-      },
-      {
-        "id": "constrained-network",
-        "text": "Constrained network",
-        "level": 2
-      },
-      {
-        "id": "artifacts-and-remaining-verification",
-        "text": "Artifacts and remaining verification",
-        "level": 2
-      },
-      {
-        "id": "derive-a-readable-comparison",
-        "text": "Derive a readable comparison",
-        "level": 2
-      },
-      {
-        "id": "supplementary-ef-batch-size-diagnostic",
-        "text": "Supplementary EF batch-size diagnostic",
-        "level": 2
-      }
-    ],
-    "wordCount": 2203,
-    "readMinutes": 11,
-    "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3, plus four optional pool-contention probes. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees, fewer than ten trials or shorter windows; those captures are explicitly labelled diagnostic and can never pass the leadership verifier. Pipeline captures pass `-Variant` (`windows`, `linux`, `tls` or `constrained-network`) and `-FixturePath` from `eng/start-performance-fixture.ps1`. The variant is resolved through the single table in [`eng/performance-variant-map.json`](../../eng/performance-variant-map.json). A cross-OS variant with no adopted meaning fails closed before anything runs. The wrapper also checks the "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-v1-release-candidate",
-    "summary": "The existing BlueTusk products are being consolidated for release. Core retains its 1.2.0 version in the V1 line; a release bundle does not change the stability classification of a product that is still undergoing qua…",
-    "keywords": [
-      "docs",
-      "operations",
-      "v1",
-      "release",
-      "candidate"
-    ],
-    "order": 1137,
-    "title": "V1 release candidate",
-    "sourcePath": "docs/operations/v1-release-candidate.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/v1-release-candidate.md",
-    "headings": [
-      {
-        "id": "v1-release-candidate",
-        "text": "V1 release candidate",
-        "level": 1
-      }
-    ],
-    "wordCount": 385,
-    "readMinutes": 2,
-    "searchText": "V1 release candidate The existing BlueTusk products are being consolidated for release. Core retains its 1.2.0 version in the V1 line; a release bundle does not change the stability classification of a product that is still undergoing qualification. Track Products Packaging Publication Core Provider, Streams, Sync, Live, Control Plane 1.2.0 candidate packages, symbols, browser clients, SBOM and source provenance Stable remains gated on qualification Ecosystem Events, Jobs, Documents, Projections, Search, Schema, SQL, Studio, Edge, Workflows Existing 0.1.0-preview.1 candidates and symbols Preview pending production qualification Graph Continuous Graph Existing preview track Requires a supported SQL/PGQ server and separate qualification Core supports stable PostgreSQL 15–18. PostgreSQL 19 and SQL/PGQ preview fixtures do not gate Core package qualification. The local reference performance capture uses the stable PostgreSQL 18 image and excludes only the two Graph preview fixtures; all other benchmark methods and existing allocation and latency ceilings remain mandatory. On 30 September 2026 the repository owner requested temporary removal of the main ruleset and sole-maintainer release approval. The main ruleset was removed, and the three release environments permit owner self-review while retaining required approval and disabled administrator bypass. The candidate environment uses an explicit main branch deployment policy. Source and remote governance checks describe this policy explicitly. Restore the archived ruleset and the previous environment settings when independent review is available again. The owner selected local Docker for qualification because the DigitalOcean account is suspended. Endurance evidence must retain the exact source commit, package hashes, stable image digest, complete duration and actual results. Streams requires 72 hours; Sync and Live/Control Plane each require 24 hours. Local capture does not claim a successful GitHub workflow identity or"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "operations-website-production",
-    "summary": "The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at…",
-    "keywords": [
-      "docs",
-      "operations",
-      "website",
-      "production"
-    ],
-    "order": 1138,
-    "title": "Website production contract",
-    "sourcePath": "docs/operations/website-production.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
-    "headings": [
-      {
-        "id": "website-production-contract",
-        "text": "Website production contract",
-        "level": 1
-      },
-      {
-        "id": "deterministic-build-budgets",
-        "text": "Deterministic build budgets",
-        "level": 2
-      },
-      {
-        "id": "delivery-and-discoverability",
-        "text": "Delivery and discoverability",
-        "level": 2
-      },
-      {
-        "id": "release-evidence",
-        "text": "Release evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 537,
-    "readMinutes": 3,
-    "searchText": "Website production contract The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at stable routes. A successful application build alone is not enough: the shipped static output must also meet the checked-in delivery contract. Deterministic build budgets [`website/production-contract.json`](../../website/production-contract.json) defines the maximum production output: Measurement V1 ceiling Purpose Initial JavaScript and CSS, raw 950 kB Prevent unbounded startup growth Initial JavaScript and CSS, Brotli 220 KiB Bound the expected compressed transfer Largest lazy JavaScript or CSS asset, Brotli 275 KiB Bound documentation-route payload growth Complete static distribution 32 MiB Bound every prerendered documentation route and the machine-readable guide set Angular independently enforces its configured initial bundle ceiling. The post-build verifier measures the emitted files, compresses JavaScript and CSS with Brotli, records the byte length and SHA-256 of every deployed file, confirms content-hashed initial assets, rejects source maps and writes `production-metrics.json` into the archived static distribution: `npm run build` invokes `verify-production-build.mjs` automatically. Run `npm run verify:production` to recheck an existing build. Independently verify the emitted report and every recorded asset with: Delivery and discoverability The production contract also requires: a language, viewport, description, theme colour, Open Graph and Twitter metadata record; no unresolved deployment-origin placeholder; 135 prerendered routes so crawlers receive complete page text without running JavaScript; explicit `OAI-SearchBot`, `ChatGPT-User`, and `GPTBot` access in `robots.txt`; a sitemap, `llms.txt` documentation index, curated `llms-full.txt` guide set, and standard `.well-known/security.txt` contact; guide-specifi"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "postgresql19-programme",
-    "summary": "PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified milestone is Beta 3; Beta 4 is recorded as not yet tested, not silently promoted to supported status. The official roadmap now targets O…",
-    "keywords": [
-      "docs",
-      "postgresql19",
-      "programme"
-    ],
-    "order": 1140,
-    "title": "PostgreSQL 19 compatibility programme",
-    "sourcePath": "docs/postgresql19-programme.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
-    "headings": [
-      {
-        "id": "postgresql-19-compatibility-programme",
-        "text": "PostgreSQL 19 compatibility programme",
-        "level": 1
-      }
-    ],
-    "wordCount": 543,
-    "readMinutes": 3,
-    "searchText": "PostgreSQL 19 compatibility programme PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified milestone is Beta 3; Beta 4 is recorded as **not yet tested**, not silently promoted to supported status. The official roadmap now targets October 2026. Beta images are for compatibility development, not production dependencies. The [Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/) removed SQL/PGQ, including `GRAPH_TABLE`, from PostgreSQL 19. A later PostgreSQL major may restore it; no version is promised here. Graph stays available as preview development on the historical Beta 3 fixture. The other five BlueTusk families have a separate [release track](releases/release-tracks.md). `eng/postgresql19-programme.json` is the machine-readable cadence. The checked Beta 3 container is pinned by OCI digest, the scheduled official-branch snapshot detects catalogue and grammar drift, and `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` checks the observed official milestone. The verifier reports the last tested milestone separately. The fixture remains Beta 3 until new image and test evidence have been recorded. The main build's existing `PostgreSQL 19 live matrix` protected status now runs provider preview compatibility, excluding native SQL/PGQ integration scenarios. It does not depend on Continuous Graph. The full historical preview matrix and both Graph application journeys run separately in `postgresql-preview.yml`. Core application integration uses the stable PostgreSQL 18 fixture instead. Capability tests compare `SupportsSqlPgq` with the actual server catalogue; major version 19 alone must not imply support. BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official documentation moved on 2026-08-13. The full serial solution suite and the application migration/integration suite passed against `postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "projections-live",
-    "summary": "BlueTusk.Projections.Live serves durable joined read models through the existing BlueTusk.Live session, replay, resume-token and transport APIs. It introduces no CDC client or network transport.",
-    "keywords": [
-      "docs",
-      "projections",
-      "LIVE"
-    ],
-    "order": 1141,
-    "title": "Published projections in Live",
-    "sourcePath": "docs/projections/LIVE.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LIVE.md",
-    "headings": [
-      {
-        "id": "published-projections-in-live",
-        "text": "Published projections in Live",
-        "level": 1
-      },
-      {
-        "id": "atomic-invalidation-and-authorized-reads",
-        "text": "Atomic invalidation and authorized reads",
-        "level": 2
-      },
-      {
-        "id": "bounded-pages-and-filters",
-        "text": "Bounded pages and filters",
-        "level": 2
-      },
-      {
-        "id": "cutover-reconnect-and-restart",
-        "text": "Cutover, reconnect and restart",
-        "level": 2
-      },
-      {
-        "id": "deployable-example-and-evidence",
-        "text": "Deployable example and evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 1353,
-    "readMinutes": 7,
-    "searchText": "Published projections in Live `BlueTusk.Projections.Live` serves durable joined read models through the existing `BlueTusk.Live` session, replay, resume-token and transport APIs. It introduces no CDC client or network transport. Streams remains the source of committed table changes; the projection definition writes source mirrors, dependencies, exact aggregate deltas and read models alongside its checkpoint. Atomic invalidation and authorized reads The projection schema is version 5. `InitializeAsync` transactionally upgrades versions 1 through 4 under the existing deployment advisory lock. The published `heads` row carries a monotonic publication revision. Successful application to the active version increments that revision in the same transaction as the documents, aggregates and checkpoint. Promotion increments it atomically with the published version pointer. Rolled-back handlers, duplicate source deliveries and unpublished snapshot/rebuild writes cannot advance it. `ProjectionLiveInvalidationLog` coalesces this durable materialized commit marker into Live's cursor contract. Its work is O(1) per refresh, without an accumulating invalidation log or a second WAL slot. It deliberately invalidates all bounded subscriptions to one projection, across tenants; authoritative reads always use the subscription's authenticated tenant and immutable security scope. This can cause harmless cross-tenant reruns, but cannot disclose another tenant's rows. Publication revisions are serialized on the per-projection heads row; latency/lock behavior under concurrent rebuilds needs the production performance gates. The application's JSON context must register both `OrderView` and `LiveResultEvent<ProjectionLiveRow<OrderView>, string>`. The adapter always supplies this metadata. The additive `LiveSharedSubscriptions.CreateWithJsonMetadata` factory preserves the existing Live constructor. Native AOT subscriptions require the metadata factory; the legacy reflection serializer remains av"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "projections-load",
-    "summary": "benchmarks/BlueTusk.Projections.LoadHarness is a standalone Release executable. It uses public Data, Events, Events.Streams, Streams, Projections and Projections.Live APIs. It does not introduce another CDC",
-    "keywords": [
-      "docs",
-      "projections",
-      "LOAD"
-    ],
-    "order": 1142,
-    "title": "Workload and recovery qualification",
-    "sourcePath": "docs/projections/LOAD.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/LOAD.md",
-    "headings": [
-      {
-        "id": "workload-and-recovery-qualification",
-        "text": "Workload and recovery qualification",
-        "level": 1
-      },
-      {
-        "id": "workload-contract",
-        "text": "Workload contract",
-        "level": 2
-      },
-      {
-        "id": "reports-and-interpretation",
-        "text": "Reports and interpretation",
-        "level": 2
-      },
-      {
-        "id": "promotion-under-acknowledged-backlog",
-        "text": "Promotion under acknowledged backlog",
-        "level": 2
-      }
-    ],
-    "wordCount": 2142,
-    "readMinutes": 10,
-    "searchText": "Workload and recovery qualification `benchmarks/BlueTusk.Projections.LoadHarness` is a standalone Release executable. It uses public Data, Events, Events.Streams, Streams, Projections and Projections.Live APIs. It does not introduce another CDC transport, intercept provider writes or depend on Npgsql/EF. This harness and its reports do not confer production qualification. Run from the checkout using PowerShell 7, .NET 10, Python 3 and Docker: `-NoBuild` executes an already-built Release binary. Use it for measured runs after compilation has finished. `-OutputDirectory` must resolve inside the checkout because the candidate fingerprint tool enforces that boundary; use a unique ignored `artifacts/projections-load/<campaign>` path for CI. The runner captures the whole candidate before and after execution and fails the candidate gate if any nonignored source input changed. Raw scenario results remain diagnostic evidence in that case. A dirty but unchanged tree is a measured candidate, not an approved immutable release. The fixture runner pins PostgreSQL 18 to `postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873`. It provisions a fresh private network, labelled named volumes, and localhost ports 55718/55719; optional port parameters must name unused distinct unprivileged ports. Default container limits are 4 CPUs and 2 GiB RAM with 128 MiB shared buffers. The client process runs on the host. Cleanup checks both owner and unique fixture labels before deleting exact objects. The runner restores all prior process environment values. It never restarts/checkpoints/vacuums the shared compatibility fixtures. The physical trial's checkpoint is confined to its new promoted container and materializes timeline evidence. Workload contract Every offered operation has a stable identifier. One caller-owned SQL transaction inserts an operation ledger entry, changes an order amount or customer name, and appends one immutable Events outbox row. An exact retry "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "projections",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "projections",
-      "README"
-    ],
-    "order": 1143,
-    "title": "BlueTusk.Projections",
-    "sourcePath": "docs/projections/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-projections",
-        "text": "BlueTusk.Projections",
-        "level": 1
-      },
-      {
-        "id": "definition-and-destination-contract",
-        "text": "Definition and destination contract",
-        "level": 2
-      },
-      {
-        "id": "bounds-and-ordering",
-        "text": "Bounds and ordering",
-        "level": 2
-      },
-      {
-        "id": "production-topology-a-dedicated-delivery-pool",
-        "text": "Production topology: a dedicated delivery pool",
-        "level": 3
-      },
-      {
-        "id": "consistent-bootstrap-and-rebuild",
-        "text": "Consistent bootstrap and rebuild",
-        "level": 2
-      },
-      {
-        "id": "published-live-reads-metrics-and-retirement",
-        "text": "Published Live reads, metrics and retirement",
-        "level": 2
-      },
-      {
-        "id": "verification-and-remaining-production-gates",
-        "text": "Verification and remaining production gates",
-        "level": 2
-      }
-    ],
-    "wordCount": 2465,
-    "readMinutes": 12,
-    "searchText": "BlueTusk.Projections **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Projections is an independent .NET 10 `0.1.0-preview.1` family for versioned, durable application read models. Its PostgreSQL destination stores source mirrors, joined output documents, dependency indexes, decimal aggregates, snapshot coverage, and CDC checkpoints in one database. It consumes **BlueTusk.Streams** snapshot and committed-transaction contracts. It has no EF persistence interception or Sync connector dependency, and no Npgsql runtime dependency. Definition and destination contract Implement `IProjectionDefinition` with an explicit name, version, immutable definition fingerprint, and Streams source identity. A registered `(name, version)` cannot be rebound to different code semantics or a different source. Change the version whenever serialization, joins, aggregates, tenant resolution, keys, dependency semantics, or mappings change. The fingerprint must represent those semantics, not an arbitrary per-process value. The definition receives a bounded `ProjectionWriteContext` inside a destination transaction. It can: Store each source table's current committed row image with `UpsertSourceAsync`/`DeleteSourceAsync`, or bounded `UpsertSourcesAsync`/`DeleteSourcesAsync` bulk operations using one SQL command per batch. Read source mirrors to calculate joins from exactly the CDC history being applied. A row the context already read or wrote in the same transaction is served from an exact transaction-scoped image without another round trip. Touching the borrowed `Connection`/`Transaction` or any failed command discards the image, so raw SQL and aborted transactions behave exactly as before. Write typed output using source-generated `JsonTypeInfo<T>`, or persist an explicit byte paylo"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "projections-recovery",
-    "summary": "Ordinary cutover rejects changes to bound catalogue/timeline lineage, including when the Streams source identity happens to be unchanged. PromoteWithLineageAsync permits a different slot only",
-    "keywords": [
-      "docs",
-      "projections",
-      "RECOVERY"
-    ],
-    "order": 1144,
-    "title": "Explicit source recovery and controlled DDL",
-    "sourcePath": "docs/projections/RECOVERY.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/RECOVERY.md",
-    "headings": [
-      {
-        "id": "explicit-source-recovery-and-controlled-ddl",
-        "text": "Explicit source recovery and controlled DDL",
-        "level": 1
-      },
-      {
-        "id": "reproducible-physical-promotion-evidence",
-        "text": "Reproducible physical promotion evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 956,
-    "readMinutes": 5,
-    "searchText": "Explicit source recovery and controlled DDL Ordinary cutover rejects changes to bound catalogue/timeline lineage, including when the Streams source identity happens to be unchanged. `PromoteWithLineageAsync` permits a different slot only within the same verified source history. Numeric LSNs cannot establish coverage across timelines, restores or independent systems. A logical slot created after this fixture's base backup was not present on the promoted physical standby; resuming its old checkpoint would not be a certified recovery. Raw Streams transactions do not carry a timeline attestation. A source reconnect must recapture and validate lineage before starting deliveries; the sample does this on every worker start. Arbitrary application code that fabricates/reinterprets a raw source identity cannot be certified by the destination store. This contract does not provide automatic source failover/reconnection. Schema version 6 adds durable operator recovery tickets and maintenance fences. These APIs deliberately make recovery explicit. They do **not** certify that the authoritative replacement source contains every previously acknowledged business write. That requires infrastructure evidence and an operator decision. The recorded reason should identify the incident/deployment and its authoritative source. For failover/restore recovery: Fence the former primary externally before promoting/routing to the replacement. A destination lease on one isolated primary cannot prevent writes to another split-brain primary. Confirm source durability and backup/replication coverage separately; this fixture uses synchronous `remote_apply`. Capture actual target lineage, register a **new empty version** with `RegisterWithLineageAsync`, and capture `ProjectionCutoverEvidence` from the target. Its barrier is emitted only after verifying the connected system/database/timeline. Use a fresh slot on the authoritative history. Call `BeginRecoveryAsync(candidate, expectedActiveVersion, evide"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "projections-evidence",
-    "summary": "workload-pg18-60s.json records a 60-second run of ProjectionsSustainedWorkloadTests against PostgreSQL 18.6 in Docker on the development Windows host. It measures one serial, bounded producer performing",
-    "keywords": [
-      "docs",
-      "projections",
-      "evidence",
-      "README"
-    ],
-    "order": 1145,
-    "title": "Local bounded workload evidence",
-    "sourcePath": "docs/projections/evidence/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/projections/evidence/README.md",
-    "headings": [
-      {
-        "id": "local-bounded-workload-evidence",
-        "text": "Local bounded workload evidence",
-        "level": 1
-      }
-    ],
-    "wordCount": 347,
-    "readMinutes": 2,
-    "searchText": "Local bounded workload evidence `workload-pg18-60s.json` records a 60-second run of `ProjectionsSustainedWorkloadTests` against PostgreSQL 18.6 in Docker on the development Windows host. It measures one serial, bounded producer performing a real SQL business write and Events outbox append in one transaction, real pgoutput projection apply, transactional Events inbox/replay, and owned durable Live refresh every 32 commits. Lease release/recovery, source redelivery and exact event retry occur during the run. Other compatibility tests and a sustained storage campaign on another PostgreSQL container shared host resources during this capture; this is reproducible local evidence, not isolated capacity, concurrency or production p99 certification. The run completed 1,149 business transactions, 1,180 source deliveries, 49 lease recoveries, 31 duplicate appends and 36 Live messages. Exact inbox count/sequence sum, checkpoint, published aggregate/document and publication revision invariants passed. The report includes per-stage latency, process allocation, working set, CPU, GC and commit-meter observations. Memory/CPU figures describe the test process; PostgreSQL server and Docker resource usage are not included. The workload creates/drops only its own generated schemas/publication/slot. Outstanding source work and client messages stay bounded. Test-process metric counts can include other tests when run concurrently; run this filter alone when comparing reports. Larger fan-out/backlog, partition concurrency, multiple independent sources, multi-node routing, disk pressure, crash/ambiguous commit and long endurance campaigns remain separate release requirements. `physical-promotion-pg18.json` and its matching TRX are a separate actual physical-recovery campaign, not a throughput measurement. `run-physical-recovery.ps1` provisions and label-checks its own PG18 pair, enables/validates synchronous `remote_apply`, hard-stops the primary, promotes the physical standby, and invokes a"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "provider-release-notes-1-0-0",
-    "summary": "Status: published on 2026-08-23 from provider-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
-    "keywords": [
-      "docs",
-      "provider",
-      "release",
-      "notes",
-      "1",
-      "0",
-      "0"
-    ],
-    "order": 1148,
-    "title": "BlueTusk Provider 1.0.0 release record",
-    "sourcePath": "docs/provider/release-notes-1.0.0.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
-    "headings": [
-      {
-        "id": "bluetusk-provider-1-0-0-release-record",
-        "text": "BlueTusk Provider 1.0.0 release record",
-        "level": 1
-      }
-    ],
-    "wordCount": 235,
-    "readMinutes": 2,
-    "searchText": "BlueTusk Provider 1.0.0 release record Status: published on 2026-08-23 from `provider-v1.0.0` at release commit `7380d7b028c72b2aae348b778711d104d022a3f8`. The complete release evidence, registry inventory, and explicit owner-accepted exceptions are recorded in the [V1 publication record](../releases/1.0.0-publication-record.md). Provider 1.0.0 is the stable contract for the ADO.NET provider, protocol and transport stack, replication, EF Core provider, authentication integrations, extension packages, templates, and tooling registered to the Provider family. Its public API is frozen by [`eng/provider-api-freeze.json`](../../eng/provider-api-freeze.json). The supported PostgreSQL baseline is 15 through 19. The planned PostgreSQL 19 GA publication prerequisite was explicitly deferred for `1.0.0`; the official GA milestone, digest-pinned GA image, and exact-candidate matrix evidence remain open before PostgreSQL 19 receives GA-grade validation. Support starts with the immutable `provider-v1.0.0` packages. Registry availability, package contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in the recorded release workflow. Breaking public API or wire-contract changes require a new major version. Post-publication defects use rollback or pinning followed by a new fixed version; the 1.0.0 artifacts are never replaced. The V1 provider also generates readable fluent property-graph migrations. The builder validates vertex/edge aliases, labels, key cardinality, properties and endpoints; generated migrations no longer expose serialized graph metadata as a long string. The existing definition overload remains compatible. The three-application RC suite restores Provider only from exact `1.0.0-rc.1` packages and covers migrations, tenant isolation, idempotency, optimistic concurrency, PostgreSQL 19 graphs, and package-only architecture. This is staging verification, not stable support or pilot evidence."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "release-process",
-    "summary": "BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish.",
-    "keywords": [
-      "docs",
-      "release",
-      "process"
-    ],
-    "order": 1153,
-    "title": "Release process",
-    "sourcePath": "docs/release-process.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
-    "headings": [
-      {
-        "id": "release-process",
-        "text": "Release process",
-        "level": 1
-      },
-      {
-        "id": "current-package-rc-train",
-        "text": "Current package RC train",
-        "level": 2
-      },
-      {
-        "id": "candidate-sequence",
-        "text": "Candidate sequence",
-        "level": 2
-      },
-      {
-        "id": "publication-boundary",
-        "text": "Publication boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 1410,
-    "readMinutes": 7,
-    "searchText": "Release process BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish. `eng/product-families.json` schema 2 records, for every independently versioned family: whether publication is armed in an immutable candidate; whether the release channel is stable or preview; the one exact tag prefix; cross-family release dependencies; and the GitHub Actions workflows that must have succeeded for the exact release commit from an approved event. All six families are published at stable `1.0.0` without prerelease suffixes; the [V1 publication record](releases/1.0.0-publication-record.md) documents the owner exception used for that release. During preparation a publication policy may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does not publish a package. Exact release tags and protected `package-production` approval remain the publication boundary. Current package RC train `eng/package-prerelease-train.json` defines the prepared immutable `1.2.0-rc.1` package train for all six historical families in dependency order. Its inclusion of Graph is prerelease packaging, not Graph stable qualification. This train is not public until the reviewed commit reaches `main` and the six exact RC tags publish successfully. RC packing uses version overrides and temporary npm artifact copies; it does not rewrite the stable family manifests. Every internal NuGet/npm dependency must resolve to the same exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected `package-prerelease` environment, and npm packages use the `rc` dist-tag, never `latest`. A correction is `rc.2`; an RC is never overwritten. The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm packages passed public-availability and clean-consumer verification. The [release record](releases/1.1.0-rc.1.md) is the human-readab"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "release-review-handoff",
-    "summary": "Use one copy of this record for each exact candidate commit. Reviewers must be independent of the person who prepared the release. Blank, inherited or ancestor-commit evidence does not pass.",
-    "keywords": [
-      "docs",
-      "release",
-      "review",
-      "handoff"
-    ],
-    "order": 1155,
-    "title": "Independent V1 release review handoff",
-    "sourcePath": "docs/release-review-handoff.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
-    "headings": [
-      {
-        "id": "independent-v1-release-review-handoff",
-        "text": "Independent V1 release review handoff",
-        "level": 1
-      },
-      {
-        "id": "candidate-identity",
-        "text": "Candidate identity",
-        "level": 2
-      },
-      {
-        "id": "required-evidence",
-        "text": "Required evidence",
-        "level": 2
-      },
-      {
-        "id": "review-decision",
-        "text": "Review decision",
-        "level": 2
-      }
-    ],
-    "wordCount": 690,
-    "readMinutes": 4,
-    "searchText": "Independent V1 release review handoff Use one copy of this record for each exact candidate commit. Reviewers must be independent of the person who prepared the release. Blank, inherited or ancestor-commit evidence does not pass. Candidate identity Field Value Product family Version and tag Full source commit Candidate workflow URL and run ID Package artifact SHA-256 values See canonical `package-manifest.json` and `build-provenance.json` CycloneDX 1.6 SHA-256 SPDX 2.3 SHA-256 GitHub attestation URL Required evidence [ ] Release dependencies are published at the exact versions declared by the candidate. [ ] The full manual `build.yml` run passed at the candidate commit. [ ] The build retained exactly one `v1-candidate-packages-<sha>` artifact; its six family inventories, package contents, SBOMs, provenance and manifest pass `verify-v1-package-evidence.ps1`. [ ] The archived Angular `production-metrics.json` passes the checked-in startup, lazy-chunk and complete-distribution budgets, and pilot evidence records field LCP, INP and CLS for the selected production host. [ ] `website-deployment-acceptance.json` records TLS, SPA fallback, cache and security-header policy, broken-link crawl, supported browsers and field Core Web Vitals for the exact archived website artifact. [ ] All ten schema-4 operational approval files pass `verify-v1-approval-evidence.ps1`; generic narrative approvals, unknown fields, measurements outside budget and approvals older than the latest exact workflow are rejected. Independent review follows all operational approvals, and maintainer sign-off is last. [ ] The manual `security.yml` CodeQL run passed at the candidate commit. [ ] Every target in the manual `fuzzing.yml` run completed for at least one hour without a crash or hang finding at the candidate commit. [ ] The [fuzz-finding review handoff](operations/fuzz-finding-handoff.md) is closed by an independent security reviewer. [ ] All workflow actions are pinned to full commits. [ ] CodeQL, de"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "releases-1-0-0-publication-record",
-    "summary": "Status: published on 2026-08-23.",
-    "keywords": [
-      "docs",
-      "releases",
-      "1",
-      "0",
-      "0",
-      "publication",
-      "record"
-    ],
-    "order": 1156,
-    "title": "BlueTusk 1.0.0 publication record",
-    "sourcePath": "docs/releases/1.0.0-publication-record.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-0-0-publication-record",
-        "text": "BlueTusk 1.0.0 publication record",
-        "level": 1
-      },
-      {
-        "id": "publication-evidence",
-        "text": "Publication evidence",
-        "level": 2
-      },
-      {
-        "id": "repository-owner-release-decision",
-        "text": "Repository-owner release decision",
-        "level": 2
-      },
-      {
-        "id": "nuget-inventory",
-        "text": "NuGet inventory",
-        "level": 2
-      },
-      {
-        "id": "provider-31",
-        "text": "Provider (31)",
-        "level": 3
-      },
-      {
-        "id": "streams-10",
-        "text": "Streams (10)",
-        "level": 3
-      },
-      {
-        "id": "sync-8",
-        "text": "Sync (8)",
-        "level": 3
-      },
-      {
-        "id": "live-9",
-        "text": "Live (9)",
-        "level": 3
-      },
-      {
-        "id": "control-plane-2",
-        "text": "Control Plane (2)",
-        "level": 3
-      },
-      {
-        "id": "continuous-graph-2",
-        "text": "Continuous Graph (2)",
-        "level": 3
-      },
-      {
-        "id": "post-release-obligations",
-        "text": "Post-release obligations",
-        "level": 2
-      }
-    ],
-    "wordCount": 579,
-    "readMinutes": 3,
-    "searchText": "BlueTusk 1.0.0 publication record Status: published on 2026-08-23. BlueTusk 1.0.0 was published as six independently versioned product families from release commit [`7380d7b028c72b2aae348b778711d104d022a3f8`](https://github.com/jphgardner/BlueTusk/commit/7380d7b028c72b2aae348b778711d104d022a3f8). Every release tag resolves to that commit. The temporary, repository-owner release exception was removed by [`6abb6365f1352fbb6d24a76d67f42d567800782b`](https://github.com/jphgardner/BlueTusk/commit/6abb6365f1352fbb6d24a76d67f42d567800782b) after publication; the normal fail-closed release workflow and active `main` ruleset are restored. Publication evidence Family Stable tag NuGet packages npm packages Release workflow Provider `provider-v1.0.0` 31 0 [run 32643869503](https://github.com/jphgardner/BlueTusk/actions/runs/32643869503) Streams `streams-v1.0.0` 10 0 [run 32644411522](https://github.com/jphgardner/BlueTusk/actions/runs/32644411522) Sync `sync-v1.0.0` 8 0 [run 32644873113](https://github.com/jphgardner/BlueTusk/actions/runs/32644873113) Live `live-v1.0.0` 9 3 [run 32645259901](https://github.com/jphgardner/BlueTusk/actions/runs/32645259901) Control Plane `control-plane-v1.0.0` 2 0 [run 32645643697](https://github.com/jphgardner/BlueTusk/actions/runs/32645643697) Continuous Graph `continuous-graph-v1.0.0` 2 0 [run 32645983565](https://github.com/jphgardner/BlueTusk/actions/runs/32645983565) **Total** 6 tags **62** **3** **6 successful runs** Each run completed restore, formatting and documentation verification, the full build and test suite, direct and transitive dependency auditing, selected family packaging, package-content and provenance validation, CycloneDX/SPDX SBOM generation, artifact upload, GitHub build-provenance attestation, and protected production publication. NuGet authentication used GitHub OIDC; the npm packages were published as public packages with npm provenance. Post-publication checks on 2026-08-23 confirmed HTTP 200 for every one of the 62 i"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "releases-1-1-0-candidate",
-    "summary": "This page described the 1.1.0 release line while it was a candidate. It has been replaced by:",
-    "keywords": [
-      "docs",
-      "releases",
-      "1",
-      "1",
-      "0",
-      "candidate"
-    ],
-    "order": 1157,
-    "title": "BlueTusk 1.1.0 candidate (superseded)",
-    "sourcePath": "docs/releases/1.1.0-candidate.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-1-0-candidate-superseded",
-        "text": "BlueTusk 1.1.0 candidate (superseded)",
-        "level": 1
-      }
-    ],
-    "wordCount": 59,
-    "readMinutes": 1,
-    "searchText": "BlueTusk 1.1.0 candidate (superseded) This page described the 1.1.0 release line while it was a candidate. It has been replaced by: [1.1.0 release notes](1.1.0.md): what 1.1.0 contains and how to upgrade. [1.1.0-rc.1 release record](1.1.0-rc.1.md): the published release candidate. [Releases](README.md): all versions and their status. The previous text of this page is in the repository history."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "releases-1-2-0-plan",
-    "summary": "The work planned here for a 1.2 release was moved into the 1.1.0 release line. There is no separate 1.2 release.",
-    "keywords": [
-      "docs",
-      "releases",
-      "1",
-      "2",
-      "0",
-      "plan"
-    ],
-    "order": 1160,
-    "title": "BlueTusk 1.2 plan (now part of 1.1.0)",
-    "sourcePath": "docs/releases/1.2.0-plan.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
-    "headings": [
-      {
-        "id": "bluetusk-1-2-plan-now-part-of-1-1-0",
-        "text": "BlueTusk 1.2 plan (now part of 1.1.0)",
-        "level": 1
-      }
-    ],
-    "wordCount": 63,
-    "readMinutes": 1,
-    "searchText": "BlueTusk 1.2 plan (now part of 1.1.0) The work planned here for a 1.2 release was moved into the 1.1.0 release line. There is no separate 1.2 release. What the work delivers: [1.1.0 release notes](1.1.0.md). How Core and Graph release separately: [release tracks](release-tracks.md). The machine-readable release contract: [`eng/v1.1-release-contract.json`](../../eng/v1.1-release-contract.json). The previous text of this plan is in the repository history."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "releases",
-    "summary": "Use this page to find the release notes for a BlueTusk version and to see which versions are current.",
-    "keywords": [
-      "docs",
-      "releases",
-      "README"
-    ],
-    "order": 1161,
-    "title": "Releases",
-    "sourcePath": "docs/releases/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/README.md",
-    "headings": [
-      {
-        "id": "releases",
-        "text": "Releases",
-        "level": 1
-      },
-      {
-        "id": "versions",
-        "text": "Versions",
-        "level": 2
-      },
-      {
-        "id": "per-product-release-notes-for-1-0-0",
-        "text": "Per-product release notes for 1.0.0",
-        "level": 2
-      },
-      {
-        "id": "how-releases-work",
-        "text": "How releases work",
-        "level": 2
-      }
-    ],
-    "wordCount": 192,
-    "readMinutes": 1,
-    "searchText": "Releases Use this page to find the release notes for a BlueTusk version and to see which versions are current. Versions Version Status Notes `1.1.0` Next release. In release qualification; not published yet. [Release notes](1.1.0.md) `1.1.0-rc.1` Release candidate, published 2026-08-29. Will be deprecated when 1.1.0 is published. [Release record](1.1.0-rc.1.md) `1.0.0` Stable, published 2026-08-23. Will be deprecated when 1.1.0 is published. [Publication record](1.0.0-publication-record.md) All Core families (Provider, Streams, Sync, Live and Control Plane) share one version number. Graph and Continuous Graph are preview and are not part of 1.1.0. The ecosystem families are released separately as previews. To choose and install a version, see [Install BlueTusk](../getting-started/install.md). To move between versions, see the [upgrade guide](../operations/upgrade-guide.md). Per-product release notes for 1.0.0 [Provider](../provider/release-notes-1.0.0.md) [Streams](../streams/release-notes-1.0.0.md) [Sync](../sync/release-notes-1.0.0.md) [Live](../live/release-notes-1.0.0.md) [Control Plane](../control-plane/release-notes-1.0.0.md) [Continuous Graph](../continuous-graph/release-notes-1.0.0.md) How releases work [Release tracks](release-tracks.md): why Core and Graph release separately. [Release process](../release-process.md): how a version is built, checked and published. [Compatibility and versioning](../../VERSIONING.md): the support matrix and compatibility policy."
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "releases-release-tracks",
-    "summary": "BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control Plane can qualify for release without waiting for Graph. Continuous Graph is retained as preview work, including its compiler, increment…",
-    "keywords": [
-      "docs",
-      "releases",
-      "release",
-      "tracks"
-    ],
-    "order": 1162,
-    "title": "Core products and Graph preview",
-    "sourcePath": "docs/releases/release-tracks.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/release-tracks.md",
-    "headings": [
-      {
-        "id": "core-products-and-graph-preview",
-        "text": "Core products and Graph preview",
-        "level": 1
-      },
-      {
-        "id": "verify-the-track-and-its-measurements",
-        "text": "Verify the track and its measurements",
-        "level": 2
-      },
-      {
-        "id": "remaining-release-wiring",
-        "text": "Remaining release wiring",
-        "level": 2
-      }
-    ],
-    "wordCount": 2204,
-    "readMinutes": 11,
-    "searchText": "Core products and Graph preview BlueTusk 1.2 has two readiness tracks. Provider, Streams, Sync, Live and Control Plane can qualify for release without waiting for Graph. Continuous Graph is retained as preview work, including its compiler, incremental engine, dashboard and examples. Sharing a source version does not make every family production qualified. Track Server support Required evidence Five core families PostgreSQL 15–18 stable; PostgreSQL 19 preview Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval Continuous Graph preview Historical, digest-pinned PostgreSQL 19 Beta 3 fixture with SQL/PGQ Separate preview tests and performance results; not production evidence Future Graph stable A supported server release that actually provides SQL/PGQ Capability probe, differential/security/recovery tests, unchanged Graph cost limits, 24-hour endurance and independent release approval PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/). PostgreSQL 19 GA alone will therefore not qualify Graph. A future server version has not been assigned here. Native PostgreSQL 19 `REPACK` remains preview compatibility work until the GA matrix passes. Verify the track and its measurements `eng/release-tracks.json` defines track membership. `verify-release-track.ps1` rejects stable Graph publication even if someone enables its package flag. Core families retain their other gates and dependency order; none depends on Continuous Graph. All stable package-publication flags remain disabled. Performance evidence schema 3 names `Core` or `ContinuousGraphPreview`. `Core` requires every declared core workload, including all seven Sync destinations, on both Windows and Linux. `ContinuousGraphPreview` requires its own complete matrix and cannot certify a core release. Preview results cannot substitute for missing core workloads. Confidence "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "schema",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "schema",
-      "README"
-    ],
-    "order": 1166,
-    "title": "BlueTusk Schema",
-    "sourcePath": "docs/schema/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-schema",
-        "text": "BlueTusk Schema",
-        "level": 1
-      },
-      {
-        "id": "command-line-snapshots-and-drift",
-        "text": "Command-line snapshots and drift",
-        "level": 2
-      },
-      {
-        "id": "expanded-catalogue-contracts",
-        "text": "Expanded catalogue contracts",
-        "level": 2
-      },
-      {
-        "id": "deployment-sequencing",
-        "text": "Deployment sequencing",
-        "level": 2
-      },
-      {
-        "id": "concurrent-index-additions",
-        "text": "Concurrent index additions",
-        "level": 2
-      }
-    ],
-    "wordCount": 2369,
-    "readMinutes": 11,
-    "searchText": "BlueTusk Schema **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). `BlueTusk.Schema` is a new preview product for consistent PostgreSQL relation contracts and consumer compatibility analysis. The caller owns the data source. Relation discovery uses one read-only repeatable-read transaction and an explicit `pg_catalog` search path. Schema names are parameters. Row counts and total metadata bytes are bounded; crossing a limit fails instead of returning a silently partial snapshot. Command deadlines and cancellation apply to every discovery operation. Snapshot inputs are copied into immutable collections. PostgreSQL catalogue deparsers can consult newer caches during concurrent DDL; relation format 1 alone does not attest that boundary. Use the expanded catalogue capture below when validating a deployment contract under concurrent DDL. The canonical SHA-256 fingerprint excludes transient OIDs. It includes relation kind, column ordinals/types/nullability/defaults/generated and identity behavior, collation, keys and constraints, index definitions/validity, RLS flags and policies, and view/partition definitions. Collection order is normalized and fields are length delimited. Schema metadata can contain sensitive default or policy expressions; fingerprints do not encrypt it, and the library does not log those expressions. Caller-created PostgreSQL type strings are metadata labels; capture obtains authoritative type names from the database. `SchemaSnapshotSerializer` exports source-generated, versioned JSON and verifies the canonical fingerprint on import. It rejects future versions, malformed Unicode/identifiers/catalogue flags, null members, excessive strings, collection width and aggregate metadata before materializing an object graph. Constructors bound enumeration befo"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "schema-catalogue-attestation",
-    "summary": "PostgreSQL catalogue rows in a held read-only repeatable-read transaction have a stable MVCC snapshot. Some metadata helpers also consult current catalogue caches. A live regression demonstrates that pggetfunctiondef…",
-    "keywords": [
-      "docs",
-      "schema",
-      "catalogue",
-      "attestation"
-    ],
-    "order": 1167,
-    "title": "Catalogue consistency attestation",
-    "sourcePath": "docs/schema/catalogue-attestation.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/schema/catalogue-attestation.md",
-    "headings": [
-      {
-        "id": "catalogue-consistency-attestation",
-        "text": "Catalogue consistency attestation",
-        "level": 1
-      },
-      {
-        "id": "narrow-permissions",
-        "text": "Narrow permissions",
-        "level": 2
-      },
-      {
-        "id": "evidence",
-        "text": "Evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 856,
-    "readMinutes": 4,
-    "searchText": "Catalogue consistency attestation PostgreSQL catalogue rows in a held read-only repeatable-read transaction have a stable MVCC snapshot. Some metadata helpers also consult current catalogue caches. A live regression demonstrates that `pg_get_functiondef` can return a concurrently replaced body even though the held `pg_proc` row remains unchanged. Capture must not describe that mixture as a consistent snapshot. The internal `PostgreSqlCatalogConsistencyAttestation` complements snapshot-derived metadata. Before materialization it reads catalogue tuple-version tokens in the held transaction. After every result has been materialized, it opens a distinct connection and a fresh read-only repeatable-read transaction, then compares the tokens and server identity. An internal mismatch becomes the public `SchemaConcurrentDdlException` at the capture boundary. `CaptureAsync` makes at most three fresh capture attempts (the initial attempt plus two retries), with 75 ms and 150 ms retry delays, under one overall configured deadline. It retries only consistency mismatches. Permission failures, timeouts, cancellation, unsupported servers and configured admission limits remain distinct and are not retried. `CaptureInTransactionAsync` does not retry: the caller-owned transaction remains unchanged and uncommitted, and its owner must start a fresh transaction after a mismatch. The transient tokens contain catalogue kind, OID or composite row key, and tuple `xmin`. They never enter serialized contracts or canonical fingerprints. The conservative scope includes every row in `pg_class`, `pg_type`, `pg_enum`, `pg_constraint`, `pg_attribute`, `pg_index`, `pg_policy`, `pg_proc`, `pg_namespace`, `pg_publication`, `pg_publication_rel`, `pg_publication_namespace`, `pg_extension`, `pg_attrdef`, `pg_collation`, `pg_language`, `pg_rewrite`, `pg_inherits`, `pg_operator`, `pg_opclass`, `pg_opfamily`, `pg_am`, `pg_cast`, `pg_transform`, `pg_ts_config`, `pg_ts_dict`, `pg_database` and `pg_authid`. Dep"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "search",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "search",
-      "README"
-    ],
-    "order": 1168,
-    "title": "BlueTusk.Search",
-    "sourcePath": "docs/search/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-search",
-        "text": "BlueTusk.Search",
-        "level": 1
-      },
-      {
-        "id": "durable-ingestion-and-deletion",
-        "text": "Durable ingestion and deletion",
-        "level": 2
-      },
-      {
-        "id": "durable-embedding-checkpoints",
-        "text": "Durable embedding checkpoints",
-        "level": 3
-      },
-      {
-        "id": "retrieval-ranking-and-pagination",
-        "text": "Retrieval, ranking and pagination",
-        "level": 2
-      },
-      {
-        "id": "opensearch-adapter",
-        "text": "OpenSearch adapter",
-        "level": 2
-      },
-      {
-        "id": "operator-readiness",
-        "text": "Operator readiness",
-        "level": 2
-      },
-      {
-        "id": "operations-and-evidence",
-        "text": "Operations and evidence",
-        "level": 2
-      }
-    ],
-    "wordCount": 3661,
-    "readMinutes": 17,
-    "searchText": "BlueTusk.Search **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). BlueTusk.Search `0.1.0-preview.1` provides versioned PostgreSQL full-text ingestion and retrieval with tenant and permission filtering. BlueTusk.Search.PgVector adds schema-qualified vector storage, cosine retrieval and optional HNSW indexing. Both use `DbDataSource`; neither depends on Npgsql or EF Core. The adapter requires a separately installed pgvector extension, validated during initialization. The host must derive tenant, index and principals from authenticated authorization state. The library cannot authenticate supplied principal strings. Every ingestion identity, query candidate and result page is tenant/index scoped. Private documents are the default; an explicit public flag grants retrieval within the document's tenant and index only. Durable ingestion and deletion Each `(tenant,index,document)` retains its highest source version and payload fingerprint. Versions must be positive and monotonically increasing for that logical source identity. A higher version atomically replaces all chunks and metadata in one PostgreSQL transaction. Same-version identical replay is idempotent; conflicting payload at the same version raises `SearchVersionConflictException`. Lower versions are ignored. Deletions retain a durable tombstone and remove all chunks, so delayed older ingestion cannot resurrect a document. No tombstone expiration is automatic: purging fences requires an independently proven upstream replay floor. Titles, metadata and ACLs live once per document; chunks retain content, weighted full-text terms and optional embeddings. Chunk replacement and version advancement share the same commit boundary. Existing search snapshots recheck source version and deletion state, so removed or replaced d"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "search-capacity",
-    "summary": "eng/run-search-capacity.ps1 runs a dedicated PostgreSQL 18 Search campaign from a clean, full commit SHA. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of me…",
-    "keywords": [
-      "docs",
-      "search",
-      "capacity"
-    ],
-    "order": 1169,
-    "title": "Search mixed ingestion and retrieval capacity campaign",
-    "sourcePath": "docs/search/capacity.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/search/capacity.md",
-    "headings": [
-      {
-        "id": "search-mixed-ingestion-and-retrieval-capacity-campaign",
-        "text": "Search mixed ingestion and retrieval capacity campaign",
-        "level": 1
-      },
-      {
-        "id": "current-diagnostic-findings",
-        "text": "Current diagnostic findings",
-        "level": 2
-      }
-    ],
-    "wordCount": 1426,
-    "readMinutes": 7,
-    "searchText": "Search mixed ingestion and retrieval capacity campaign `eng/run-search-capacity.ps1` runs a dedicated PostgreSQL 18 Search campaign from a **clean, full commit SHA**. It provisions a digest-pinned, labelled Docker volume and container on loopback, with four CPUs and 2 GiB of memory, then removes only its own fixture. The runner takes before/after whole-source fingerprints, snapshots the built executable and dependencies, checks the executable after each run, and hashes every archived raw artifact. It never publishes a package or marks the product production-qualified. The workload seeds 128 distinct 4 KiB documents in each of eight tenants, then explicitly analyzes the seeded document and chunk tables before the timed interval. This measures a prepared steady state; first-query behavior after bulk loading remains a separate operational gate. Content is deterministic high-entropy text with both a common term and a unique per-document term. Documents include public, `readers`-authorized and `restricted`-only ACLs. One writer per tenant offers an update every 200 ms while four readers each offer a scoped full-text query every 100 ms: nominally 40 writes and 40 reads per second. One quarter of planned read offers seek a public document's unique term; the rest seek the common term. Both tenants assigned to each reader receive selective queries. The campaign uses a 60-second query snapshot lifetime and a 512-snapshot per-scope cap; these are reported and checked against the budget. The earlier 10-second lifetime expired a first-page cursor during the 1,800-second load, while the production default is two minutes. The shorter campaign lifetime retains steady expiry churn without making a single unusually slow query invalidate its first page. The schedule uses a monotonic clock and skips missed slots instead of building an unbounded client queue. Every planned slot is counted as offered or skipped; every offered call is counted as accepted or explicitly rejected by bounded "
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "sql",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "sql",
-      "README"
-    ],
-    "order": 1171,
-    "title": "BlueTusk Sql",
-    "sourcePath": "docs/sql/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sql/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-sql",
-        "text": "BlueTusk Sql",
-        "level": 1
-      }
-    ],
-    "wordCount": 1499,
-    "readMinutes": 7,
-    "searchText": "BlueTusk Sql **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). New preview typed SQL tooling consists of `BlueTusk.Sql` and the incremental `BlueTusk.Sql.SourceGeneration` analyzer. Reference the generator as an analyzer with `ReferenceOutputAssembly=\"false\"` and add `.sql` files as `AdditionalFiles`. Generated code contains a typed `Arguments` record, a typed `Row` record and one immutable `Definition`. Positional parameter OIDs, result getters and nullable handling are emitted directly; there is no reflection-driven construction. Invalid/duplicate identifiers, types, bounds or directives fail compilation. Directives precede the SQL body, preserving application SQL literals. PostgreSQL validates read query grammar and actual result name/type contracts through a zero-row wrapper in a read-only transaction. Runtime execution checks the result contract and required nulls before constructing rows. Runtime execution wraps each admitted single read query in an outer limit of `MaximumRows + 1`, so PostgreSQL sends at most the declared rows plus one overflow sentinel even for a query without parameters. The original `ORDER BY`, `LIMIT`, and `OFFSET` remain inside the wrapper. BlueTusk SQL requests a non-sequential portal reader and rejects a connection configured to buffer entire readers before executing the query. SQL forms that PostgreSQL cannot use inside a derived table fail rather than running without the cap. Command time is also bounded. Each field defaults to one MiB and each result to 64 MiB of encoded PostgreSQL field data plus four length bytes per field. The BlueTusk reader exposes encoded field length without value decoding/copying, so limits are checked before the generated projector allocates strings/byte arrays. The non-sequential portal reader buffers one"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "studio",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "studio",
-      "README"
-    ],
-    "order": 1192,
-    "title": "BlueTusk Studio",
-    "sourcePath": "docs/studio/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/studio/README.md",
-    "headings": [
-      {
-        "id": "bluetusk-studio",
-        "text": "BlueTusk Studio",
-        "level": 1
-      },
-      {
-        "id": "operational-adapters",
-        "text": "Operational adapters",
-        "level": 2
-      },
-      {
-        "id": "local-verification",
-        "text": "Local verification",
-        "level": 2
-      }
-    ],
-    "wordCount": 2157,
-    "readMinutes": 10,
-    "searchText": "BlueTusk Studio **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). New preview ASP.NET Core developer workspace: an embedded SQL editor, schema browser, query-plan viewer, authorized event traces, Live inspection and audited quarantine replay. SQL/schema, Events and Control Plane integrations are separate packages so the core workspace does not require either operational runtime. The scope resolver is required. It chooses the authenticated principal's least-privilege PostgreSQL data source/role, a stable non-sensitive `StudioDatabaseScope.AuditScopeId` identifying the selected database/tenant scope, and the schemas exposed in the browser. Schema visibility is not a SQL authorization boundary: PostgreSQL grants, RLS and function privileges must enforce that principal's actual query access. Studio does not borrow an unrestricted operator data source implicitly. The caller owns all resolved data sources. Durable audit is also required. This preview upgrade requires existing host resolvers to set `AuditScopeId` to an opaque value that is stable across replicas and restarts and distinct for different database/tenant scopes. Leaving it empty fails the query audit closed. `PostgreSqlStudioAuditSink` supplies a durable borrowed-data-source implementation. Provision its schema during deployment with `InitializeAsync`, using a deployment role, then register the configured sink instance before `AddBlueTuskStudio`: The runtime audit role needs SELECT on `studio_audit_version` and SELECT/INSERT on `studio_audit`; the database scope resolver must use a separate least-privilege role for user queries. The runtime role must not own the audit table or have permission to disable its insert trigger. Retries of an operation/outcome identity require identical actor, scope, fingerprint an"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "v1-applications",
-    "summary": "BlueTusk V1 is exercised by three independently deployable applications in applications/BlueTusk.Applications.slnx:",
-    "keywords": [
-      "docs",
-      "v1",
-      "applications"
-    ],
-    "order": 1205,
-    "title": "V1 application suite and RC deployment",
-    "sourcePath": "docs/v1-applications.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
-    "headings": [
-      {
-        "id": "v1-application-suite-and-rc-deployment",
-        "text": "V1 application suite and RC deployment",
-        "level": 1
-      },
-      {
-        "id": "local-rc-verification",
-        "text": "Local RC verification",
-        "level": 2
-      },
-      {
-        "id": "property-graph-migrations",
-        "text": "Property-graph migrations",
-        "level": 2
-      },
-      {
-        "id": "rc-staging-boundary",
-        "text": "RC staging boundary",
-        "level": 2
-      }
-    ],
-    "wordCount": 1032,
-    "readMinutes": 5,
-    "searchText": "V1 application suite and RC deployment BlueTusk V1 is exercised by three independently deployable applications in [`applications/BlueTusk.Applications.slnx`](../applications/BlueTusk.Applications.slnx): **Order Fulfilment Operations** uses Provider/EF for its write model, Streams for its durable relay, Sync for the operational projection, Live SignalR delivery, and the Control Plane dashboard. **Service Topology Centre** uses PostgreSQL 19 SQL/PGQ, ContinuousGraph, Streams replay/invalidation, Angular Live delivery, and graph status in the Control Plane. **Fraud Graph Investigator** uses PostgreSQL 19 property graphs, ContinuousGraph evaluation, Streams, the framework-neutral Live client, and immutable case evidence. The current applications consume exact `1.1.0-rc.1` NuGet and npm packages. The original 2026-08-18 evidence below remains an immutable historical record of the `1.0.0-rc.1` train; it is not the current deployment baseline. They have no project reference to BlueTusk production source. Each backend is split into Domain, Application, Infrastructure, API, and Worker projects, and each has a browser client, Dockerfiles, a Helm deployment, seed data, SLOs, and an operator runbook. The shared BFF implements OIDC sessions, secure cookies, CSRF protection, CSP, rate limiting, tenant/role enforcement, RFC 9457 errors, health endpoints, and OpenTelemetry. Order Operations also includes a fully supported Angular client used by the `bluetusk-production` starter. It exercises the same BFF, CSRF, idempotency, Live delivery, and package-only boundary as the React client. Deployable V1 image evidence continues to cover one reviewed UI per application; the starter client has its own build and template-generation gates. Before RC publication, the application build uses `eng/nuget/applications-candidate.config` and an isolated package cache. NuGet source mapping permits `BlueTusk.*` only from the locally packed candidate feed; all third-party packages remain mapped to NuG"
-  },
-  {
-    "category": "operations",
-    "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "v1-release-readiness",
-    "summary": "BlueTusk 1.0.0 was published on 2026-08-23 under the explicit repository-owner decision recorded in the V1 publication record. Publication did",
-    "keywords": [
-      "docs",
-      "v1",
-      "release",
-      "readiness"
-    ],
-    "order": 1206,
-    "title": "V1 release readiness",
-    "sourcePath": "docs/v1-release-readiness.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",
-    "headings": [
-      {
-        "id": "v1-release-readiness",
-        "text": "V1 release readiness",
-        "level": 1
-      },
-      {
-        "id": "implemented-v1-hardening",
-        "text": "Implemented V1 hardening",
-        "level": 2
-      },
-      {
-        "id": "verification-snapshot",
-        "text": "Verification snapshot",
-        "level": 2
-      },
-      {
-        "id": "gates-that-must-remain-open",
-        "text": "Gates that must remain open",
-        "level": 2
-      }
-    ],
-    "wordCount": 1420,
-    "readMinutes": 7,
-    "searchText": "V1 release readiness BlueTusk `1.0.0` was published on 2026-08-23 under the explicit repository-owner decision recorded in the [V1 publication record](releases/1.0.0-publication-record.md). Publication did not complete the external exact-candidate evidence below: independent approval, fuzz, reference performance, endurance, and PostgreSQL 19 GA remain open. The standard release process remains fail closed for later versions. On 2026-08-29, the coordinated `1.1.0-rc.1` train was published from commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`. Its 62 NuGet and three npm packages passed public availability and clean consumer verification. That updates package availability only; it does not close the stable endurance, PostgreSQL 19 GA, performance, security, or external-acceptance gates below. See the [1.1 RC release record](releases/1.1.0-rc.1.md). Implemented V1 hardening Nine bounded parser fuzzing targets, replayable corpus tests, CI/scheduled coverage-guided runs, finding archive/minimisation tools, and a machine-checked target/corpus/limit/workflow synchronization contract. An explicit ADO.NET compatibility contract covering PostgreSQL routines, parameter directions, transactions, reader behaviours, schema discovery, Dapper, dependency injection, health checks and documented exclusions. Exact public-API budgets for all six product families. Commit-pinned workflow actions, CodeQL, dependency review, NuGet advisory auditing, CycloneDX 1.6 and SPDX 2.3 SBOMs, artifact hashes and build provenance. A machine-checked intentional test-credential inventory covering 24 workflow/Compose occurrences by fingerprint, exact path, count and local-only context; unknown values, external-host use and release-workflow literals fail closed. External scanner disposition remains independently required. A canonical evidence-only package artifact for all six product families, with exact per-family archive reconstruction, package-content verification, SHA-256 inventory, SBOM/provenance b"
+    "keywords": []
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
-    "listed": false,
-    "slug": "workflows",
-    "summary": "Preview. This family is 0.1.0-preview.1 and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See product status.",
-    "keywords": [
-      "docs",
-      "workflows",
-      "README"
-    ],
-    "order": 1207,
-    "title": "BlueTusk.Workflows",
-    "sourcePath": "docs/workflows/README.md",
-    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/workflows/README.md",
+    "slug": "tools",
+    "title": "Use the BlueTusk command-line tools",
+    "summary": "Check a database connection, scaffold a model, or validate a typed SQL catalog.",
+    "order": 9,
     "headings": [
-      {
-        "id": "bluetusk-workflows",
-        "text": "BlueTusk.Workflows",
-        "level": 1
-      },
-      {
-        "id": "define-and-execute",
-        "text": "Define and execute",
-        "level": 2
-      },
-      {
-        "id": "durable-execution-contract",
-        "text": "Durable execution contract",
-        "level": 2
-      },
-      {
-        "id": "failure-cancellation-and-recovery",
-        "text": "Failure, cancellation and recovery",
-        "level": 2
-      },
       {
-        "id": "history-replay-and-migration",
-        "text": "History, replay and migration",
+        "id": "inspect-a-postgresql-connection",
+        "text": "Inspect a PostgreSQL connection",
         "level": 2
       },
       {
-        "id": "bounds-and-operations",
-        "text": "Bounds and operations",
+        "id": "scaffold-an-ef-core-model",
+        "text": "Scaffold an EF Core model",
         "level": 2
       },
       {
-        "id": "evidence-and-qualification",
-        "text": "Evidence and qualification",
+        "id": "choose-a-specialist-tool",
+        "text": "Choose a specialist tool",
         "level": 2
       }
     ],
-    "wordCount": 1522,
-    "readMinutes": 7,
-    "searchText": "BlueTusk.Workflows **Preview.** This family is `0.1.0-preview.1` and is not published to a package feed yet. It is not part of the 1.1.0 release and its API may change. Build it from source to evaluate it. See [product status](../getting-started/install.md#product-status). Use the shared [storage maintenance contract](../jobs/maintenance.md) for workflow state and its dispatch Jobs. [Durable-format support](../jobs/durable-format.md) documents same-format restart/configuration rollback and the unsupported cross-format migration boundary. The optional `BlueTusk.Workflows.DependencyInjection` adapter provides trusted scope host readiness, redacted results, generated JSON and bounded telemetry. See the shared [hosting and credential rotation contract](../jobs/hosting.md). BlueTusk.Workflows executes immutable, versioned directed acyclic graphs in PostgreSQL. Activities, joins, timers, buffered signals, results, compensation, history and dispatch state survive worker restarts. Jobs supplies transactional dispatch, bounded workers, database-clock leases, retries and fencing. The package targets .NET 10 and is `0.1.0-preview.1`. Current implementation evidence does not establish qualification for massive production workloads. Define and execute The caller owns the data source. Workflow and Jobs tables must live in the same database. StartAsync also accepts a caller BlueTuskTransaction and an explicit cancellation token: instance, nodes, history and dispatch commit or roll back with business writes. A duplicate start key returns the original workflow only when the original definition version and input match. Compatible migration preserves that original identity. Durable execution contract Definitions are scoped by tenant, queue, name and integer version. Registration canonicalizes node/dependency ordering, checks immutable serialized bytes and SHA-256, and rejects duplicate/missing identities, cycles, invalid node fields and limits. Activity names should themselves be vers"
+    "sourcePath": "docs/operations/tools.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/tools.md",
+    "keywords": []
   }
 ];

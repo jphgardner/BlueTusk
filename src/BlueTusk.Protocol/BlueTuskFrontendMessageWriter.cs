@@ -14,14 +14,14 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteSslRequest(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         WriteInt32(output, 8);
         WriteInt32(output, SslRequestCode);
     }
 
     public static void WriteCancelRequest(IBufferWriter<byte> output, BlueTuskBackendKeyData backendKeyData)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         WriteInt32(output, sizeof(int) * 4);
         WriteInt32(output, CancelRequestCode);
         WriteInt32(output, backendKeyData.ProcessId);
@@ -32,8 +32,8 @@ public static class BlueTuskFrontendMessageWriter
         IBufferWriter<byte> output,
         IReadOnlyDictionary<string, string> parameters)
     {
-        ArgumentNullException.ThrowIfNull(output);
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(output);
+        BlueTuskGuard.NotNull(parameters);
 
         var payloadLength = sizeof(int);
         foreach (var pair in parameters)
@@ -59,7 +59,7 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteSimpleQuery(IBufferWriter<byte> output, string sql)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(sql, nameof(sql));
 
         var sqlLength = Encoding.UTF8.GetByteCount(sql);
@@ -74,7 +74,7 @@ public static class BlueTuskFrontendMessageWriter
         string firstStatement,
         string secondStatement)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(firstStatement, nameof(firstStatement));
         ValidateCString(secondStatement, nameof(secondStatement));
 
@@ -91,7 +91,7 @@ public static class BlueTuskFrontendMessageWriter
 
     internal static void WriteDiscardAll(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ReadOnlySpan<byte> message =
         [
             (byte)'Q', 0, 0, 0, 16,
@@ -104,9 +104,9 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteSaslInitialResponse(IBufferWriter<byte> output, string mechanism, string response)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(mechanism, nameof(mechanism));
-        ArgumentNullException.ThrowIfNull(response);
+        BlueTuskGuard.NotNull(response);
 
         var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
         var responseLength = Encoding.UTF8.GetByteCount(response);
@@ -120,7 +120,7 @@ public static class BlueTuskFrontendMessageWriter
         string mechanism,
         ReadOnlySpan<byte> response)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(mechanism, nameof(mechanism));
 
         var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
@@ -143,8 +143,8 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteSaslResponse(IBufferWriter<byte> output, string response)
     {
-        ArgumentNullException.ThrowIfNull(output);
-        ArgumentNullException.ThrowIfNull(response);
+        BlueTuskGuard.NotNull(output);
+        BlueTuskGuard.NotNull(response);
 
         var responseLength = Encoding.UTF8.GetByteCount(response);
         WriteByte(output, (byte)'p');
@@ -155,7 +155,7 @@ public static class BlueTuskFrontendMessageWriter
     /// <summary>Writes a SASL response from caller-owned sensitive bytes.</summary>
     public static void WriteSaslResponse(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
 
         WriteByte(output, (byte)'p');
         WriteInt32(output, checked(sizeof(int) + response.Length));
@@ -165,7 +165,7 @@ public static class BlueTuskFrontendMessageWriter
     /// <summary>Writes an opaque GSSAPI or SSPI negotiation token.</summary>
     public static void WriteGssResponse(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
 
         WriteByte(output, (byte)'p');
         WriteInt32(output, checked(sizeof(int) + response.Length));
@@ -181,7 +181,7 @@ public static class BlueTuskFrontendMessageWriter
     /// </remarks>
     public static void WritePasswordMessage(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         if (response.Contains((byte)0))
         {
             throw new ArgumentException("A PostgreSQL password response cannot contain an embedded null byte.", nameof(response));
@@ -195,7 +195,7 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteTerminate(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         WriteByte(output, (byte)'X');
         WriteInt32(output, sizeof(int));
     }
@@ -206,7 +206,7 @@ public static class BlueTuskFrontendMessageWriter
         string sql,
         IReadOnlyList<uint> parameterTypeOids)
     {
-        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+        BlueTuskGuard.NotNull(parameterTypeOids);
         WriteParse(
             output,
             statementName,
@@ -221,10 +221,10 @@ public static class BlueTuskFrontendMessageWriter
         TTypeOids parameterTypeOids)
         where TTypeOids : struct, IBlueTuskTypeOidSource
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(statementName, nameof(statementName));
         ValidateCString(sql, nameof(sql));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameterTypeOids.Count, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(parameterTypeOids.Count, short.MaxValue);
 
         var statementLength = Encoding.UTF8.GetByteCount(statementName);
         var sqlLength = Encoding.UTF8.GetByteCount(sql);
@@ -270,7 +270,7 @@ public static class BlueTuskFrontendMessageWriter
         IReadOnlyList<BlueTuskBindParameter> parameters,
         IReadOnlyList<short>? resultFormatCodes = null)
     {
-        ArgumentNullException.ThrowIfNull(parameters);
+        BlueTuskGuard.NotNull(parameters);
         WriteBind(
             output,
             portalName,
@@ -287,12 +287,12 @@ public static class BlueTuskFrontendMessageWriter
         IReadOnlyList<short>? resultFormatCodes = null)
         where TParameters : struct, IBlueTuskBindParameterSource
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(portalName, nameof(portalName));
         ValidateCString(statementName, nameof(statementName));
         resultFormatCodes ??= Array.Empty<short>();
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(resultFormatCodes.Count, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(parameters.Count, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(resultFormatCodes.Count, short.MaxValue);
 
         var portalLength = Encoding.UTF8.GetByteCount(portalName);
         var statementLength = Encoding.UTF8.GetByteCount(statementName);
@@ -373,10 +373,10 @@ public static class BlueTuskFrontendMessageWriter
         where TTypeOids : struct, IBlueTuskTypeOidSource
         where TParameters : struct, IBlueTuskBindParameterSource
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(sql, nameof(sql));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameterTypeOids.Count, short.MaxValue);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(parameterTypeOids.Count, short.MaxValue);
+        BlueTuskGuard.NotGreaterThan(parameters.Count, short.MaxValue);
         if (resultFormatCode is not (0 or 1))
         {
             throw new ArgumentOutOfRangeException(
@@ -524,7 +524,7 @@ public static class BlueTuskFrontendMessageWriter
         string name,
         string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(name, parameterName);
         var nameLength = Encoding.UTF8.GetByteCount(name);
         var length = checked(sizeof(int) + 1 + nameLength + 1);
@@ -544,7 +544,7 @@ public static class BlueTuskFrontendMessageWriter
         string name,
         string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(name, parameterName);
         var nameLength = Encoding.UTF8.GetByteCount(name);
         var length = checked(sizeof(int) + 1 + nameLength + 1);
@@ -560,9 +560,9 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteExecute(IBufferWriter<byte> output, string portalName, int maximumRows = 0)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(portalName, nameof(portalName));
-        ArgumentOutOfRangeException.ThrowIfNegative(maximumRows);
+        BlueTuskGuard.NotNegative(maximumRows);
         var portalLength = Encoding.UTF8.GetByteCount(portalName);
         var length = checked(sizeof(int) + portalLength + 1 + sizeof(int));
         var messageLength = checked(1 + length);
@@ -578,7 +578,7 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteSync(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         var destination = output.GetSpan(5);
         destination[0] = (byte)'S';
         BinaryPrimitives.WriteInt32BigEndian(destination[1..], sizeof(int));
@@ -587,7 +587,7 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteFlush(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         var destination = output.GetSpan(5);
         destination[0] = (byte)'H';
         BinaryPrimitives.WriteInt32BigEndian(destination[1..], sizeof(int));
@@ -598,7 +598,7 @@ public static class BlueTuskFrontendMessageWriter
         IBufferWriter<byte> output,
         ReadOnlySpan<byte> data)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         WriteByte(output, (byte)'d');
         WriteInt32(output, checked(sizeof(int) + data.Length));
         WriteBytes(output, data);
@@ -606,7 +606,7 @@ public static class BlueTuskFrontendMessageWriter
 
     public static void WriteCopyDone(IBufferWriter<byte> output)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         WriteByte(output, (byte)'c');
         WriteInt32(output, sizeof(int));
     }
@@ -615,7 +615,7 @@ public static class BlueTuskFrontendMessageWriter
         IBufferWriter<byte> output,
         string message)
     {
-        ArgumentNullException.ThrowIfNull(output);
+        BlueTuskGuard.NotNull(output);
         ValidateCString(message, nameof(message));
         var messageLength = Encoding.UTF8.GetByteCount(message);
         WriteByte(output, (byte)'f');
@@ -666,7 +666,7 @@ public static class BlueTuskFrontendMessageWriter
 
     private static void ValidateCString(string value, string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(value, parameterName);
+        BlueTuskGuard.NotNull(value, parameterName);
         if (value.Contains('\0', StringComparison.Ordinal))
         {
             throw new ArgumentException("PostgreSQL C strings cannot contain a null character.", parameterName);

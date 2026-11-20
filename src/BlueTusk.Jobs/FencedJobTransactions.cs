@@ -14,7 +14,7 @@ public sealed partial class PostgreSqlJobStore
         CancellationToken cancellationToken = default)
     {
         ValidateLease(lease);
-        ArgumentNullException.ThrowIfNull(action);
+        BlueTuskGuard.NotNull(action);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using (var command = CreateCommand(connection, transaction, $"""

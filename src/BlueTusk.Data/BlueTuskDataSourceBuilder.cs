@@ -29,7 +29,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
 
     public BlueTuskDataSourceBuilder UsePlugin(IBlueTuskPlugin plugin)
     {
-        ArgumentNullException.ThrowIfNull(plugin);
+        BlueTuskGuard.NotNull(plugin);
         plugin.Configure(this);
         return this;
     }
@@ -63,7 +63,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Uses a synchronous password callback for each new physical connection.</summary>
     public BlueTuskDataSourceBuilder UsePasswordProvider(BlueTuskPasswordProvider provider)
     {
-        ArgumentNullException.ThrowIfNull(provider);
+        BlueTuskGuard.NotNull(provider);
         _clientConfiguration = _clientConfiguration with { PasswordProvider = provider };
         return this;
     }
@@ -71,7 +71,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Uses an asynchronous password callback for each new physical connection.</summary>
     public BlueTuskDataSourceBuilder UsePasswordProvider(BlueTuskPasswordProviderAsync provider)
     {
-        ArgumentNullException.ThrowIfNull(provider);
+        BlueTuskGuard.NotNull(provider);
         _clientConfiguration = _clientConfiguration with { PasswordProviderAsync = provider };
         return this;
     }
@@ -79,7 +79,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Uses a synchronous access-token callback for each new physical connection.</summary>
     public BlueTuskDataSourceBuilder UseAccessTokenProvider(BlueTuskAccessTokenProvider provider)
     {
-        ArgumentNullException.ThrowIfNull(provider);
+        BlueTuskGuard.NotNull(provider);
         _clientConfiguration = _clientConfiguration with { AccessTokenProvider = provider };
         return this;
     }
@@ -87,7 +87,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Uses an asynchronous access-token callback for each new physical connection.</summary>
     public BlueTuskDataSourceBuilder UseAccessTokenProvider(BlueTuskAccessTokenProviderAsync provider)
     {
-        ArgumentNullException.ThrowIfNull(provider);
+        BlueTuskGuard.NotNull(provider);
         _clientConfiguration = _clientConfiguration with { AccessTokenProviderAsync = provider };
         return this;
     }
@@ -104,7 +104,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Configures tracing, metrics, and redacted slow-command diagnostics.</summary>
     public BlueTuskDataSourceBuilder ConfigureDiagnostics(BlueTuskDiagnosticsOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _clientConfiguration = _clientConfiguration with { Diagnostics = options with { } };
         return this;
@@ -129,7 +129,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// </summary>
     public BlueTuskDataSourceBuilder UseGssCredential(NetworkCredential credential)
     {
-        ArgumentNullException.ThrowIfNull(credential);
+        BlueTuskGuard.NotNull(credential);
         _clientConfiguration = _clientConfiguration with { GssCredential = credential };
         return this;
     }
@@ -137,7 +137,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     /// <summary>Adds a caller-owned TLS client certificate offered to PostgreSQL.</summary>
     public BlueTuskDataSourceBuilder UseClientCertificate(X509Certificate2 certificate)
     {
-        ArgumentNullException.ThrowIfNull(certificate);
+        BlueTuskGuard.NotNull(certificate);
         _clientConfiguration = _clientConfiguration with
         {
             ClientCertificates = [.. _clientConfiguration.ClientCertificates, certificate],
@@ -149,7 +149,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     public BlueTuskDataSourceBuilder UseClientCertificateSelectionCallback(
         LocalCertificateSelectionCallback callback)
     {
-        ArgumentNullException.ThrowIfNull(callback);
+        BlueTuskGuard.NotNull(callback);
         _clientConfiguration = _clientConfiguration with { LocalCertificateSelectionCallback = callback };
         return this;
     }
@@ -158,7 +158,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     public BlueTuskDataSourceBuilder UseRemoteCertificateValidationCallback(
         RemoteCertificateValidationCallback callback)
     {
-        ArgumentNullException.ThrowIfNull(callback);
+        BlueTuskGuard.NotNull(callback);
         _clientConfiguration = _clientConfiguration with { RemoteCertificateValidationCallback = callback };
         return this;
     }

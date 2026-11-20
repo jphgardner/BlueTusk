@@ -21,7 +21,7 @@ public sealed class BlueTuskSparseVector :
         int dimensions,
         params BlueTuskSparseVectorElement[] elements)
     {
-        ArgumentNullException.ThrowIfNull(elements);
+        BlueTuskGuard.NotNull(elements);
         ValidateDimensions(dimensions);
         if (elements.Length > MaxNonZeroElements || elements.Length > dimensions)
         {
@@ -65,7 +65,7 @@ public sealed class BlueTuskSparseVector :
 
     public static BlueTuskSparseVector Parse(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        BlueTuskGuard.NotNull(value);
         var text = value.AsSpan().Trim();
         var close = text.IndexOf('}');
         if (text.Length < 4 || text[0] != '{' || close < 1 || close + 1 >= text.Length || text[close + 1] != '/')

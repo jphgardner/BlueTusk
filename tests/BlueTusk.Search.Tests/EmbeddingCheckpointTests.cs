@@ -322,7 +322,7 @@ public sealed class EmbeddingCheckpointTests
                 await provider.InitializeAsync(); await search.InitializeAsync();
                 var scope = new SearchScope("tenant", "index");
                 var ranked = await search.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Vector, Text = "cat cached" });
-                Assert.Equal(["first", "second"], (await search.ReadPageAsync(scope, ranked)).Hits.Select(static hit => hit.DocumentId).Order(StringComparer.Ordinal));
+                Assert.Equal(["first", "second"], (await search.ReadPageAsync(scope, ranked)).Hits.Select(static hit => hit.DocumentId).OrderBy(static value => value, StringComparer.Ordinal));
                 Assert.Equal(2, embeddings.Calls);
                 var otherScope = new SearchScope("tenant", "other");
                 var empty = await search.SearchAsync(otherScope, new SearchRequest { Mode = SearchMode.Vector, Text = "cat cached" });

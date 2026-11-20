@@ -10,7 +10,7 @@ public sealed class LiveResumeTokenKey
 
     public LiveResumeTokenKey(string keyId, ReadOnlySpan<byte> secret, bool isPrimary = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(keyId);
+        BlueTuskGuard.NotNullOrWhiteSpace(keyId);
         if (Encoding.UTF8.GetByteCount(keyId) > byte.MaxValue)
         {
             throw new ArgumentException("A resume-token key ID cannot exceed 255 UTF-8 bytes.", nameof(keyId));
@@ -67,7 +67,7 @@ public sealed class LiveResumeTokenProtector
         IEnumerable<LiveResumeTokenKey> keys,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(keys);
+        BlueTuskGuard.NotNull(keys);
         var keyArray = keys.ToArray();
         if (keyArray.Length == 0 || keyArray.Select(key => key.KeyId).Distinct(StringComparer.Ordinal).Count() != keyArray.Length)
         {
@@ -90,9 +90,9 @@ public sealed class LiveResumeTokenProtector
         long sequence,
         TimeSpan lifetime)
     {
-        ArgumentNullException.ThrowIfNull(identity);
-        ArgumentOutOfRangeException.ThrowIfNegative(sequence);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lifetime, TimeSpan.Zero);
+        BlueTuskGuard.NotNull(identity);
+        BlueTuskGuard.NotNegative(sequence);
+        BlueTuskGuard.NotLessThanOrEqual(lifetime, TimeSpan.Zero);
         var keyId = Encoding.UTF8.GetBytes(_primary.KeyId);
         var identityBytes = Convert.FromHexString(identity.Fingerprint);
         var expiresAt = _timeProvider.GetUtcNow().Add(lifetime);
@@ -106,7 +106,7 @@ public sealed class LiveResumeTokenProtector
         BinaryPrimitives.WriteInt64BigEndian(payload.AsSpan(offset, sizeof(long)), sequence);
         offset += sizeof(long);
         BinaryPrimitives.WriteInt64BigEndian(payload.AsSpan(offset, sizeof(long)), expiresAt.UtcTicks);
-        var signature = HMACSHA256.HashData(_primary.Secret, payload);
+        var signature = BlueTuskRuntime.HmacSha256(_primary.Secret, payload);
         return $"bt1.{Base64UrlEncode(payload)}.{Base64UrlEncode(signature)}";
     }
 
@@ -114,8 +114,8 @@ public sealed class LiveResumeTokenProtector
         string token,
         LiveSubscriptionIdentity expectedIdentity)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(token);
-        ArgumentNullException.ThrowIfNull(expectedIdentity);
+        BlueTuskGuard.NotNullOrWhiteSpace(token);
+        BlueTuskGuard.NotNull(expectedIdentity);
         if (token.Length > MaximumTokenLength)
         {
             return new LiveResumeTokenValidationResult(LiveResumeTokenValidationStatus.Malformed, null);
@@ -149,7 +149,7 @@ public sealed class LiveResumeTokenProtector
             return new LiveResumeTokenValidationResult(LiveResumeTokenValidationStatus.UnknownKey, null);
         }
 
-        var expectedSignature = HMACSHA256.HashData(key.Secret, payload);
+        var expectedSignature = BlueTuskRuntime.HmacSha256(key.Secret, payload);
         if (!CryptographicOperations.FixedTimeEquals(expectedSignature, signature))
         {
             return new LiveResumeTokenValidationResult(LiveResumeTokenValidationStatus.InvalidSignature, null);
@@ -191,7 +191,7 @@ public sealed class LiveResumeTokenProtector
     {
         decoded = [];
         if (value.Length == 0 || value.Any(character =>
-                !(char.IsAsciiLetterOrDigit(character) || character is '-' or '_')))
+                !(BlueTuskRuntime.IsAsciiLetterOrDigit(character) || character is '-' or '_')))
         {
             return false;
         }

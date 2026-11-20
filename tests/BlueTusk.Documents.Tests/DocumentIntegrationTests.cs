@@ -16,7 +16,7 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Documents.Tests;
 
-public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture walDatabase) : IClassFixture<DocumentWalDatabaseFixture>
+public sealed class DocumentIntegrationTests(DocumentWalDatabaseFixture walDatabase) : IClassFixture<DocumentWalDatabaseFixture>
 {
     private static readonly ChangeSourceIdentity Source = new("system", "documents", "slot", "publication");
     private static readonly DocumentCollectionDefinition<IntegrationDocument> Collection = new("orders", IntegrationJsonContext.Default.IntegrationDocument);
@@ -134,7 +134,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
         Assert.Equal("snapshot", Assert.Single(mapped.Documents).Value!.Name);
     }
 
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Real_document_WAL_drives_typed_transactions_and_durable_Live_authoritative_diffs()
     {
         var schema = "documents_integrated_" + Guid.NewGuid().ToString("N");
@@ -222,7 +222,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
     // table is decoded with a historic snapshot that cannot see the table, and every retry
     // of that slot fails the same way. Only a slot in the same database is exposed, which is
     // why the WAL tests run in their own database.
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task Catalog_churn_committed_while_a_slot_builds_poisons_only_slots_in_the_same_database()
     {
         var suffix = Guid.NewGuid().ToString("N");
@@ -283,7 +283,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
                 // table was later altered, PostgreSQL finds the newer row but not its columns. If
                 // PostgreSQL ever decodes this slot, the upstream fix has shipped: revisit
                 // docs/streams/README.md.
-                Assert.Matches(PoisonedSlotError(), failure.Message);
+                Assert.Matches(PoisonedSlotErrorPattern, failure.Message);
             }
 
             var stream = new PgOutputChangeStream(isolatedReplication.StartReplicationAsync(isolatedSlot, isolatedPublication, cancellationToken: token).DecodePgOutputAsync(),
@@ -334,8 +334,7 @@ public sealed partial class DocumentIntegrationTests(DocumentWalDatabaseFixture 
         new(table, [Text(tenant), Text(collection), Text(id), Text(revision.ToString(System.Globalization.CultureInfo.InvariantCulture)), Text("1"), Text(json)]);
     private static ChangeColumnValue Text(string value) => ChangeColumnValue.FromValue(Encoding.UTF8.GetBytes(value), ChangeValueEncoding.Text);
 
-    [System.Text.RegularExpressions.GeneratedRegex("^(could not map file(node|number) \"[^\"]+\" to relation OID|pg_attribute catalog is missing [0-9]+ attribute\\(s\\) for relation OID [0-9]+)$")]
-    private static partial System.Text.RegularExpressions.Regex PoisonedSlotError();
+    private const string PoisonedSlotErrorPattern = "^(could not map file(node|number) \"[^\"]+\" to relation OID|pg_attribute catalog is missing [0-9]+ attribute\\(s\\) for relation OID [0-9]+)$";
 
     private static Task ExecuteAsync(BlueTuskDataSource source, string sql, CancellationToken cancellationToken) =>
         DocumentWalDatabaseFixture.ExecuteAsync(source, sql, cancellationToken);

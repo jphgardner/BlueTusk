@@ -39,7 +39,7 @@ public sealed class SearchStoreTests
         Assert.Throws<ArgumentException>(() => adapter.Encode([1, float.NaN, 0]));
     }
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Fulltext_search_enforces_tenant_index_permissions_and_public_access() => WithStoreAsync(async (store, unusedSource) =>
     {
         await store.UpsertAsync(Doc("public", 1, "cat animal", isPublic: true));
@@ -50,11 +50,11 @@ public sealed class SearchStoreTests
         var publicPage = await store.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" });
         Assert.Equal("public", Assert.Single(publicPage.Hits).DocumentId);
         var readers = await store.SearchAsync(new SearchScope("tenant", "library", ["readers"]), new SearchRequest { Text = "cat" });
-        Assert.Equal(["allowed", "public"], readers.Hits.Select(static x => x.DocumentId).Order(StringComparer.Ordinal));
+        Assert.Equal(["allowed", "public"], readers.Hits.Select(static x => x.DocumentId).OrderBy(static value => value, StringComparer.Ordinal));
         Assert.DoesNotContain(readers.Hits, static x => x.DocumentId is "private" or "other-index" or "other-tenant");
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Version_fences_handle_duplicates_conflicting_replays_and_deletion_resurrection() => WithStoreAsync(async (store, unusedSource) =>
     {
         var document = Doc("1", 2, "cat", true);
@@ -70,7 +70,7 @@ public sealed class SearchStoreTests
         Assert.Single((await store.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" })).Hits);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Competing_ingestion_versions_never_leave_chunks_at_an_older_fence() => WithStoreAsync(async (store, source) =>
     {
         await Task.WhenAll(Enumerable.Range(1, 8).Select(version => store.UpsertAsync(Doc("race", version, $"cat version {version}", true)).AsTask()));
@@ -82,7 +82,7 @@ public sealed class SearchStoreTests
         Assert.Equal(0L, await command.ExecuteScalarAsync());
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Stable_rank_snapshots_ignore_new_documents_and_recheck_revocations_and_scope() => WithStoreAsync(async (store, unusedSource) =>
     {
         for (var i = 0; i < 5; i++)
@@ -103,7 +103,7 @@ public sealed class SearchStoreTests
         Assert.Null(second.NextCursor);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Expired_query_cleanup_and_query_capacity_are_bounded() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -119,7 +119,7 @@ public sealed class SearchStoreTests
         Assert.True(first.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(-1));
     }, options: new SearchStoreOptions { MaxActiveQueriesPerScope = 1 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Chunk_replacement_removes_old_terms_and_metadata_is_stored_once_per_document() => WithStoreAsync(async (store, source) =>
     {
         using var metadata = JsonDocument.Parse("{\"source\":\"fixture\"}");
@@ -135,7 +135,7 @@ public sealed class SearchStoreTests
         Assert.Equal(1L, await command.ExecuteScalarAsync());
     }, options: new SearchStoreOptions { MaxChunkCharacters = 16, ChunkOverlapCharacters = 2 });
 
-    [Fact]
+    [SearchVectorFact]
     public Task Vector_and_hybrid_search_rank_scoped_candidates_and_create_optional_hnsw_index() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("cat", 1, "cat animal", true));
@@ -155,7 +155,7 @@ public sealed class SearchStoreTests
         Assert.Equal(vector.Hits.Select(static x => x.DocumentId), exactAfterIndex.Hits.Select(static x => x.DocumentId));
     }, useVectors: true);
 
-    [Fact]
+    [SearchVectorFact]
     public Task Embedding_failure_does_not_advance_version_or_replace_searchable_chunks() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -165,7 +165,7 @@ public sealed class SearchStoreTests
         Assert.Equal(1, Assert.Single(page.Hits).SourceVersion);
     }, useVectors: true);
 
-    [Fact]
+    [SearchVectorFact]
     public Task Concurrent_embedding_admission_rejects_overload_without_unbounded_waiters() => WithStoreAsync(async (store, source) =>
     {
         var blocking = new BlockingEmbeddings();
@@ -177,7 +177,7 @@ public sealed class SearchStoreTests
         Assert.Equal(SearchIngestionStatus.Applied, (await first).Status);
     }, useVectors: true);
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Chunk_failure_rolls_back_parent_fence_and_preserves_previous_search_results() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -195,7 +195,7 @@ public sealed class SearchStoreTests
         Assert.Empty((await store.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "dog" })).Hits);
     }, options: new SearchStoreOptions { MaxChunkCharacters = 16, ChunkOverlapCharacters = 2 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Ranking_extensions_reorder_only_authorized_candidates_and_cannot_inject_results() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("a", 1, "cat", true));
@@ -209,7 +209,7 @@ public sealed class SearchStoreTests
         _ = await Assert.ThrowsAsync<InvalidOperationException>(() => invalid.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" }).AsTask());
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Pending_ranking_does_not_hold_scope_admission_and_cannot_be_paged() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -242,7 +242,7 @@ public sealed class SearchStoreTests
         Assert.True(firstPage.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(1));
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Failed_ranking_and_candidate_insert_release_pending_capacity() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -281,7 +281,7 @@ public sealed class SearchStoreTests
         Assert.Equal("1", Assert.Single((await bounded.SearchAsync(scope, new SearchRequest { Text = "cat" })).Hits).DocumentId);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Expired_pending_ranking_cannot_publish_and_is_pruned() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -306,7 +306,7 @@ public sealed class SearchStoreTests
         Assert.Single((await store.SearchAsync(new SearchScope("tenant", "library"), new SearchRequest { Text = "cat" })).Hits);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Revocation_during_ranking_is_rechecked_before_delivery() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", principals: ["readers"]));
@@ -327,7 +327,7 @@ public sealed class SearchStoreTests
         Assert.Empty((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Ranking_admission_rejects_overload_without_adding_pending_rows() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -352,7 +352,7 @@ public sealed class SearchStoreTests
         Assert.Single((await first.WaitAsync(TimeSpan.FromSeconds(10))).Hits);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Cancelled_ranking_releases_its_reservation_and_local_slot() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -372,7 +372,7 @@ public sealed class SearchStoreTests
         Assert.Single((await ranked.SearchAsync(scope, new SearchRequest { Text = "cat" })).Hits);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Version_one_rank_snapshots_upgrade_as_ready_without_losing_cursor() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -391,7 +391,7 @@ public sealed class SearchStoreTests
         Assert.Equal(1L, await command.ExecuteScalarAsync());
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Version_two_rank_snapshots_upgrade_with_accounted_rows_and_existing_cursor() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("1", 1, "cat", true));
@@ -414,7 +414,7 @@ public sealed class SearchStoreTests
         Assert.True(reader.GetInt64(2) >= 80);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Deployment_wide_rank_budget_spans_tenants_and_store_instances_and_releases_expiry() => WithStoreAsync(async (store, source) =>
     {
         var options = store.Options;
@@ -450,7 +450,7 @@ public sealed class SearchStoreTests
         Assert.Equal(1104L, after.GetInt64(2));
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 2, MaxRetainedRankRows = 3, MaxRetainedRankBytes = 1656 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Rank_row_budget_rejects_across_scopes_and_failure_rolls_back_reservation() => WithStoreAsync(async (store, source) =>
     {
         await store.UpsertAsync(Doc("one", 1, "cat", true));
@@ -471,7 +471,7 @@ public sealed class SearchStoreTests
         Assert.Equal(552L, reader.GetInt64(2));
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 1, MaxRetainedRankBytes = 1104 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Rank_byte_budget_rejects_second_scope_even_with_row_headroom() => WithStoreAsync(async (store, unusedSource) =>
     {
         var request = new SearchRequest { Text = "cat", CandidateLimit = 1, PageSize = 1 };
@@ -479,7 +479,7 @@ public sealed class SearchStoreTests
         _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => store.SearchAsync(new SearchScope("second", "library"), request).AsTask());
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 2, MaxRetainedRankBytes = 552 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Concurrent_tenants_cannot_overbook_shared_rank_budget() => WithStoreAsync(async (store, source) =>
     {
         await using var other = new PostgreSqlSearchStore(source, store.Options);
@@ -508,7 +508,7 @@ public sealed class SearchStoreTests
         Assert.Equal(retained, reader.GetInt64(3));
     }, options: new SearchStoreOptions { MaxCandidateCount = 1, MaxPageSize = 1, MaxRetainedQueries = 4, MaxRetainedRankRows = 4, MaxRetainedRankBytes = 2208 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Short_global_budget_contention_waits_without_shedding_a_query() => WithStoreAsync(async (store, source) =>
     {
         await using var connection = await source.OpenConnectionAsync();
@@ -532,7 +532,7 @@ public sealed class SearchStoreTests
         await arrival;
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Background_prune_waits_for_a_longer_bounded_budget_contention() => WithStoreAsync(async (store, source) =>
     {
         await using var connection = await source.OpenConnectionAsync();
@@ -552,7 +552,7 @@ public sealed class SearchStoreTests
         Assert.Equal(0, await prune);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Page_and_ranking_byte_budgets_stop_payloads_before_they_leave_postgresql() => WithStoreAsync(async (store, source) =>
     {
         for (var i = 0; i < 3; i++)
@@ -572,7 +572,7 @@ public sealed class SearchStoreTests
         _ = await Assert.ThrowsAsync<SearchBackpressureException>(() => boundedRank.SearchAsync(scope, new SearchRequest { Text = "cat" }).AsTask());
     }, options: new SearchStoreOptions { MaxPageBytes = 65 });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Bounded_concurrent_workload_indexes_512_documents_and_pages_all_ranked_results() => WithStoreAsync(async (store, unusedSource) =>
     {
         const int workers = 8;
@@ -605,7 +605,7 @@ public sealed class SearchStoreTests
         Assert.Equal(workers * documentsPerWorker, found.Count);
     });
 
-    [Fact]
+    [PostgreSqlFact]
     public Task Storage_contract_changes_and_canceled_ingestion_are_rejected() => WithStoreAsync(async (store, source) =>
     {
         await using var mismatch = new PostgreSqlSearchStore(source, store.Options with { ChunkOverlapCharacters = 1 });

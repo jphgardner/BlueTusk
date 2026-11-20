@@ -22,9 +22,9 @@ public sealed record FileChangeStreamStateStoreOptions
 
     internal void Validate()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(DirectoryPath);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(LockTimeout, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(LockRetryDelay, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(DirectoryPath);
+        BlueTuskGuard.NotLessThanOrEqual(LockTimeout, TimeSpan.Zero);
+        BlueTuskGuard.NotLessThanOrEqual(LockRetryDelay, TimeSpan.Zero);
         if (LockRetryDelay > LockTimeout)
         {
             throw new ArgumentException(
@@ -49,7 +49,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
         FileChangeStreamStateStoreOptions options,
         TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        BlueTuskGuard.NotNull(options);
         options.Validate();
         _options = options;
         _timeProvider = timeProvider ?? TimeProvider.System;
@@ -72,8 +72,8 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(replacement);
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(replacement);
+        BlueTuskGuard.NotNull(lease);
         await using var stateLock = await AcquireLockAsync(key, cancellationToken).ConfigureAwait(false);
         var statePath = GetStatePath(key);
         var document = await ReadDocumentAsync(statePath, cancellationToken).ConfigureAwait(false);
@@ -162,7 +162,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         ValidateLeaseArguments(lease.OwnerId, duration);
         await using var stateLock = await AcquireLockAsync(lease.Key, cancellationToken).ConfigureAwait(false);
         var statePath = GetStatePath(lease.Key);
@@ -183,7 +183,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
         ChangeStreamLease lease,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(lease);
+        BlueTuskGuard.NotNull(lease);
         await using var stateLock = await AcquireLockAsync(lease.Key, cancellationToken).ConfigureAwait(false);
         var statePath = GetStatePath(lease.Key);
         var document = await ReadDocumentAsync(statePath, cancellationToken).ConfigureAwait(false);
@@ -323,7 +323,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
     private string GetStatePath(ChangeStreamStateKey key)
     {
         var identity = Encoding.UTF8.GetBytes(key.SourceFingerprint + "\n" + key.ConsumerGroup);
-        var fileName = Convert.ToHexStringLower(SHA256.HashData(identity)) + ".state";
+        var fileName = BlueTuskRuntime.ToHexStringLower(SHA256.HashData(identity)) + ".state";
         return Path.Combine(Path.GetFullPath(_options.DirectoryPath), fileName);
     }
 
@@ -344,8 +344,8 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
 
     private static void ValidateLeaseArguments(string ownerId, TimeSpan duration)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
+        BlueTuskGuard.NotNullOrWhiteSpace(ownerId);
+        BlueTuskGuard.NotLessThanOrEqual(duration, TimeSpan.Zero);
     }
 
     private sealed class StateDocument

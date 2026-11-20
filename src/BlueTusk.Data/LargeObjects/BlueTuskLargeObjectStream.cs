@@ -25,9 +25,9 @@ public sealed class BlueTuskLargeObjectStream : Stream
         long position,
         IBlueTuskLargeObjectOperations operations)
     {
-        ArgumentNullException.ThrowIfNull(operations);
-        ArgumentOutOfRangeException.ThrowIfLessThan(length, -1);
-        ArgumentOutOfRangeException.ThrowIfNegative(position);
+        BlueTuskGuard.NotNull(operations);
+        BlueTuskGuard.NotLessThan(length, -1);
+        BlueTuskGuard.NotNegative(position);
 
         ObjectId = objectId;
         _access = access;
@@ -105,7 +105,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        ValidateBufferArguments(buffer, offset, count);
+        BlueTuskRuntime.ValidateBufferArguments(buffer, offset, count);
         ThrowIfDisposed();
         if (!CanRead)
         {
@@ -226,7 +226,9 @@ public sealed class BlueTuskLargeObjectStream : Stream
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitLegacyReadAsync(
         ValueTask<byte[]> pendingRead,
         Memory<byte> destination,
@@ -244,7 +246,9 @@ public sealed class BlueTuskLargeObjectStream : Stream
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitDirectReadAsync(ValueTask<int> pendingRead, int requested)
     {
         try
@@ -260,7 +264,9 @@ public sealed class BlueTuskLargeObjectStream : Stream
         }
     }
 
+#if NET6_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> AwaitReadAheadAsync(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -280,7 +286,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        ValidateBufferArguments(buffer, offset, count);
+        BlueTuskRuntime.ValidateBufferArguments(buffer, offset, count);
         ThrowIfDisposed();
         if (!CanWrite)
         {
@@ -445,7 +451,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
             throw new NotSupportedException("The large object was not opened for writing.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegative(value);
+        BlueTuskGuard.NotNegative(value);
         try
         {
             SynchronizeReadAhead();
@@ -470,7 +476,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
             throw new NotSupportedException("The large object was not opened for writing.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfNegative(value);
+        BlueTuskGuard.NotNegative(value);
         try
         {
             await SynchronizeReadAheadAsync(cancellationToken).ConfigureAwait(false);
@@ -675,5 +681,5 @@ public sealed class BlueTuskLargeObjectStream : Stream
         InvalidateReadAhead();
     }
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsDisposed, this);
+    private void ThrowIfDisposed() => BlueTuskGuard.NotDisposed(IsDisposed, this);
 }

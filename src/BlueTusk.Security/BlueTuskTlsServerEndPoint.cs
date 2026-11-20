@@ -8,7 +8,7 @@ public static class BlueTuskTlsServerEndPoint
 {
     public static byte[] Create(X509Certificate2 certificate)
     {
-        ArgumentNullException.ThrowIfNull(certificate);
+        BlueTuskGuard.NotNull(certificate);
         var algorithm = certificate.SignatureAlgorithm.Value switch
         {
             "1.2.840.113549.1.1.12" or "1.2.840.10045.4.3.3" => HashAlgorithmName.SHA384,

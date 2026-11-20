@@ -1,4 +1,7 @@
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)eng\Compatibility.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)eng\LegacyPublicApi.targets" />
+
   <Target Name="ValidateBlueTuskProductFamily" BeforeTargets="PrepareForBuild">
     <Error Condition="!Exists('$(MSBuildThisFileDirectory)eng\versions\$(BlueTuskProductFamily).props')"
            Text="Unknown BlueTusk product family '$(BlueTuskProductFamily)'. Add eng/versions/$(BlueTuskProductFamily).props before building this project." />

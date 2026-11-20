@@ -12,8 +12,8 @@ public static class BlueTuskTimescaleDbMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
         return migrationBuilder.Sql(
             $"CREATE EXTENSION IF NOT EXISTS {BlueTuskSqlIdentifier.Delimit("timescaledb")} " +
             $"WITH SCHEMA {BlueTuskSqlIdentifier.Delimit(schema)}");
@@ -24,7 +24,7 @@ public static class BlueTuskTimescaleDbMigrationBuilderExtensions
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        BlueTuskGuard.NotNull(migrationBuilder);
         return migrationBuilder.Sql(
             $"DROP EXTENSION IF EXISTS {BlueTuskSqlIdentifier.Delimit("timescaledb")}" +
             (cascade ? " CASCADE" : string.Empty));
@@ -39,11 +39,11 @@ public static class BlueTuskTimescaleDbMigrationBuilderExtensions
         string extensionSchema = "public",
         bool migrateData = false)
     {
-        ArgumentNullException.ThrowIfNull(migrationBuilder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        ArgumentException.ThrowIfNullOrWhiteSpace(timeColumn);
-        ArgumentException.ThrowIfNullOrWhiteSpace(schema);
-        ArgumentException.ThrowIfNullOrWhiteSpace(extensionSchema);
+        BlueTuskGuard.NotNull(migrationBuilder);
+        BlueTuskGuard.NotNullOrWhiteSpace(table);
+        BlueTuskGuard.NotNullOrWhiteSpace(timeColumn);
+        BlueTuskGuard.NotNullOrWhiteSpace(schema);
+        BlueTuskGuard.NotNullOrWhiteSpace(extensionSchema);
 
         var relation = QuoteLiteral(BlueTuskSqlIdentifier.Delimit(table, schema));
         var column = QuoteLiteral(timeColumn);

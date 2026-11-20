@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][ValidateSet('chromium','firefox','webkit','msedge')][string]$Browser,
     [Parameter(Mandatory)][string]$EvidenceDirectory,
     [ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ReviewHeadCommit,
+    [ValidatePattern('^10\.0\.\d+$')][string]$DotnetSdkVersion = '10.0.404',
     [switch]$StorageOnly
 )
 
@@ -35,6 +36,14 @@ try {
     $source = Get-Content -LiteralPath (Join-Path $evidence 'source-before.json') -Raw | ConvertFrom-Json
     Require ($source.commit -ceq $head -and $source.dirty -eq $false) 'Source capture is not clean or exact.'
     $platform = if ($IsLinux) { 'linux' } elseif ($IsWindows) { 'win32' } else { throw 'Only Linux and Windows are supported.' }
+    # Invoke the legacy SDK directly while the repository selects .NET 11 for other builds.
+    $dotnetHost = (Get-Command dotnet -CommandType Application | Select-Object -First 1).Source
+    $sdkPattern = '^' + [regex]::Escape($DotnetSdkVersion) + ' \[(.+)\]$'
+    $sdks = @(& $dotnetHost --list-sdks | Select-String -CaseSensitive -Pattern $sdkPattern)
+    Require ($LASTEXITCODE -eq 0 -and $sdks.Count -eq 1) "The Edge lane requires the installed .NET SDK $DotnetSdkVersion."
+    $dotnetCli = Join-Path $sdks[0].Matches[0].Groups[1].Value "$DotnetSdkVersion/dotnet.dll"
+    $selectedSdk = (& $dotnetHost exec $dotnetCli --version).Trim()
+    Require ($LASTEXITCODE -eq 0 -and $selectedSdk -ceq $DotnetSdkVersion) 'Could not invoke the selected Edge SDK.'
     $runtime = [ordered]@{
         CandidateSha = $head
         SourceTreeSha256 = $source.sourceTreeSha256
@@ -43,7 +52,7 @@ try {
         Scope = $(if ($StorageOnly) { 'storage-only' } else { 'storage-and-http' })
         ReviewHeadSha = $ReviewHeadCommit
         NodeVersion = (& node --version).Trim()
-        DotnetVersion = (& dotnet --version).Trim()
+        DotnetVersion = $selectedSdk
         PlaywrightVersion = (& node -p "require('./node_modules/playwright/package.json').version").Trim()
         LockfileSha256 = Hash 'package-lock.json'
         ProductionQualified = $false
@@ -57,7 +66,8 @@ try {
     & npm run test --workspace '@bluetusk/edge' 2>&1 | Tee-Object -FilePath (Join-Path $evidence 'browser-unit.log')
     Require ($LASTEXITCODE -eq 0) 'The Edge browser contract tests failed.'
     if (-not $StorageOnly) {
-        & dotnet build tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj -c Release -nr:false 2>&1 |
+        & $dotnetHost exec $dotnetCli build tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj `
+            --framework net10.0 -p:BlueTuskRuntimeTargetFrameworks=net10.0 -c Release -nr:false 2>&1 |
             Tee-Object -FilePath (Join-Path $evidence 'host-build.log')
         Require ($LASTEXITCODE -eq 0) 'The Edge HTTP smoke host did not build.'
     }
@@ -84,7 +94,8 @@ try {
     Require ($LASTEXITCODE -eq 0) 'Real browser durable-storage recovery failed.'
     if (-not $StorageOnly) {
         $env:BLUETUSK_EDGE_HTTP_BROWSER_RESULT = Join-Path $evidence 'http.json'
-        & dotnet run --project tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj -c Release --no-build 2>&1 |
+        & $dotnetHost exec $dotnetCli run --project tests/BlueTusk.Edge.BrowserHttpSmoke/BlueTusk.Edge.BrowserHttpSmoke.csproj `
+            --framework net10.0 -p:BlueTuskRuntimeTargetFrameworks=net10.0 -c Release --no-build 2>&1 |
             Tee-Object -FilePath (Join-Path $evidence 'http.log')
         Require ($LASTEXITCODE -eq 0) 'Real browser/PostgreSQL HTTP recovery failed.'
     }

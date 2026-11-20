@@ -130,7 +130,10 @@ public sealed class SqlQueryGenerator : IIncrementalGenerator
         }
 
         source.Append("        },\n        static (command, arguments) =>\n        {\n");
-        source.Append("            global::System.ArgumentNullException.ThrowIfNull(arguments);\n");
+        source.Append("            if (arguments is null)\n")
+            .Append("            {\n")
+            .Append("                throw new global::System.ArgumentNullException(nameof(arguments));\n")
+            .Append("            }\n");
         foreach (var parameter in query.Parameters)
         {
             if (!parameter.Nullable && (parameter.Type.ClrName == "string" || parameter.Type.ClrName.EndsWith("]", StringComparison.Ordinal)))

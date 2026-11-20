@@ -9,6 +9,12 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using NetTopologySuite.Geometries;
 
+#if BLUETUSK_EF9_OR_GREATER
+using SpatialFunctionExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlExpression;
+#else
+using SpatialFunctionExpression = Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlFunctionExpression;
+#endif
+
 namespace BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Query.Internal;
 
 internal sealed class BlueTuskPostGisMethodCallTranslatorPlugin : IMethodCallTranslatorPlugin
@@ -158,7 +164,7 @@ internal sealed class BlueTuskPostGisMethodCallTranslator(
         };
     }
 
-    private SqlExpression TranslateSpatialFunction(
+    private SpatialFunctionExpression TranslateSpatialFunction(
         string functionName,
         SqlExpression instance,
         IReadOnlyList<SqlExpression> arguments,
@@ -170,7 +176,7 @@ internal sealed class BlueTuskPostGisMethodCallTranslator(
             resultType,
             geometryOnly);
 
-    private SqlExpression TranslateStandaloneFunction(
+    private SpatialFunctionExpression TranslateStandaloneFunction(
         string functionName,
         IReadOnlyList<SqlExpression> arguments,
         Type resultType,

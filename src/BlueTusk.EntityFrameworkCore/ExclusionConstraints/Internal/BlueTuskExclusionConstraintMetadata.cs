@@ -16,14 +16,14 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static IReadOnlyList<BlueTuskExclusionConstraintDefinition> Get(IReadOnlyAnnotatable annotatable)
     {
-        ArgumentNullException.ThrowIfNull(annotatable);
+        BlueTuskGuard.NotNull(annotatable);
         var json = annotatable.FindAnnotation(AnnotationName)?.Value as string;
         return string.IsNullOrWhiteSpace(json) ? [] : Deserialize(json);
     }
 
     public static string Serialize(IEnumerable<BlueTuskExclusionConstraintDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         var normalized = Normalize(definitions);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -31,7 +31,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static string Serialize(BlueTuskExclusionConstraintDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        BlueTuskGuard.NotNull(definition);
         var normalized = Normalize(definition);
         Validate(normalized);
         return JsonSerializer.Serialize(normalized, SerializerOptions);
@@ -39,7 +39,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static string Serialize(IEnumerable<BlueTuskExclusionConstraintTableDefinition> tables)
     {
-        ArgumentNullException.ThrowIfNull(tables);
+        BlueTuskGuard.NotNull(tables);
         return JsonSerializer.Serialize(
             tables.OrderBy(table => table.Schema, StringComparer.Ordinal)
                 .ThenBy(table => table.Name, StringComparer.Ordinal)
@@ -49,7 +49,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static IReadOnlyList<BlueTuskExclusionConstraintDefinition> Deserialize(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definitions = JsonSerializer.Deserialize<BlueTuskExclusionConstraintDefinition[]>(json, SerializerOptions)
             ?? throw new ArgumentException("The exclusion-constraint definition set is empty.", nameof(json));
         var normalized = Normalize(definitions);
@@ -59,7 +59,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static BlueTuskExclusionConstraintDefinition DeserializeDefinition(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        BlueTuskGuard.NotNullOrWhiteSpace(json);
         var definition = JsonSerializer.Deserialize<BlueTuskExclusionConstraintDefinition>(json, SerializerOptions)
             ?? throw new ArgumentException("The exclusion-constraint definition is empty.", nameof(json));
         var normalized = Normalize(definition);
@@ -119,7 +119,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static void Validate(IReadOnlyList<BlueTuskExclusionConstraintDefinition> definitions)
     {
-        ArgumentNullException.ThrowIfNull(definitions);
+        BlueTuskGuard.NotNull(definitions);
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var definition in definitions)
         {
@@ -135,12 +135,12 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     public static void Validate(BlueTuskExclusionConstraintDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.Name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(definition.IndexMethod);
-        ArgumentNullException.ThrowIfNull(definition.Elements);
-        ArgumentNullException.ThrowIfNull(definition.IncludedColumns);
-        ArgumentNullException.ThrowIfNull(definition.StorageParameters);
+        BlueTuskGuard.NotNull(definition);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.Name);
+        BlueTuskGuard.NotNullOrWhiteSpace(definition.IndexMethod);
+        BlueTuskGuard.NotNull(definition.Elements);
+        BlueTuskGuard.NotNull(definition.IncludedColumns);
+        BlueTuskGuard.NotNull(definition.StorageParameters);
         if (definition.Elements.Count == 0)
         {
             throw new ArgumentException("An exclusion constraint requires at least one element.", nameof(definition));
@@ -166,9 +166,9 @@ internal static partial class BlueTuskExclusionConstraintMetadata
 
     private static void Validate(BlueTuskExclusionElementDefinition element)
     {
-        ArgumentNullException.ThrowIfNull(element);
-        ArgumentException.ThrowIfNullOrWhiteSpace(element.Expression);
-        ArgumentException.ThrowIfNullOrWhiteSpace(element.Operator);
+        BlueTuskGuard.NotNull(element);
+        BlueTuskGuard.NotNullOrWhiteSpace(element.Expression);
+        BlueTuskGuard.NotNullOrWhiteSpace(element.Operator);
         if (!OperatorPattern().IsMatch(element.Operator) ||
             element.Operator.Contains("--", StringComparison.Ordinal) ||
             element.Operator.Contains("/*", StringComparison.Ordinal))
@@ -181,7 +181,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
         ValidateOptionalIdentifier(element.OperatorSchema, nameof(element.OperatorSchema));
         ValidateIdentifierPair(element.Collation, element.CollationSchema, nameof(element.Collation));
         ValidateIdentifierPair(element.OperatorClass, element.OperatorClassSchema, nameof(element.OperatorClass));
-        ArgumentNullException.ThrowIfNull(element.OperatorClassParameters);
+        BlueTuskGuard.NotNull(element.OperatorClassParameters);
         ValidateParameters(element.OperatorClassParameters, nameof(element.OperatorClassParameters));
         if (!Enum.IsDefined(element.NullSortOrder))
         {
@@ -259,7 +259,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var parameter in parameters)
         {
-            ArgumentNullException.ThrowIfNull(parameter);
+            BlueTuskGuard.NotNull(parameter);
             if (!ParameterNamePattern().IsMatch(parameter.Name))
             {
                 throw new ArgumentException(
@@ -289,7 +289,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var value in values)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            BlueTuskGuard.NotNullOrWhiteSpace(value);
             if (!names.Add(value))
             {
                 throw new ArgumentException($"{description} must be unique.", parameterName);
@@ -312,7 +312,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 
@@ -320,7 +320,7 @@ internal static partial class BlueTuskExclusionConstraintMetadata
     {
         if (value is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+            BlueTuskGuard.NotNullOrWhiteSpace(value, parameterName);
         }
     }
 
@@ -331,12 +331,27 @@ internal static partial class BlueTuskExclusionConstraintMetadata
         return options;
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[+\\-*/<>=~!@#%^&|`?]+$", RegexOptions.CultureInvariant)]
     private static partial Regex OperatorPattern();
+#else
+    private static readonly Regex _operatorPattern = new("^[+\\-*/<>=~!@#%^&|`?]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex OperatorPattern() => _operatorPattern;
+#endif
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant)]
     private static partial Regex ParameterNamePattern();
+#else
+    private static readonly Regex _parameterNamePattern = new("^[a-z_][a-z0-9_]*$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex ParameterNamePattern() => _parameterNamePattern;
+#endif
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant)]
     private static partial Regex ParameterValuePattern();
+#else
+    private static readonly Regex _parameterValuePattern = new("^[A-Za-z0-9_.+\\-]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Regex ParameterValuePattern() => _parameterValuePattern;
+#endif
 }

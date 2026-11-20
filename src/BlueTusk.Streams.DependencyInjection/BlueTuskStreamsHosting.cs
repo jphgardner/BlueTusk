@@ -110,8 +110,8 @@ public sealed class BlueTuskStreamsBuilder
         SnapshotThenStreamOptions? options = null)
         where TConsumer : class, IChangeStreamConsumer
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(sourceFactory);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(sourceFactory);
         EnsureUniqueWorker(name);
         Services.AddSingleton(new HostedConsumerRegistration(
             name,
@@ -137,8 +137,8 @@ public sealed class BlueTuskStreamsBuilder
         Func<IServiceProvider, CancellationToken, IAsyncEnumerable<ChangeTransactionDelivery>> streamFactory)
         where TConsumer : class, IChangeStreamConsumer
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(streamFactory);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNull(streamFactory);
         EnsureUniqueWorker(name);
         Services.AddSingleton(new HostedConsumerRegistration(
             name,
@@ -164,7 +164,7 @@ public static class BlueTuskStreamsServiceCollectionExtensions
 {
     public static BlueTuskStreamsBuilder AddBlueTuskStreams(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        BlueTuskGuard.NotNull(services);
         services.TryAddSingleton<BlueTuskStreamHealthRegistry>();
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IHostedService, BlueTuskStreamsHostedService>());

@@ -35,9 +35,9 @@ internal static class BlueTuskBinaryCopyCodec
         BlueTuskParameter parameter,
         ref byte[]? reusableBuffer)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(registry);
-        ArgumentNullException.ThrowIfNull(parameter);
+        BlueTuskGuard.NotNull(value);
+        BlueTuskGuard.NotNull(registry);
+        BlueTuskGuard.NotNull(parameter);
         parameter.Value = value;
         parameter.PostgreSqlTypeOid = postgreSqlTypeOid;
         var encoded = BlueTuskParameterEncoder.Encode(parameter, registry, ref reusableBuffer);
@@ -73,9 +73,9 @@ internal static class BlueTuskBinaryCopyCodec
                 reusableBuffer = bytes;
                 return bytes;
             }
-            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            catch (BlueTuskWriteBufferTooSmallException) when (length < BlueTuskRuntime.MaxArrayLength)
             {
-                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+                length = length > BlueTuskRuntime.MaxArrayLength / 2 ? BlueTuskRuntime.MaxArrayLength : length * 2;
             }
         }
     }
@@ -95,7 +95,7 @@ internal static class BlueTuskBinaryCopyCodec
         BlueTuskTypeRegistry registry,
         ref BlueTuskBinaryCopyDecoder decoder)
     {
-        ArgumentNullException.ThrowIfNull(registry);
+        BlueTuskGuard.NotNull(registry);
         var clrType = typeof(T);
         if (!ReferenceEquals(decoder.ClrType, clrType) ||
             decoder.RequestedTypeOid != postgreSqlTypeOid ||

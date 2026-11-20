@@ -118,7 +118,7 @@ public sealed class OpenSearchStoreTests
         var vector = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Vector, Vector = new float[] { 1, 0, 0 } });
         var vectorPage = await fixture.Store.ReadPageAsync(scope, vector);
         Assert.Equal("cat", vectorPage.Hits[0].DocumentId);
-        Assert.Equal(["cat", "dog"], vectorPage.Hits.Select(static hit => hit.DocumentId).Order(StringComparer.Ordinal));
+        Assert.Equal(["cat", "dog"], vectorPage.Hits.Select(static hit => hit.DocumentId).OrderBy(static value => value, StringComparer.Ordinal));
         var hybrid = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Hybrid, Text = "cat", Vector = new float[] { 1, 0, 0 } });
         Assert.Equal("integration", (await fixture.Store.ReadPageAsync(scope, hybrid)).Hits[0].Metadata.GetProperty("origin").GetString());
         await Assert.ThrowsAsync<SearchCursorExpiredException>(async () => await fixture.Store.ReadPageAsync(new SearchScope("other", "knowledge", ["reader"]), hybrid));
@@ -215,10 +215,15 @@ public sealed class OpenSearchStoreTests
     public Task OpenSearch_bounded_workload_pages_all_ranked_parents_once() => WithFixtureAsync(async fixture =>
     {
         const int count = 32;
-        await Parallel.ForEachAsync(Enumerable.Range(0, count), new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (i, token) =>
+        const int workers = 4;
+        await Task.WhenAll(Enumerable.Range(0, workers).Select(async worker =>
         {
-            _ = await fixture.Store.UpsertAsync(new SearchDocument("tenant", "knowledge", i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture), 1, "cat workload", "cat " + new string('x', 1024), true), token);
-        });
+            for (var i = worker; i < count; i += workers)
+            {
+                var id = i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture);
+                _ = await fixture.Store.UpsertAsync(new SearchDocument("tenant", "knowledge", id, 1, "cat workload", "cat " + new string('x', 1024), true));
+            }
+        }));
         var scope = new SearchScope("tenant", "knowledge");
         var ranked = await fixture.Store.SearchAsync(scope, new SearchRequest { Mode = SearchMode.Hybrid, Text = "cat", Vector = new float[] { 1, 0, 0 }, CandidateLimit = 64 });
         var seen = new HashSet<string>(StringComparer.Ordinal);

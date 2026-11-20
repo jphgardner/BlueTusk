@@ -74,7 +74,7 @@ public sealed class BlueTuskSyncHealthRegistry : IBlueTuskSyncStatusSource
         bool handoffCommitted,
         Exception? error = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(sourceFingerprint);
         var failureCount = _workers.TryGetValue(pipelineId, out var previous)
             ? previous.FailureCount
             : 0;
@@ -186,7 +186,7 @@ public sealed class PostgreSqlRelaySyncCutoverPositionProvider : ISyncCutoverPos
         SnapshotEpoch snapshotEpoch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         await _relay.InitializeAsync(cancellationToken).ConfigureAwait(false);
         var source = await _relay.RegisterSourceAsync(
             snapshotEpoch.Source,
@@ -230,9 +230,9 @@ public sealed class BlueTuskSyncBuilder
         where TTransform : class, ISyncTransform
         where TDestination : class, ISyncDestination
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(sourceFactory);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(sourceFactory);
         EnsureUniquePipeline(options.PipelineId);
         Services.TryAddSingleton<TTransform>();
         Services.TryAddSingleton<TDestination>();
@@ -258,9 +258,9 @@ public sealed class BlueTuskSyncBuilder
         where TTransform : class, ISyncTransform
         where TDestination : class, ISyncDestination
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(sourceFactory);
+        BlueTuskGuard.NotNull(options);
+        BlueTuskGuard.NotNull(source);
+        BlueTuskGuard.NotNull(sourceFactory);
         EnsureUniquePipeline(options.PipelineId);
         Services.TryAddSingleton<TTransform>();
         Services.TryAddSingleton<TDestination>();
@@ -312,7 +312,7 @@ public static class BlueTuskSyncServiceCollectionExtensions
     /// <summary>Adds hosted Sync pipelines, telemetry, and readiness health checks.</summary>
     public static BlueTuskSyncBuilder AddBlueTuskSync(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        BlueTuskGuard.NotNull(services);
         services.TryAddSingleton<BlueTuskSyncHealthRegistry>();
         services.TryAddSingleton<IBlueTuskSyncStatusSource>(static services =>
             services.GetRequiredService<BlueTuskSyncHealthRegistry>());
@@ -542,7 +542,7 @@ internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
         finally
         {
             SyncHostingDiagnostics.TransactionDuration.Record(
-                Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+                BlueTuskRuntime.GetElapsedTime(started).TotalMilliseconds,
                 SyncHostingDiagnostics.PipelineTag(_pipelineId));
             UpdateHealth();
         }
@@ -649,7 +649,7 @@ internal sealed class SyncWorkerRuntime(
     {
         lock (_lifetimeLock)
         {
-            ObjectDisposedException.ThrowIf(_disposeRequested, this);
+            BlueTuskGuard.NotDisposed(_disposeRequested, this);
             _leases = checked(_leases + 1);
         }
 
@@ -750,7 +750,7 @@ internal sealed class HostedSyncRebuildCutoverBarrier : ISyncRebuildCutoverBarri
         SnapshotEpoch snapshotEpoch,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
         var runtime = _runtimes.GetRequired(pipelineId);
         var gate = await runtime.EnterDeliveryAsync(cancellationToken).ConfigureAwait(false);
         try

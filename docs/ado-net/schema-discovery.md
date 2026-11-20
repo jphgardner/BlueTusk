@@ -1,7 +1,7 @@
 # Schema discovery
 
-This page helps you read database metadata at run time (tables, columns and
-the shape of a query result) through the standard ADO.NET schema APIs.
+BlueTusk implements provider-neutral ADO.NET schema discovery for applications,
+libraries and diagnostic tools that inspect database metadata at runtime.
 
 ## Connection collections
 
@@ -12,7 +12,7 @@ await using var connection = await dataSource.OpenConnectionAsync();
 var collections = await connection.GetSchemaAsync();
 ```
 
-BlueTusk supports these collections:
+Supported collections include:
 
 | Collection | Requires open connection | Purpose |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ command.CommandText = """
     WHERE tenant_id = @tenant_id
     """;
 command.Parameters.Add(
-    new BlueTuskParameter<Guid>(tenantId) { ParameterName = "tenant_id" });
+    new BlueTuskParameter<Guid>("tenant_id", tenantId));
 
 await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 var columns = await reader.GetColumnSchemaAsync(cancellationToken);
@@ -82,12 +82,12 @@ origin information.
 
 ## Intentional exclusions
 
-`CommandBehavior.SchemaOnly` and `CommandBehavior.KeyInfo` are not supported
+`CommandBehavior.SchemaOnly` and `CommandBehavior.KeyInfo` are unsupported
 and throw `NotSupportedException`. Silently treating either as
 `CommandBehavior.Default` would execute behavior the caller did not request.
 
-When you need PostgreSQL to describe a result shape, run a query that returns
-no rows:
+Use a bounded query that returns no rows when you need PostgreSQL to describe a
+result shape:
 
 ```sql
 SELECT id, created_at, payload

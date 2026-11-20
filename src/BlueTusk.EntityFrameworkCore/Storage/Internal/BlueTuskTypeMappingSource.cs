@@ -3,6 +3,9 @@ using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
+#if BLUETUSK_EF7_OR_GREATER && !BLUETUSK_EF10_OR_GREATER
+using JsonTypePlaceholder = System.Text.Json.JsonElement;
+#endif
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
@@ -24,8 +27,15 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         new DateTimeTypeMapping("timestamp without time zone", DbType.DateTime);
     private static readonly RelationalTypeMapping DateTimeOffset =
         new DateTimeOffsetTypeMapping("timestamp with time zone", DbType.DateTimeOffset);
+#if BLUETUSK_EF7_OR_GREATER
     private static readonly RelationalTypeMapping DateOnly = new DateOnlyTypeMapping("date", DbType.Date);
     private static readonly RelationalTypeMapping TimeOnly = new TimeOnlyTypeMapping("time without time zone", DbType.Time);
+#else
+    private static readonly RelationalTypeMapping DateOnly = new BlueTuskLegacyTemporalTypeMapping(
+        "date", typeof(DateOnly), DbType.Date, "yyyy-MM-dd");
+    private static readonly RelationalTypeMapping TimeOnly = new BlueTuskLegacyTemporalTypeMapping(
+        "time without time zone", typeof(TimeOnly), DbType.Time, "HH:mm:ss.fffffff");
+#endif
     private static readonly RelationalTypeMapping TimeSpan = new BlueTuskIntervalTypeMapping();
     private static readonly RelationalTypeMapping Record =
         new BlueTuskNativeTypeMapping("record", typeof(BlueTuskRecord), 2249);
@@ -81,8 +91,10 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
 
     private static readonly RelationalTypeMapping Json = Native("json", typeof(string), BlueTuskBuiltInTypes.Json);
     private static readonly RelationalTypeMapping Jsonb = Native("jsonb", typeof(string), BlueTuskBuiltInTypes.Jsonb);
+#if BLUETUSK_EF7_OR_GREATER
     private static readonly RelationalTypeMapping StructuralJson = new BlueTuskStructuralJsonTypeMapping("json");
     private static readonly RelationalTypeMapping StructuralJsonb = new BlueTuskStructuralJsonTypeMapping("jsonb");
+#endif
     private static readonly RelationalTypeMapping Xml = Native("xml", typeof(string), BlueTuskBuiltInTypes.Xml);
     private static readonly RelationalTypeMapping Name = Native("name", typeof(string), BlueTuskBuiltInTypes.Name);
 
@@ -569,6 +581,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ? Nullable.GetUnderlyingType(requestedClrType) ?? requestedClrType
             : null;
 
+#if BLUETUSK_EF7_OR_GREATER
         if (clrType == typeof(JsonTypePlaceholder))
         {
             if (mappingInfo.StoreTypeNameBase is not { } jsonStoreType)
@@ -582,8 +595,14 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
                     ? StructuralJsonb
                     : null;
         }
+#endif
 
+#if BLUETUSK_EF8_OR_GREATER
         if (clrType is { IsArray: true } && clrType != typeof(byte[]))
+#else
+        if (clrType is not null && clrType != typeof(byte[])
+            && FindSequenceElementType(clrType) is not null)
+#endif
         {
             var arrayMapping = FindArrayMapping(mappingInfo, clrType, elementTypeMapping: null);
             if (arrayMapping is not null)
@@ -627,6 +646,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         return base.FindMapping(mappingInfo);
     }
 
+#if BLUETUSK_EF8_OR_GREATER
     protected override RelationalTypeMapping? FindCollectionMapping(
         RelationalTypeMappingInfo mappingInfo,
         Type modelClrType,
@@ -681,7 +701,15 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         if (typeMapping is BlueTuskArrayTypeMapping arrayMapping
             && property.DeclaringType.IsMappedToJson())
         {
-            var storeType = property.DeclaringType.GetContainerColumnType() ?? "jsonb";
+            var storeType =
+#if BLUETUSK_EF9_OR_GREATER
+                property.DeclaringType.GetContainerColumnType()
+#else
+#pragma warning disable CS0618 // EF8 exposes its JSON container mapping through this legacy metadata seam.
+                (property.DeclaringType as IEntityType)?.GetContainerColumnTypeMapping()?.StoreType
+#pragma warning restore CS0618
+#endif
+                ?? "jsonb";
 #pragma warning disable EF1001 // Provider implementation of EF's relational collection-mapping seam.
             return base.FindCollectionMapping(
                 new RelationalTypeMappingInfo(
@@ -698,6 +726,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         return typeMapping;
     }
 
+#endif
     private static RelationalTypeMapping ApplyFacets(
         RelationalTypeMapping mapping,
         in RelationalTypeMappingInfo mappingInfo)
@@ -721,12 +750,18 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
                     DbType.StringFixedLength,
                     unicode: false,
                     mappingInfo.Size).Clone(
-                        mappingInfo,
-                        storeTypePostfix: StoreTypePostfix.Size)
+#if BLUETUSK_EF8_OR_GREATER
+                        mappingInfo, storeTypePostfix: StoreTypePostfix.Size)
+#else
+                        mappingInfo)
+#endif
                 : mappingInfo.Size is { } size
                     ? new StringTypeMapping("character varying", DbType.String, unicode: false, size).Clone(
-                        mappingInfo,
-                        storeTypePostfix: StoreTypePostfix.Size)
+#if BLUETUSK_EF8_OR_GREATER
+                        mappingInfo, storeTypePostfix: StoreTypePostfix.Size)
+#else
+                        mappingInfo)
+#endif
                     : String;
         }
 
@@ -738,8 +773,11 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
                 DbType.Decimal,
                 mappingInfo.Precision,
                 mappingInfo.Scale).Clone(
-                    mappingInfo,
-                    storeTypePostfix: StoreTypePostfix.PrecisionAndScale);
+#if BLUETUSK_EF8_OR_GREATER
+                    mappingInfo, storeTypePostfix: StoreTypePostfix.PrecisionAndScale);
+#else
+                    mappingInfo);
+#endif
         }
 
         return mapping;

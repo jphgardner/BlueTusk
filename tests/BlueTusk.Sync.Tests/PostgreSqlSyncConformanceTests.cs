@@ -1,24 +1,18 @@
-using System.Data.Common;
 using System.Text;
 using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Testing;
-using Xunit.Sdk;
+using BlueTusk.Tests.Shared;
 
 namespace BlueTusk.Sync.Tests;
 
 public sealed class PostgreSqlSyncConformanceTests
 {
-    [Fact]
+    [RequiredEnvironmentFact("BLUETUSK_TEST_CONNECTION_STRING")]
     public async Task PostgreSql_passes_shared_destination_conformance()
     {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "BLUETUSK_TEST_CONNECTION_STRING");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
-        }
+        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING")!;
 
         await using var harness = new PostgreSqlHarness(connectionString);
 
@@ -30,7 +24,7 @@ public sealed class PostgreSqlSyncConformanceTests
 
     private sealed class PostgreSqlHarness : ISyncDestinationConformanceHarness, IAsyncDisposable
     {
-        private readonly DbDataSource _dataSource;
+        private readonly BlueTuskDataSource _dataSource;
         private readonly string _schema = "bluetusk_sync_conformance_" + Guid.NewGuid().ToString("N");
 
         public PostgreSqlHarness(string connectionString) =>

@@ -39,7 +39,7 @@ public sealed class SchemaRelation
         string? definitionSql = null,
         SchemaSnapshotLimits? limits = null)
     {
-        ArgumentNullException.ThrowIfNull(columns);
+        BlueTuskGuard.NotNull(columns);
         limits ??= SchemaSnapshotLimits.Default;
         limits.Validate();
         var budget = new SchemaModelBudget(limits);
@@ -128,7 +128,7 @@ public sealed class SchemaSnapshot
 
     public SchemaSnapshot(IEnumerable<SchemaRelation> relations, SchemaSnapshotLimits? limits = null)
     {
-        ArgumentNullException.ThrowIfNull(relations);
+        BlueTuskGuard.NotNull(relations);
         limits ??= SchemaSnapshotLimits.Default;
         limits.Validate();
         var budget = new SchemaModelBudget(limits);
@@ -211,7 +211,7 @@ public sealed class SchemaSnapshot
             }
         }
 
-        return Convert.ToHexStringLower(hash.GetHashAndReset());
+        return BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset());
     }
 
     private static void Append(IncrementalHash hash, int value)

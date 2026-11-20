@@ -67,8 +67,8 @@ public sealed record SyncTransformVersion
 
     public SyncTransformVersion(string name, string fingerprint)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(fingerprint);
         if (fingerprint.Length != 64 || !fingerprint.All(Uri.IsHexDigit))
         {
             throw new ArgumentException(
@@ -89,8 +89,8 @@ public sealed record SyncTransformVersion
         string version,
         ReadOnlySpan<byte> canonicalConfiguration = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        BlueTuskGuard.NotNullOrWhiteSpace(name);
+        BlueTuskGuard.NotNullOrWhiteSpace(version);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Append(hash, name);
         Append(hash, version);
@@ -98,7 +98,7 @@ public sealed record SyncTransformVersion
         System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(length, canonicalConfiguration.Length);
         hash.AppendData(length);
         hash.AppendData(canonicalConfiguration);
-        return new SyncTransformVersion(name, Convert.ToHexStringLower(hash.GetHashAndReset()));
+        return new SyncTransformVersion(name, BlueTuskRuntime.ToHexStringLower(hash.GetHashAndReset()));
     }
 
     private static void Append(IncrementalHash hash, string value)
@@ -127,10 +127,10 @@ public sealed record SyncMutation
             throw new ArgumentOutOfRangeException(nameof(kind));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
         if (kind is not SyncMutationKind.DeleteCollection)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            BlueTuskGuard.NotNullOrWhiteSpace(key);
         }
         if (kind is not SyncMutationKind.Upsert && !content.IsEmpty)
         {
@@ -139,7 +139,7 @@ public sealed record SyncMutation
 
         if (kind is SyncMutationKind.Upsert)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+            BlueTuskGuard.NotNullOrWhiteSpace(contentType);
         }
 
         ChangeId = changeId;
@@ -176,9 +176,9 @@ public sealed record SyncSnapshotMutation
         string contentType,
         string? partitionKey = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+        BlueTuskGuard.NotNullOrWhiteSpace(collection);
+        BlueTuskGuard.NotNullOrWhiteSpace(key);
+        BlueTuskGuard.NotNullOrWhiteSpace(contentType);
         RowId = rowId;
         Collection = collection;
         Key = key;
@@ -210,10 +210,10 @@ public sealed class SyncTransactionBatch
         ChangeTransaction transaction,
         IEnumerable<SyncMutation> mutations)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(transform);
-        ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(transform);
+        BlueTuskGuard.NotNull(transaction);
+        BlueTuskGuard.NotNull(mutations);
         PipelineId = pipelineId;
         Transform = transform;
         Transaction = new SyncSourceTransaction(
@@ -262,10 +262,10 @@ public sealed class SyncSnapshotBatch
         ChangeSnapshotBatch sourceBatch,
         IEnumerable<SyncSnapshotMutation> mutations)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
-        ArgumentNullException.ThrowIfNull(transform);
-        ArgumentNullException.ThrowIfNull(sourceBatch);
-        ArgumentNullException.ThrowIfNull(mutations);
+        BlueTuskGuard.NotNullOrWhiteSpace(pipelineId);
+        BlueTuskGuard.NotNull(transform);
+        BlueTuskGuard.NotNull(sourceBatch);
+        BlueTuskGuard.NotNull(mutations);
         PipelineId = pipelineId;
         Transform = transform;
         SourceBatch = sourceBatch;
