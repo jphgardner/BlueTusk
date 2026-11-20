@@ -33,14 +33,21 @@ spec:
           emptyDir: {sizeLimit: 32Gi}
       initContainers:
         - name: tools
-          image: mcr.microsoft.com/powershell@sha256:73c08403182e3cd1a62176b6723645b2d2037cda8deefc0e2c2c01cb814abe43
+          image: mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:a82c44c2efe00953d66a37e90d307c4cfbd1e974b16e3b2a2fc665331946c9af
           command: [/bin/sh, -ec]
           args:
             - |
-              mkdir -p /tools/powershell /tools/bin /tools/plugins
+              mkdir -p /tools/powershell /tools/powershell-runtime/shared /tools/bin /tools/plugins
               source="$(dirname "$(readlink -f "$(command -v pwsh)")")"
               cp -R "$source/." /tools/powershell/
-              ln -s ../powershell/pwsh /tools/bin/pwsh
+              dotnet_root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+              cp "$dotnet_root/dotnet" /tools/powershell-runtime/
+              cp -R "$dotnet_root/host" /tools/powershell-runtime/
+              cp -R "$dotnet_root/shared/Microsoft.NETCore.App" /tools/powershell-runtime/shared/
+              pwsh_dll="$(find /tools/powershell -type f -name pwsh.dll)"
+              test -f "$pwsh_dll"
+              printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
+              chmod 0755 /tools/bin/pwsh
           securityContext:
             runAsUser: 1001
             runAsGroup: 1001
@@ -103,7 +110,12 @@ spec:
               export DOCKER_CONFIG="$(mktemp -d)"
               printf '%s\n' '{"cliPluginsExtraDirs":["/tools/plugins"]}' > "$DOCKER_CONFIG/config.json"
               docker info --format '{{.ServerVersion}}'
-              pwsh -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()'
+              pwsh -NoProfile -NonInteractive -Command '
+                if (-not (Get-Command ConvertFrom-Json).Parameters.ContainsKey("DateKind")) {
+                  throw "Core evidence requires a PowerShell runtime that preserves JSON timestamps as strings."
+                }
+                $PSVersionTable.PSVersion.ToString()
+              '
               jit="$RUNNER_JIT_CONFIG"
               unset RUNNER_JIT_CONFIG
               exec /home/runner/run.sh --jitconfig "$jit"
