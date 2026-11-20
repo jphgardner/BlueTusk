@@ -1,0 +1,38 @@
+[
+  {
+    "path": "org/apache/hadoop/hadoop-client-api/3.4.2/hadoop-client-api-3.4.2.jar",
+    "sha256": "607c0299f4df33013bd0a0f37c8cf255c635bbaddd247b8fec68c210cc17d19f"
+  },
+  {
+    "path": "org/apache/hadoop/hadoop-client-runtime/3.4.2/hadoop-client-runtime-3.4.2.jar",
+    "sha256": "18d071c7f72f8a946677b398a57af9c7afa2dd41a81023c310f99373fec200b3"
+  },
+  {
+    "path": "org/apache/parquet/parquet-column/1.16.0/parquet-column-1.16.0.jar",
+    "sha256": "034ec38dc4c58a0677bdaed666c9a7a8c68c269cce0d61dce4b7b49f7a0b9d7e"
+  },
+  {
+    "path": "org/apache/parquet/parquet-common/1.16.0/parquet-common-1.16.0.jar",
+    "sha256": "7c7d120b83c923f9f5044e53518e6e8cc26d7993b89051b2a9979c3afdbc7811"
+  },
+  {
+    "path": "org/apache/parquet/parquet-encoding/1.16.0/parquet-encoding-1.16.0.jar",
+    "sha256": "da7b8f3a458871e70de6f883539a39d8dc9e8ec67312d3b95ea1dbca4b68f5b3"
+  },
+  {
+    "path": "org/apache/parquet/parquet-format-structures/1.16.0/parquet-format-structures-1.16.0.jar",
+    "sha256": "aae70622e2ab2f6a6678d03054a8bf94731ecea98025dedbea6c7a6defbc9ee0"
+  },
+  {
+    "path": "org/apache/parquet/parquet-hadoop/1.16.0/parquet-hadoop-1.16.0.jar",
+    "sha256": "06d9ecec624434c21680d736833aa4873655438dda9e64ccbeec1772d52cdfd5"
+  },
+  {
+    "path": "org/apache/parquet/parquet-jackson/1.16.0/parquet-jackson-1.16.0.jar",
+    "sha256": "12e8fbc43d989fc26336c2649b7cfcc82f5ee82b808258b6f79c24320aee001f"
+  },
+  {
+    "path": "org/locationtech/jts/jts-core/1.20.0/jts-core-1.20.0.jar",
+    "sha256": "6a783d8f9dba3d3cf7265435f134402f63c05838aa6cbcc4297ad3a5b2842baf"
+  }
+]

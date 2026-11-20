@@ -132,8 +132,17 @@ producer. Both write a complete ordered envelope and its position checkpoint
 in a Kafka transaction. The reference persists split HTTP fragments in a
 separate topic before acknowledging them. After an abrupt broker restart, a
 committed-record consumer checks the source IDs, timestamps, ordered mutations,
-and every checkpoint. These workloads use `evidence_class=diagnostic` and
-`families=Sync`. Sync qualification also requires S3 and Webhooks measurements.
+and every checkpoint.
+
+The S3 diagnostic pairs the production connector with the native S3 HTTP API
+and Apache Parquet writer in Debezium. The reference writer's extra JARs are
+verified by SHA-256. Both write a Zstandard Parquet object before its immutable
+commit manifest. The reference stores split HTTP fragments before acknowledging
+them and removes them after committing the full transaction. After a forced
+MinIO restart, the verifier checks that every manifest points to the exact
+uploaded Parquet bytes and that all ordered rows match PostgreSQL.
+These workloads use `evidence_class=diagnostic` and `families=Sync`.
+Sync qualification also requires Webhooks measurements.
 
 ## Primary workloads for v1.2
 

@@ -77,7 +77,7 @@ public final class StreamsHttpProbe {
         if (fields.length != 9 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
             !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
-            !fields[8].matches("count|postgresql|redis|nats|opensearch|kafka") || !System.getProperty("os.arch").equals("amd64")) {
+            !fields[8].matches("count|postgresql|redis|nats|opensearch|kafka|s3") || !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -111,12 +111,24 @@ public final class StreamsHttpProbe {
             case "nats" -> new NatsCaptureSink();
             case "opensearch" -> new OpenSearchCaptureSink();
             case "kafka" -> new KafkaCaptureSink();
+            case "s3" -> createS3Sink();
             default -> null;
         };
         if (!threads.isThreadAllocatedMemorySupported()) {
             throw new IllegalStateException("The reference JVM must expose its process allocation counter.");
         }
         threads.setThreadAllocatedMemoryEnabled(true);
+    }
+
+    private static SyncCaptureReference createS3Sink() throws IOException {
+        try {
+            // Only the S3 reference loads the checksum-pinned Parquet libraries.
+            return (SyncCaptureReference) Class.forName("S3CaptureSink").getDeclaredConstructor().newInstance();
+        } catch (java.lang.reflect.InvocationTargetException failure) {
+            throw new IOException("The S3 reference did not initialize.", failure.getCause());
+        } catch (ReflectiveOperationException failure) {
+            throw new IOException("The S3 reference or its pinned writer is missing.", failure);
+        }
     }
 
     private void progress(HttpExchange exchange) throws IOException {
@@ -170,7 +182,7 @@ public final class StreamsHttpProbe {
                 complete = true;
             }
             respond(exchange, 200, "accepted");
-        } catch (IOException | RuntimeException | SQLException exception) {
+        } catch (IOException | RuntimeException | SQLException | LinkageError exception) {
             failed = true;
             System.err.println("Streams benchmark probe: " + exception.getMessage());
             respond(exchange, 409, "The Streams benchmark rejected the delivery.");

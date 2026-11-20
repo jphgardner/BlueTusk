@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
-    [ValidateSet('postgresql','redis','nats','opensearch','kafka')][string] $SyncDestination = 'postgresql',
+    [ValidateSet('postgresql','redis','nats','opensearch','kafka','s3')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -13,6 +13,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/s3-fixture.ps1')
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 $artifacts = Join-Path $root 'artifacts'
 $separator = [IO.Path]::DirectorySeparatorChar
@@ -33,6 +34,7 @@ $null = New-Item -ItemType Directory -Path $work, $output -Force
 $records = [Collections.Generic.List[object]]::new()
 $implementations = @{}
 $started = [DateTimeOffset]::UtcNow
+$s3Image = if ($Family -ceq 'Sync' -and $SyncDestination -ceq 's3') { Resolve-SyncS3Image '' "$RunId-s3" }
 
 $workloads = if ($Family -ceq 'Sync')
 {
@@ -62,7 +64,7 @@ else
 }
 
 $workloadNumber = 0
-$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch'; kafka = 'recoveredFromKafka' }
+$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch'; kafka = 'recoveredFromKafka'; s3 = 'recoveredFromS3' }
 foreach ($workload in $workloads)
 {
     $workloadNumber++
@@ -79,6 +81,11 @@ foreach ($workload in $workloads)
                 RunId = "$RunId-$workloadNumber-$($role[0])$trial"; Owner = $Owner
             }
             if ($role -ceq 'candidate' -or $proofNames.ContainsKey($workload.Sink)) { $arguments.BenchmarkAssemblyPath = $assembly }
+            if ($s3Image)
+            {
+                $arguments.S3FixtureImage = $s3Image
+                if ($role -ceq 'reference') { $arguments.S3ReferenceLibraryDirectory = Join-Path $work 's3-libraries' }
+            }
             & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
@@ -91,7 +98,8 @@ foreach ($workload in $workloads)
             {
                 $destination = $workload.Sink
                 $proof = $proofNames[$destination]
-                if ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.$destination -or
+                $expectedImage = if ($destination -ceq 's3') { $s3Image } else { $plan.families.Sync.destinationImages.$destination }
+                if ($capture.environment.destinationImage -cne $expectedImage -or
                     $capture.environment.destinationProof.$proof -ne $true)
                 { throw "The $destination trial '$id' has no matching recovery proof." }
             }
@@ -110,7 +118,8 @@ foreach ($workload in $workloads)
 }
 
 $images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
-if ($Family -ceq 'Sync' -and $proofNames.ContainsKey($SyncDestination)) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
+if ($s3Image) { $images += $s3Image }
+elseif ($Family -ceq 'Sync' -and $proofNames.ContainsKey($SyncDestination)) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
 [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false

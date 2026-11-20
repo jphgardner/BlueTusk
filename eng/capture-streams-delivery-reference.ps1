@@ -4,9 +4,11 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka', 's3')][string] $Sink = 'count',
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
+    [string] $S3FixtureImage,
+    [string] $S3ReferenceLibraryDirectory,
     [ValidateRange(1, 1000)][int] $MaxHttpBatchRows = 1000,
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
@@ -23,6 +25,7 @@ $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/nats-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/opensearch-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/kafka-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/s3-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
 $sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
@@ -48,7 +51,7 @@ $image = [string]$plan.families.$family.referenceImage
 if ($image -cnotmatch '^quay\.io/debezium/server:3\.6\.1\.Final@sha256:[0-9a-f]{64}$') { throw 'The Debezium reference must be pinned by digest.' }
 $dotnet = $null
 $assembly = $null
-if ($Sink -cin @('redis', 'nats', 'opensearch', 'kafka'))
+if ($Sink -cin @('redis', 'nats', 'opensearch', 'kafka', 's3'))
 {
     $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Source
     if (-not $BenchmarkAssemblyPath) { $BenchmarkAssemblyPath = Join-Path $root 'benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll' }
@@ -57,6 +60,12 @@ if ($Sink -cin @('redis', 'nats', 'opensearch', 'kafka'))
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 if (Test-Path -LiteralPath $output) { throw 'The reference capture requires a new output directory.' }
 $null = New-Item -ItemType Directory -Path $output
+$s3Libraries = if ($Sink -ceq 's3')
+{
+    if (-not $S3ReferenceLibraryDirectory) { $S3ReferenceLibraryDirectory = Join-Path $output 's3-libraries' }
+    Get-SyncS3ReferenceLibraries $S3ReferenceLibraryDirectory
+}
+$previousS3Environment = if ($Sink -ceq 's3') { Get-SyncS3Environment }
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $root $fixturePath
 $reference = "bt-perf-$RunId-debezium"
@@ -102,6 +111,8 @@ try
     { $destinationFixture = New-SyncOpenSearchFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.opensearch }
     if ($Sink -ceq 'kafka')
     { $destinationFixture = New-SyncKafkaFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.kafka }
+    if ($Sink -ceq 's3')
+    { $destinationFixture = New-SyncS3Fixture $fixture.network $RunId $Owner $ExpectedCommit $S3FixtureImage $dotnet $assembly }
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -141,16 +152,33 @@ debezium.source.offset.storage.file.filename=/debezium/data/streams-offsets.dat
 debezium.source.offset.flush.interval.ms=1000
 "@
     [IO.File]::WriteAllText($configuration, $properties)
-    [IO.File]::WriteAllText($manifest, "Premain-Class: StreamsHttpProbe`n`n")
+    $manifestText = "Premain-Class: StreamsHttpProbe`n"
+    $javaFiles = @('StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java',
+        'NatsCaptureSink.java', 'OpenSearchCaptureSink.java', 'KafkaCaptureSink.java')
+    $agentClasspath = '/debezium/lib/*'
+    $fixtureEnvironmentArgs = @()
+    if ($s3Libraries)
+    {
+        $javaFiles += 'S3CaptureSink.java'
+        $agentClasspath += ':/tmp/*'
+        $jarNames = @($s3Libraries.Files | ForEach-Object { [IO.Path]::GetFileName($_) })
+        $manifestText += "Class-Path: $($jarNames -join "`n  ")`n"
+        $fixtureEnvironmentArgs = @('--env','BLUETUSK_BENCHMARK_S3_ACCESS_KEY','--env','BLUETUSK_BENCHMARK_S3_SECRET_KEY')
+    }
+    [IO.File]::WriteAllText($manifest, "$manifestText`n")
     $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario,$Sink"
-    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/*Capture*.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
+    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "{0}" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/*Capture*.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh' -f $agentClasspath
     $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$Owner" `
         --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
-        --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" --entrypoint /bin/sh $image -ec $launch
+        --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" @fixtureEnvironmentArgs --entrypoint /bin/sh $image -ec $launch
     $created = $true
-    foreach ($java in 'StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java',
-        'NatsCaptureSink.java', 'OpenSearchCaptureSink.java', 'KafkaCaptureSink.java')
+    foreach ($java in $javaFiles)
     { $null = Invoke-Docker cp (Join-Path $PSScriptRoot "streams-performance/$java") "${reference}:/tmp/$java" }
+    if ($s3Libraries)
+    {
+        foreach ($jar in $s3Libraries.Files)
+        { $null = Invoke-Docker cp $jar "${reference}:/tmp/$([IO.Path]::GetFileName($jar))" }
+    }
     $null = Invoke-Docker cp $manifest "${reference}:/tmp/probe.mf"
     $null = Invoke-Docker cp $configuration "${reference}:/debezium/config/application.properties"
     [IO.File]::Delete($configuration)
@@ -211,11 +239,13 @@ debezium.source.offset.flush.interval.ms=1000
             'nats' { Assert-SyncNatsDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
             'opensearch' { Assert-SyncOpenSearchDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
             'kafka' { Assert-SyncKafkaDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
+            's3' { Assert-SyncS3Delivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly }
             'postgresql' { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions -Reference }
         }
         if ($Sink -ceq 'kafka' -and $destinationProof.recoveredFragments -ne $capture.environment.durableHttpFragments)
         { throw 'Kafka did not recover every acknowledged HTTP fragment.' }
         if ($destinationFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $destinationFixture.Image }
+        if ($s3Libraries) { $capture.environment | Add-Member -NotePropertyName referenceLibrariesLockSha256 -NotePropertyValue $s3Libraries.LockSha256 }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }
@@ -224,6 +254,7 @@ debezium.source.offset.flush.interval.ms=1000
 }
 finally
 {
+    if ($previousS3Environment) { Restore-SyncS3Environment $previousS3Environment }
     if (Test-Path -LiteralPath $configuration) { [IO.File]::Delete($configuration) }
     if ($created) { & docker logs $reference *> (Join-Path $output 'debezium.log') }
     & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner

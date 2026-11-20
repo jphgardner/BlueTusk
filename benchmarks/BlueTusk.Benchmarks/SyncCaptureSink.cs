@@ -2,6 +2,7 @@ using System.Buffers.Text;
 using System.Data.Common;
 using System.Globalization;
 using System.Text;
+using Amazon.S3;
 using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync;
@@ -10,6 +11,7 @@ using BlueTusk.Sync.Nats;
 using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
+using BlueTusk.Sync.S3;
 using BlueTusk.TypeSystem;
 using NATS.Client.Core;
 using NATS.Net;
@@ -35,21 +37,35 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
     private readonly NatsClient? _nats;
     private readonly HttpClient? _http;
     private readonly KafkaSyncDestination? _kafka;
+    private readonly AmazonS3Client? _s3;
     private readonly SyncPipeline _pipeline;
 
     private SyncCaptureSink(ISyncDestination destination, ChangeSourceIdentity source,
-        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null, NatsClient? nats = null, HttpClient? http = null)
+        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null, NatsClient? nats = null,
+        HttpClient? http = null, AmazonS3Client? s3 = null)
     {
         _dataSource = dataSource;
         _redis = redis;
         _nats = nats;
         _http = http;
         _kafka = destination as KafkaSyncDestination;
+        _s3 = s3;
         _pipeline = new SyncPipeline(new() { PipelineId = PipelineId }, source, new CaptureTransform(), destination);
     }
 
     public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
     {
+        if (sink == "s3")
+        {
+            var client = S3SyncCaptureVerification.Connect();
+            return new(new S3SyncDestination(new()
+            {
+                Client = client,
+                BucketName = S3SyncCaptureVerification.Bucket,
+                Prefix = S3SyncCaptureVerification.Prefix,
+                ServerSideEncryption = ServerSideEncryptionMethod.None,
+            }), source, s3: client);
+        }
         if (sink == "kafka")
         {
             return new(new KafkaSyncDestination(new()
@@ -136,6 +152,7 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         _redis?.Dispose();
         if (_nats is not null) await _nats.DisposeAsync();
         if (_kafka is not null) await _kafka.DisposeAsync();
+        _s3?.Dispose();
         _http?.Dispose();
     }
 

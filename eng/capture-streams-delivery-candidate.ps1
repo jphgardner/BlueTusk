@@ -4,9 +4,10 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
+    [string] $S3FixtureImage,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka', 's3')][string] $Sink = 'count',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -26,6 +27,7 @@ $fixtureDirectory = Join-Path $repository $fixturePath
 . (Join-Path $PSScriptRoot 'streams-performance/nats-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/opensearch-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/kafka-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/s3-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
 $sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
@@ -86,6 +88,7 @@ $previousRedisConnection = $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT
 $previousNatsConnection = $env:BLUETUSK_BENCHMARK_NATS_ENDPOINT
 $previousOpenSearchConnection = $env:BLUETUSK_BENCHMARK_OPENSEARCH_ENDPOINT
 $previousKafkaConnection = $env:BLUETUSK_BENCHMARK_KAFKA_ENDPOINT
+$previousS3Environment = if ($Sink -ceq 's3') { Get-SyncS3Environment }
 try
 {
     & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
@@ -96,7 +99,7 @@ try
     New-StreamsCaptureTable $postgres $spill
     if ($Sink -ceq 'postgresql') { New-SyncPostgreSqlFixture $postgres $false }
     $destinationFixture = $null
-    if ($Sink -cin @('redis', 'nats', 'opensearch', 'kafka'))
+    if ($Sink -cin @('redis', 'nats', 'opensearch', 'kafka', 's3'))
     {
         $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
         switch -CaseSensitive ($Sink)
@@ -116,6 +119,9 @@ try
             'kafka' {
                 $destinationFixture = New-SyncKafkaFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.kafka
                 $env:BLUETUSK_BENCHMARK_KAFKA_ENDPOINT = $destinationFixture.Endpoint
+            }
+            's3' {
+                $destinationFixture = New-SyncS3Fixture $fixture.network $RunId $Owner $ExpectedCommit $S3FixtureImage $dotnet $assembly
             }
         }
     }
@@ -192,6 +198,7 @@ try
             'nats' { Assert-SyncNatsDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly candidate }
             'opensearch' { Assert-SyncOpenSearchDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly candidate }
             'kafka' { Assert-SyncKafkaDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly candidate }
+            's3' { Assert-SyncS3Delivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly }
             'postgresql' { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions }
         }
         if ($destinationFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $destinationFixture.Image }
@@ -208,6 +215,7 @@ finally
     $env:BLUETUSK_BENCHMARK_NATS_ENDPOINT = $previousNatsConnection
     $env:BLUETUSK_BENCHMARK_OPENSEARCH_ENDPOINT = $previousOpenSearchConnection
     $env:BLUETUSK_BENCHMARK_KAFKA_ENDPOINT = $previousKafkaConnection
+    if ($previousS3Environment) { Restore-SyncS3Environment $previousS3Environment }
     if ($candidate)
     {
         if (-not $candidate.HasExited) { $candidate.Kill($true) }

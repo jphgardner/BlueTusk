@@ -47,6 +47,18 @@ if (args is ["--sync-kafka-verify", var kafkaChanges, var kafkaSourceTransaction
     return;
 }
 
+if (args is ["--sync-s3-create-bucket"])
+{
+    await S3SyncCaptureVerification.CreateBucketAsync();
+    return;
+}
+
+if (args is ["--sync-s3-verify", var s3Changes, var s3SourceTransactions])
+{
+    await S3SyncCaptureVerification.RunAsync(int.Parse(s3Changes, System.Globalization.CultureInfo.InvariantCulture), s3SourceTransactions);
+    return;
+}
+
 if (args is ["--sync-opensearch-verify", var searchChanges, var searchSourceTransactions, var searchRole])
 {
     await OpenSearchSyncCaptureVerification.RunAsync(int.Parse(searchChanges, System.Globalization.CultureInfo.InvariantCulture),
