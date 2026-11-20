@@ -40,7 +40,8 @@ public final class StreamsHttpProbe {
     private final boolean liveDelivery;
     private final boolean snapshot;
     private final boolean spill;
-    private final PostgreSqlCaptureSink postgres;
+    private final String sink;
+    private final SyncCaptureReference destination;
     private final long[] ticks;
     private final long[] commitMicros;
     private final long[] transactionIds;
@@ -76,7 +77,7 @@ public final class StreamsHttpProbe {
         if (fields.length != 9 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
             !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
-            !fields[8].matches("count|postgresql") || !System.getProperty("os.arch").equals("amd64")) {
+            !fields[8].matches("count|postgresql|redis") || !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -85,7 +86,8 @@ public final class StreamsHttpProbe {
         measuredRows = Math.multiplyExact(changes, transactions);
         trial = Integer.parseInt(fields[3]);
         scenario = fields[7];
-        boolean sync = fields[8].equals("postgresql");
+        sink = fields[8];
+        boolean sync = !sink.equals("count");
         spill = scenario.equals("spill");
         liveDelivery = scenario.equals("commit-to-delivery") || spill;
         snapshot = scenario.equals("snapshot");
@@ -103,7 +105,11 @@ public final class StreamsHttpProbe {
         transactionIds = new long[snapshot ? 0 : transactions];
         spillPayloadSha256 = new String[spill ? transactions : 0];
         spillHash = spill ? sha256() : null;
-        postgres = sync ? new PostgreSqlCaptureSink() : null;
+        destination = switch (sink) {
+            case "postgresql" -> new PostgreSqlCaptureSink();
+            case "redis" -> new RedisCaptureSink();
+            default -> null;
+        };
         if (!threads.isThreadAllocatedMemorySupported()) {
             throw new IllegalStateException("The reference JVM must expose its process allocation counter.");
         }
@@ -153,8 +159,8 @@ public final class StreamsHttpProbe {
             } else {
                 recordEvent(body, received, receivedAt);
             }
-            if (postgres != null) {
-                postgres.beforeAcknowledge();
+            if (destination != null) {
+                destination.beforeAcknowledge();
             }
             if (delivered == warmupRows + measuredRows) {
                 writeResult();
@@ -192,7 +198,7 @@ public final class StreamsHttpProbe {
             if (spill) {
                 recordSpillPayload(after.required("payload"));
             }
-            if (postgres != null) {
+            if (destination != null) {
                 recordSyncDelivery(row.longValue(), source);
             }
         }
@@ -221,7 +227,7 @@ public final class StreamsHttpProbe {
         } else if (commitMicros[batch] != timestamp.longValue() || transactionIds[batch] != transaction.longValue()) {
             throw new IllegalStateException("Rows in a transaction reported different source positions.");
         }
-        if (spill || postgres != null) {
+        if (spill || destination != null) {
             return;
         }
         long receiveTicks = received.getEpochSecond() * TICKS_PER_SECOND + received.getNano() / 100;
@@ -248,7 +254,7 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("The reference Sync sink received an incomplete transaction.");
         }
         boolean last = rowInTransaction == changes - 1;
-        postgres.deliver(key, syncTransactionId, lsn.longValue(), last);
+        destination.deliver(key, syncTransactionId, lsn.longValue(), last);
         if (last && delivered >= warmupRows) {
             int batch = (delivered - warmupRows) / changes;
             var committed = Instant.now();
@@ -309,13 +315,13 @@ public final class StreamsHttpProbe {
             "allocation", "JVM-wide allocated-byte counter delta", "gc", "Total collections across JVM collectors in the first counter",
             "peakRss", "JVM process VmHWM, including the loopback HTTP sink");
         var capture = JSON.createObjectNode();
-        var workload = postgres == null
+        var workload = destination == null
             ? hostOs + "|Streams|changes=" + changes + (spill ? "|spoolBytes=" + SPILL_BYTES : "|scenario=" + scenario)
-            : hostOs + "|Sync|mutations=" + changes + "|destination=postgresql";
-        capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", postgres == null ? "Streams" : "Sync")
+            : hostOs + "|Sync|mutations=" + changes + "|destination=" + sink;
+        capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", destination == null ? "Streams" : "Sync")
             .put("workloadKey", workload)
             .put("role", "reference").put("trial", trial).put("sourceCommit", commit).put("diagnostic", true)
-            .put("synthetic", false).put("implementation", "Debezium Server " + VERSION + (postgres == null ? "" : " plus native PostgreSQL JDBC"))
+            .put("synthetic", false).put("implementation", "Debezium Server " + VERSION + (destination == null ? "" : " plus " + destination.implementation()))
             .put("frequency", TICKS_PER_SECOND);
         var environmentNode = JSON.createObjectNode();
         environment.forEach((key, value) -> environmentNode.set(key, JSON.valueToTree(value)));
@@ -323,10 +329,10 @@ public final class StreamsHttpProbe {
             environmentNode.set("spillPayloadSha256", JSON.valueToTree(spillPayloadSha256));
             environmentNode.put("latency", "WAL commit to complete payload validation in the reference HTTP sink");
         }
-        if (postgres != null) {
-            environmentNode.put("sink", "postgresql");
-            environmentNode.put("durableHttpFragments", postgres.durableFragments());
-            environmentNode.put("latency", "WAL commit to durable mutations and checkpoint in the PostgreSQL JDBC sink");
+        if (destination != null) {
+            environmentNode.put("sink", sink);
+            environmentNode.put("durableHttpFragments", destination.durableFragments());
+            environmentNode.put("latency", "WAL commit to durable destination mutations and checkpoint");
         }
         capture.set("environment", environmentNode);
         capture.set("measurement", JSON.valueToTree(measurement));

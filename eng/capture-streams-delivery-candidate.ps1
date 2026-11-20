@@ -6,7 +6,7 @@ param(
     [string] $BenchmarkAssemblyPath,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis')][string] $Sink = 'count',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -22,11 +22,12 @@ $output = [IO.Path]::GetFullPath($OutputPath)
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $repository $fixturePath
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/redis-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
-$sync = $Sink -ceq 'postgresql'
+$sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
-{ throw 'The PostgreSQL Sync sink supports the live delivery scenario and 1, 100 or 1000 mutations.' }
-$suffix = if ($sync) { 'destination=postgresql' } else { Get-StreamsWorkloadSuffix $Scenario }
+{ throw 'Sync sinks support live delivery and 1, 100 or 1000 mutations.' }
+$suffix = if ($sync) { "destination=$Sink" } else { Get-StreamsWorkloadSuffix $Scenario }
 $liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
 if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
 if ($spill -and -not $PSBoundParameters.ContainsKey('MeasurementTransactions')) { $MeasurementTransactions = 8 }
@@ -78,6 +79,7 @@ else
 
 $candidate = $null
 $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
+$previousRedisConnection = $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT
 try
 {
     & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
@@ -86,7 +88,14 @@ try
     $postgres = $fixture.containers[0].name
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = [IO.File]::ReadAllText((Join-Path $fixtureDirectory 'connection.secret'))
     New-StreamsCaptureTable $postgres $spill
-    if ($sync) { New-SyncPostgreSqlFixture $postgres $false }
+    if ($Sink -ceq 'postgresql') { New-SyncPostgreSqlFixture $postgres $false }
+    $redisFixture = $null
+    if ($Sink -ceq 'redis')
+    {
+        $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
+        $redisFixture = New-SyncRedisFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.redis
+        $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT = $redisFixture.Endpoint
+    }
     if ($Scenario -ceq 'catch-up')
     {
         $null = & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -153,7 +162,11 @@ try
     $verifiedPath = Join-Path $output 'candidate.json'
     if ($sync)
     {
-        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions)
+        $transactions = $WarmupTransactions + $MeasurementTransactions
+        $destinationProof = if ($redisFixture)
+        { Assert-SyncRedisDelivery $postgres $redisFixture $Changes $transactions $dotnet $assembly }
+        else { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions }
+        if ($redisFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $redisFixture.Image }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
     }
@@ -163,6 +176,7 @@ try
 finally
 {
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $previousConnection
+    $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT = $previousRedisConnection
     if ($candidate)
     {
         if (-not $candidate.HasExited) { $candidate.Kill($true) }

@@ -3,8 +3,9 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
+    [ValidateSet('postgresql','redis')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
-    [ValidatePattern('^[a-z0-9][a-z0-9-]{2,29}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
+    [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
 )
 
@@ -37,7 +38,7 @@ $workloads = if ($Family -ceq 'Sync')
 {
     foreach ($changes in $contract.workloads.Sync.mutationCounts)
     {
-        @{ Sink = 'postgresql'; Scenario = 'commit-to-delivery'; Changes = $changes; WarmupTransactions = 4; MeasurementTransactions = 20 }
+        @{ Sink = $SyncDestination; Scenario = 'commit-to-delivery'; Changes = $changes; WarmupTransactions = 4; MeasurementTransactions = 20 }
     }
 }
 else
@@ -64,7 +65,7 @@ $workloadNumber = 0
 foreach ($workload in $workloads)
 {
     $workloadNumber++
-    $key = if ($Family -ceq 'Sync') { "$os|Sync|mutations=$($workload.Changes)|destination=postgresql" }
+    $key = if ($Family -ceq 'Sync') { "$os|Sync|mutations=$($workload.Changes)|destination=$SyncDestination" }
         else { "$os|Streams|changes=$($workload.Changes)|$(Get-StreamsWorkloadSuffix $workload.Scenario)" }
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
@@ -76,7 +77,7 @@ foreach ($workload in $workloads)
                 ExpectedCommit = $ExpectedCommit; Trial = $trial; OutputPath = (Join-Path $work $id)
                 RunId = "$RunId-$workloadNumber-$($role[0])$trial"; Owner = $Owner
             }
-            if ($role -ceq 'candidate') { $arguments.BenchmarkAssemblyPath = $assembly }
+            if ($role -ceq 'candidate' -or $workload.Sink -ceq 'redis') { $arguments.BenchmarkAssemblyPath = $assembly }
             & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
@@ -85,6 +86,10 @@ foreach ($workload in $workloads)
                 $capture.measurement.completedOperations -ne $workload.Changes * [long]$workload.MeasurementTransactions -or
                 $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
             { throw "The $Family diagnostic trial '$id' differs from its requested source, role or workload." }
+            if ($workload.Sink -ceq 'redis' -and
+                ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.redis -or
+                 $capture.environment.destinationProof.recoveredFromAppendOnlyFile -ne $true))
+            { throw "The Redis trial '$id' has no matching append-only recovery proof." }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $capture.implementation)
             { throw "The $role implementation changed between $Family trials." }
             $implementations[$role] = $capture.implementation
@@ -99,12 +104,14 @@ foreach ($workload in $workloads)
     }
 }
 
+$images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
+if ($Family -ceq 'Sync' -and $SyncDestination -ceq 'redis') { $images += [string]$plan.families.Sync.destinationImages.redis }
 [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false
     startedUtc = $started.ToString('o'); completedUtc = [DateTimeOffset]::UtcNow.ToString('o')
     candidateImplementation = $implementations.candidate; referenceImplementation = $implementations.reference
-    containerImageDigests = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
+    containerImageDigests = $images
     records = @($records)
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
 Write-Output "Captured $($records.Count) paired $Family diagnostic trials in '$output'."

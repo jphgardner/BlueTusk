@@ -102,10 +102,16 @@ PostgreSQL fixture. The capture checks that every destination batch persisted
 its exact row range and that the final checkpoint shares the final batch's
 database transaction. If an HTTP batch ends mid-transaction, the reference
 stages that fragment in PostgreSQL before responding. It publishes the staged
-rows together with the final fragment and checkpoint. Choose
-`evidence_class=diagnostic` and `families=Sync` for
-these runs. Sync qualification also requires NATS, Redis, OpenSearch, Kafka,
-S3 and Webhooks measurements.
+rows together with the final fragment and checkpoint.
+
+The Redis diagnostic uses the same source at all three mutation counts. BlueTusk
+uses its Redis connector and Debezium uses the native Jedis client. Both apply
+documents, their reconciliation index, and the checkpoint atomically. Redis
+uses synchronous append-only writes. After each capture, the harness kills
+and restarts the isolated Redis fixture and checks every recovered document,
+source transaction ID, index entry and final checkpoint. These workloads use
+`evidence_class=diagnostic` and `families=Sync`. Sync qualification also requires
+NATS, OpenSearch, Kafka, S3 and Webhooks measurements.
 
 ## Statistics
 

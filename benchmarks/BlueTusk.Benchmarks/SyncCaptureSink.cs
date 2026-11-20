@@ -6,23 +6,45 @@ using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync;
 using BlueTusk.Sync.PostgreSql;
+using BlueTusk.Sync.Redis;
 using BlueTusk.TypeSystem;
+using StackExchange.Redis;
 
 namespace BlueTusk.Benchmarks;
 
-internal sealed class PostgreSqlSyncCaptureSink : IAsyncDisposable
+internal sealed class SyncCaptureSink : IAsyncDisposable
 {
-    private readonly BlueTuskDataSource _dataSource;
+    internal const string RedisConnectionVariable = "BLUETUSK_BENCHMARK_REDIS_ENDPOINT";
+    internal const string PipelineId = "sync_capture";
+    internal const string Collection = "streams_capture";
+    private readonly BlueTuskDataSource? _dataSource;
+    private readonly ConnectionMultiplexer? _redis;
     private readonly SyncPipeline _pipeline;
 
-    public PostgreSqlSyncCaptureSink(string sourceConnectionString, ChangeSourceIdentity source)
+    private SyncCaptureSink(ISyncDestination destination, ChangeSourceIdentity source,
+        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null)
     {
+        _dataSource = dataSource;
+        _redis = redis;
+        _pipeline = new SyncPipeline(new() { PipelineId = PipelineId }, source, new CaptureTransform(), destination);
+    }
+
+    public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
+    {
+        if (sink == "redis")
+        {
+            var redis = await ConnectRedisAsync();
+            return new(new RedisSyncDestination(new() { Connection = redis }), source, redis: redis);
+        }
         var connection = new DbConnectionStringBuilder { ConnectionString = sourceConnectionString };
         connection["Database"] = "bluetusk_sync_sink";
-        _dataSource = BlueTuskDataSource.Create(connection.ConnectionString);
-        _pipeline = new SyncPipeline(new() { PipelineId = "sync_capture" }, source, new CaptureTransform(),
-            new PostgreSqlSyncDestination(new() { DestinationDataSource = _dataSource }));
+        var dataSource = BlueTuskDataSource.Create(connection.ConnectionString);
+        return new(new PostgreSqlSyncDestination(new() { DestinationDataSource = dataSource }), source, dataSource);
     }
+
+    internal static Task<ConnectionMultiplexer> ConnectRedisAsync() =>
+        ConnectionMultiplexer.ConnectAsync(Environment.GetEnvironmentVariable(RedisConnectionVariable) ??
+            throw new InvalidOperationException("The capture requires a dedicated Redis fixture endpoint."));
 
     public ValueTask InitializeAsync(CancellationToken cancellationToken) => _pipeline.ProvisionAsync(cancellationToken);
 
@@ -48,7 +70,8 @@ internal sealed class PostgreSqlSyncCaptureSink : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await _pipeline.DisposeAsync();
-        await _dataSource.DisposeAsync();
+        if (_dataSource is not null) await _dataSource.DisposeAsync();
+        _redis?.Dispose();
     }
 
     private sealed class CaptureTransform : ISyncTransform
@@ -63,7 +86,7 @@ internal sealed class PostgreSqlSyncCaptureSink : IAsyncDisposable
             var mutations = new List<SyncMutation>(transaction.Changes.Count);
             await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
             {
-                if (change is not InsertChange { NewRow: var row } || row.Table is not { Schema: "public", Name: "streams_capture" })
+                if (change is not InsertChange { NewRow: var row } || row.Table is not { Schema: "public", Name: Collection })
                 {
                     throw new InvalidDataException("Sync received an unexpected source operation or relation.");
                 }
@@ -75,7 +98,7 @@ internal sealed class PostgreSqlSyncCaptureSink : IAsyncDisposable
                 }
                 var text = key.ToString(CultureInfo.InvariantCulture);
                 mutations.Add(new(new ChangeId(transaction.Source, transaction.CommitEndPosition, transaction.TransactionId, mutations.Count),
-                    SyncMutationKind.Upsert, "streams_capture", text, Encoding.UTF8.GetBytes($"{{\"id\":{text}}}"), "application/json"));
+                    SyncMutationKind.Upsert, Collection, text, Encoding.UTF8.GetBytes($"{{\"id\":{text}}}"), "application/json"));
                 _nextKey++;
             }
             if (mutations.Count != transaction.Changes.Count)

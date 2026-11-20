@@ -29,6 +29,12 @@ if (args is ["--streams-delivery-candidate", var streamsCaptureOptions])
     return;
 }
 
+if (args is ["--sync-redis-verify", var redisChanges, var redisSourceTransactions])
+{
+    await RedisSyncCaptureVerification.RunAsync(int.Parse(redisChanges, System.Globalization.CultureInfo.InvariantCulture), redisSourceTransactions);
+    return;
+}
+
 if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
 {
     await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);

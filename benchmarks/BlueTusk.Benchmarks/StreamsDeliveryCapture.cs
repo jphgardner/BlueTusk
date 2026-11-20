@@ -12,6 +12,7 @@ using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 using BlueTusk.Streams;
 using BlueTusk.Sync.PostgreSql;
+using BlueTusk.Sync.Redis;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Benchmarks;
@@ -51,11 +52,11 @@ internal static class StreamsDeliveryCapture
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
         var spill = options.Scenario == "spill";
-        var sync = options.Sink == "postgresql";
+        var sync = options.Sink is "postgresql" or "redis";
         var liveDelivery = options.Scenario == "commit-to-delivery" || spill;
         var snapshot = options.Scenario == "snapshot";
         if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot" or "spill") ||
-            options.Sink is not ("count" or "postgresql") || (sync && options.Scenario != "commit-to-delivery") ||
+            options.Sink is not ("count" or "postgresql" or "redis") || (sync && options.Scenario != "commit-to-delivery") ||
             options.Trial is < 0 or >= 50 || (options.ChangesPerTransaction is not (1 or 1_000) && !(sync && options.ChangesPerTransaction == 100)) ||
             (liveDelivery ? options.WarmupTransactions is < 1 or > 10_000 : options.WarmupTransactions != 0) ||
             options.MeasurementTransactions is < 1 or > 16_000 ||
@@ -73,7 +74,12 @@ internal static class StreamsDeliveryCapture
         {
             throw new PlatformNotSupportedException("Streams capture targets x64.");
         }
-        var implementationType = sync ? typeof(PostgreSqlSyncDestination) : typeof(PgOutputChangeStream);
+        var implementationType = options.Sink switch
+        {
+            "postgresql" => typeof(PostgreSqlSyncDestination),
+            "redis" => typeof(RedisSyncDestination),
+            _ => typeof(PgOutputChangeStream),
+        };
         var implementation = implementationType.Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
         if (!implementation.EndsWith($"+{options.SourceCommit}", StringComparison.Ordinal))
         {
@@ -125,7 +131,7 @@ internal static class StreamsDeliveryCapture
         var measurement = new ProviderRequestCapture.Window(
             counters.Elapsed, samples.Length, counters.Allocated, counters.Cpu, counters.PeakRss, counters.Gc, [new(samples, samples.Length)]);
         var family = sync ? "Sync" : "Streams";
-        var workload = sync ? $"{os}|Sync|mutations={options.ChangesPerTransaction}|destination=postgresql" :
+        var workload = sync ? $"{os}|Sync|mutations={options.ChangesPerTransaction}|destination={options.Sink}" :
             $"{os}|Streams|changes={options.ChangesPerTransaction}|{(spill ? $"spoolBytes={SpillBytes}" : $"scenario={options.Scenario}")}";
         var report = new PerformanceEvidenceGenerator.TrialFile(
             1, "bluetusk-performance-trial", family, workload,
@@ -142,7 +148,7 @@ internal static class StreamsDeliveryCapture
                     "snapshot" => "Time from starting the consumer to delivering each row of the consistent snapshot",
                     "catch-up" => "Time from starting the consumer to delivering each row of an already committed backlog",
                     "spill" => "WAL commit to complete disk replay, payload validation and acknowledgement",
-                    "commit-to-delivery" when sync => "WAL commit to durable PostgreSQL mutations, checkpoint and source acknowledgement",
+                    "commit-to-delivery" when sync => "WAL commit to durable destination mutations, checkpoint and source acknowledgement",
                     _ => "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
                 },
                 clockBefore,
@@ -231,7 +237,7 @@ internal static class StreamsDeliveryCapture
         {
             await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString, cancellationToken);
             var source = await ReadIdentityAsync(replication);
-            await using var syncSink = sync ? new PostgreSqlSyncCaptureSink(connectionString, source) : null;
+            await using var syncSink = sync ? await SyncCaptureSink.CreateAsync(options.Sink, connectionString, source) : null;
             if (syncSink is not null) await syncSink.InitializeAsync(cancellationToken);
             if (liveDelivery)
             {

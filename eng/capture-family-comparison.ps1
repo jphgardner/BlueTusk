@@ -51,7 +51,14 @@ if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
 {
     $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Family = $Family; Trials = $Trials; Owner = $Owner }
     if ($RunId) { $capture.RunId = $RunId }
-    & (Join-Path $PSScriptRoot 'capture-streams-delivery.ps1') @capture
+    $runner = Join-Path $PSScriptRoot 'capture-streams-delivery.ps1'
+    if ($Family -ceq 'Streams') { & $runner @capture; return }
+    foreach ($destination in 'postgresql','redis')
+    {
+        $capture.OutputPath = "$OutputPath-$destination"
+        if ($RunId) { $capture.RunId = "$RunId-$($destination[0])" }
+        & $runner @capture -SyncDestination $destination
+    }
     return
 }
 if ($Family -ceq 'ControlPlane')

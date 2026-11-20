@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 /** Native PostgreSQL baseline living in the same JVM as the Debezium Server HTTP client. */
-final class PostgreSqlCaptureSink {
+final class PostgreSqlCaptureSink implements SyncCaptureReference {
     private final Connection connection;
     private final PreparedStatement write;
     private final PreparedStatement checkpoint;
@@ -61,7 +61,7 @@ final class PostgreSqlCaptureSink {
         clearStaged = connection.prepareStatement("DELETE FROM bluetusk_sync.staged_rows WHERE source_transaction_id = ?");
     }
 
-    void deliver(long key, long transactionId, long lsn, boolean last) throws SQLException {
+    public void deliver(long key, long transactionId, long lsn, boolean last) throws SQLException {
         pending.add(new Row(key, transactionId, lsn));
         if (!last) {
             return;
@@ -97,7 +97,7 @@ final class PostgreSqlCaptureSink {
         }
     }
 
-    void beforeAcknowledge() throws SQLException {
+    public void beforeAcknowledge() throws SQLException {
         if (pending.isEmpty()) {
             return;
         }
@@ -121,8 +121,12 @@ final class PostgreSqlCaptureSink {
         }
     }
 
-    int durableFragments() {
+    public int durableFragments() {
         return durableFragments;
+    }
+
+    public String implementation() {
+        return "native PostgreSQL JDBC";
     }
 
     private void rollback(SQLException failure) {

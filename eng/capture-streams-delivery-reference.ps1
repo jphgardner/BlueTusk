@@ -4,7 +4,9 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis')][string] $Sink = 'count',
+    [string] $DotNetPath = 'dotnet',
+    [string] $BenchmarkAssemblyPath,
     [ValidateRange(1, 1000)][int] $MaxHttpBatchRows = 1000,
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
@@ -17,11 +19,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/redis-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
-$sync = $Sink -ceq 'postgresql'
+$sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
-{ throw 'The PostgreSQL Sync sink supports the live delivery scenario and 1, 100 or 1000 mutations.' }
-$suffix = if ($sync) { 'destination=postgresql' } else { Get-StreamsWorkloadSuffix $Scenario }
+{ throw 'Sync sinks support live delivery and 1, 100 or 1000 mutations.' }
+$suffix = if ($sync) { "destination=$Sink" } else { Get-StreamsWorkloadSuffix $Scenario }
 $liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
 $snapshot = $Scenario -ceq 'snapshot'
 if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
@@ -40,6 +43,14 @@ $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-
 $family = if ($sync) { 'Sync' } else { 'Streams' }
 $image = [string]$plan.families.$family.referenceImage
 if ($image -cnotmatch '^quay\.io/debezium/server:3\.6\.1\.Final@sha256:[0-9a-f]{64}$') { throw 'The Debezium reference must be pinned by digest.' }
+$dotnet = $null
+$assembly = $null
+if ($Sink -ceq 'redis')
+{
+    $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Source
+    if (-not $BenchmarkAssemblyPath) { $BenchmarkAssemblyPath = Join-Path $root 'benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll' }
+    $assembly = (Resolve-Path -LiteralPath $BenchmarkAssemblyPath).Path
+}
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 if (Test-Path -LiteralPath $output) { throw 'The reference capture requires a new output directory.' }
 $null = New-Item -ItemType Directory -Path $output
@@ -78,7 +89,10 @@ try
     $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
     $postgres = $fixture.containers[0].name
     New-StreamsCaptureTable $postgres $spill
-    if ($sync) { New-SyncPostgreSqlFixture $postgres $true }
+    if ($Sink -ceq 'postgresql') { New-SyncPostgreSqlFixture $postgres $true }
+    $redisFixture = $null
+    if ($Sink -ceq 'redis')
+    { $redisFixture = New-SyncRedisFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.redis }
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -120,13 +134,13 @@ debezium.source.offset.flush.interval.ms=1000
     [IO.File]::WriteAllText($configuration, $properties)
     [IO.File]::WriteAllText($manifest, "Premain-Class: StreamsHttpProbe`n`n")
     $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario,$Sink"
-    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/PostgreSqlCaptureSink.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
+    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/*Capture*.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
     $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$Owner" `
         --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
         --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" --entrypoint /bin/sh $image -ec $launch
     $created = $true
-    $null = Invoke-Docker cp (Join-Path $PSScriptRoot 'streams-performance/StreamsHttpProbe.java') "${reference}:/tmp/StreamsHttpProbe.java"
-    $null = Invoke-Docker cp (Join-Path $PSScriptRoot 'streams-performance/PostgreSqlCaptureSink.java') "${reference}:/tmp/PostgreSqlCaptureSink.java"
+    foreach ($java in 'StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java')
+    { $null = Invoke-Docker cp (Join-Path $PSScriptRoot "streams-performance/$java") "${reference}:/tmp/$java" }
     $null = Invoke-Docker cp $manifest "${reference}:/tmp/probe.mf"
     $null = Invoke-Docker cp $configuration "${reference}:/debezium/config/application.properties"
     [IO.File]::Delete($configuration)
@@ -180,7 +194,11 @@ debezium.source.offset.flush.interval.ms=1000
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark tracked worktree changed during capture.' }
     if ($sync)
     {
-        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions) -Reference
+        $transactions = $WarmupTransactions + $MeasurementTransactions
+        $destinationProof = if ($redisFixture)
+        { Assert-SyncRedisDelivery $postgres $redisFixture $Changes $transactions $dotnet $assembly }
+        else { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions -Reference }
+        if ($redisFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $redisFixture.Image }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }
