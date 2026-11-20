@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../benchmarks/BlueTusk.Benchmarks/ProviderRequestCaptureWindow.cs" Link="ProviderRequestCaptureWindow.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UsePublishedProvider)' == 'true'">
+    <PackageReference Include="BlueTusk.Data" Version="[1.0.0]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UsePublishedProvider)' != 'true'">
+    <ProjectReference Include="../../src/BlueTusk.Data/BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

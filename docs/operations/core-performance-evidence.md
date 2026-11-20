@@ -165,6 +165,8 @@ Each comparison uses the same host and runtime for the candidate and BlueTusk
 
 The Control Plane inventory adapter can capture its primary workload with
 `capture-control-plane-inventory.ps1 -PrimaryHotPath -ExpectedCommit <sha>`.
+The Provider probe uses the same timed measurement loop as the Provider matrix
+and can capture its comparison with `capture-provider-primary.ps1 -ExpectedCommit <sha>`.
 The Core planner requires all five captures on both operating systems before
 full qualification can run. The existing 20% improvement thresholds for P95
 latency and allocation apply to each comparison.

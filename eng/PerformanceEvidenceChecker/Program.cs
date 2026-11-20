@@ -80,7 +80,7 @@ internal static class Checker
         using var summaryDocument = JsonDocument.Parse(summaryBytes, DocumentOptions);
         var summary = summaryDocument.RootElement;
         var release = "1.1.0";
-        (int Sources, int Clients)? controlPlanePrimary = null;
+        JsonElement approvedPrimary = default;
         if (contractPath is not null)
         {
             var contractBytes = File.ReadAllBytes(contractPath);
@@ -91,8 +91,7 @@ internal static class Checker
                 "Summary contract hash differs from the selected contract.");
             if (release == "1.2.0" && contract.RootElement.TryGetProperty("primaryHotPaths", out var primaryHotPaths))
             {
-                var inventory = primaryHotPaths.GetProperty("workloads").GetProperty("ControlPlane");
-                controlPlanePrimary = (Int(inventory, "sources"), Int(inventory, "clients"));
+                approvedPrimary = primaryHotPaths.Clone();
             }
         }
         Require(Int(summary, "schemaVersion") == 1 && Str(summary, "evidenceKind") == "bluetusk-performance-summary" &&
@@ -161,7 +160,7 @@ internal static class Checker
             var produced = format switch
             {
                 "provider-request-capture-index/1" => ReadProvider(root, id, index.RootElement, input, commit, os, mapDocument.RootElement, bound),
-                "performance-trial-index/1" => ReadTrials(root, id, index.RootElement, input, commit, os, bound, controlPlanePrimary),
+                "performance-trial-index/1" => ReadTrials(root, id, index.RootElement, input, commit, os, bound, approvedPrimary),
                 _ => throw new CheckFailedException($"Input '{id}' has unknown format '{format}'."),
             };
             foreach (var trial in produced)
@@ -334,7 +333,7 @@ internal static class Checker
     }
 
     private static List<TrialMetrics> ReadTrials(string root, string id, JsonElement index, JsonElement input, string commit,
-        string os, Dictionary<string, string> bound, (int Sources, int Clients)? controlPlanePrimary)
+        string os, Dictionary<string, string> bound, JsonElement approvedPrimary)
     {
         var family = Str(index, "family");
         Require(Int(index, "schemaVersion") == 1 && Str(index, "evidenceKind") == "bluetusk-performance-trial-index" &&
@@ -346,17 +345,19 @@ internal static class Checker
         Require(images.Length > 0 && images.All(item => Regex.IsMatch(item, "^\\S+@sha256:[0-9a-f]{64}$")) &&
             images.SequenceEqual(input.GetProperty("containerImageDigests").EnumerateArray().Select(item => item.GetString()!)),
             $"Trial input '{id}' image evidence is not digest pinned or differs from the manifest.");
-        var controlPlaneQualification = family == "ControlPlane" && !Bool(index, "diagnostic") && !Bool(index, "synthetic");
-        var warmup = controlPlaneQualification ? Int(index, "warmupSeconds") : 0;
-        var window = controlPlaneQualification ? Int(index, "measurementSeconds") : 0;
-        if (controlPlaneQualification)
+        var timedQualification = family is "Provider" or "ControlPlane" && !Bool(index, "diagnostic") && !Bool(index, "synthetic");
+        var warmup = timedQualification ? Int(index, "warmupSeconds") : 0;
+        var window = timedQualification ? Int(index, "measurementSeconds") : 0;
+        var familyName = family == "ControlPlane" ? "Control Plane" : family;
+        if (timedQualification)
         {
             Require(warmup is >= 5 and <= 60 && window is >= 10 and <= 60 &&
                 Str(index, "candidateImplementation").EndsWith($"+{commit}", StringComparison.Ordinal) &&
                 Str(index, "referenceImplementation") == "1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8",
-                $"Control Plane input '{id}' must bind the committed timing, candidate and published baseline.");
+                $"{familyName} input '{id}' must bind the committed timing, candidate and published baseline.");
         }
         var result = new List<TrialMetrics>();
+        string? matchedRuntime = null;
         foreach (var record in index.GetProperty("records").EnumerateArray())
         {
             var key = Str(record, "workloadKey");
@@ -374,17 +375,35 @@ internal static class Checker
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
-            if (controlPlanePrimary is { } inventory && key == $"{os}|ControlPlane|primary-hot-path" && !Bool(index, "synthetic"))
+            if (approvedPrimary.ValueKind == JsonValueKind.Object && key == $"{os}|{family}|primary-hot-path" && !Bool(index, "synthetic"))
             {
-                Require(scan.Long("environment.sourceCount") == inventory.Sources &&
-                    scan.Long("environment.apiClientCount") == inventory.Clients && scan.Workers.Count == inventory.Clients,
-                    $"Control Plane trial '{path}' did not measure the approved primary inventory workload.");
+                var reference = Str(approvedPrimary, "referenceVersion") + "+" + Str(approvedPrimary, "referenceSourceCommit");
+                Require(Str(index, "candidateImplementation").EndsWith($"+{commit}", StringComparison.Ordinal) &&
+                    Str(index, "referenceImplementation") == reference, $"Primary comparison '{path}' has the wrong assemblies.");
+                var runtime = scan.Text("environment.runtime");
+                matchedRuntime ??= runtime;
+                Require(!string.IsNullOrWhiteSpace(runtime) && runtime == matchedRuntime, $"Primary comparison '{path}' changed runtime.");
+                var workload = approvedPrimary.GetProperty("workloads").GetProperty(family);
+                if (family == "ControlPlane")
+                {
+                    Require(scan.Long("environment.sourceCount") == Int(workload, "sources") &&
+                        scan.Long("environment.apiClientCount") == Int(workload, "clients") && scan.Workers.Count == Int(workload, "clients"),
+                        $"Control Plane trial '{path}' did not measure the approved primary inventory workload.");
+                }
+                if (family == "Provider")
+                {
+                    Require(scan.Text("environment.feature") == Str(workload, "feature") &&
+                        scan.Long("environment.concurrency") == Int(workload, "concurrency") &&
+                        scan.Text("environment.variant") == Str(workload, "variant") && !scan.Bool("environment.tlsActive") &&
+                        scan.Workers.Count == Int(workload, "concurrency"),
+                        $"Provider trial '{path}' did not measure the approved native primary query.");
+                }
             }
-            if (controlPlaneQualification)
+            if (timedQualification)
             {
                 Require(frequency > 0 && scan.Long("warmupSeconds") == warmup && scan.Long("measurementSeconds") == window &&
                     (double)scan.Long("measurement.elapsedTicks") / frequency >= window,
-                    $"Control Plane trial '{path}' has an invalid measurement window.");
+                    $"{familyName} trial '{path}' has an invalid measurement window.");
             }
             result.Add(new(key, role, trial, path, hash!, Derive(scan, frequency, path)));
         }
