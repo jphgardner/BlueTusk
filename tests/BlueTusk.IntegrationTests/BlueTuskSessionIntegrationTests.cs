@@ -817,6 +817,24 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(46, await ExecuteInt64Async(45));
         Assert.Equal(47, await ExecuteInt32Async(46));
 
+        await using (var shape = new BlueTuskCommand(
+            "SELECT NULLIF($1::int4, 0), $1::text WHERE $1::int4 >= 0", connection))
+        {
+            using var cancellable = new CancellationTokenSource();
+            var argument = new BlueTuskParameter<int>(7);
+            shape.Parameters.Add(argument);
+            Assert.Equal(7, await shape.ExecuteScalarAsync<int>());
+            argument.TypedValue = 0;
+            Assert.Null(await shape.ExecuteScalarAsync<int?>(cancellable.Token));
+            argument.TypedValue = -1;
+            Assert.Null(await shape.ExecuteScalarAsync(cancellable.Token));
+            argument.TypedValue = 9;
+            await using var reader = await shape.ExecuteReaderAsync(cancellable.Token);
+            Assert.True(await reader.ReadAsync(cancellable.Token));
+            Assert.Equal(9, reader.GetInt32(0));
+            Assert.Equal("9", reader.GetString(1));
+        }
+
         async Task<int> ExecuteInt32Async(int value)
         {
             await using var command = new BlueTuskCommand(
@@ -835,6 +853,39 @@ public sealed class BlueTuskSessionIntegrationTests
             command.Parameters.Add(
                 new BlueTuskParameter<long>(value) { ParameterName = "value" });
             return await command.ExecuteScalarAsync<int>();
+        }
+    }
+
+    [Fact]
+    public async Task Unnamed_scalar_recovers_after_an_external_result_type_change()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await using var schemaConnection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await schemaConnection.OpenAsync(CancellationToken.None);
+        var table = "scalar_refresh_" + Guid.NewGuid().ToString("N");
+        await using var ddl = new BlueTuskCommand($"CREATE TABLE {table} (value int4)", schemaConnection);
+        _ = await ddl.ExecuteNonQueryAsync(CancellationToken.None);
+        try
+        {
+            ddl.CommandText = $"INSERT INTO {table} VALUES (42)";
+            _ = await ddl.ExecuteNonQueryAsync(CancellationToken.None);
+            await using var query = new BlueTuskCommand($"SELECT value FROM {table} WHERE $1::int4 = 1", connection);
+            query.Parameters.Add(new BlueTuskParameter<int>(1));
+            Assert.Equal(42, await query.ExecuteScalarAsync<int>());
+            Assert.Equal(42, await query.ExecuteScalarAsync<int>());
+
+            ddl.CommandText = $"ALTER TABLE {table} ALTER COLUMN value TYPE text USING value::text";
+            _ = await ddl.ExecuteNonQueryAsync(CancellationToken.None);
+            var invalidated = await Assert.ThrowsAsync<BlueTuskException>(() => query.ExecuteScalarAsync<string>());
+            Assert.Equal("0A000", invalidated.SqlState);
+            Assert.Equal("42", await query.ExecuteScalarAsync<string>());
+            Assert.Equal("42", await query.ExecuteScalarAsync<string>());
+        }
+        finally
+        {
+            ddl.CommandText = $"DROP TABLE {table}";
+            _ = await ddl.ExecuteNonQueryAsync(CancellationToken.None);
         }
     }
 

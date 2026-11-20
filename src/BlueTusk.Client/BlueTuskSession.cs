@@ -783,6 +783,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             WriteExtendedScalarMessages,
             cancellationToken,
             prepareState: PrepareExtendedScalarWriteState,
+            getDescription: GetExtendedScalarDescription,
             completeState: CompleteExtendedScalarWriteState);
     }
 
@@ -2766,20 +2767,6 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return true;
     }
 
-    private void RememberUnnamedStatement(
-        string? sql,
-        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters)
-    {
-        if (sql is null)
-        {
-            return;
-        }
-
-        RememberUnnamedStatementIdentity(sql, parameters);
-        _unnamedStatementFields = null;
-        _unnamedPortalMessages = null;
-    }
-
     private void RememberUnnamedStatementFields(
         string? sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -4423,7 +4410,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         PreparedStatementDescription? preparedDescription = null,
         Func<BlueTuskSession, TState, TState>? prepareState = null,
         Func<TState, ReadOnlyMemory<byte>>? getPreEncodedMessages = null,
-        Action<BlueTuskSession, TState>? completeState = null,
+        Func<TState, PreparedStatementDescription?>? getDescription = null,
+        Action<BlueTuskSession, TState, BlueTuskScalarQueryResult>? completeState = null,
         int prependedResultSetCount = 0,
         int prependedReadyForQueryCount = 0,
         Action? prependedCompleted = null,
@@ -4444,6 +4432,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 state = prepareState(this, state);
             }
 
+            preparedDescription ??= getDescription?.Invoke(state);
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
             entered = true;
             var encodedMessages = preEncodedMessages.IsEmpty
@@ -4470,11 +4459,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     prependedResultSetCount,
                     prependedReadyForQueryCount,
                     prependedCompleted).ConfigureAwait(false);
-                completeState?.Invoke(this, state);
+                completeState?.Invoke(this, state, result);
                 return result;
             }
 
-            IReadOnlyList<BlueTuskFieldDescription> fields = [];
+            IReadOnlyList<BlueTuskFieldDescription>? fields = null;
             BlueTuskFieldDescription? firstField = preparedDescription?.FirstField;
             ReadOnlyMemory<byte>? firstValue = null;
             BlueTuskServerException? deferredError = null;
@@ -4582,8 +4571,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                             throw deferredError;
                         }
 
-                        completeState?.Invoke(this, state);
-                        return new BlueTuskScalarQueryResult(firstField, firstValue, hasValue);
+                        var result = new BlueTuskScalarQueryResult(firstField, firstValue, hasValue, fields);
+                        completeState?.Invoke(this, state, result);
+                        return result;
                     default:
                         break;
                 }
@@ -4591,6 +4581,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         catch when (entered)
         {
+            if (completeState is not null)
+            {
+                InvalidateUnnamedStatement();
+            }
+
             MarkUnusableIfWirePositionUnknown();
             throw;
         }
@@ -4688,7 +4683,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             string.Empty,
             new ExtendedQueryBindParameterSource(state.Parameters),
             state.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
-        BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+        if (state.Fields is null)
+        {
+            BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+        }
         BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
         BlueTuskFrontendMessageWriter.WriteSync(output);
     }
@@ -4732,14 +4730,20 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private static ExtendedScalarWriteState PrepareExtendedScalarWriteState(
         BlueTuskSession session,
-        ExtendedScalarWriteState state) =>
-        state with
-        {
-            ParseSql = session.GetUnnamedStatementParseSql(
-                string.Empty,
-                state.OriginalSql,
-                state.Parameters),
-        };
+        ExtendedScalarWriteState state)
+    {
+        var sql = session.GetUnnamedStatementParseSql(string.Empty, state.OriginalSql, state.Parameters);
+        // An extended-protocol Parse fixes the result type for this server statement.
+        // Reuse the portal description only when the statement and result format match.
+        var fields = sql is null && session._unnamedStatementFieldsUseBinaryResults == state.UseBinaryResults
+            ? session._unnamedStatementFields
+            : null;
+        return state with { ParseSql = sql, Fields = fields };
+    }
+
+    private static PreparedStatementDescription? GetExtendedScalarDescription(ExtendedScalarWriteState state) =>
+        state.Fields is { } fields ? new PreparedStatementDescription(
+            fields.Count == 0 ? null : fields[0], fields.Count) : null;
 
     private static ExtendedScalarWriteState PrepareBeginAndExtendedScalarWriteState(
         BlueTuskSession session,
@@ -4760,8 +4764,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private static void CompleteExtendedScalarWriteState(
         BlueTuskSession session,
-        ExtendedScalarWriteState state) =>
-        session.RememberUnnamedStatement(state.OriginalSql, state.Parameters);
+        ExtendedScalarWriteState state,
+        BlueTuskScalarQueryResult result)
+    {
+        if (result.Fields is not null || state.Fields is null)
+        {
+            session.RememberUnnamedStatementFields(
+                state.OriginalSql, state.Parameters, state.UseBinaryResults, result.Fields ?? []);
+        }
+    }
 
     private static void WriteDeferredBegin(IBufferWriter<byte> output, string beginStatement)
     {
@@ -6052,7 +6063,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Action? prependedCompleted = null,
         bool completeReadyForQuery = true)
     {
-        IReadOnlyList<BlueTuskFieldDescription> fields = [];
+        IReadOnlyList<BlueTuskFieldDescription>? fields = null;
         BlueTuskFieldDescription? firstField = preparedDescription?.FirstField;
         ReadOnlyMemory<byte>? firstValue = null;
         BlueTuskServerException? deferredError = null;
@@ -6144,7 +6155,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         throw deferredError;
                     }
 
-                    return new BlueTuskScalarQueryResult(firstField, firstValue, hasValue);
+                    return new BlueTuskScalarQueryResult(firstField, firstValue, hasValue, fields);
                 default:
                     break;
             }
@@ -7349,7 +7360,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? ParseSql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters,
         bool UseBinaryResults,
-        string? BeginStatement = null);
+        string? BeginStatement = null,
+        IReadOnlyList<BlueTuskFieldDescription>? Fields = null);
 
     private readonly record struct PortalWriteState(
         string PortalName,

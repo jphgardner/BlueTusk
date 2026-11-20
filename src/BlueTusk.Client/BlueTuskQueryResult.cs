@@ -15,7 +15,8 @@ public sealed record BlueTuskQueryResult(IReadOnlyList<BlueTuskResultSet> Result
 internal readonly record struct BlueTuskScalarQueryResult(
     BlueTuskFieldDescription? Field,
     ReadOnlyMemory<byte>? Value,
-    bool HasValue)
+    bool HasValue,
+    IReadOnlyList<BlueTuskFieldDescription>? Fields = null)
 {
     internal static BlueTuskScalarQueryResult FromQueryResult(BlueTuskQueryResult result)
     {
