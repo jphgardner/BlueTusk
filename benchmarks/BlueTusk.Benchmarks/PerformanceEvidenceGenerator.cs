@@ -47,11 +47,13 @@ internal static class PerformanceEvidenceGenerator
 
     internal sealed record TrialIndex(int SchemaVersion, string EvidenceKind, string Family, string SourceCommit,
         string Os, bool Diagnostic, bool Synthetic, int Trials, string CandidateImplementation,
-        string ReferenceImplementation, string[] ContainerImageDigests, TrialEntry[] Records, bool LeadershipGatePassed);
+        string ReferenceImplementation, string[] ContainerImageDigests, TrialEntry[] Records, bool LeadershipGatePassed,
+        int? WarmupSeconds = null, int? MeasurementSeconds = null);
     internal sealed record TrialEntry(string WorkloadKey, int Trial, string Role, string Path, string Sha256);
     internal sealed record TrialFile(int SchemaVersion, string EvidenceKind, string Family, string WorkloadKey,
         string Role, int Trial, string SourceCommit, bool Diagnostic, bool Synthetic, string Implementation,
-        JsonElement Environment, long Frequency, ProviderRequestCapture.Window Measurement);
+        JsonElement Environment, long Frequency, ProviderRequestCapture.Window Measurement,
+        int? WarmupSeconds = null, int? MeasurementSeconds = null);
 
     internal static async Task RunAsync(string osRoot, string expectedCommit, string os, string contractPath,
         string variantMapPath, bool allowSynthetic)
@@ -453,6 +455,14 @@ internal static class PerformanceEvidenceGenerator
         {
             throw new InvalidDataException($"Trial input '{id}' identity, family, bounds or image evidence is invalid.");
         }
+        var controlPlaneQualification = index is { Family: "ControlPlane", Diagnostic: false, Synthetic: false };
+        if (controlPlaneQualification && (index.WarmupSeconds is not (>= 5 and <= 60) ||
+            index.MeasurementSeconds is not (>= 10 and <= 60) ||
+            !index.CandidateImplementation.EndsWith($"+{commit}", StringComparison.Ordinal) ||
+            index.ReferenceImplementation != "1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8"))
+        {
+            throw new InvalidDataException($"Control Plane input '{id}' must bind the committed timing, candidate and published baseline.");
+        }
         var seen = new HashSet<(string, int, string)>();
         var files = new List<string> { TrialIndexName };
         var values = new List<TrialValues>();
@@ -482,6 +492,12 @@ internal static class PerformanceEvidenceGenerator
                 trial.Environment.GetProperty("architecture").GetString() != "x64")
             {
                 throw new InvalidDataException($"Trial '{entry.Path}' identity does not match its index.");
+            }
+            if (controlPlaneQualification && (trial.WarmupSeconds != index.WarmupSeconds ||
+                trial.MeasurementSeconds != index.MeasurementSeconds ||
+                (double)trial.Measurement.ElapsedTicks / trial.Frequency < index.MeasurementSeconds!.Value))
+            {
+                throw new InvalidDataException($"Control Plane trial '{entry.Path}' has an invalid measurement window.");
             }
             var metrics = ProviderRequestStatistics.Derive(trial.Measurement, trial.Frequency);
             files.Add(entry.Path);

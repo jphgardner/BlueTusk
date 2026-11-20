@@ -62,7 +62,7 @@
       "method": "cross-runtime"
     },
     "ControlPlane": {
-      "status": "stub-fails-closed",
+      "status": "implemented",
       "format": "performance-trial-index/1",
       "reference": "BlueTusk 1.0.0 plus absolute scaling budgets",
       "method": "unique"

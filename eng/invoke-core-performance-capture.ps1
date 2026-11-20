@@ -72,7 +72,8 @@ try
     if ($Kind -eq 'family')
     {
         & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family $Family -ExpectedCommit $ExpectedCommit `
-            -OutputPath $output -Trials $Trials -Diagnostic:$Diagnostic
+            -OutputPath $output -Trials $Trials -Diagnostic:$Diagnostic -Owner $Owner `
+            -RunId "$RunId-$($Os.Substring(0, 3))-cp" -WarmupSeconds $WarmupSeconds -MeasurementSeconds $MeasurementSeconds
         return
     }
     $map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json

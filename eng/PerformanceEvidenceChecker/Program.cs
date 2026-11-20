@@ -340,6 +340,16 @@ internal static class Checker
         Require(images.Length > 0 && images.All(item => Regex.IsMatch(item, "^\\S+@sha256:[0-9a-f]{64}$")) &&
             images.SequenceEqual(input.GetProperty("containerImageDigests").EnumerateArray().Select(item => item.GetString()!)),
             $"Trial input '{id}' image evidence is not digest pinned or differs from the manifest.");
+        var controlPlaneQualification = family == "ControlPlane" && !Bool(index, "diagnostic") && !Bool(index, "synthetic");
+        var warmup = controlPlaneQualification ? Int(index, "warmupSeconds") : 0;
+        var window = controlPlaneQualification ? Int(index, "measurementSeconds") : 0;
+        if (controlPlaneQualification)
+        {
+            Require(warmup is >= 5 and <= 60 && window is >= 10 and <= 60 &&
+                Str(index, "candidateImplementation").EndsWith($"+{commit}", StringComparison.Ordinal) &&
+                Str(index, "referenceImplementation") == "1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8",
+                $"Control Plane input '{id}' must bind the committed timing, candidate and published baseline.");
+        }
         var result = new List<TrialMetrics>();
         foreach (var record in index.GetProperty("records").EnumerateArray())
         {
@@ -357,7 +367,14 @@ internal static class Checker
                 scan.Text("environment.os") == os && scan.Text("environment.architecture") == "x64" &&
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
-            result.Add(new(key, role, trial, path, hash!, Derive(scan, scan.Long("frequency"), path)));
+            var frequency = scan.Long("frequency");
+            if (controlPlaneQualification)
+            {
+                Require(frequency > 0 && scan.Long("warmupSeconds") == warmup && scan.Long("measurementSeconds") == window &&
+                    (double)scan.Long("measurement.elapsedTicks") / frequency >= window,
+                    $"Control Plane trial '{path}' has an invalid measurement window.");
+            }
+            result.Add(new(key, role, trial, path, hash!, Derive(scan, frequency, path)));
         }
         return result;
     }

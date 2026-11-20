@@ -127,22 +127,38 @@ public sealed class PostgreSqlControlPlaneQueryServiceTests
         await using var dataSource = BlueTuskDataSource.Create("Host=localhost;Database=test;Username=test");
         var instances = Enumerable.Range(0, 100).Select(index =>
             new ControlPlanePostgreSqlSource(index.ToString("D3", CultureInfo.InvariantCulture), dataSource, dataSource)).ToArray();
-        var slow = true;
-        var service = new PostgreSqlControlPlaneQueryService(instances,
-            Options(TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(40)), null, async (instance, token) =>
+        var options = Options(TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(30));
+        var clock = new RefreshBudgetTimeProvider(options.RefreshBudget);
+        using var watchdog = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var blockReads = true;
+        var blockedReads = 0;
+        var service = new PostgreSqlControlPlaneQueryService(instances, options, clock, async (instance, token) =>
             {
-                if (slow) await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                if (Volatile.Read(ref blockReads))
+                {
+                    Interlocked.Increment(ref blockedReads);
+                    await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                }
                 return [Snapshot(instance.InstanceName)];
             });
 
-        var timedOut = await service.GetOverviewAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        var blockedRefresh = service.GetOverviewAsync(watchdog.Token).AsTask();
+        Assert.Equal(options.MaximumParallelInstances, Volatile.Read(ref blockedReads));
+        var expireBudget = await clock.FirstBudget.WaitAsync(watchdog.Token);
+        expireBudget();
+        var timedOut = await blockedRefresh;
         Assert.Empty(timedOut.Sources);
+        Assert.Equal(instances.Length, timedOut.Instances.Count);
         Assert.All(timedOut.Instances, status => Assert.Equal("refresh_budget_exceeded", status.DiagnosticCode));
-        slow = false;
-        // Let canceled reads release their concurrency slots before recovery.
-        await Task.Delay(20);
-        var recovered = await service.GetOverviewAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.Equal(100, recovered.Sources.Count);
+        Volatile.Write(ref blockReads, false);
+
+        // A canceled provider read may still be unwinding when the first retry starts.
+        var recovered = await service.GetOverviewAsync(watchdog.Token);
+        while (recovered.Sources.Count != instances.Length)
+        {
+            await Task.Delay(10, watchdog.Token);
+            recovered = await service.GetOverviewAsync(watchdog.Token);
+        }
         Assert.All(recovered.Instances, status => Assert.Equal(ControlPlaneInstanceAvailability.Current, status.Availability));
     }
 
@@ -186,5 +202,23 @@ public sealed class PostgreSqlControlPlaneQueryServiceTests
     {
         public DateTimeOffset Now { get; set; } = new(2026, 10, 25, 9, 0, 0, TimeSpan.Zero);
         public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    private sealed class RefreshBudgetTimeProvider(TimeSpan refreshBudget) : TimeProvider
+    {
+        private readonly TaskCompletionSource<Action> _firstBudget = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<Action> FirstBudget => _firstBudget.Task;
+
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            if (dueTime != refreshBudget)
+            {
+                return base.CreateTimer(callback, state, dueTime, period);
+            }
+
+            _firstBudget.TrySetResult(() => callback(state));
+            return base.CreateTimer(callback, state, Timeout.InfiniteTimeSpan, period);
+        }
     }
 }
