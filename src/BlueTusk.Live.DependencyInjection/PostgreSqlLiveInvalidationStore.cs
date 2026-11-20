@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using BlueTusk.Data;
 using BlueTusk.Streams;
 
 namespace BlueTusk.Live.DependencyInjection;
@@ -141,16 +142,16 @@ public sealed class PostgreSqlLiveInvalidationStore :
             writer.WriteEndArray();
         }
 
-        var hasAmbientTransaction = System.Transactions.Transaction.Current is not null;
-        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         // Keep the explicit commit when a provider can enlist connections in an ambient transaction.
-        await using var dbTransaction = hasAmbientTransaction
-            ? await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false)
+        var hasAmbientTransaction = System.Transactions.Transaction.Current is not null;
+        await using var connection = hasAmbientTransaction || _dataSource is not BlueTuskDataSource
+            ? await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false)
             : null;
-        await using var command = connection.CreateCommand();
-        command.Transaction = dbTransaction;
+        await using var dbTransaction = hasAmbientTransaction
+            ? await connection!.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false)
+            : null;
         // The invalidation and its dependency rows become visible in the same commit.
-        command.CommandText = $"""
+        var sql = $"""
             WITH invalidation AS (
                 INSERT INTO {_invalidationsTable} (
                     database_identity, source_fingerprint, commit_position, transaction_id, committed_at)
@@ -166,6 +167,12 @@ public sealed class PostgreSqlLiveInvalidationStore :
                 ON CONFLICT DO NOTHING)
             SELECT cursor FROM invalidation
             """;
+        await using var command = connection is null ? CreateStandaloneWrite(sql) : connection.CreateCommand();
+        if (connection is not null)
+        {
+            command.CommandText = sql;
+            command.Transaction = dbTransaction;
+        }
         AddParameter(command, "database", databaseIdentity);
         AddParameter(command, "source", transaction.Source.Fingerprint);
         AddParameter(command, "position", (decimal)transaction.CommitEndPosition.Value);
@@ -326,13 +333,19 @@ public sealed class PostgreSqlLiveInvalidationStore :
         }
 
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
-        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        if (System.Transactions.Transaction.Current is null && request.ExpectedLastSequence > 0 && request.Events.Count == 1 &&
-            await TryAppendSingleReplayAsync(connection, request, cancellationToken).ConfigureAwait(false))
+        var singleAppend = System.Transactions.Transaction.Current is null && request.ExpectedLastSequence > 0 && request.Events.Count == 1;
+        await using var existingConnection = singleAppend && _dataSource is BlueTuskDataSource
+            ? null
+            : await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        if (singleAppend && await TryAppendSingleReplayAsync(existingConnection, request, cancellationToken).ConfigureAwait(false))
         {
             return new LiveReplayAppendResult(LiveReplayAppendStatus.Stored, request.Events[0].Sequence);
         }
 
+        await using var fallbackConnection = existingConnection is null
+            ? await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false)
+            : null;
+        var connection = existingConnection ?? fallbackConnection!;
         await using var transaction = await connection.BeginTransactionAsync(
             IsolationLevel.ReadCommitted,
             cancellationToken).ConfigureAwait(false);
@@ -407,17 +420,14 @@ public sealed class PostgreSqlLiveInvalidationStore :
     }
 
     private async ValueTask<bool> TryAppendSingleReplayAsync(
-        DbConnection connection,
+        DbConnection? connection,
         LiveReplayAppendRequest request,
         CancellationToken cancellationToken)
     {
         var replayEvent = request.Events[0];
         // If another writer advanced the sequence, the UPDATE returns nothing.
         // The existing conflict path then checks whether the request was already stored.
-        var inserted = await ExecuteAsync(
-            connection,
-            transaction: null,
-            $"""
+        var sql = $"""
             WITH advanced AS (
                 UPDATE {_replaySubscriptionsTable}
                 SET last_sequence = @sequence,
@@ -429,17 +439,26 @@ public sealed class PostgreSqlLiveInvalidationStore :
                 identity_fingerprint, sequence, event_kind, content_type, payload, integrity_hash)
             SELECT identity_fingerprint, @sequence, @kind, @content_type, @payload, @integrity
             FROM advanced
-            """,
-            cancellationToken,
-            ("identity", request.Identity.Fingerprint),
-            ("expected", request.ExpectedLastSequence),
-            ("sequence", replayEvent.Sequence),
-            ("kind", (int)replayEvent.Kind),
-            ("content_type", replayEvent.ContentType),
-            ("payload", replayEvent.Payload.ToArray()),
-            ("integrity", replayEvent.IntegrityHash.ToArray()),
-            ("retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds)).ConfigureAwait(false);
-        return inserted == 1;
+            """;
+        await using var command = connection is null ? CreateStandaloneWrite(sql + "\nRETURNING sequence") : connection.CreateCommand();
+        if (connection is not null)
+        {
+            command.CommandText = sql;
+        }
+        AddParameter(command, "identity", request.Identity.Fingerprint);
+        AddParameter(command, "expected", request.ExpectedLastSequence);
+        AddParameter(command, "sequence", replayEvent.Sequence);
+        AddParameter(command, "kind", (int)replayEvent.Kind);
+        AddParameter(command, "content_type", replayEvent.ContentType);
+        AddParameter(command, "payload", replayEvent.Payload.ToArray());
+        AddParameter(command, "integrity", replayEvent.IntegrityHash.ToArray());
+        AddParameter(command, "retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds);
+        if (connection is not null)
+        {
+            return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 1;
+        }
+        var inserted = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return inserted is not null and not DBNull;
     }
 
     ValueTask<LiveReplayAppendResult> ILiveReplayStore.AppendAsync(
@@ -762,6 +781,15 @@ public sealed class PostgreSqlLiveInvalidationStore :
         parameter.ParameterName = name;
         parameter.Value = value;
         command.Parameters.Add(parameter);
+    }
+
+    private BlueTuskCommand CreateStandaloneWrite(string sql)
+    {
+        // The provider can prepend a pending pool reset to this scalar exchange. Keep these
+        // writes on their own connection so they retain the existing commit boundary.
+        var command = ((BlueTuskDataSource)_dataSource).CreateCommand(sql);
+        command.MultiplexingMode = BlueTuskMultiplexingMode.Disable;
+        return command;
     }
 
     private sealed record ReplayState(long FirstAvailableSequence, long LastSequence);

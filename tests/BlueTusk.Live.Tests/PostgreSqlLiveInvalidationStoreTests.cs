@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Data;
 using BlueTusk.Live.DependencyInjection;
 using BlueTusk.Streams;
@@ -258,6 +259,38 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
     }
 
     [PostgreSqlFact]
+    public async Task Store_uses_the_opening_hook_of_a_custom_control_data_source()
+    {
+        var schema = "bluetusk_live_custom_" + Guid.NewGuid().ToString("N");
+        var token = TestContext.Current.CancellationToken;
+        await using var provider = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
+        await using var dataSource = new OpenOnlyDataSource(provider);
+        var store = new PostgreSqlLiveInvalidationStore(new() { ControlDataSource = dataSource, ControlSchema = schema });
+        try
+        {
+            await using var delivery = Delivery(Table("sales", "orders"), transactionId: 33, position: 100);
+            var cursor = await store.AppendAsync("primary", delivery.Transaction, token);
+            Assert.Equal(cursor, await store.GetCurrentCursorAsync("primary", token));
+            Assert.True(await store.HasChangesAsync("primary", [new LiveTableDependency("sales", "orders")],
+                new LiveInvalidationCursor(0), cursor, token));
+
+            var identity = Identity();
+            var initial = new LiveReplayAppendRequest(identity, 0,
+                [new LiveReplayEvent(1, LiveEventKind.InitialResult, LiveReplayJsonSerializer.ContentType, "initial"u8)]);
+            var update = new LiveReplayAppendRequest(identity, 1,
+                [new LiveReplayEvent(2, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, "updated"u8)]);
+            Assert.Equal(LiveReplayAppendStatus.Stored, (await store.AppendReplayAsync(initial, token)).Status);
+            Assert.Equal(LiveReplayAppendStatus.Stored, (await store.AppendReplayAsync(update, token)).Status);
+            Assert.Equal(LiveReplayAppendStatus.AlreadyStored, (await store.AppendReplayAsync(update, token)).Status);
+            Assert.Equal(LiveEventKind.RowUpdated, Assert.Single((await store.ReadAsync(identity, 1, 10, token)).Events).Kind);
+        }
+        finally
+        {
+            await DropSchemaAsync(provider, schema);
+        }
+    }
+
+    [PostgreSqlFact]
     public async Task Store_migrates_v1_metadata_and_rejects_future_schema_versions()
     {
         var schema = "bluetusk_live_upgrade_" + Guid.NewGuid().ToString("N");
@@ -378,6 +411,17 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
     }
 
     private sealed record TestRow(int Id);
+
+    private sealed class OpenOnlyDataSource(DbDataSource dataSource) : DbDataSource
+    {
+        public override string ConnectionString => dataSource.ConnectionString;
+        protected override DbConnection CreateDbConnection() => throw new NotSupportedException();
+        protected override DbConnection OpenDbConnection() => dataSource.OpenConnection();
+        protected override ValueTask<DbConnection> OpenDbConnectionAsync(CancellationToken cancellationToken = default) =>
+            dataSource.OpenConnectionAsync(cancellationToken);
+        protected override DbCommand CreateDbCommand([AllowNull] string commandText) => throw new NotSupportedException();
+        protected override DbBatch CreateDbBatch() => throw new NotSupportedException();
+    }
 
     private sealed class TrackingObserver : IChangeDeliveryObserver
     {

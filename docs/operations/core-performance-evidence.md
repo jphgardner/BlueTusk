@@ -160,6 +160,12 @@ The probe verifies the key, revision and sequence received by every subscriber.
 These captures cover the affected-key update scenario. Churn and slow-client
 capture are required separately for the full Live comparison.
 
+Use `-ProfileStages` to time the source commit, change feed, invalidation
+write, publication and subscriber receipts for each timed update. The
+publication time includes the authoritative query, which the profile also
+records separately. The capture prints the profile directory under its
+working artifacts.
+
 ## Primary workloads for v1.2
 
 Each comparison uses the same host and runtime for the candidate and BlueTusk
