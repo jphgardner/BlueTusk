@@ -33,7 +33,7 @@ spec:
           emptyDir: {sizeLimit: 32Gi}
       initContainers:
         - name: tools
-          image: mcr.microsoft.com/powershell@sha256:73c08403182e3cd1a62176b6723645b2d2037cda8deefc0e2c2c01cb814abe43
+          image: mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:a82c44c2efe00953d66a37e90d307c4cfbd1e974b16e3b2a2fc665331946c9af
           command: [/bin/sh, -ec]
           args:
             - |
@@ -97,7 +97,12 @@ spec:
               export DOCKER_CONFIG="$(mktemp -d)"
               printf '%s\n' '{"cliPluginsExtraDirs":["/tools/plugins"]}' > "$DOCKER_CONFIG/config.json"
               docker info --format '{{.ServerVersion}}'
-              pwsh -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()'
+              pwsh -NoProfile -NonInteractive -Command '
+                if (-not (Get-Command ConvertFrom-Json).Parameters.ContainsKey("DateKind")) {
+                  throw "Core evidence requires a PowerShell runtime that preserves JSON timestamps as strings."
+                }
+                $PSVersionTable.PSVersion.ToString()
+              '
               jit="$RUNNER_JIT_CONFIG"
               unset RUNNER_JIT_CONFIG
               exec /home/runner/run.sh --jitconfig "$jit"
