@@ -48,15 +48,15 @@ final class S3CaptureSink implements SyncCaptureReference {
     private static final String TRANSFORM_FINGERPRINT = digest(identity(TRANSFORM, "1", ""));
     private static final MessageType SCHEMA = MessageTypeParser.parseMessageType("""
         message S3SyncParquetRow {
-          required binary DeliveryId (STRING);
+          optional binary DeliveryId (STRING);
           required int32 Ordinal;
-          required binary StableId (STRING);
-          required binary Kind (STRING);
-          required binary Collection (STRING);
+          optional binary StableId (STRING);
+          optional binary Kind (STRING);
+          optional binary Collection (STRING);
           optional binary Key (STRING);
           optional binary ContentType (STRING);
           optional binary PartitionKey (STRING);
-          required binary Content;
+          optional binary Content;
         }
         """);
     private static final ObjectMapper JSON = new ObjectMapper();
