@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -14,10 +14,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$liveDelivery = $Scenario -ceq 'commit-to-delivery'
+. (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
+$spill = $Scenario -ceq 'spill'
+$liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
 $snapshot = $Scenario -ceq 'snapshot'
+if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
+if ($spill -and -not $PSBoundParameters.ContainsKey('MeasurementTransactions')) { $MeasurementTransactions = 8 }
 if (-not $liveDelivery -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
-if ($liveDelivery -eq ($WarmupTransactions -eq 0)) { throw 'Only live commit-to-delivery capture uses warmup transactions.' }
+if ($liveDelivery -eq ($WarmupTransactions -eq 0) -or ($spill -and $WarmupTransactions + $MeasurementTransactions -gt 32))
+{ throw 'Live delivery needs warmup. A spill capture supports up to 32 total transactions.' }
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use a Windows or Linux benchmark host.' }
 $head = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit) { throw 'The benchmark checkout differs from the expected commit.' }
@@ -59,44 +64,30 @@ function Wait-Delivery([string] $Expected)
     throw "The Debezium reference did not reach delivery state '$Expected'. See 'debezium.log'."
 }
 
-function Write-Transactions([int] $Start, [int] $Count)
-{
-    # psql sends each statement as a separate autocommitted transaction, as in the candidate capture.
-    & {
-        for ($index = $Start; $index -lt $Start + $Count; $index++)
-        {
-            $first = $index * [long]$Changes + 1
-            $last = $first + $Changes - 1
-            "INSERT INTO public.streams_capture SELECT generate_series($first, $last);"
-        }
-    } | & docker exec -i $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark
-    if ($LASTEXITCODE) { throw 'The independent PostgreSQL workload writer failed.' }
-}
-
 try
 {
     & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
         -OutputPath $fixturePath -SourceCommit $ExpectedCommit -LogicalReplication
     $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
     $postgres = $fixture.containers[0].name
-    $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
-    $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
+    New-StreamsCaptureTable $postgres $spill
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
             -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
     }
-    if (-not $liveDelivery) { Write-Transactions 0 $MeasurementTransactions }
+    if (-not $liveDelivery) { Write-StreamsTransactions $postgres $Changes 0 $MeasurementTransactions $spill }
 
     $connection = [Data.Common.DbConnectionStringBuilder]::new()
     $connection.set_ConnectionString([IO.File]::ReadAllText((Join-Path $fixtureDirectory 'container-connection.secret')))
     $snapshotMode = if ($snapshot) { 'initial' } else { 'no_data' }
+    $httpBatchSize = if ($spill) { $Changes } else { 1000 }
     $properties = @"
 debezium.sink.type=http
 debezium.sink.http.url=http://127.0.0.1:8081/events
 debezium.sink.http.retries=0
 debezium.sink.http.batch.enabled=true
-debezium.sink.http.batch.max-size=1000
+debezium.sink.http.batch.max-size=$httpBatchSize
 debezium.format.value=json
 debezium.format.value.schemas.enable=false
 debezium.source.connector.class=io.debezium.connector.postgresql.PostgresConnector
@@ -107,6 +98,7 @@ debezium.source.database.password=$($connection['Password'])
 debezium.source.database.dbname=bluetusk_benchmark
 debezium.source.database.sslmode=disable
 debezium.source.plugin.name=pgoutput
+debezium.source.binary.handling.mode=base64
 debezium.source.slot.name=streams_capture
 debezium.source.publication.name=streams_capture
 debezium.source.publication.autocreate.mode=disabled
@@ -144,10 +136,10 @@ debezium.source.offset.flush.interval.ms=1000
         } while ([DateTimeOffset]::UtcNow -lt $slotDeadline)
         if ($slot -cne 't') { throw 'The reference did not open the pinned PostgreSQL publication slot.' }
 
-        Write-Transactions 0 $WarmupTransactions
+        Write-StreamsTransactions $postgres $Changes 0 $WarmupTransactions $spill
         Wait-Delivery ([string]($Changes * [long]$WarmupTransactions))
         $null = Invoke-Docker exec $reference curl --silent --show-error --fail --max-time 3 --request POST 'http://127.0.0.1:8081/measure'
-        Write-Transactions $WarmupTransactions $MeasurementTransactions
+        Write-StreamsTransactions $postgres $Changes $WarmupTransactions $MeasurementTransactions $spill
     }
     Wait-Delivery 'complete'
     $captured = Join-Path $fixtureDirectory 'reference.json'
@@ -160,7 +152,7 @@ debezium.source.offset.flush.interval.ms=1000
     $expectedCommitTimestamps = if ($snapshot) { 0 } else { $commits.Count }
     if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $expectedCommitTimestamps -or
         $capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
-        -not $capture.workloadKey.EndsWith("|scenario=$Scenario", [StringComparison]::Ordinal) -or
+        -not $capture.workloadKey.EndsWith("|$(Get-StreamsWorkloadSuffix $Scenario)", [StringComparison]::Ordinal) -or
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
     { throw 'The reference capture did not match its measured workload.' }
     for ($index = 0; $index -lt $commits.Count; $index++)
@@ -172,6 +164,7 @@ debezium.source.offset.flush.interval.ms=1000
             [long]$microseconds -ne $capture.environment.commitMicrosByTransaction[$index]))
         { throw "Debezium delivery timestamps differ from PostgreSQL commit history at measured transaction $index." }
     }
+    if ($spill) { Assert-StreamsSpillPayload $postgres $warmupRows $MeasurementTransactions $capture }
     $finalHead = (& git -C $root rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or $finalHead -cne $ExpectedCommit) { throw 'The benchmark checkout changed during capture.' }
     $dirty = & git -C $root status --porcelain --untracked-files=no

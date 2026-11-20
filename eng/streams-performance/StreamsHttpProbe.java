@@ -11,7 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Map;
 
 /** Counts actual HTTP deliveries inside the pinned Debezium JVM. */
@@ -21,6 +25,8 @@ public final class StreamsHttpProbe {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final long TICKS_PER_SECOND = 10_000_000;
     private static final int MAX_HTTP_BATCH_BYTES = 2 * 1024 * 1024;
+    private static final int SPILL_BYTES = 4 * 1024 * 1024;
+    private static final int MAX_SPILL_HTTP_BATCH_BYTES = 8 * 1024 * 1024;
 
     private final int changes;
     private final int warmupRows;
@@ -32,12 +38,16 @@ public final class StreamsHttpProbe {
     private final String scenario;
     private final boolean liveDelivery;
     private final boolean snapshot;
+    private final boolean spill;
     private final long[] ticks;
     private final long[] commitMicros;
     private final long[] transactionIds;
+    private final String[] spillPayloadSha256;
+    private final MessageDigest spillHash;
     private final ThreadMXBean threads = (ThreadMXBean) ManagementFactory.getThreadMXBean();
     private final OperatingSystemMXBean process = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
     private int delivered;
+    private int spillPayloadBytes;
     private long started;
     private long allocationBefore;
     private long cpuBefore;
@@ -62,7 +72,7 @@ public final class StreamsHttpProbe {
         var fields = arguments.split(",", -1);
         if (fields.length != 8 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
-            !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot") ||
+            !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
             !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
@@ -72,10 +82,12 @@ public final class StreamsHttpProbe {
         measuredRows = Math.multiplyExact(changes, transactions);
         trial = Integer.parseInt(fields[3]);
         scenario = fields[7];
-        liveDelivery = scenario.equals("commit-to-delivery");
+        spill = scenario.equals("spill");
+        liveDelivery = scenario.equals("commit-to-delivery") || spill;
         snapshot = scenario.equals("snapshot");
         if ((changes != 1 && changes != 1_000) || (liveDelivery ? warmupRows < 1 : warmupRows != 0) || warmupRows > 10_000_000 ||
-            transactions < 1 || transactions > 16_000 || measuredRows > 1_048_576 || trial < 0 || trial >= 50) {
+            transactions < 1 || transactions > 16_000 || measuredRows > 1_048_576 || trial < 0 || trial >= 50 ||
+            (spill && warmupRows / changes + transactions > 32)) {
             throw new IllegalArgumentException("The Streams capture exceeds its workload bounds.");
         }
         commit = fields[4];
@@ -84,6 +96,8 @@ public final class StreamsHttpProbe {
         ticks = new long[measuredRows];
         commitMicros = new long[snapshot ? 0 : transactions];
         transactionIds = new long[snapshot ? 0 : transactions];
+        spillPayloadSha256 = new String[spill ? transactions : 0];
+        spillHash = spill ? sha256() : null;
         if (!threads.isThreadAllocatedMemorySupported()) {
             throw new IllegalStateException("The reference JVM must expose its process allocation counter.");
         }
@@ -117,8 +131,9 @@ public final class StreamsHttpProbe {
             if (!exchange.getRequestMethod().equals("POST") || failed || complete) {
                 throw new IllegalStateException("Unexpected delivery request.");
             }
-            var bytes = exchange.getRequestBody().readNBytes(MAX_HTTP_BATCH_BYTES + 1);
-            if (bytes.length > MAX_HTTP_BATCH_BYTES) {
+            int maxBytes = spill ? MAX_SPILL_HTTP_BATCH_BYTES : MAX_HTTP_BATCH_BYTES;
+            var bytes = exchange.getRequestBody().readNBytes(maxBytes + 1);
+            if (bytes.length > maxBytes) {
                 throw new IllegalStateException("The delivery exceeded the fixture byte bound.");
             }
             var body = JSON.readTree(bytes);
@@ -144,9 +159,10 @@ public final class StreamsHttpProbe {
         }
     }
 
-    private void recordEvent(JsonNode event, Instant received, long receivedAt) {
+    private void recordEvent(JsonNode event, Instant received, long receivedAt) throws IOException {
         var source = event.required("source");
-        var row = event.required("after").required("id");
+        var after = event.required("after");
+        var row = after.required("id");
         if (delivered >= warmupRows + measuredRows || !row.isIntegralNumber() ||
             !event.required("op").asText().equals(snapshot ? "r" : "c") || !source.required("version").asText().equals(VERSION) ||
             !source.required("schema").asText().equals("public") || !source.required("table").asText().equals("streams_capture")) {
@@ -163,6 +179,9 @@ public final class StreamsHttpProbe {
                     throw new IllegalStateException("A measured row arrived before the measurement marker.");
                 }
                 recordDelivery(source, received, receivedAt);
+            }
+            if (spill) {
+                recordSpillPayload(after.required("payload"));
             }
         }
         delivered++;
@@ -190,12 +209,45 @@ public final class StreamsHttpProbe {
         } else if (commitMicros[batch] != timestamp.longValue() || transactionIds[batch] != transaction.longValue()) {
             throw new IllegalStateException("Rows in a transaction reported different source positions.");
         }
+        if (spill) {
+            return;
+        }
         long receiveTicks = received.getEpochSecond() * TICKS_PER_SECOND + received.getNano() / 100;
         long latency = liveDelivery ? receiveTicks - timestamp.longValue() * 10 : (receivedAt - started) / 100;
         if (latency <= 0) {
             throw new IllegalStateException("The Streams delivery latency must be positive.");
         }
         ticks[sample] = latency;
+    }
+
+    private void recordSpillPayload(JsonNode payload) throws IOException {
+        if (!payload.isTextual()) {
+            throw new IllegalStateException("The Debezium sink did not deliver a binary payload.");
+        }
+        var bytes = payload.binaryValue();
+        spillPayloadBytes += bytes.length;
+        if (spillPayloadBytes > SPILL_BYTES) {
+            throw new IllegalStateException("The Debezium sink delivered more than 4 MiB in a single transaction.");
+        }
+        spillHash.update(bytes);
+        if ((delivered + 1) % changes != 0) {
+            return;
+        }
+        if (spillPayloadBytes != SPILL_BYTES) {
+            throw new IllegalStateException("The Debezium sink did not deliver the complete 4 MiB payload.");
+        }
+        spillPayloadBytes = 0;
+        var digest = spillHash.digest();
+        if (delivered >= warmupRows) {
+            int batch = (delivered - warmupRows) / changes;
+            spillPayloadSha256[batch] = HexFormat.of().formatHex(digest);
+            var consumed = Instant.now();
+            long latency = consumed.getEpochSecond() * TICKS_PER_SECOND + consumed.getNano() / 100 - commitMicros[batch] * 10;
+            if (latency <= 0) {
+                throw new IllegalStateException("The Streams spill latency must be positive.");
+            }
+            Arrays.fill(ticks, batch * changes, (batch + 1) * changes, latency);
+        }
     }
 
     private void writeResult() throws IOException {
@@ -218,10 +270,16 @@ public final class StreamsHttpProbe {
             "peakRss", "JVM process VmHWM, including the loopback HTTP sink");
         var capture = JSON.createObjectNode();
         capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", "Streams")
-            .put("workloadKey", hostOs + "|Streams|changes=" + changes + "|scenario=" + scenario)
+            .put("workloadKey", hostOs + "|Streams|changes=" + changes + (spill ? "|spoolBytes=" + SPILL_BYTES : "|scenario=" + scenario))
             .put("role", "reference").put("trial", trial).put("sourceCommit", commit).put("diagnostic", true)
             .put("synthetic", false).put("implementation", "Debezium Server " + VERSION).put("frequency", TICKS_PER_SECOND);
-        capture.set("environment", JSON.valueToTree(environment));
+        var environmentNode = JSON.createObjectNode();
+        environment.forEach((key, value) -> environmentNode.set(key, JSON.valueToTree(value)));
+        if (spill) {
+            environmentNode.set("spillPayloadSha256", JSON.valueToTree(spillPayloadSha256));
+            environmentNode.put("latency", "WAL commit to complete payload validation in the reference HTTP sink");
+        }
+        capture.set("environment", environmentNode);
         capture.set("measurement", JSON.valueToTree(measurement));
         var temporary = OUTPUT.resolveSibling(OUTPUT.getFileName() + ".tmp");
         JSON.writeValue(temporary.toFile(), capture);
@@ -231,6 +289,14 @@ public final class StreamsHttpProbe {
     private static long collections() {
         return ManagementFactory.getGarbageCollectorMXBeans().stream()
             .mapToLong(collector -> collector.getCollectionCount()).filter(count -> count >= 0).sum();
+    }
+
+    private static MessageDigest sha256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("The reference JVM must support SHA-256.", exception);
+        }
     }
 
     private static void respond(HttpExchange exchange, int code, String body) throws IOException {

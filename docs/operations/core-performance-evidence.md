@@ -76,8 +76,8 @@ and client count. It binds each trial to the candidate commit, the published
 to diagnostics. The qualification workflow requires a clean checkout and the
 committed minimum trial count and measurement windows.
 
-The Streams diagnostic runs consistent snapshot, live commit-to-delivery and
-WAL backlog catch-up at both transaction sizes. It alternates implementations and
+The Streams diagnostic runs consistent snapshot, live commit-to-delivery,
+WAL backlog catch-up, and 4 MiB transaction replay at both transaction sizes. It alternates implementations and
 starts a fresh process and fixture for each trial. Both consume the same
 `pgoutput` publication and validate every row. Snapshot seeds each transaction
 size before starting the snapshot readers and checks row identity and uniqueness
@@ -87,9 +87,12 @@ either consumer. It measures time from inside consumer startup to each delivery
 using a local monotonic clock. The pinned Debezium JVM counts rows through its
 batched HTTP sink and records its process counters. The harness checks its
 transaction IDs and commit timestamps against PostgreSQL's stored commit
-history. Run the workflow with `evidence_class=diagnostic` and `families=Streams`
-to exercise these workloads. Streams still needs the spill workload for
-qualification.
+history. The replay fixture commits exactly 4 MiB of uncompressed binary column
+data per transaction. Both sinks hash the full payload in row order and the
+harness compares each digest with PostgreSQL. BlueTusk must have a completed spool
+file before replay and release it on acknowledgement. Debezium measures the same
+committed input through its HTTP sink. These runs use
+`evidence_class=diagnostic` and `families=Streams`.
 
 ## Statistics
 

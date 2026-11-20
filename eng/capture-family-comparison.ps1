@@ -23,7 +23,7 @@ $specification = switch ($Family)
     'Streams' { [ordered]@{
         reference = $plan.families.Streams.reference; referenceImage = $plan.families.Streams.referenceImage; mode = 'cross-runtime'
         workloads = "changes {$($contract.workloads.Streams.transactionChanges -join ',')} x scenario {$($contract.workloads.Streams.scenarios -join ',')} plus spoolBytes $($contract.workloads.Streams.spoolBytes -join ',')"
-        harness = 'Same pgoutput publication, row shape and sink (an in-process counting sink for BlueTusk; the Debezium Server HTTP sink into an equivalent counting endpoint). One process per trial; record snapshot, live delivery and backlog catch-up latency per change and process/JVM counters.' } }
+        harness = 'Same pgoutput publication and row fixture. BlueTusk uses an in-process sink and Debezium pushes to a local HTTP sink. Record snapshot, live delivery, backlog catch-up and 4 MiB transaction replay latency per change and process/JVM counters.' } }
     'Sync' { [ordered]@{
         reference = $plan.families.Sync.reference; referenceImage = $plan.families.Sync.referenceImage; mode = 'cross-runtime'
         workloads = "mutations {$($contract.workloads.Sync.mutationCounts -join ',')} x destination {$($contract.workloads.Sync.destinations -join ',')}"

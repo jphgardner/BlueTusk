@@ -10,6 +10,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 $artifacts = Join-Path $root 'artifacts'
 $separator = [IO.Path]::DirectorySeparatorChar
@@ -41,12 +42,18 @@ $workloads = foreach ($scenario in $contract.workloads.Streams.scenarios)
         @{ Scenario = $scenario; Changes = $changes; WarmupTransactions = $warmup; MeasurementTransactions = $measurement }
     }
 }
+if (@($contract.workloads.Streams.spoolBytes).Count -ne 1 -or $contract.workloads.Streams.spoolBytes[0] -ne $streamsSpillBytes)
+{ throw 'The Streams spill harness requires the contracted 4 MiB workload.' }
+foreach ($changes in $contract.workloads.Streams.transactionChanges)
+{
+    $workloads += @{ Scenario = 'spill'; Changes = $changes; WarmupTransactions = 2; MeasurementTransactions = 8 }
+}
 
 $workloadNumber = 0
 foreach ($workload in $workloads)
 {
     $workloadNumber++
-    $key = "$os|Streams|changes=$($workload.Changes)|scenario=$($workload.Scenario)"
+    $key = "$os|Streams|changes=$($workload.Changes)|$(Get-StreamsWorkloadSuffix $workload.Scenario)"
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
         $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }

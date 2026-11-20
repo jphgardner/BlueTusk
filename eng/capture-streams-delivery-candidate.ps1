@@ -5,7 +5,7 @@ param(
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -20,9 +20,14 @@ $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Sourc
 $output = [IO.Path]::GetFullPath($OutputPath)
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $repository $fixturePath
-$liveDelivery = $Scenario -ceq 'commit-to-delivery'
+. (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
+$spill = $Scenario -ceq 'spill'
+$liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
+if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
+if ($spill -and -not $PSBoundParameters.ContainsKey('MeasurementTransactions')) { $MeasurementTransactions = 8 }
 if (-not $liveDelivery -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
-if ($liveDelivery -eq ($WarmupTransactions -eq 0)) { throw 'Only live commit-to-delivery capture uses warmup transactions.' }
+if ($liveDelivery -eq ($WarmupTransactions -eq 0) -or ($spill -and $WarmupTransactions + $MeasurementTransactions -gt 32))
+{ throw 'Live delivery needs warmup. A spill capture supports up to 32 total transactions.' }
 
 function Assert-CandidateSource
 {
@@ -43,20 +48,6 @@ function Wait-CaptureMarker([string] $Path)
         { throw "Streams candidate stopped before reaching '$Path'. See '$candidateError'." }
         Start-Sleep -Milliseconds 50
     }
-}
-
-function Write-Transactions([int] $Start, [int] $Count)
-{
-    # psql sends each statement as a separate autocommitted transaction.
-    & {
-        for ($index = $Start; $index -lt $Start + $Count; $index++)
-        {
-            $first = $index * [long]$Changes + 1
-            $last = $first + $Changes - 1
-            "INSERT INTO public.streams_capture SELECT generate_series($first, $last);"
-        }
-    } | & docker exec -i $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark
-    if ($LASTEXITCODE -ne 0) { throw 'The independent PostgreSQL workload writer failed.' }
 }
 
 Assert-CandidateSource
@@ -89,20 +80,18 @@ try
     $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
     $postgres = $fixture.containers[0].name
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = [IO.File]::ReadAllText((Join-Path $fixtureDirectory 'connection.secret'))
-    $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
-    & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
-    if ($LASTEXITCODE -ne 0) { throw 'Creating the diagnostic source publication failed.' }
+    New-StreamsCaptureTable $postgres $spill
     if ($Scenario -ceq 'catch-up')
     {
         $null = & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
             -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
         if ($LASTEXITCODE -ne 0) { throw 'Creating the backlog replication slot failed.' }
     }
-    if (-not $liveDelivery) { Write-Transactions 0 $MeasurementTransactions }
+    if (-not $liveDelivery) { Write-StreamsTransactions $postgres $Changes 0 $MeasurementTransactions $spill }
 
     $ready = Join-Path $output 'ready'
     $measurementReady = Join-Path $output 'measurement-ready'
-    $trialPath = Join-Path $output 'candidate.json'
+    $trialPath = Join-Path $fixtureDirectory 'candidate.json'
     $optionsPath = Join-Path $output 'candidate-options.json'
     $candidateError = Join-Path $output 'candidate-error.log'
     [ordered]@{
@@ -115,6 +104,7 @@ try
         measurementTransactions = $MeasurementTransactions
         publication = 'streams_capture'
         slot = 'streams_capture'
+        spoolDirectory = if ($spill) { Join-Path $fixtureDirectory 'spool' } else { $null }
         readyPath = $ready
         measurementReadyPath = $measurementReady
         outputPath = $trialPath
@@ -133,9 +123,9 @@ try
     if ($liveDelivery)
     {
         Wait-CaptureMarker $ready
-        Write-Transactions 0 $WarmupTransactions
+        Write-StreamsTransactions $postgres $Changes 0 $WarmupTransactions $spill
         Wait-CaptureMarker $measurementReady
-        Write-Transactions $WarmupTransactions $MeasurementTransactions
+        Write-StreamsTransactions $postgres $Changes $WarmupTransactions $MeasurementTransactions $spill
     }
     if (-not $candidate.WaitForExit(90000) -or $candidate.ExitCode -ne 0)
     { throw "The Streams candidate failed to finish its trial. See '$candidateError'." }
@@ -143,11 +133,19 @@ try
     Assert-CandidateSource
     $capture = Get-Content -LiteralPath $trialPath -Raw | ConvertFrom-Json
     if ($capture.sourceCommit -cne $ExpectedCommit -or $capture.role -cne 'candidate' -or
-        -not $capture.workloadKey.EndsWith("|scenario=$Scenario", [StringComparison]::Ordinal) -or
+        -not $capture.workloadKey.EndsWith("|$(Get-StreamsWorkloadSuffix $Scenario)", [StringComparison]::Ordinal) -or
         -not $capture.diagnostic -or $capture.synthetic -or
         $capture.measurement.completedOperations -ne [long]$Changes * $MeasurementTransactions)
     { throw "The captured candidate trial did not match its requested workload at '$trialPath'." }
-    "Captured $($capture.measurement.completedOperations) changes in '$trialPath'."
+    if ($spill)
+    {
+        Assert-StreamsSpillPayload $postgres ($Changes * [long]$WarmupTransactions) $MeasurementTransactions $capture
+        if ($capture.environment.verifiedSpoolTransactions -ne $MeasurementTransactions -or $capture.environment.minimumReadySpoolBytes -lt $streamsSpillBytes)
+        { throw 'The candidate did not verify every measured transaction crossed the physical spool boundary.' }
+    }
+    $verifiedPath = Join-Path $output 'candidate.json'
+    [IO.File]::Copy($trialPath, $verifiedPath)
+    "Captured $($capture.measurement.completedOperations) changes in '$verifiedPath'."
 }
 finally
 {

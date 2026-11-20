@@ -3,6 +3,7 @@ using System.Buffers.Text;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -18,6 +19,7 @@ namespace BlueTusk.Benchmarks;
 internal static class StreamsDeliveryCapture
 {
     internal const string ConnectionVariable = "BLUETUSK_BENCHMARK_CONNECTION_STRING";
+    private const int SpillBytes = 4 * 1024 * 1024;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -37,6 +39,7 @@ internal static class StreamsDeliveryCapture
         int MeasurementTransactions,
         string Publication,
         string Slot,
+        string? SpoolDirectory,
         string ReadyPath,
         string MeasurementReadyPath,
         string OutputPath);
@@ -45,12 +48,15 @@ internal static class StreamsDeliveryCapture
     {
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
-        var liveDelivery = options.Scenario == "commit-to-delivery";
+        var spill = options.Scenario == "spill";
+        var liveDelivery = options.Scenario == "commit-to-delivery" || spill;
         var snapshot = options.Scenario == "snapshot";
-        if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot") ||
+        if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot" or "spill") ||
             options.Trial is < 0 or >= 50 || options.ChangesPerTransaction is not (1 or 1_000) ||
             (liveDelivery ? options.WarmupTransactions is < 1 or > 10_000 : options.WarmupTransactions != 0) ||
             options.MeasurementTransactions is < 1 or > 16_000 ||
+            (spill && (options.WarmupTransactions + options.MeasurementTransactions > 32 ||
+                string.IsNullOrWhiteSpace(options.SpoolDirectory))) ||
             !Regex.IsMatch(options.SourceCommit, "^[0-9a-f]{40}$", RegexOptions.CultureInvariant) ||
             !Regex.IsMatch(options.PostgreSqlImage, "^postgres:[^@\\s]+@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant))
         {
@@ -79,6 +85,9 @@ internal static class StreamsDeliveryCapture
         var cancellationToken = timeout.Token;
         var transactionTicks = snapshot ? Array.Empty<long>() : new long[options.MeasurementTransactions];
         var samples = new long[checked(options.MeasurementTransactions * options.ChangesPerTransaction)];
+        var spillPayloadSha256 = spill ? new string[options.MeasurementTransactions] : null;
+        long minimumReadySpoolBytes = long.MaxValue;
+        var verifiedSpoolTransactions = 0;
         using var process = Process.GetCurrentProcess();
         var cpuBefore = TimeSpan.Zero;
         int[] gcBefore = [];
@@ -110,9 +119,10 @@ internal static class StreamsDeliveryCapture
 
         var measurement = new ProviderRequestCapture.Window(
             counters.Elapsed, samples.Length, counters.Allocated, counters.Cpu, counters.PeakRss, counters.Gc, [new(samples, samples.Length)]);
+        var workload = spill ? $"spoolBytes={SpillBytes}" : $"scenario={options.Scenario}";
         var report = new PerformanceEvidenceGenerator.TrialFile(
             1, "bluetusk-performance-trial", "Streams",
-            $"{os}|Streams|changes={options.ChangesPerTransaction}|scenario={options.Scenario}",
+            $"{os}|Streams|changes={options.ChangesPerTransaction}|{workload}",
             "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, $"BlueTusk.Streams {implementation}",
             JsonSerializer.SerializeToElement(new
             {
@@ -124,6 +134,7 @@ internal static class StreamsDeliveryCapture
                 {
                     "snapshot" => "Time from starting the consumer to delivering each row of the consistent snapshot",
                     "catch-up" => "Time from starting the consumer to delivering each row of an already committed backlog",
+                    "spill" => "WAL commit to complete disk replay, payload validation and acknowledgement",
                     _ => "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
                 },
                 clockBefore,
@@ -131,6 +142,9 @@ internal static class StreamsDeliveryCapture
                 sourceClockUpperOffsetTicks = liveDelivery ? upperOffset : (long?)null,
                 changesPerTransaction = options.ChangesPerTransaction,
                 rawWallTicksByTransaction = liveDelivery ? transactionTicks : null,
+                spillPayloadSha256,
+                verifiedSpoolTransactions = spill ? verifiedSpoolTransactions : (int?)null,
+                minimumReadySpoolBytes = spill ? minimumReadySpoolBytes : (long?)null,
                 clockOffsetAssumption = liveDelivery ? "Source-to-client offset remains within the endpoint bounds during measurement" : null,
                 sourceWriter = "separate process",
                 allocation = "process-wide managed allocation counter delta",
@@ -214,9 +228,27 @@ internal static class StreamsDeliveryCapture
                 await clockConnection.OpenAsync(cancellationToken);
                 _ = await replication.CreateReplicationSlotAsync(options.Slot, temporary: true, cancellationToken: cancellationToken);
             }
-            var envelopes = replication.StartReplicationAsync(options.Slot, options.Publication, cancellationToken)
+            var envelopes = replication.StartReplicationAsync(new BlueTuskPgOutputReplicationOptions
+                {
+                    SlotName = options.Slot,
+                    PublicationNames = [options.Publication],
+                    Binary = spill,
+                }, cancellationToken)
                 .DecodePgOutputAsync(cancellationToken: cancellationToken);
-            var stream = new PgOutputChangeStream(envelopes, source);
+            var spoolDirectory = spill ? Directory.CreateDirectory(options.SpoolDirectory!) : null;
+            if (spoolDirectory is not null && spoolDirectory.EnumerateFileSystemInfos().Any())
+            {
+                throw new InvalidOperationException("The Streams capture requires an empty dedicated spool directory.");
+            }
+            var assemblyOptions = spoolDirectory is null ? null : new TransactionAssemblyOptions
+            {
+                MaxInMemoryTransactionBytes = 64 * 1024,
+                MaxTransactionBytes = 8 * 1024 * 1024,
+                MaxSpoolBytes = 16 * 1024 * 1024,
+                SpoolDirectory = spoolDirectory.FullName,
+            };
+            var stream = new PgOutputChangeStream(envelopes, source, assemblyOptions);
+            using var spillHash = spill ? IncrementalHash.CreateHash(HashAlgorithmName.SHA256) : null;
             await using var transactions = stream.ReadTransactionsAsync(cancellationToken).GetAsyncEnumerator(cancellationToken);
 
             BlueTuskLogSequenceNumber? previous = null;
@@ -234,11 +266,11 @@ internal static class StreamsDeliveryCapture
             }
             for (var index = 0; index < options.MeasurementTransactions; index++)
             {
-                transactionTicks[index] = await ReadDeliveryAsync();
+                transactionTicks[index] = await ReadDeliveryAsync(index);
             }
             return StopMeasurement();
 
-            async ValueTask<long> ReadDeliveryAsync()
+            async ValueTask<long> ReadDeliveryAsync(int measurementIndex = -1)
             {
                 if (!await transactions.MoveNextAsync())
                 {
@@ -255,7 +287,14 @@ internal static class StreamsDeliveryCapture
                     throw new InvalidDataException("Replication delivered an unexpected change count or a repeated/out-of-order commit.");
                 }
 
+                var spoolBytes = spoolDirectory?.EnumerateFiles("*.ready").SingleOrDefault()?.Length;
+                if (spill && (!transaction.Changes.IsSpooled || spoolBytes is null or < SpillBytes))
+                {
+                    throw new InvalidDataException("The transaction did not finish on the expected disk spool before delivery.");
+                }
+
                 var expectedNextTransaction = nextRow + options.ChangesPerTransaction;
+                long payloadBytes = 0;
                 await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
                 {
                     if (change is not InsertChange insert || insert.NewRow.Table is not { Schema: "public", Name: "streams_capture" })
@@ -263,11 +302,19 @@ internal static class StreamsDeliveryCapture
                         throw new InvalidDataException("Replication delivered an unexpected operation or table.");
                     }
 
-                    var id = insert.NewRow["id"];
-                    if (id is not { State: ChangeColumnState.Value, Encoding: ChangeValueEncoding.Text } ||
-                        !Utf8Parser.TryParse(id.Data.Span, out long row, out var consumed) || consumed != id.Data.Length || row != nextRow)
+                    if (!IsExpectedKey(insert.NewRow["id"], nextRow, spill))
                     {
                         throw new InvalidDataException("Replication delivered a missing, repeated, or out-of-order row.");
+                    }
+                    if (spillHash is not null)
+                    {
+                        var payload = insert.NewRow["payload"];
+                        if (payload is not { State: ChangeColumnState.Value, Encoding: ChangeValueEncoding.Binary })
+                        {
+                            throw new InvalidDataException("The spooled row did not preserve its binary payload.");
+                        }
+                        payloadBytes += payload.Data.Length;
+                        spillHash.AppendData(payload.Data.Span);
                     }
                     nextRow++;
                 }
@@ -276,8 +323,31 @@ internal static class StreamsDeliveryCapture
                     throw new InvalidDataException("Replication did not enumerate every change in the transaction.");
                 }
 
+                if (spillHash is not null)
+                {
+                    if (payloadBytes != SpillBytes)
+                    {
+                        throw new InvalidDataException("Disk replay did not deliver the complete 4 MiB payload.");
+                    }
+                    var payloadDigest = Convert.ToHexStringLower(spillHash.GetHashAndReset());
+                    if (measurementIndex >= 0)
+                    {
+                        spillPayloadSha256![measurementIndex] = payloadDigest;
+                        minimumReadySpoolBytes = Math.Min(minimumReadySpoolBytes, spoolBytes!.Value);
+                        verifiedSpoolTransactions++;
+                    }
+                }
+
                 previous = transaction.CommitPosition;
                 await delivery.AcknowledgeAsync(cancellationToken);
+                if (spoolDirectory is not null)
+                {
+                    delivered = DateTimeOffset.UtcNow;
+                    if (spoolDirectory.EnumerateFileSystemInfos().Any())
+                    {
+                        throw new InvalidDataException("Acknowledgement did not release the disk spool.");
+                    }
+                }
                 return liveDelivery ? (delivered - transaction.CommitTimestamp).Ticks : deliveredAfterStart;
             }
         }
@@ -287,6 +357,15 @@ internal static class StreamsDeliveryCapture
             var identity = await replication.IdentifySystemAsync(cancellationToken);
             return new ChangeSourceIdentity(identity.SystemIdentifier, identity.DatabaseName!, options.Slot, options.Publication);
         }
+    }
+
+    private static bool IsExpectedKey(ChangeColumnValue id, long expected, bool binary)
+    {
+        if (id.State != ChangeColumnState.Value) return false;
+        return binary
+            ? id.Encoding == ChangeValueEncoding.Binary && id.Data.Length == sizeof(long) && BinaryPrimitives.ReadInt64BigEndian(id.Data.Span) == expected
+            : id.Encoding == ChangeValueEncoding.Text && Utf8Parser.TryParse(id.Data.Span, out long value, out var consumed) &&
+                consumed == id.Data.Length && value == expected;
     }
 
     private readonly record struct MeasurementCounters(long Elapsed, long Allocated, double Cpu, long PeakRss, int[] Gc);
