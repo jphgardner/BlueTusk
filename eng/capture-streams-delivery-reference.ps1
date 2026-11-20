@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka', 's3')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis', 'nats', 'opensearch', 'kafka', 's3', 'webhooks')][string] $Sink = 'count',
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
     [string] $S3FixtureImage,
@@ -26,6 +26,7 @@ $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/opensearch-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/kafka-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/s3-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/webhook-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
 $sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
@@ -66,6 +67,7 @@ $s3Libraries = if ($Sink -ceq 's3')
     Get-SyncS3ReferenceLibraries $S3ReferenceLibraryDirectory
 }
 $previousS3Environment = if ($Sink -ceq 's3') { Get-SyncS3Environment }
+$previousWebhookEnvironment = if ($Sink -ceq 'webhooks') { Get-SyncWebhookEnvironment }
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $root $fixturePath
 $reference = "bt-perf-$RunId-debezium"
@@ -113,6 +115,8 @@ try
     { $destinationFixture = New-SyncKafkaFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.kafka }
     if ($Sink -ceq 's3')
     { $destinationFixture = New-SyncS3Fixture $fixture.network $RunId $Owner $ExpectedCommit $S3FixtureImage $dotnet $assembly }
+    if ($Sink -ceq 'webhooks')
+    { $destinationFixture = New-SyncWebhookFixture $fixture.network $RunId $Owner $ExpectedCommit $image }
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -154,7 +158,7 @@ debezium.source.offset.flush.interval.ms=1000
     [IO.File]::WriteAllText($configuration, $properties)
     $manifestText = "Premain-Class: StreamsHttpProbe`n"
     $javaFiles = @('StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java',
-        'NatsCaptureSink.java', 'OpenSearchCaptureSink.java', 'KafkaCaptureSink.java')
+        'NatsCaptureSink.java', 'OpenSearchCaptureSink.java', 'KafkaCaptureSink.java', 'WebhookCaptureProtocol.java', 'WebhookCaptureSink.java')
     $agentClasspath = '/debezium/lib/*'
     $fixtureEnvironmentArgs = @()
     if ($s3Libraries)
@@ -165,6 +169,8 @@ debezium.source.offset.flush.interval.ms=1000
         $manifestText += "Class-Path: $($jarNames -join "`n  ")`n"
         $fixtureEnvironmentArgs = @('--env','BLUETUSK_BENCHMARK_S3_ACCESS_KEY','--env','BLUETUSK_BENCHMARK_S3_SECRET_KEY')
     }
+    elseif ($Sink -ceq 'webhooks')
+    { $fixtureEnvironmentArgs = @('--env','BLUETUSK_BENCHMARK_WEBHOOK_KEY') }
     [IO.File]::WriteAllText($manifest, "$manifestText`n")
     $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario,$Sink"
     $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "{0}" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/*Capture*.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh' -f $agentClasspath
@@ -240,6 +246,7 @@ debezium.source.offset.flush.interval.ms=1000
             'opensearch' { Assert-SyncOpenSearchDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
             'kafka' { Assert-SyncKafkaDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
             's3' { Assert-SyncS3Delivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly }
+            'webhooks' { Assert-SyncWebhookDelivery $postgres $destinationFixture $Changes $transactions }
             'postgresql' { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions -Reference }
         }
         if ($Sink -ceq 'kafka' -and $destinationProof.recoveredFragments -ne $capture.environment.durableHttpFragments)
@@ -255,6 +262,7 @@ debezium.source.offset.flush.interval.ms=1000
 finally
 {
     if ($previousS3Environment) { Restore-SyncS3Environment $previousS3Environment }
+    if ($previousWebhookEnvironment) { Restore-SyncWebhookEnvironment $previousWebhookEnvironment }
     if (Test-Path -LiteralPath $configuration) { [IO.File]::Delete($configuration) }
     if ($created) { & docker logs $reference *> (Join-Path $output 'debezium.log') }
     & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner

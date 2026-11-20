@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\BlueTusk.Sync.PostgreSql\BlueTusk.Sync.PostgreSql.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Sync.Redis\BlueTusk.Sync.Redis.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Sync.S3\BlueTusk.Sync.S3.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.Webhooks\BlueTusk.Sync.Webhooks.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

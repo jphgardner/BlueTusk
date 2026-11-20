@@ -59,7 +59,7 @@ if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
     if ($RunId) { $capture.RunId = $RunId }
     $runner = Join-Path $PSScriptRoot 'capture-streams-delivery.ps1'
     if ($Family -ceq 'Streams') { & $runner @capture; return }
-    foreach ($destination in 'postgresql','redis','nats','opensearch','kafka','s3')
+    foreach ($destination in 'postgresql','redis','nats','opensearch','kafka','s3','webhooks')
     {
         $capture.OutputPath = "$OutputPath-$destination"
         if ($RunId) { $capture.RunId = "$RunId-$($destination[0])" }

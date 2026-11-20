@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
-    [ValidateSet('postgresql','redis','nats','opensearch','kafka','s3')][string] $SyncDestination = 'postgresql',
+    [ValidateSet('postgresql','redis','nats','opensearch','kafka','s3','webhooks')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -64,7 +64,10 @@ else
 }
 
 $workloadNumber = 0
-$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch'; kafka = 'recoveredFromKafka'; s3 = 'recoveredFromS3' }
+$proofNames = @{
+    redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch'
+    kafka = 'recoveredFromKafka'; s3 = 'recoveredFromS3'; webhooks = 'recoveredFromWebhooks'
+}
 foreach ($workload in $workloads)
 {
     $workloadNumber++
@@ -98,7 +101,12 @@ foreach ($workload in $workloads)
             {
                 $destination = $workload.Sink
                 $proof = $proofNames[$destination]
-                $expectedImage = if ($destination -ceq 's3') { $s3Image } else { $plan.families.Sync.destinationImages.$destination }
+                $expectedImage = switch -CaseSensitive ($destination)
+                {
+                    's3' { $s3Image }
+                    'webhooks' { $plan.families.Sync.referenceImage }
+                    default { $plan.families.Sync.destinationImages.$destination }
+                }
                 if ($capture.environment.destinationImage -cne $expectedImage -or
                     $capture.environment.destinationProof.$proof -ne $true)
                 { throw "The $destination trial '$id' has no matching recovery proof." }
@@ -119,7 +127,8 @@ foreach ($workload in $workloads)
 
 $images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
 if ($s3Image) { $images += $s3Image }
-elseif ($Family -ceq 'Sync' -and $proofNames.ContainsKey($SyncDestination)) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
+elseif ($Family -ceq 'Sync' -and $SyncDestination -cne 'webhooks' -and $proofNames.ContainsKey($SyncDestination))
+{ $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
 [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false

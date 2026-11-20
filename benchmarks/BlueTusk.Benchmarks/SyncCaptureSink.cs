@@ -12,6 +12,7 @@ using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
 using BlueTusk.Sync.S3;
+using BlueTusk.Sync.Webhooks;
 using BlueTusk.TypeSystem;
 using NATS.Client.Core;
 using NATS.Net;
@@ -55,6 +56,25 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
 
     public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
     {
+        if (sink == "webhooks")
+        {
+            var endpoint = Environment.GetEnvironmentVariable("BLUETUSK_BENCHMARK_WEBHOOK_ENDPOINT");
+            var configuredKey = Environment.GetEnvironmentVariable("BLUETUSK_BENCHMARK_WEBHOOK_KEY");
+            if (endpoint is null || configuredKey is null)
+            {
+                throw new InvalidOperationException("The capture requires an isolated webhook receiver and signing key.");
+            }
+            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            return new(new WebhookSyncDestination(new()
+            {
+                Client = client,
+                Endpoint = new Uri(endpoint),
+                KeyId = "sync-fixture-v1",
+                SigningKey = Convert.FromBase64String(configuredKey),
+                AllowInsecureHttp = true,
+                MaximumAttempts = 1,
+            }), source, http: client);
+        }
         if (sink == "s3")
         {
             var client = S3SyncCaptureVerification.Connect();

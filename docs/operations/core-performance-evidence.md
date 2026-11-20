@@ -141,8 +141,14 @@ commit manifest. The reference stores split HTTP fragments before acknowledging
 them and removes them after committing the full transaction. After a forced
 MinIO restart, the verifier checks that every manifest points to the exact
 uploaded Parquet bytes and that all ordered rows match PostgreSQL.
-These workloads use `evidence_class=diagnostic` and `families=Sync`.
-Sync qualification also requires Webhooks measurements.
+
+The Webhooks diagnostic uses the production sender and a native signed HTTP
+sender in Debezium against the same isolated receiver. The receiver verifies
+each signature and flushes the receipt to disk before acknowledging a
+delivery. It also persists incomplete reference fragments until the complete
+transaction has a receipt. After a forced restart, the verifier checks the
+stored signatures, commit positions and every ordered mutation against
+PostgreSQL. These workloads use `evidence_class=diagnostic` and `families=Sync`.
 
 ## Primary workloads for v1.2
 

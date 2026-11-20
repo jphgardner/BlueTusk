@@ -17,6 +17,7 @@ using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
 using BlueTusk.Sync.S3;
+using BlueTusk.Sync.Webhooks;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Benchmarks;
@@ -56,7 +57,7 @@ internal static class StreamsDeliveryCapture
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
         var spill = options.Scenario == "spill";
-        var sync = options.Sink is "postgresql" or "redis" or "nats" or "opensearch" or "kafka" or "s3";
+        var sync = options.Sink is "postgresql" or "redis" or "nats" or "opensearch" or "kafka" or "s3" or "webhooks";
         var liveDelivery = options.Scenario == "commit-to-delivery" || spill;
         var snapshot = options.Scenario == "snapshot";
         if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot" or "spill") ||
@@ -86,6 +87,7 @@ internal static class StreamsDeliveryCapture
             "opensearch" => typeof(OpenSearchSyncDestination),
             "kafka" => typeof(KafkaSyncDestination),
             "s3" => typeof(S3SyncDestination),
+            "webhooks" => typeof(WebhookSyncDestination),
             _ => typeof(PgOutputChangeStream),
         };
         var implementation = implementationType.Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
