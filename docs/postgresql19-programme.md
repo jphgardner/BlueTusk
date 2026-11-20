@@ -1,9 +1,8 @@
 # PostgreSQL 19 compatibility programme
 
-PostgreSQL 19 Beta 4 was released on 24 September 2026. BlueTusk's last verified
-milestone is Beta 3; Beta 4 is recorded as **not yet tested**, not silently
-promoted to supported status. The official roadmap now targets October 2026.
-Beta images are for compatibility development, not production dependencies.
+[PostgreSQL 19](https://www.postgresql.org/about/news/postgresql-19-released-3449/)
+was released on 19 November 2026. BlueTusk's last verified milestone is Beta 3.
+Beta 4, RC 1, RC 2 and 19.0 have pending compatibility records.
 
 The [Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
 removed SQL/PGQ, including `GRAPH_TABLE`, from PostgreSQL 19. A later PostgreSQL
@@ -23,7 +22,10 @@ The main build's existing `PostgreSQL 19 live matrix` protected status now runs
 provider preview compatibility, excluding native SQL/PGQ integration scenarios.
 It does not depend on Continuous Graph. The full historical preview matrix and
 both Graph application journeys run separately in `postgresql-preview.yml`.
-Core application integration uses the stable PostgreSQL 18 fixture instead.
+Core application integration uses the stable PostgreSQL 18 fixture. Scheduled
+and full manual builds include the branch snapshot, replication endurance and
+provider stress jobs. The Core-only manual build uses the stable qualification
+matrix without running the PostgreSQL 19 preview jobs.
 Capability tests compare `SupportsSqlPgq` with the actual server catalogue;
 major version 19 alone must not imply support.
 

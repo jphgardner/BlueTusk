@@ -5,6 +5,7 @@ param(
     [string] $Variant = '',
     [string] $Family = '',
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
+    [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json'),
     # Host-persistent store shared by the capture and summarize jobs of one OS (ephemeral runners lose workspaces).
     [Parameter(Mandatory)][string] $EvidenceStore,
     [Parameter(Mandatory)][ValidatePattern('^[a-z0-9][a-z0-9-]{2,24}$')][string] $RunId,
@@ -74,8 +75,9 @@ try
             -OutputPath $output -Trials $Trials -Diagnostic:$Diagnostic
         return
     }
-    $map = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-variant-map.json') -Raw | ConvertFrom-Json
-    $profileName = [string]$map.variants.$Os.$Variant
+    $map = Get-Content -LiteralPath $VariantMapPath -Raw | ConvertFrom-Json
+    $variantEntry = $map.variants.$Os.PSObject.Properties[$Variant]
+    $profileName = if ($variantEntry) { [string]$variantEntry.Value } else { '' }
     if ($profileName -ceq 'crossOsProfile') { $profileName = [string]$map.crossOsProfile }
     if ($profileName -ceq 'unresolved' -or -not $profileName)
     { throw "Provider variant '$Variant' on $Os is unresolved (see $($map.proposal)); this leg fails closed and captures nothing." }
@@ -87,6 +89,7 @@ try
         PostgreSqlImage = [string]$plan.fixture.postgreSqlImage
         OutputPath = $output
         Variant = $Variant
+        VariantMapPath = $VariantMapPath
         FixturePath = (Join-Path $root $fixturePath)
         Trials = $Trials
         Concurrency = $Concurrency

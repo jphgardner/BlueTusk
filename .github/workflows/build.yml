@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       core_packages_only:
-        description: Collect Core package readiness evidence without the website build
+        description: Collect Core package readiness evidence without website, application or PostgreSQL 19 preview jobs
         type: boolean
         default: false
       include_legacy_all_family_packages:
@@ -993,7 +993,7 @@ jobs:
 
   postgresql19-nightly:
     name: PostgreSQL 19 official branch snapshot
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.core_packages_only)
     runs-on: ubuntu-latest
 
     steps:
@@ -1041,7 +1041,7 @@ jobs:
 
   replication-endurance:
     name: PostgreSQL 19 replication endurance
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.core_packages_only)
     runs-on: ubuntu-latest
 
     steps:
@@ -1078,7 +1078,7 @@ jobs:
 
   provider-stress:
     name: PostgreSQL 19 provider stress
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.core_packages_only)
     runs-on: ubuntu-latest
 
     steps:

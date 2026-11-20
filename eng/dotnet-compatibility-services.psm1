@@ -14,8 +14,8 @@ function Test-DotNetCompatibilityServiceReady
     {
         'redis' { return (& docker exec $Fixture.container redis-cli ping) -ceq 'PONG' }
         'nats' {
-            $logs = & docker logs --tail 150 $Fixture.container 2>&1
-            return $LASTEXITCODE -eq 0 -and ($logs -join [Environment]::NewLine).Contains('Server is ready')
+            & docker exec $Fixture.container wget -q -T 2 -O /dev/null 'http://127.0.0.1:8222/healthz?js-enabled-only=true' 2>$null
+            return $LASTEXITCODE -eq 0
         }
         'opensearch' {
             try
@@ -72,7 +72,7 @@ function Start-DotNetCompatibilityService
         'redis' { $port = 6379 }
         'nats' {
             $port = 4222
-            $serverArguments = @('-js')
+            $serverArguments = @('-js', '-m', '8222')
         }
         'opensearch' {
             $port = 9200
@@ -120,6 +120,7 @@ function Start-DotNetCompatibilityService
         kind = $kind
         container = $null
         identity = $image
+        serverLog = Join-Path $WorkDirectory 'server.log'
         environment = @{}
         containerEnvironment = @{}
     }
@@ -167,10 +168,11 @@ function Start-DotNetCompatibilityService
 
 function Stop-DotNetCompatibilityService
 {
-    param([hashtable] $Fixture)
+    param([hashtable] $Fixture, [switch] $RetainServerLog)
 
     if ($Fixture -and $Fixture.container)
     {
+        if ($RetainServerLog) { & docker logs $Fixture.container *> $Fixture.serverLog }
         & docker rm --force --volumes $Fixture.container *> $null
     }
 }

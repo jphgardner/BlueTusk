@@ -13,6 +13,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'performance-provider-contract.psm1')
 
 function Get-Sha256([string] $Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Read-Json([string] $Path)
@@ -36,7 +37,14 @@ $contract = Get-Content -LiteralPath $ContractPath -Raw | ConvertFrom-Json
 & (Join-Path $PSScriptRoot 'verify-performance-leadership-contract.ps1') -ContractPath $ContractPath | Out-Null
 $contractHash = Get-Sha256 $ContractPath
 $mapHash = Get-Sha256 $VariantMapPath
-$committedMapHash = Get-Sha256 (Join-Path $PSScriptRoot 'performance-variant-map.json')
+$committedMap = Join-Path $PSScriptRoot 'performance-variant-map.json'
+if ($contract.release -ceq '1.2.0' -and -not $Diagnostic)
+{
+    $resolved = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $ExpectedCommit
+    if ($contractHash -cne (Get-Sha256 $resolved.ContractPath)) { throw 'The performance contract differs from the exact candidate.' }
+    $committedMap = $resolved.VariantMapPath
+}
+$committedMapHash = Get-Sha256 $committedMap
 $rules = $contract.comparisonRules
 $tracks = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-tracks.json') -Raw | ConvertFrom-Json
 $coreFamilies = @($tracks.stableFamilies)
@@ -46,7 +54,8 @@ function Get-ExpectedWorkloads([string] $Os)
 {
     $expected = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
     $w = $contract.workloads
-    foreach ($f in $w.Provider.features) { foreach ($c in $w.Provider.concurrency) { foreach ($v in $w.Provider.variants) {
+    $variants = Get-PerformanceProviderVariants -Contract $contract -Os $Os
+    foreach ($f in $w.Provider.features) { foreach ($c in $w.Provider.concurrency) { foreach ($v in $variants) {
         $expected.Add("$Os|Provider|$f|c=$c|variant=$v", 'same-runtime') } } }
     foreach ($changes in $w.Streams.transactionChanges)
     {
@@ -206,7 +215,7 @@ if ($isDiagnostic)
         ' OUTPUT. This is not performance evidence and must never be relabelled as qualification.** It proves the pipeline only.').AppendLine()
 }
 $null = $report.AppendLine("Candidate: ``$ExpectedCommit``. Release $($contract.release), scope Core. Contract SHA-256 ``$contractHash``.")
-$null = $report.AppendLine("Variant map SHA-256 ``$mapHash`` (committed map: $(if ($mapHash -ceq $committedMapHash) { 'yes' } else { 'NO' })).").AppendLine()
+$null = $report.AppendLine("Variant map SHA-256 ``$mapHash``.").AppendLine()
 $null = $report.AppendLine('Pipeline: raw captures -> generator (seeded studentized bootstrap of per-trial means) -> independent checker (recomputed from raw) -> this assembler -> `verify-performance-leadership-evidence.ps1`.')
 $null = $report.AppendLine('Bounds are separate nominal 99% studentized intervals per role, with at least 30 independent qualification trials. The contract remains at 95%; the verifier gates candidate upper / reference lower (lower-better) and candidate lower / reference upper (throughput). Ties fail.').AppendLine()
 $null = $report.AppendLine('| OS | Comparisons | Missing | Trials | Cross-OS profile | Diagnostic |').AppendLine('|---|---:|---:|---|---|---|')
@@ -218,7 +227,7 @@ $null = $report.AppendLine().AppendLine("## Missing contract workloads ($($missi
 if ($missing.Count -eq 0) { $null = $report.AppendLine('None.') }
 else
 {
-    $null = $report.AppendLine('Missing evidence fails the verifier. Cross-OS Provider variants stay missing until the owner adopts a meaning (see `eng/performance-cross-os-proposal.md`).').AppendLine()
+    $null = $report.AppendLine('Missing measurements fail the verifier. See `eng/performance-cross-os-proposal.md` for the Provider topology.').AppendLine()
     foreach ($group in @($missing | Group-Object { $_.Split('|')[0] + '|' + $_.Split('|')[1] } | Sort-Object Name))
     { $null = $report.AppendLine("- ``$($group.Name)``: $($group.Count)") }
 }

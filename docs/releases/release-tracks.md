@@ -85,7 +85,9 @@ The package track covers Provider, Streams, Sync, Live, and Control Plane on
 stable PostgreSQL 15–18. Continuous Graph qualifies through its own release
 track. Website deployment has its own scope.
 
-Dispatch the evidence producers at the same candidate SHA.
+Use the exact candidate SHA on `main` for final qualification. The protected
+candidate-readiness workflow accepts only `main` and requires the dispatch SHA
+to match every producer. Checks on the pull request give pre-merge feedback.
 
 1. Run the build with the Core packages-only option. It retains the five
    package families, their SBOMs and provenance, and the regression and stable
@@ -95,7 +97,7 @@ Dispatch the evidence producers at the same candidate SHA.
    to run in their ordinary build contexts.
 2. Run the runtime compatibility workflow with full coverage required. Run
    security, one-hour fuzzing, and the Core performance qualification workflow.
-   Use the qualification evidence class and the full reference topology.
+   Use the qualification evidence class and the [v1.2 Provider topology](../../eng/performance-cross-os-proposal.md).
 3. Give the successful package build run ID to the Streams, Sync, and Live /
    Control Plane endurance workflows. They verify the same package archive
    before the 72-hour, 24-hour, and 24-hour runs respectively.
