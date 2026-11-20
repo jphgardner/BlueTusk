@@ -3,6 +3,8 @@ param(
     [Parameter(Mandatory)]
     [string] $ImageEvidencePath,
     [string] $KubernetesContext = 'proxmox-homelab',
+    [ValidatePattern('^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$')]
+    [string] $StorageClass = 'longhorn',
     [switch] $Apply
 )
 
@@ -32,7 +34,8 @@ if ($readyNodes -lt 2)
 {
     throw "RC staging requires at least two Ready nodes; found $readyNodes."
 }
-& (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') -MinimumReadyNodes 2
+& (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') `
+    -MinimumReadyNodes 2 -KubernetesContext $KubernetesContext -StorageClass $StorageClass
 
 foreach ($crd in @('clusters.postgresql.cnpg.io', 'keycloaks.k8s.keycloak.org'))
 {
@@ -90,7 +93,7 @@ foreach ($application in $applications)
         }
     }
 
-    $setArguments = @()
+    $setArguments = @('--set-string', "database.storageClass=$StorageClass")
     foreach ($component in @('api', 'worker', 'ui'))
     {
         $reference = [string]$images.PSObject.Properties[$component].Value
@@ -153,7 +156,7 @@ foreach ($application in $applications)
 if ($Apply)
 {
     & (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') `
-        -MinimumReadyNodes 2 `
+        -MinimumReadyNodes 2 -KubernetesContext $KubernetesContext -StorageClass $StorageClass `
         -RequireApplications
 }
 

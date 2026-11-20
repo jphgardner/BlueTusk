@@ -116,6 +116,7 @@ jobs:
         shell: pwsh
         env:
           KUBECONFIG_BASE64: ${{ secrets.BLUETUSK_DEPLOY_KUBECONFIG_BASE64 }}
+          STORAGE_CLASS: ${{ vars.BLUETUSK_APP_STORAGE_CLASS || 'longhorn' }}
           SITE_IMAGE: ${{ needs.publish-site-image.outputs.site-image }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -133,11 +134,11 @@ jobs:
               throw 'Configure the deployment kubeconfig to use the in-cluster Kubernetes API service.'
             }
             $appEvidence = 'artifacts/deployment-inputs/application-images.json'
-            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context
+            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -StorageClass $env:STORAGE_CLASS
             $previous = kubectl -n bluetusk get deployment bluetusk-site -o 'jsonpath={.spec.template.spec.containers[?(@.name=="site")].image}'
             if ([string]::IsNullOrWhiteSpace($previous)) { throw 'The existing website deployment has no site container.' }
             kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE" --dry-run=server
-            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -Apply
+            ./eng/deploy-applications-rc.ps1 -ImageEvidencePath $appEvidence -KubernetesContext $context -StorageClass $env:STORAGE_CLASS -Apply
             kubectl -n bluetusk set image deployment/bluetusk-site "site=$env:SITE_IMAGE"
             try {
               kubectl -n bluetusk rollout status deployment/bluetusk-site --timeout=5m

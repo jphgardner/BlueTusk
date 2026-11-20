@@ -148,8 +148,10 @@ The `bluetusk-production` GitHub environment requires a dedicated Kubernetes dep
 `BLUETUSK_DEPLOY_KUBECONFIG_BASE64` with `https://kubernetes.default.svc` as the server. Limit that
 identity to the website Deployment and the reference
 application Helm namespaces and grant read access to the cluster health and operator metadata used
-by the preflight. Provision the PostgreSQL and identity operators and the documented reference
-application secrets before the first run. For clusters with several Linux workers, apply
+by the preflight. Set the environment variable `BLUETUSK_APP_STORAGE_CLASS` to the StorageClass for
+the reference application databases when it differs from `longhorn`. Provision the PostgreSQL and
+identity operators and the documented reference application secrets before the first run. For
+clusters with several Linux workers, apply
 [`kubernetes-runner-cache.yaml`](../../eng/runners/kubernetes-runner-cache.yaml) to keep the runner
 tool images on each node. The endurance launcher registers one runner per queued release job.
 
