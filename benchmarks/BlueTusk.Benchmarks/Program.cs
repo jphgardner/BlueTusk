@@ -23,9 +23,9 @@ if (args is ["--ef-batch-capture", var efOptionsPath, var efRowCount, var efBatc
     return;
 }
 
-if (args is ["--streams-commit-delivery-candidate", var streamsCaptureOptions])
+if (args is ["--streams-delivery-candidate", var streamsCaptureOptions])
 {
-    await StreamsCommitDeliveryCapture.RunAsync(streamsCaptureOptions);
+    await StreamsDeliveryCapture.RunAsync(streamsCaptureOptions);
     return;
 }
 

@@ -23,7 +23,7 @@ $specification = switch ($Family)
     'Streams' { [ordered]@{
         reference = $plan.families.Streams.reference; referenceImage = $plan.families.Streams.referenceImage; mode = 'cross-runtime'
         workloads = "changes {$($contract.workloads.Streams.transactionChanges -join ',')} x scenario {$($contract.workloads.Streams.scenarios -join ',')} plus spoolBytes $($contract.workloads.Streams.spoolBytes -join ',')"
-        harness = 'Same pgoutput slot configuration, publication, row shape and sink (an in-process counting sink for BlueTusk; the Debezium Server HTTP sink into an equivalent counting endpoint). One process restart per trial; record commit-to-delivery ticks per change and process/JVM counters.' } }
+        harness = 'Same pgoutput publication, row shape and sink (an in-process counting sink for BlueTusk; the Debezium Server HTTP sink into an equivalent counting endpoint). One process per trial; record live delivery and backlog catch-up latency per change and process/JVM counters.' } }
     'Sync' { [ordered]@{
         reference = $plan.families.Sync.reference; referenceImage = $plan.families.Sync.referenceImage; mode = 'cross-runtime'
         workloads = "mutations {$($contract.workloads.Sync.mutationCounts -join ',')} x destination {$($contract.workloads.Sync.destinations -join ',')}"
@@ -51,7 +51,7 @@ if ($Family -ceq 'Streams' -and $Diagnostic)
 {
     $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Trials = $Trials; Owner = $Owner }
     if ($RunId) { $capture.RunId = $RunId }
-    & (Join-Path $PSScriptRoot 'capture-streams-commit-delivery.ps1') @capture
+    & (Join-Path $PSScriptRoot 'capture-streams-delivery.ps1') @capture
     return
 }
 if ($Family -ceq 'ControlPlane')

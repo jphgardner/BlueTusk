@@ -14,7 +14,7 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Benchmarks;
 
 /// <summary>Captures one diagnostic candidate process against a dedicated PostgreSQL publication.</summary>
-internal static class StreamsCommitDeliveryCapture
+internal static class StreamsDeliveryCapture
 {
     internal const string ConnectionVariable = "BLUETUSK_BENCHMARK_CONNECTION_STRING";
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -29,6 +29,7 @@ internal static class StreamsCommitDeliveryCapture
     private sealed record Options(
         string SourceCommit,
         string PostgreSqlImage,
+        string Scenario,
         int Trial,
         int ChangesPerTransaction,
         int WarmupTransactions,
@@ -43,8 +44,11 @@ internal static class StreamsCommitDeliveryCapture
     {
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
-        if (options.Trial is < 0 or >= 50 || options.ChangesPerTransaction is not (1 or 1_000) ||
-            options.WarmupTransactions is < 1 or > 10_000 || options.MeasurementTransactions is < 1 or > 16_000 ||
+        var catchUp = options.Scenario == "catch-up";
+        if (options.Scenario is not ("commit-to-delivery" or "catch-up") ||
+            options.Trial is < 0 or >= 50 || options.ChangesPerTransaction is not (1 or 1_000) ||
+            (catchUp ? options.WarmupTransactions != 0 : options.WarmupTransactions is < 1 or > 10_000) ||
+            options.MeasurementTransactions is < 1 or > 16_000 ||
             !Regex.IsMatch(options.SourceCommit, "^[0-9a-f]{40}$", RegexOptions.CultureInvariant) ||
             !Regex.IsMatch(options.PostgreSqlImage, "^postgres:[^@\\s]+@sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant))
         {
@@ -71,13 +75,26 @@ internal static class StreamsCommitDeliveryCapture
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var cancellationToken = timeout.Token;
-        var wallTicks = new long[options.MeasurementTransactions];
+        var transactionTicks = new long[options.MeasurementTransactions];
         var samples = new long[checked(options.MeasurementTransactions * options.ChangesPerTransaction)];
+        using var process = Process.GetCurrentProcess();
+        var cpuBefore = TimeSpan.Zero;
+        int[] gcBefore = [];
+        long allocatedBefore = 0;
+        long started = 0;
+        if (catchUp)
+        {
+            StartMeasurement();
+        }
+
         await using var clockConnection = new BlueTuskConnection(connectionString);
-        await clockConnection.OpenAsync(cancellationToken);
         await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString, cancellationToken);
         var identity = await replication.IdentifySystemAsync(cancellationToken);
-        _ = await replication.CreateReplicationSlotAsync(options.Slot, temporary: true, cancellationToken: cancellationToken);
+        if (!catchUp)
+        {
+            await clockConnection.OpenAsync(cancellationToken);
+            _ = await replication.CreateReplicationSlotAsync(options.Slot, temporary: true, cancellationToken: cancellationToken);
+        }
         var source = new ChangeSourceIdentity(identity.SystemIdentifier, identity.DatabaseName!, options.Slot, options.Publication);
         var envelopes = replication.StartReplicationAsync(options.Slot, options.Publication, cancellationToken)
             .DecodePgOutputAsync(cancellationToken: cancellationToken);
@@ -86,24 +103,22 @@ internal static class StreamsCommitDeliveryCapture
 
         BlueTuskLogSequenceNumber? previous = null;
         long nextRow = 1;
-        Signal(options.ReadyPath);
-
-        for (var index = 0; index < options.WarmupTransactions; index++)
+        ClockOffset? clockBefore = null;
+        if (!catchUp)
         {
-            _ = await ReadDeliveryAsync();
+            Signal(options.ReadyPath);
+            for (var index = 0; index < options.WarmupTransactions; index++)
+            {
+                _ = await ReadDeliveryAsync();
+            }
+
+            clockBefore = await SampleClockOffsetAsync(clockConnection, cancellationToken);
+            StartMeasurement();
+            Signal(options.MeasurementReadyPath);
         }
-
-        var clockBefore = await SampleClockOffsetAsync(clockConnection, cancellationToken);
-        using var process = Process.GetCurrentProcess();
-        Signal(options.MeasurementReadyPath);
-
-        var cpuBefore = process.TotalProcessorTime;
-        var gcBefore = new[] { GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2) };
-        var allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
-        var started = Stopwatch.GetTimestamp();
         for (var index = 0; index < options.MeasurementTransactions; index++)
         {
-            wallTicks[index] = await ReadDeliveryAsync();
+            transactionTicks[index] = await ReadDeliveryAsync();
         }
 
         var elapsed = Stopwatch.GetElapsedTime(started).Ticks;
@@ -113,26 +128,26 @@ internal static class StreamsCommitDeliveryCapture
         var cpu = (process.TotalProcessorTime - cpuBefore).TotalMilliseconds;
         var peakRss = process.PeakWorkingSet64;
 
-        // Bracket clock offset on either side of the window. Retain the original wall-clock
-        // observations alongside upper-bound diagnostic latency, with no dropped samples.
-        var clockAfter = await SampleClockOffsetAsync(clockConnection, cancellationToken);
-        var upperOffset = Math.Max(clockBefore.LatestOffsetTicks, clockAfter.LatestOffsetTicks);
-        for (var index = 0; index < wallTicks.Length; index++)
+        // Live delivery brackets clock offset on either side of the window and retains the
+        // original wall-clock observations. Backlog latency uses the local monotonic clock.
+        var clockAfter = catchUp ? null : await SampleClockOffsetAsync(clockConnection, cancellationToken);
+        var upperOffset = clockBefore is null ? 0 : Math.Max(clockBefore.LatestOffsetTicks, clockAfter!.LatestOffsetTicks);
+        for (var index = 0; index < transactionTicks.Length; index++)
         {
-            var latencyUpperBound = wallTicks[index] + upperOffset;
-            if (latencyUpperBound <= 0)
+            var latency = transactionTicks[index] + upperOffset;
+            if (latency <= 0)
             {
-                throw new InvalidDataException("The sampled clock bounds do not explain the WAL and delivery timestamps.");
+                throw new InvalidDataException("The Streams delivery latency must be positive.");
             }
 
-            samples.AsSpan(index * options.ChangesPerTransaction, options.ChangesPerTransaction).Fill(latencyUpperBound);
+            samples.AsSpan(index * options.ChangesPerTransaction, options.ChangesPerTransaction).Fill(latency);
         }
 
         var measurement = new ProviderRequestCapture.Window(
             elapsed, samples.Length, allocated, cpu, peakRss, gc, [new(samples, samples.Length)]);
         var report = new PerformanceEvidenceGenerator.TrialFile(
             1, "bluetusk-performance-trial", "Streams",
-            $"{os}|Streams|changes={options.ChangesPerTransaction}|scenario=commit-to-delivery",
+            $"{os}|Streams|changes={options.ChangesPerTransaction}|scenario={options.Scenario}",
             "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, $"BlueTusk.Streams {implementation}",
             JsonSerializer.SerializeToElement(new
             {
@@ -140,13 +155,14 @@ internal static class StreamsCommitDeliveryCapture
                 architecture = "x64",
                 runtime = RuntimeInformation.FrameworkDescription,
                 postgreSqlImage = options.PostgreSqlImage,
-                latency = "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
+                latency = catchUp ? "Time from starting the consumer to delivering each row of an already committed backlog" :
+                    "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
                 clockBefore,
                 clockAfter,
-                sourceClockUpperOffsetTicks = upperOffset,
+                sourceClockUpperOffsetTicks = catchUp ? (long?)null : upperOffset,
                 changesPerTransaction = options.ChangesPerTransaction,
-                rawWallTicksByTransaction = wallTicks,
-                clockOffsetAssumption = "Source-to-client offset remains within the endpoint bounds during measurement",
+                rawWallTicksByTransaction = catchUp ? null : transactionTicks,
+                clockOffsetAssumption = catchUp ? null : "Source-to-client offset remains within the endpoint bounds during measurement",
                 sourceWriter = "separate process",
                 allocation = "process-wide managed allocation counter delta",
                 gc = "managed collection count delta by generation",
@@ -156,6 +172,14 @@ internal static class StreamsCommitDeliveryCapture
         await using var output = new FileStream(options.OutputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
         await JsonSerializer.SerializeAsync(output, report, JsonOptions, cancellationToken);
 
+        void StartMeasurement()
+        {
+            cpuBefore = process.TotalProcessorTime;
+            gcBefore = [GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2)];
+            allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
+            started = Stopwatch.GetTimestamp();
+        }
+
         async ValueTask<long> ReadDeliveryAsync()
         {
             if (!await transactions.MoveNextAsync())
@@ -164,6 +188,7 @@ internal static class StreamsCommitDeliveryCapture
             }
 
             var delivered = DateTimeOffset.UtcNow;
+            var deliveredAfterStart = catchUp ? Stopwatch.GetElapsedTime(started).Ticks : 0;
             await using var delivery = transactions.Current;
             var transaction = delivery.Transaction;
             if (transaction.Changes.Count != options.ChangesPerTransaction ||
@@ -195,7 +220,7 @@ internal static class StreamsCommitDeliveryCapture
 
             previous = transaction.CommitPosition;
             await delivery.AcknowledgeAsync(cancellationToken);
-            return (delivered - transaction.CommitTimestamp).Ticks;
+            return catchUp ? deliveredAfterStart : (delivered - transaction.CommitTimestamp).Ticks;
         }
     }
 

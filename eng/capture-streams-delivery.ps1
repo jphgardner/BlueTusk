@@ -25,37 +25,45 @@ $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-
 $assembly = Join-Path $root 'benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll'
 if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw 'Build the Release benchmark assembly before capturing Streams.' }
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use a Windows or Linux benchmark host.' }
-$work = Join-Path $artifacts ('streams-commit-delivery/' + [guid]::NewGuid().ToString('N'))
+$work = Join-Path $artifacts ('streams-delivery/' + [guid]::NewGuid().ToString('N'))
 $null = New-Item -ItemType Directory -Path $work, $output -Force
 $records = [Collections.Generic.List[object]]::new()
 $implementations = @{}
 $started = [DateTimeOffset]::UtcNow
 
-foreach ($changes in $contract.workloads.Streams.transactionChanges)
+$workloads = foreach ($scenario in 'commit-to-delivery', 'catch-up')
 {
-    # Run both implementations against the same number of commits and rows in each trial.
-    # The batched case uses fewer commits to keep the diagnostic row counts bounded.
-    $warmup = if ($changes -eq 1) { 20 } else { 2 }
-    $measurement = if ($changes -eq 1) { 1000 } else { 8 }
-    $key = "$os|Streams|changes=$changes|scenario=commit-to-delivery"
+    foreach ($changes in $contract.workloads.Streams.transactionChanges)
+    {
+        # Bound row counts while exercising the same transactions on both sides.
+        $warmup = if ($scenario -ceq 'catch-up') { 0 } elseif ($changes -eq 1) { 20 } else { 2 }
+        $measurement = if ($changes -eq 1) { 1000 } else { 8 }
+        @{ Scenario = $scenario; Changes = $changes; WarmupTransactions = $warmup; MeasurementTransactions = $measurement }
+    }
+}
+
+$workloadNumber = 0
+foreach ($workload in $workloads)
+{
+    $workloadNumber++
+    $key = "$os|Streams|changes=$($workload.Changes)|scenario=$($workload.Scenario)"
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
         $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }
         foreach ($role in $order)
         {
-            $id = "$changes-$role-$trial"
-            $arguments = @{
-                ExpectedCommit = $ExpectedCommit; Changes = $changes; WarmupTransactions = $warmup
-                MeasurementTransactions = $measurement; Trial = $trial; OutputPath = (Join-Path $work $id)
-                RunId = "$RunId-$changes-$($role[0])$trial"; Owner = $Owner
+            $id = "$workloadNumber-$role-$trial"
+            $arguments = $workload + @{
+                ExpectedCommit = $ExpectedCommit; Trial = $trial; OutputPath = (Join-Path $work $id)
+                RunId = "$RunId-$workloadNumber-$($role[0])$trial"; Owner = $Owner
             }
             if ($role -ceq 'candidate') { $arguments.BenchmarkAssemblyPath = $assembly }
-            & (Join-Path $PSScriptRoot "capture-streams-commit-delivery-$role.ps1") @arguments
+            & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
             if ($capture.workloadKey -cne $key -or $capture.role -cne $role -or $capture.trial -ne $trial -or
                 $capture.sourceCommit -cne $ExpectedCommit -or $capture.environment.postgreSqlImage -cne $plan.fixture.postgreSqlImage -or
-                $capture.measurement.completedOperations -ne $changes * [long]$measurement -or
+                $capture.measurement.completedOperations -ne $workload.Changes * [long]$workload.MeasurementTransactions -or
                 $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
             { throw "The Streams diagnostic trial '$id' differs from its requested source, role or workload." }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $capture.implementation)

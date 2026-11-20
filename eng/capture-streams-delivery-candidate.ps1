@@ -5,7 +5,8 @@ param(
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateRange(1, 10000)][int] $WarmupTransactions = 20,
+    [ValidateSet('commit-to-delivery', 'catch-up')][string] $Scenario = 'commit-to-delivery',
+    [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,40}$')][string] $RunId = ('streams-cand-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
@@ -19,6 +20,9 @@ $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Sourc
 $output = [IO.Path]::GetFullPath($OutputPath)
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $repository $fixturePath
+$catchUp = $Scenario -ceq 'catch-up'
+if ($catchUp -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
+if ($catchUp -ne ($WarmupTransactions -eq 0)) { throw 'Only a catch-up capture starts without warmup transactions.' }
 
 function Assert-CandidateSource
 {
@@ -88,6 +92,13 @@ try
     $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
     & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
     if ($LASTEXITCODE -ne 0) { throw 'Creating the diagnostic source publication failed.' }
+    if ($catchUp)
+    {
+        $null = & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
+            -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
+        if ($LASTEXITCODE -ne 0) { throw 'Creating the backlog replication slot failed.' }
+        Write-Transactions 0 $MeasurementTransactions
+    }
 
     $ready = Join-Path $output 'ready'
     $measurementReady = Join-Path $output 'measurement-ready'
@@ -97,6 +108,7 @@ try
     [ordered]@{
         sourceCommit = $ExpectedCommit
         postgreSqlImage = $fixture.postgreSqlImage
+        scenario = $Scenario
         trial = $Trial
         changesPerTransaction = $Changes
         warmupTransactions = $WarmupTransactions
@@ -109,7 +121,7 @@ try
     } | ConvertTo-Json | Set-Content -LiteralPath $optionsPath -Encoding utf8
     $start = @{
         FilePath = $dotnet
-        ArgumentList = ('"{0}" --streams-commit-delivery-candidate "{1}"' -f $assembly, $optionsPath)
+        ArgumentList = ('"{0}" --streams-delivery-candidate "{1}"' -f $assembly, $optionsPath)
         WorkingDirectory = $repository
         PassThru = $true
         RedirectStandardOutput = (Join-Path $output 'candidate.log')
@@ -118,16 +130,20 @@ try
     if ($IsWindows) { $start.WindowStyle = 'Hidden' }
     $candidate = Start-Process @start
 
-    Wait-CaptureMarker $ready
-    Write-Transactions 0 $WarmupTransactions
-    Wait-CaptureMarker $measurementReady
-    Write-Transactions $WarmupTransactions $MeasurementTransactions
+    if (-not $catchUp)
+    {
+        Wait-CaptureMarker $ready
+        Write-Transactions 0 $WarmupTransactions
+        Wait-CaptureMarker $measurementReady
+        Write-Transactions $WarmupTransactions $MeasurementTransactions
+    }
     if (-not $candidate.WaitForExit(90000) -or $candidate.ExitCode -ne 0)
     { throw "The Streams candidate failed to finish its trial. See '$candidateError'." }
 
     Assert-CandidateSource
     $capture = Get-Content -LiteralPath $trialPath -Raw | ConvertFrom-Json
     if ($capture.sourceCommit -cne $ExpectedCommit -or $capture.role -cne 'candidate' -or
+        -not $capture.workloadKey.EndsWith("|scenario=$Scenario", [StringComparison]::Ordinal) -or
         -not $capture.diagnostic -or $capture.synthetic -or
         $capture.measurement.completedOperations -ne [long]$Changes * $MeasurementTransactions)
     { throw "The captured candidate trial did not match its requested workload at '$trialPath'." }

@@ -76,15 +76,18 @@ and client count. It binds each trial to the candidate commit, the published
 to diagnostics. The qualification workflow requires a clean checkout and the
 committed minimum trial count and measurement windows.
 
-The Streams diagnostic runs commit-to-delivery at both transaction sizes in the
-contract. It restarts each implementation for each trial and alternates their
-order. Both consume the same `pgoutput` publication shape on fresh PostgreSQL
-fixtures. The pinned Debezium JVM counts rows through its batched HTTP sink and
-records its own process counters. The harness checks Debezium's transaction IDs
-and commit timestamps against PostgreSQL's stored commit history. Run the
-workflow with `evidence_class=diagnostic` and `families=Streams` to exercise these
-two workloads. Streams qualification still requires snapshot, catch-up and spill
-measurements.
+The Streams diagnostic runs live commit-to-delivery and WAL backlog catch-up at
+both transaction sizes in the contract. It alternates implementations and
+starts a fresh process and fixture for each trial. Both consume the same
+`pgoutput` publication and check delivery order and row counts. Catch-up creates
+the permanent replication slot and commits the entire backlog before starting
+either consumer. It measures time from inside consumer startup to each delivery
+using a local monotonic clock. The pinned Debezium JVM counts rows through its
+batched HTTP sink and records its process counters. The harness checks its
+transaction IDs and commit timestamps against PostgreSQL's stored commit
+history. Run the workflow with `evidence_class=diagnostic` and `families=Streams`
+to exercise these workloads. Streams still needs snapshot and spill workloads
+for qualification.
 
 ## Statistics
 

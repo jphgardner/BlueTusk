@@ -29,6 +29,8 @@ public final class StreamsHttpProbe {
     private final String commit;
     private final String image;
     private final String hostOs;
+    private final String scenario;
+    private final boolean catchUp;
     private final long[] ticks;
     private final long[] commitMicros;
     private final long[] transactionIds;
@@ -48,15 +50,19 @@ public final class StreamsHttpProbe {
         server.createContext("/events", probe::receive);
         server.createContext("/progress", probe::progress);
         server.createContext("/measure", probe::begin);
+        if (probe.catchUp) {
+            probe.startMeasurement();
+        }
         // One HTTP handler thread keeps the delivery order and measurement boundaries consistent.
         server.start();
     }
 
     private StreamsHttpProbe(String arguments) {
         var fields = arguments.split(",", -1);
-        if (fields.length != 7 || !fields[4].matches("[0-9a-f]{40}") ||
+        if (fields.length != 8 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
-            !fields[6].matches("windows|linux") || !System.getProperty("os.arch").equals("amd64")) {
+            !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up") ||
+            !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -64,7 +70,9 @@ public final class StreamsHttpProbe {
         var transactions = Integer.parseInt(fields[2]);
         measuredRows = Math.multiplyExact(changes, transactions);
         trial = Integer.parseInt(fields[3]);
-        if ((changes != 1 && changes != 1_000) || warmupRows < 1 || warmupRows > 10_000_000 ||
+        scenario = fields[7];
+        catchUp = scenario.equals("catch-up");
+        if ((changes != 1 && changes != 1_000) || (catchUp ? warmupRows != 0 : warmupRows < 1) || warmupRows > 10_000_000 ||
             transactions < 1 || transactions > 16_000 || measuredRows > 1_048_576 || trial < 0 || trial >= 50) {
             throw new IllegalArgumentException("The Streams capture exceeds its workload bounds.");
         }
@@ -89,15 +97,20 @@ public final class StreamsHttpProbe {
             respond(exchange, 409, "Warmup is incomplete or measurement has already started.");
             return;
         }
+        startMeasurement();
+        respond(exchange, 200, "measuring");
+    }
+
+    private void startMeasurement() {
         allocationBefore = threads.getTotalThreadAllocatedBytes();
         cpuBefore = process.getProcessCpuTime();
         gcBefore = collections();
         started = System.nanoTime();
-        respond(exchange, 200, "measuring");
     }
 
     private void receive(HttpExchange exchange) throws IOException {
         var received = Instant.now();
+        long receivedAt = System.nanoTime();
         try {
             if (!exchange.getRequestMethod().equals("POST") || failed || complete) {
                 throw new IllegalStateException("Unexpected delivery request.");
@@ -112,10 +125,10 @@ public final class StreamsHttpProbe {
                     throw new IllegalStateException("The HTTP batch has an unexpected row count.");
                 }
                 for (var event : body) {
-                    recordEvent(event, received);
+                    recordEvent(event, received, receivedAt);
                 }
             } else {
-                recordEvent(body, received);
+                recordEvent(body, received, receivedAt);
             }
             if (delivered == warmupRows + measuredRows) {
                 writeResult();
@@ -129,7 +142,7 @@ public final class StreamsHttpProbe {
         }
     }
 
-    private void recordEvent(JsonNode event, Instant received) {
+    private void recordEvent(JsonNode event, Instant received, long receivedAt) {
         var source = event.required("source");
         var row = event.required("after").required("id");
         if (delivered >= warmupRows + measuredRows || !row.isIntegralNumber() || row.longValue() != (long) delivered + 1 ||
@@ -141,12 +154,12 @@ public final class StreamsHttpProbe {
             if (started == 0) {
                 throw new IllegalStateException("A measured row arrived before the measurement marker.");
             }
-            recordDelivery(source, received);
+            recordDelivery(source, received, receivedAt);
         }
         delivered++;
     }
 
-    private void recordDelivery(JsonNode source, Instant received) {
+    private void recordDelivery(JsonNode source, Instant received, long receivedAt) {
         var timestamp = source.required("ts_us");
         var transaction = source.required("txId");
         if (!timestamp.isIntegralNumber() || !transaction.isIntegralNumber() || timestamp.longValue() <= 0) {
@@ -161,9 +174,9 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("Rows in a transaction reported different source positions.");
         }
         long receiveTicks = received.getEpochSecond() * TICKS_PER_SECOND + received.getNano() / 100;
-        long latency = receiveTicks - timestamp.longValue() * 10;
+        long latency = catchUp ? (receivedAt - started) / 100 : receiveTicks - timestamp.longValue() * 10;
         if (latency <= 0) {
-            throw new IllegalStateException("The reference and PostgreSQL clocks must agree for commit-to-delivery capture.");
+            throw new IllegalStateException("The Streams delivery latency must be positive.");
         }
         ticks[sample] = latency;
     }
@@ -188,7 +201,7 @@ public final class StreamsHttpProbe {
             "peakRss", "JVM process VmHWM, including the loopback HTTP sink");
         var capture = JSON.createObjectNode();
         capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", "Streams")
-            .put("workloadKey", hostOs + "|Streams|changes=" + changes + "|scenario=commit-to-delivery")
+            .put("workloadKey", hostOs + "|Streams|changes=" + changes + "|scenario=" + scenario)
             .put("role", "reference").put("trial", trial).put("sourceCommit", commit).put("diagnostic", true)
             .put("synthetic", false).put("implementation", "Debezium Server " + VERSION).put("frequency", TICKS_PER_SECOND);
         capture.set("environment", JSON.valueToTree(environment));

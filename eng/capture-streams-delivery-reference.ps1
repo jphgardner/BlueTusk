@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateRange(1, 10000)][int] $WarmupTransactions = 20,
+    [ValidateSet('commit-to-delivery', 'catch-up')][string] $Scenario = 'commit-to-delivery',
+    [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,40}$')][string] $RunId = ('streams-ref-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
@@ -13,6 +14,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+$catchUp = $Scenario -ceq 'catch-up'
+if ($catchUp -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
+if ($catchUp -ne ($WarmupTransactions -eq 0)) { throw 'Only a catch-up capture starts without warmup transactions.' }
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use a Windows or Linux benchmark host.' }
 $head = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit) { throw 'The benchmark checkout differs from the expected commit.' }
@@ -76,6 +80,12 @@ try
     $postgres = $fixture.containers[0].name
     $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
     $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
+    if ($catchUp)
+    {
+        $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
+            -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
+        Write-Transactions 0 $MeasurementTransactions
+    }
 
     $connection = [Data.Common.DbConnectionStringBuilder]::new()
     $connection.set_ConnectionString([IO.File]::ReadAllText((Join-Path $fixtureDirectory 'container-connection.secret')))
@@ -107,7 +117,7 @@ debezium.source.offset.flush.interval.ms=1000
 "@
     [IO.File]::WriteAllText($configuration, $properties)
     [IO.File]::WriteAllText($manifest, "Premain-Class: StreamsHttpProbe`n`n")
-    $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os"
+    $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario"
     $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
     $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$Owner" `
         --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
@@ -119,21 +129,24 @@ debezium.source.offset.flush.interval.ms=1000
     [IO.File]::Delete($configuration)
     $null = Invoke-Docker start $reference
 
-    Wait-Delivery '0'
-    $slotDeadline = [DateTimeOffset]::UtcNow.AddMinutes(2)
-    do
+    if (-not $catchUp)
     {
-        $slot = Invoke-Docker exec $postgres psql -X -qAt -U postgres -d bluetusk_benchmark -c "SELECT active FROM pg_replication_slots WHERE slot_name='streams_capture'"
-        if ($slot -ceq 't') { break }
-        if ((Invoke-Docker inspect --format '{{.State.Running}}' $reference) -cne 'true') { break }
-        Start-Sleep -Milliseconds 250
-    } while ([DateTimeOffset]::UtcNow -lt $slotDeadline)
-    if ($slot -cne 't') { throw 'The reference did not open the pinned PostgreSQL publication slot.' }
+        Wait-Delivery '0'
+        $slotDeadline = [DateTimeOffset]::UtcNow.AddMinutes(2)
+        do
+        {
+            $slot = Invoke-Docker exec $postgres psql -X -qAt -U postgres -d bluetusk_benchmark -c "SELECT active FROM pg_replication_slots WHERE slot_name='streams_capture'"
+            if ($slot -ceq 't') { break }
+            if ((Invoke-Docker inspect --format '{{.State.Running}}' $reference) -cne 'true') { break }
+            Start-Sleep -Milliseconds 250
+        } while ([DateTimeOffset]::UtcNow -lt $slotDeadline)
+        if ($slot -cne 't') { throw 'The reference did not open the pinned PostgreSQL publication slot.' }
 
-    Write-Transactions 0 $WarmupTransactions
-    Wait-Delivery ([string]($Changes * [long]$WarmupTransactions))
-    $null = Invoke-Docker exec $reference curl --silent --show-error --fail --max-time 3 --request POST 'http://127.0.0.1:8081/measure'
-    Write-Transactions $WarmupTransactions $MeasurementTransactions
+        Write-Transactions 0 $WarmupTransactions
+        Wait-Delivery ([string]($Changes * [long]$WarmupTransactions))
+        $null = Invoke-Docker exec $reference curl --silent --show-error --fail --max-time 3 --request POST 'http://127.0.0.1:8081/measure'
+        Write-Transactions $WarmupTransactions $MeasurementTransactions
+    }
     Wait-Delivery 'complete'
     $captured = Join-Path $fixtureDirectory 'reference.json'
     $null = Invoke-Docker cp "${reference}:/tmp/streams-reference.json" $captured
@@ -144,6 +157,7 @@ debezium.source.offset.flush.interval.ms=1000
     $commits = @(Invoke-Docker exec $postgres psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $query)
     if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $commits.Count -or
         $capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
+        -not $capture.workloadKey.EndsWith("|scenario=$Scenario", [StringComparison]::Ordinal) -or
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
     { throw 'The reference capture did not match its measured workload.' }
     for ($index = 0; $index -lt $commits.Count; $index++)
