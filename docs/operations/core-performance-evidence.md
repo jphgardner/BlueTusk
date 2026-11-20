@@ -7,10 +7,10 @@ resolves the contract for the candidate from
 The v1.2 resolver applies the approved Provider topology and binds the five
 approved primary workloads to the published [BlueTusk 1.0.0 release](https://github.com/jphgardner/BlueTusk/releases/tag/v1.0.0).
 
-**Status:** the reference host can run the v1.2 Provider and Control Plane
-matrices. Streams, Sync, Live and primary hot-path qualification harnesses are
-pending. Qualification fails at planning until all producers can capture the
-required measurements.
+**Status:** the reference host can capture the v1.2 Provider and Control Plane
+matrices and all five primary workloads. Qualification remains gated on the
+full external-reference matrices for Streams, Sync, and Live and on the
+performance thresholds.
 Qualification planning reports every missing producer and fails before starting measurement
 jobs. Provider jobs are split by concurrency level, each with a separate raw input directory;
 assembly still requires every original workload key exactly once.
@@ -181,6 +181,9 @@ It measures from handing a decoded change to the Sync pipeline through its
 acknowledgement of the destination commit. The probe then reads back every row
 and the checkpoint. Capture it with
 `capture-core-primary.ps1 -Family Sync -ExpectedCommit <sha>`.
+Select `primary-hot-path` in the existing Core performance workflow to capture
+all five workloads on Windows and Linux. Each family writes its own raw index
+under the operating system's evidence directory.
 The Core planner requires all five captures on both operating systems before
 full qualification can run. The existing 20% improvement thresholds for P95
 latency and allocation apply to each comparison.

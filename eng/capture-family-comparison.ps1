@@ -67,6 +67,45 @@ if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
     }
     return
 }
+if ($Family -ceq 'primary-hot-path' -and $active.Release -ceq '1.2.0')
+{
+    if ($WarmupSeconds % 1 -ne 0 -or $MeasurementSeconds % 1 -ne 0)
+    { throw 'Core primary capture windows use whole seconds.' }
+    if (($Diagnostic -and $Trials -lt $plan.statistics.minimumDiagnosticTrials) -or
+        (-not $Diagnostic -and ($Trials -lt $plan.statistics.minimumQualificationTrials -or
+            $WarmupSeconds -lt $plan.timing.qualificationWarmupSeconds -or
+            $MeasurementSeconds -lt $plan.timing.qualificationMeasurementSeconds)))
+    { throw 'Core primary capture requires the committed minimum trial count and timing.' }
+
+    $rawRoot = Split-Path -Parent ([IO.Path]::GetFullPath($OutputPath))
+    $products = @('Provider', 'Streams', 'Sync', 'Live', 'ControlPlane')
+    foreach ($product in $products)
+    {
+        $inputName = "$($product.ToLowerInvariant())-primary-hot-path"
+        if (Test-Path -LiteralPath (Join-Path $rawRoot $inputName))
+        { throw "The primary capture requires a new raw directory for $product." }
+    }
+    $capture = @{
+        ExpectedCommit = $ExpectedCommit; Trials = $Trials; Owner = $Owner
+        WarmupSeconds = [int]$WarmupSeconds; MeasurementSeconds = [int]$MeasurementSeconds
+        Qualification = -not $Diagnostic
+    }
+    foreach ($product in $products)
+    {
+        $inputName = "$($product.ToLowerInvariant())-primary-hot-path"
+        $capture.OutputPath = Join-Path $rawRoot $inputName
+        if ($RunId) { $capture.RunId = "$RunId-$($product.Substring(0, 2).ToLowerInvariant())" }
+        if ($product -ceq 'ControlPlane')
+        {
+            & (Join-Path $PSScriptRoot 'capture-control-plane-inventory.ps1') @capture -PrimaryHotPath
+        }
+        else
+        {
+            & (Join-Path $PSScriptRoot 'capture-core-primary.ps1') @capture -Family $product
+        }
+    }
+    return
+}
 if ($Family -ceq 'ControlPlane')
 {
     if ($WarmupSeconds % 1 -ne 0 -or $MeasurementSeconds % 1 -ne 0)

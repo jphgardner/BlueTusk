@@ -89,7 +89,7 @@ if ($release -ceq '1.2.0')
 
     $planDocument = $plan | ConvertFrom-Json -AsHashtable
     $planDocument.primaryHotPaths.definitionStatus = 'owner-approved'
-    $planDocument.primaryHotPaths.status = 'stub-fails-closed'
+    $planDocument.primaryHotPaths.status = 'implemented'
     $plan = ($planDocument | ConvertTo-Json -Depth 20).Replace("`r`n", "`n")
 
     $map = Get-Content -LiteralPath $mapPath -Raw | ConvertFrom-Json -AsHashtable

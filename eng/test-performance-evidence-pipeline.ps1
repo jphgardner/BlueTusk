@@ -313,8 +313,14 @@ try
         $primaryDescription = & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family primary-hot-path `
             -ExpectedCommit $head -OutputPath (Join-Path $temporary 'primary') -Describe | ConvertFrom-Json
         if ($primaryDescription.definitionStatus -cne 'owner-approved' -or $primaryLegs.Count -ne 2 -or
-            @($primaryLegs | Where-Object status -cne 'stub-fails-closed').Count -ne 0)
-        { throw 'The approved 1.2 primary workloads must stay required on both operating systems while their producer is pending.' }
+            @($primaryLegs | Where-Object status -cne 'implemented').Count -ne 0)
+        { throw 'The approved 1.2 primary workloads must stay required on both operating systems and feed the implemented capture route.' }
+        $shortPrimary = Join-Path $temporary 'short-primary/primary-hot-path'
+        Assert-Rejected 'short-primary-qualification' {
+            & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family primary-hot-path -ExpectedCommit $head `
+                -OutputPath $shortPrimary -Trials 3
+        } 'committed minimum trial count and timing'
+        if (Test-Path -LiteralPath (Split-Path -Parent $shortPrimary)) { throw 'The rejected primary capture wrote evidence.' }
         $alteredContract = Join-Path $temporary 'changed-primary-contract.json'
         $contractDocument = Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json -AsHashtable
         $contractDocument.primaryHotPaths.workloads.Live.subscribers = 63
