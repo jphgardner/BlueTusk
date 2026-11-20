@@ -43,6 +43,7 @@ public final class StreamsHttpProbe {
     private final String sink;
     private final SyncCaptureReference destination;
     private final long[] ticks;
+    private final long[] deliveryUnixTicks;
     private final long[] commitMicros;
     private final long[] transactionIds;
     private final String[] spillPayloadSha256;
@@ -101,6 +102,7 @@ public final class StreamsHttpProbe {
         image = fields[5];
         hostOs = fields[6];
         ticks = new long[measuredRows];
+        deliveryUnixTicks = new long[liveDelivery && !sync ? measuredRows : 0];
         commitMicros = new long[snapshot ? 0 : transactions];
         transactionIds = new long[snapshot ? 0 : transactions];
         spillPayloadSha256 = new String[spill ? transactions : 0];
@@ -252,6 +254,9 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("The Streams delivery latency must be positive.");
         }
         ticks[sample] = latency;
+        if (liveDelivery) {
+            deliveryUnixTicks[sample] = receiveTicks;
+        }
     }
 
     private void recordSyncDelivery(long key, JsonNode source) throws SQLException, IOException {
@@ -306,11 +311,13 @@ public final class StreamsHttpProbe {
             int batch = (delivered - warmupRows) / changes;
             spillPayloadSha256[batch] = HexFormat.of().formatHex(digest);
             var consumed = Instant.now();
-            long latency = consumed.getEpochSecond() * TICKS_PER_SECOND + consumed.getNano() / 100 - commitMicros[batch] * 10;
+            long receiveTicks = consumed.getEpochSecond() * TICKS_PER_SECOND + consumed.getNano() / 100;
+            long latency = receiveTicks - commitMicros[batch] * 10;
             if (latency <= 0) {
                 throw new IllegalStateException("The Streams spill latency must be positive.");
             }
             Arrays.fill(ticks, batch * changes, (batch + 1) * changes, latency);
+            Arrays.fill(deliveryUnixTicks, batch * changes, (batch + 1) * changes, receiveTicks);
         }
     }
 
@@ -343,6 +350,9 @@ public final class StreamsHttpProbe {
             .put("frequency", TICKS_PER_SECOND);
         var environmentNode = JSON.createObjectNode();
         environment.forEach((key, value) -> environmentNode.set(key, JSON.valueToTree(value)));
+        if (deliveryUnixTicks.length != 0) {
+            environmentNode.set("deliveryUnixTicks", JSON.valueToTree(deliveryUnixTicks));
+        }
         if (spill) {
             environmentNode.set("spillPayloadSha256", JSON.valueToTree(spillPayloadSha256));
             environmentNode.put("latency", "WAL commit to complete payload validation in the reference HTTP sink");

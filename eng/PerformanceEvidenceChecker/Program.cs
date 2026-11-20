@@ -361,10 +361,11 @@ internal static class Checker
         }
         var result = new List<TrialMetrics>();
         var streamsFixtures = new Dictionary<string, (long Warmup, long Transactions)>(StringComparer.Ordinal);
-        var provesStreamsSource = family == "Streams" && index.TryGetProperty("sourceProofSchemaVersion", out _);
-        if (provesStreamsSource)
+        var streamProofVersion = 0;
+        if (family == "Streams" && index.TryGetProperty("sourceProofSchemaVersion", out _))
         {
-            Require(Int(index, "sourceProofSchemaVersion") == 1, $"Streams input '{id}' uses an unsupported source proof.");
+            streamProofVersion = Int(index, "sourceProofSchemaVersion");
+            Require(streamProofVersion is 1 or 2, $"Streams input '{id}' uses an unsupported source proof.");
         }
         string? matchedRuntime = null;
         foreach (var record in index.GetProperty("records").EnumerateArray())
@@ -385,9 +386,10 @@ internal static class Checker
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
             if (family == "Streams" && key != $"{os}|Streams|primary-hot-path" && !Bool(index, "synthetic") &&
-                (provesStreamsSource || !Bool(index, "diagnostic") || scan.TryText("environment.sourceFixture.schemaVersion") is not null))
+                (streamProofVersion != 0 || !Bool(index, "diagnostic") || scan.TryText("environment.sourceFixture.schemaVersion") is not null))
             {
-                var fixture = VerifyStreamsSourceFixture(scan, images, commit, role, key, path, frequency);
+                var fixture = VerifyStreamsSourceFixture(scan, images, commit, role, key, path, frequency,
+                    verifyReferenceClock: streamProofVersion >= 2 || !Bool(index, "diagnostic"));
                 Require(streamsFixtures.TryAdd(key, fixture) || streamsFixtures[key] == fixture,
                     $"Streams workload '{key}' changed its transaction counts between trials.");
             }
@@ -483,7 +485,7 @@ internal static class Checker
     }
 
     private static (long Warmup, long Transactions) VerifyStreamsSourceFixture(RawScan scan, string[] images,
-        string commit, string role, string key, string path, long frequency)
+        string commit, string role, string key, string path, long frequency, bool verifyReferenceClock)
     {
         var workload = Regex.Match(key, @"\|changes=(1|1000)\|(scenario=(snapshot|catch-up|commit-to-delivery)|spoolBytes=4194304)$",
             RegexOptions.CultureInvariant);
@@ -535,7 +537,65 @@ internal static class Checker
                     $"Streams trial '{path}' has an invalid spill payload digest.");
             }
         }
+        if (spill || scenario == "commit-to-delivery")
+        {
+            if (role == "candidate")
+            {
+                VerifyStreamsCandidateClock(scan, transactions, changes, path);
+            }
+            else if (verifyReferenceClock || scan.DeliveryUnixTicks is not null)
+            {
+                VerifyStreamsReferenceClock(scan, transactions, changes, path);
+            }
+        }
         return (warmup, transactions);
+    }
+
+    private static void VerifyStreamsCandidateClock(RawScan scan, int transactions, int changes, string path)
+    {
+        var beforeLower = scan.Long("environment.clockBefore.earliestOffsetTicks");
+        var beforeUpper = scan.Long("environment.clockBefore.latestOffsetTicks");
+        var afterLower = scan.Long("environment.clockAfter.earliestOffsetTicks");
+        var afterUpper = scan.Long("environment.clockAfter.latestOffsetTicks");
+        var upper = Math.Max(beforeUpper, afterUpper);
+        const string observations = "environment.rawWallTicksByTransaction";
+        Require(beforeLower <= beforeUpper && afterLower <= afterUpper &&
+            scan.Long("environment.sourceClockUpperOffsetTicks") == upper &&
+            scan.ArrayCount(observations) == transactions && scan.Workers.Count == 1 &&
+            scan.Workers[0].Length == transactions * changes,
+            $"Streams trial '{path}' has inconsistent clock bounds or transaction samples.");
+
+        var samples = scan.Workers[0];
+        for (var index = 0; index < transactions; index++)
+        {
+            var expected = (Int128)scan.Long($"{observations}[{index}]") + upper;
+            Require(expected > 0 && expected <= long.MaxValue,
+                $"Streams trial '{path}' has an invalid corrected latency at transaction {index}.");
+            var transactionSamples = samples.AsSpan(index * changes, changes);
+            Require(transactionSamples.IndexOfAnyExcept((long)expected) < 0,
+                $"Streams trial '{path}' latency differs from the retained clock observations at transaction {index}.");
+        }
+    }
+
+    private static void VerifyStreamsReferenceClock(RawScan scan, int transactions, int changes, string path)
+    {
+        var receiptTicks = scan.DeliveryUnixTicks;
+        Require(receiptTicks is not null && receiptTicks.Length == transactions * changes &&
+            scan.Workers.Count == 1 && scan.Workers[0].Length == receiptTicks.Length,
+            $"Streams reference trial '{path}' has incomplete receipt clock samples.");
+
+        var samples = scan.Workers[0];
+        for (var transaction = 0; transaction < transactions; transaction++)
+        {
+            var commit = (Int128)scan.Long($"environment.commitMicrosByTransaction[{transaction}]") * 10;
+            var first = transaction * changes;
+            for (var index = first; index < first + changes; index++)
+            {
+                var latency = (Int128)receiptTicks![index] - commit;
+                Require(latency > 0 && latency == samples[index],
+                    $"Streams reference trial '{path}' latency differs from receipt and PostgreSQL commit at row {index + 1}.");
+            }
+        }
     }
 
     private static void VerifyLiveSignalRCapture(JsonElement index, RawScan scan, string commit, string os, string role,
@@ -820,6 +880,7 @@ internal static class Checker
         public int ArrayCount(string path) => ArrayLengths.TryGetValue(path, out var count) ? count :
             throw new CheckFailedException($"Raw capture is missing array '{path}'.");
         public long[]? UncorrectedTicks { get; set; }
+        public long[]? DeliveryUnixTicks { get; set; }
         public string Text(string path) => Scalars.TryGetValue(path, out var value) ? value : throw new CheckFailedException($"Raw capture is missing '{path}'.");
         public string? TryText(string path) => Scalars.TryGetValue(path, out var value) ? value : null;
         public long Long(string path) => long.Parse(Text(path), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
@@ -870,7 +931,8 @@ internal static class Checker
                     {
                         var path = Child();
                         if (reader.TokenType == JsonTokenType.StartArray &&
-                            (path == "rawUncorrectedTicksByTransaction" || Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$")))
+                            (path is "rawUncorrectedTicksByTransaction" or "environment.deliveryUnixTicks" ||
+                             Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$")))
                         {
                             var buffer = new List<long>();
                             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -882,6 +944,10 @@ internal static class Checker
                             if (path == "rawUncorrectedTicksByTransaction")
                             {
                                 scan.UncorrectedTicks = buffer.ToArray();
+                            }
+                            else if (path == "environment.deliveryUnixTicks")
+                            {
+                                scan.DeliveryUnixTicks = buffer.ToArray();
                             }
                             else
                             {
