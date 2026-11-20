@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,6 +55,11 @@ internal static class StreamsCommitDeliveryCapture
         if (RuntimeInformation.ProcessArchitecture != Architecture.X64)
         {
             throw new PlatformNotSupportedException("Streams capture targets x64.");
+        }
+        var implementation = typeof(PgOutputChangeStream).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+        if (!implementation.EndsWith($"+{options.SourceCommit}", StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("The Streams assembly was not built from the requested source commit.");
         }
 
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -125,7 +131,7 @@ internal static class StreamsCommitDeliveryCapture
         var report = new PerformanceEvidenceGenerator.TrialFile(
             1, "bluetusk-performance-trial", "Streams",
             $"{os}|Streams|changes={options.ChangesPerTransaction}|scenario=commit-to-delivery",
-            "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, "BlueTusk.Streams",
+            "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, $"BlueTusk.Streams {implementation}",
             JsonSerializer.SerializeToElement(new
             {
                 os,

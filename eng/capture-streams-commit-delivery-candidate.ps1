@@ -3,17 +3,22 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [string] $DotNetPath = 'dotnet',
+    [string] $BenchmarkAssemblyPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
     [ValidateRange(1, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
-    [ValidateRange(0, 49)][int] $Trial = 0
+    [ValidateRange(0, 49)][int] $Trial = 0,
+    [ValidatePattern('^[a-z0-9][a-z0-9-]{2,40}$')][string] $RunId = ('streams-cand-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
+    [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-candidate-probe'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repository = Split-Path $PSScriptRoot -Parent
-$dotnet = (Get-Command $DotNetPath -CommandType Application).Source
+$dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Source
 $output = [IO.Path]::GetFullPath($OutputPath)
+$fixturePath = "artifacts/performance-fixtures/$RunId"
+$fixtureDirectory = Join-Path $repository $fixturePath
 
 function Assert-CandidateSource
 {
@@ -46,43 +51,42 @@ function Write-Transactions([int] $Start, [int] $Count)
             $last = $first + $Changes - 1
             "INSERT INTO public.streams_capture SELECT generate_series($first, $last);"
         }
-    } | & docker exec -i $postgres.container psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_compatibility
+    } | & docker exec -i $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark
     if ($LASTEXITCODE -ne 0) { throw 'The independent PostgreSQL workload writer failed.' }
 }
 
 Assert-CandidateSource
 if (Test-Path -LiteralPath $output) { throw "Capture output already exists at '$output'." }
 $null = New-Item -ItemType Directory -Path $output
-$benchmark = Join-Path $repository 'benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj'
-$build = Join-Path $output 'build'
-$buildLog = Join-Path $output 'build.log'
-$tfm = '-p:BlueTuskRuntimeTargetFrameworks=net10.0'
-& $dotnet build $benchmark --configuration Release --artifacts-path $build $tfm '--maxcpucount:2' --verbosity minimal *> $buildLog
-if ($LASTEXITCODE -ne 0) { throw "Building the Streams benchmark failed. See '$buildLog'." }
-$assembly = @(& $dotnet msbuild $benchmark $tfm -p:Configuration=Release -p:UseArtifactsOutput=true "-p:ArtifactsPath=$build" -getProperty:TargetPath)
-if ($LASTEXITCODE -ne 0 -or $assembly.Count -ne 1 -or -not (Test-Path -LiteralPath $assembly[0] -PathType Leaf))
-{ throw 'Cannot locate the isolated Streams benchmark assembly.' }
+if ($BenchmarkAssemblyPath)
+{
+    $assembly = (Resolve-Path -LiteralPath $BenchmarkAssemblyPath).Path
+}
+else
+{
+    $benchmark = Join-Path $repository 'benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj'
+    $build = Join-Path $output 'build'
+    $buildLog = Join-Path $output 'build.log'
+    $tfm = '-p:BlueTuskRuntimeTargetFrameworks=net10.0'
+    & $dotnet build $benchmark --configuration Release --artifacts-path $build $tfm '--maxcpucount:2' --verbosity minimal *> $buildLog
+    if ($LASTEXITCODE -ne 0) { throw "Building the Streams benchmark failed. See '$buildLog'." }
+    $target = @(& $dotnet msbuild $benchmark $tfm -p:Configuration=Release -p:UseArtifactsOutput=true "-p:ArtifactsPath=$build" -getProperty:TargetPath)
+    if ($LASTEXITCODE -ne 0 -or $target.Count -ne 1 -or -not (Test-Path -LiteralPath $target[0] -PathType Leaf))
+    { throw 'Cannot locate the isolated Streams benchmark assembly.' }
+    $assembly = $target[0]
+}
 
-$performancePlan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
-$compatibility = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'dotnet-compatibility.json') -Raw | ConvertFrom-Json
-if ($compatibility.postgreSqlFixture.linuxImage -cne $performancePlan.fixture.postgreSqlImage)
-{ throw 'The diagnostic PostgreSQL fixture image no longer matches the performance plan pin.' }
-Import-Module (Join-Path $PSScriptRoot 'dotnet-compatibility-postgresql.psm1') -Force
-$postgres = $null
 $candidate = $null
 $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
 try
 {
-    $fixtureOptions = @{
-        Contract = $compatibility.postgreSqlFixture
-        WorkDirectory = (Join-Path $output 'postgresql')
-        DownloadCache = (Join-Path $repository 'artifacts/dotnet-downloads')
-        UseDocker = $true
-    }
-    $postgres = Start-DotNetCompatibilityPostgreSql @fixtureOptions
-    $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $postgres.connection
+    & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
+        -OutputPath $fixturePath -SourceCommit $ExpectedCommit -LogicalReplication
+    $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
+    $postgres = $fixture.containers[0].name
+    $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = [IO.File]::ReadAllText((Join-Path $fixtureDirectory 'connection.secret'))
     $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
-    & docker exec $postgres.container psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_compatibility -c $schema
+    & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
     if ($LASTEXITCODE -ne 0) { throw 'Creating the diagnostic source publication failed.' }
 
     $ready = Join-Path $output 'ready'
@@ -92,7 +96,7 @@ try
     $candidateError = Join-Path $output 'candidate-error.log'
     [ordered]@{
         sourceCommit = $ExpectedCommit
-        postgreSqlImage = $postgres.identity
+        postgreSqlImage = $fixture.postgreSqlImage
         trial = $Trial
         changesPerTransaction = $Changes
         warmupTransactions = $WarmupTransactions
@@ -105,7 +109,7 @@ try
     } | ConvertTo-Json | Set-Content -LiteralPath $optionsPath -Encoding utf8
     $start = @{
         FilePath = $dotnet
-        ArgumentList = ('"{0}" --streams-commit-delivery-candidate "{1}"' -f $assembly[0], $optionsPath)
+        ArgumentList = ('"{0}" --streams-commit-delivery-candidate "{1}"' -f $assembly, $optionsPath)
         WorkingDirectory = $repository
         PassThru = $true
         RedirectStandardOutput = (Join-Path $output 'candidate.log')
@@ -137,5 +141,10 @@ finally
         if (-not $candidate.HasExited) { $candidate.Kill($true) }
         $candidate.Dispose()
     }
-    if ($postgres) { Stop-DotNetCompatibilityPostgreSql -Fixture $postgres }
+    & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner
+    foreach ($file in 'connection.secret', 'container-connection.secret', 'postgres.env.secret')
+    {
+        $path = Join-Path $fixtureDirectory $file
+        if (Test-Path -LiteralPath $path) { [IO.File]::Delete($path) }
+    }
 }

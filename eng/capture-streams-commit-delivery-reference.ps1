@@ -5,7 +5,9 @@ param(
     [ValidateSet(1, 1000)][int] $Changes = 1,
     [ValidateRange(1, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
-    [ValidateRange(0, 49)][int] $Trial = 0
+    [ValidateRange(0, 49)][int] $Trial = 0,
+    [ValidatePattern('^[a-z0-9][a-z0-9-]{2,40}$')][string] $RunId = ('streams-ref-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
+    [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-reference-probe'
 )
 
 Set-StrictMode -Version Latest
@@ -24,11 +26,9 @@ if ($image -cnotmatch '^quay\.io/debezium/server:3\.6\.1\.Final@sha256:[0-9a-f]{
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 if (Test-Path -LiteralPath $output) { throw 'The reference capture requires a new output directory.' }
 $null = New-Item -ItemType Directory -Path $output
-$run = 'streams-ref-' + [guid]::NewGuid().ToString('N').Substring(0, 12)
-$owner = 'streams-reference-probe'
-$fixturePath = "artifacts/performance-fixtures/$run"
+$fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $root $fixturePath
-$reference = "bt-perf-$run-debezium"
+$reference = "bt-perf-$RunId-debezium"
 $configuration = Join-Path $fixtureDirectory 'application.properties'
 $manifest = Join-Path $fixtureDirectory 'probe.mf'
 $capturePath = Join-Path $output 'reference.json'
@@ -70,7 +70,7 @@ function Write-Transactions([int] $Start, [int] $Count)
 
 try
 {
-    & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $run -Owner $owner -CaptureProfile native `
+    & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
         -OutputPath $fixturePath -SourceCommit $ExpectedCommit -LogicalReplication
     $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
     $postgres = $fixture.containers[0].name
@@ -83,6 +83,8 @@ try
 debezium.sink.type=http
 debezium.sink.http.url=http://127.0.0.1:8081/events
 debezium.sink.http.retries=0
+debezium.sink.http.batch.enabled=true
+debezium.sink.http.batch.max-size=1000
 debezium.format.value=json
 debezium.format.value.schemas.enable=false
 debezium.source.connector.class=io.debezium.connector.postgresql.PostgresConnector
@@ -107,8 +109,8 @@ debezium.source.offset.flush.interval.ms=1000
     [IO.File]::WriteAllText($manifest, "Premain-Class: StreamsHttpProbe`n`n")
     $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os"
     $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
-    $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$owner" `
-        --label "bluetusk.run=$run" --label "bluetusk.commit=$ExpectedCommit" `
+    $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$Owner" `
+        --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
         --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" --entrypoint /bin/sh $image -ec $launch
     $created = $true
     $null = Invoke-Docker cp (Join-Path $PSScriptRoot 'streams-performance/StreamsHttpProbe.java') "${reference}:/tmp/StreamsHttpProbe.java"
@@ -152,6 +154,10 @@ debezium.source.offset.flush.interval.ms=1000
             [long]$microseconds -ne $capture.environment.commitMicrosByTransaction[$index])
         { throw "Debezium delivery timestamps differ from PostgreSQL commit history at measured transaction $index." }
     }
+    $finalHead = (& git -C $root rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $finalHead -cne $ExpectedCommit) { throw 'The benchmark checkout changed during capture.' }
+    $dirty = & git -C $root status --porcelain --untracked-files=no
+    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark tracked worktree changed during capture.' }
     [IO.File]::Copy($captured, $capturePath)
     "Captured $($capture.measurement.completedOperations) Debezium rows with verified PostgreSQL commit timestamps in '$capturePath'."
 }
@@ -159,7 +165,7 @@ finally
 {
     if (Test-Path -LiteralPath $configuration) { [IO.File]::Delete($configuration) }
     if ($created) { & docker logs $reference *> (Join-Path $output 'debezium.log') }
-    & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $run -Owner $owner
+    & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner
     foreach ($file in 'connection.secret', 'container-connection.secret', 'postgres.env.secret')
     {
         $path = Join-Path $fixtureDirectory $file

@@ -20,6 +20,7 @@ public final class StreamsHttpProbe {
     private static final Path OUTPUT = Path.of("/tmp/streams-reference.json");
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final long TICKS_PER_SECOND = 10_000_000;
+    private static final int MAX_HTTP_BATCH_BYTES = 2 * 1024 * 1024;
 
     private final int changes;
     private final int warmupRows;
@@ -101,25 +102,21 @@ public final class StreamsHttpProbe {
             if (!exchange.getRequestMethod().equals("POST") || failed || complete) {
                 throw new IllegalStateException("Unexpected delivery request.");
             }
-            var bytes = exchange.getRequestBody().readNBytes(65_537);
-            if (bytes.length > 65_536) {
-                throw new IllegalStateException("The row message exceeded the fixture bound.");
+            var bytes = exchange.getRequestBody().readNBytes(MAX_HTTP_BATCH_BYTES + 1);
+            if (bytes.length > MAX_HTTP_BATCH_BYTES) {
+                throw new IllegalStateException("The delivery exceeded the fixture byte bound.");
             }
-            var event = JSON.readTree(bytes);
-            var source = event.required("source");
-            var row = event.required("after").required("id");
-            if (!row.isIntegralNumber() || row.longValue() != (long) delivered + 1 ||
-                !event.required("op").asText().equals("c") || !source.required("version").asText().equals(VERSION) ||
-                !source.required("schema").asText().equals("public") || !source.required("table").asText().equals("streams_capture")) {
-                throw new IllegalStateException("Debezium delivered an unexpected row, operation, version or table.");
-            }
-            if (delivered >= warmupRows) {
-                if (started == 0) {
-                    throw new IllegalStateException("A measured row arrived before the measurement marker.");
+            var body = JSON.readTree(bytes);
+            if (body.isArray()) {
+                if (body.isEmpty() || body.size() > 1_000) {
+                    throw new IllegalStateException("The HTTP batch has an unexpected row count.");
                 }
-                recordDelivery(source, received);
+                for (var event : body) {
+                    recordEvent(event, received);
+                }
+            } else {
+                recordEvent(body, received);
             }
-            delivered++;
             if (delivered == warmupRows + measuredRows) {
                 writeResult();
                 complete = true;
@@ -130,6 +127,23 @@ public final class StreamsHttpProbe {
             System.err.println("Streams benchmark probe: " + exception.getMessage());
             respond(exchange, 409, "The Streams benchmark rejected the delivery.");
         }
+    }
+
+    private void recordEvent(JsonNode event, Instant received) {
+        var source = event.required("source");
+        var row = event.required("after").required("id");
+        if (delivered >= warmupRows + measuredRows || !row.isIntegralNumber() || row.longValue() != (long) delivered + 1 ||
+            !event.required("op").asText().equals("c") || !source.required("version").asText().equals(VERSION) ||
+            !source.required("schema").asText().equals("public") || !source.required("table").asText().equals("streams_capture")) {
+            throw new IllegalStateException("Debezium delivered an unexpected row, operation, version or table.");
+        }
+        if (delivered >= warmupRows) {
+            if (started == 0) {
+                throw new IllegalStateException("A measured row arrived before the measurement marker.");
+            }
+            recordDelivery(source, received);
+        }
+        delivered++;
     }
 
     private void recordDelivery(JsonNode source, Instant received) {

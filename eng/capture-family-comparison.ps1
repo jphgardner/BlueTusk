@@ -47,6 +47,13 @@ if ($Describe)
     $specification | ConvertTo-Json -Depth 4
     return
 }
+if ($Family -ceq 'Streams' -and $Diagnostic)
+{
+    $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Trials = $Trials; Owner = $Owner }
+    if ($RunId) { $capture.RunId = $RunId }
+    & (Join-Path $PSScriptRoot 'capture-streams-commit-delivery.ps1') @capture
+    return
+}
 if ($Family -ceq 'ControlPlane')
 {
     if ($WarmupSeconds % 1 -ne 0 -or $MeasurementSeconds % 1 -ne 0)
@@ -56,7 +63,7 @@ if ($Family -ceq 'ControlPlane')
         WarmupSeconds = [int]$WarmupSeconds; MeasurementSeconds = [int]$MeasurementSeconds
         Owner = $Owner; Qualification = -not $Diagnostic
     }
-    if ($RunId) { $capture.RunId = $RunId }
+    if ($RunId) { $capture.RunId = "$RunId-cp" }
     & (Join-Path $PSScriptRoot 'capture-control-plane-inventory.ps1') @capture
     return
 }
