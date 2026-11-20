@@ -32,7 +32,7 @@ function Add-ConditionalSkip([object] $Fixture)
     $skip.id = 54322
     $skip.html_url = 'https://github.com/jphgardner/BlueTusk/actions/runs/12345/job/54322'
     $skip.conclusion = 'skipped'
-    $skip.started_at = '2026-01-01T00:00:03Z'
+    $skip.started_at = '2026-01-01T00:00:10Z'
     $skip.completed_at = '2026-01-01T00:00:02Z'
     $skip | Add-Member -NotePropertyName steps -NotePropertyValue @()
     $Fixture.pages[0].total_count = 2
@@ -104,7 +104,8 @@ Reject 'job-after-run-completion' { param($f) $f.pages[0].jobs[0].completed_at='
 Reject 'only-skipped-jobs' { param($f) $f.pages[0].jobs[0].conclusion='skipped' } 'not only skipped'
 Reject 'inverted-skip-with-step' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].steps=@([pscustomobject]@{conclusion='success'}) } 'lifecycle'
 Reject 'inverted-skip-outside-run' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].started_at='2026-01-01T00:00:01Z'; $f.pages[0].jobs[1].completed_at='2026-01-01T00:00:00Z' } 'lifecycle'
-Reject 'skip-inversion-over-one-second' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].started_at='2026-01-01T00:00:04Z' } 'lifecycle'
+Reject 'inverted-skip-start-after-run' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].started_at='2026-01-01T00:00:11Z' } 'lifecycle'
+Reject 'inverted-skip-missing-steps' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].PSObject.Properties.Remove('steps') } 'missing'
 
 $conditional = Fresh
 Add-ConditionalSkip $conditional

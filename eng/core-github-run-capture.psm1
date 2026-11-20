@@ -97,9 +97,9 @@ function ConvertTo-CoreGithubRunRecord
         $jobCompletedText = Value $job 'completed_at'
         $jobCompleted = Utc $jobCompletedText 'GitHub job completion'
         $ordered = $jobCompleted -ge $jobStarted
-        if (-not $ordered -and $jobConclusion -ceq 'skipped' -and $jobStarted -eq $jobCompleted.AddSeconds(1))
+        if (-not $ordered -and $jobConclusion -ceq 'skipped')
         {
-            # GitHub can record a conditional skip one second before its nominal start.
+            # A conditional skip can be recorded before its nominal start because no steps ran.
             $steps = Value $job 'steps'
             $ordered = $steps -is [array] -and $steps.Count -eq 0
         }
