@@ -7,13 +7,19 @@ uses a separate historical fixture.
 
 | Track | Server support | Required evidence |
 | --- | --- | --- |
-| Five core families | PostgreSQL 15–18 stable; PostgreSQL 19 preview | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
+| Five core families | PostgreSQL 15–18 stable support. PostgreSQL 19 GA qualification pending. | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
 | Portable Graph preview | PostgreSQL 15–18, with a digest-pinned PostgreSQL 18 release fixture | Exact candidate packages, differential and security tests, Windows and Linux performance, 24-hour recovery, and independent approval |
 | Native SQL/PGQ preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture | Capability checks and native regression evidence on the pinned fixture. A future native release also requires result parity and permissions checks. |
 
-PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/).
-Native mode requires the actual server capability. Native PostgreSQL 19 `REPACK` remains preview
-compatibility work until the GA matrix passes.
+The PostgreSQL project released PostgreSQL 19 on November 19, 2026. BlueTusk
+qualifies each PostgreSQL major separately. [PostgreSQL 19 release announcement](https://www.postgresql.org/about/news/postgresql-19-released-3449/)
+
+Portable Graph uses joins over ordinary mapped tables. Native Graph checks the
+running server for SQL/PGQ, which upstream removed in PostgreSQL 19 Beta 4.
+[PostgreSQL 19 Beta 4 release notes](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
+
+BlueTusk's integration with PostgreSQL 19 `REPACK` remains in compatibility
+testing until the GA matrix passes.
 
 ## BlueTusk graph engine
 
@@ -161,8 +167,8 @@ attempts.
 The build workflow now measures stable PostgreSQL 15–18 compatibility and
 produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
-the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
-stable qualification. Compile-time and shared API checks still cover Graph.
+the historical PostgreSQL 19 Beta 3 fixture for native graph regression. Compile-time
+and shared API checks still cover Graph.
 The Core package-only application job runs Orders on its pinned stable database.
 The portable Graph workflow runs Topology and Fraud against the exact candidate
 packages on pinned PostgreSQL 18.
@@ -171,7 +177,7 @@ The existing protected `PostgreSQL 19 live matrix` status is preserved as a
 provider-only check on the last verified historical fixture; it does not run
 Continuous Graph or native SQL/PGQ scenarios. The separate preview matrix still
 tests those scenarios. No protected status or approval rule has been removed.
-This historical compatibility check is not a claim that Beta 4 or GA passed.
+PostgreSQL 19 GA qualification requires a run against the released server.
 
 ```powershell
 ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core
