@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateSet('commit-to-delivery', 'catch-up')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot')][string] $Scenario = 'commit-to-delivery',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -14,9 +14,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$catchUp = $Scenario -ceq 'catch-up'
-if ($catchUp -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
-if ($catchUp -ne ($WarmupTransactions -eq 0)) { throw 'Only a catch-up capture starts without warmup transactions.' }
+$liveDelivery = $Scenario -ceq 'commit-to-delivery'
+$snapshot = $Scenario -ceq 'snapshot'
+if (-not $liveDelivery -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
+if ($liveDelivery -eq ($WarmupTransactions -eq 0)) { throw 'Only live commit-to-delivery capture uses warmup transactions.' }
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use a Windows or Linux benchmark host.' }
 $head = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $head -cne $ExpectedCommit) { throw 'The benchmark checkout differs from the expected commit.' }
@@ -80,15 +81,16 @@ try
     $postgres = $fixture.containers[0].name
     $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
     $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
-    if ($catchUp)
+    if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
             -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
-        Write-Transactions 0 $MeasurementTransactions
     }
+    if (-not $liveDelivery) { Write-Transactions 0 $MeasurementTransactions }
 
     $connection = [Data.Common.DbConnectionStringBuilder]::new()
     $connection.set_ConnectionString([IO.File]::ReadAllText((Join-Path $fixtureDirectory 'container-connection.secret')))
+    $snapshotMode = if ($snapshot) { 'initial' } else { 'no_data' }
     $properties = @"
 debezium.sink.type=http
 debezium.sink.http.url=http://127.0.0.1:8081/events
@@ -110,7 +112,7 @@ debezium.source.publication.name=streams_capture
 debezium.source.publication.autocreate.mode=disabled
 debezium.source.topic.prefix=streams_reference
 debezium.source.table.include.list=public.streams_capture
-debezium.source.snapshot.mode=no_data
+debezium.source.snapshot.mode=$snapshotMode
 debezium.source.offset.storage=org.apache.kafka.connect.storage.FileOffsetBackingStore
 debezium.source.offset.storage.file.filename=/debezium/data/streams-offsets.dat
 debezium.source.offset.flush.interval.ms=1000
@@ -129,7 +131,7 @@ debezium.source.offset.flush.interval.ms=1000
     [IO.File]::Delete($configuration)
     $null = Invoke-Docker start $reference
 
-    if (-not $catchUp)
+    if ($liveDelivery)
     {
         Wait-Delivery '0'
         $slotDeadline = [DateTimeOffset]::UtcNow.AddMinutes(2)
@@ -155,7 +157,8 @@ debezium.source.offset.flush.interval.ms=1000
     $warmupRows = $Changes * [long]$WarmupTransactions
     $query = "SELECT min(id), count(*), xmin::text, (extract(epoch FROM pg_xact_commit_timestamp((xmin::text)::xid)) * 1000000)::bigint FROM public.streams_capture WHERE id > $warmupRows GROUP BY xmin::text ORDER BY min(id)"
     $commits = @(Invoke-Docker exec $postgres psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $query)
-    if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $commits.Count -or
+    $expectedCommitTimestamps = if ($snapshot) { 0 } else { $commits.Count }
+    if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $expectedCommitTimestamps -or
         $capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
         -not $capture.workloadKey.EndsWith("|scenario=$Scenario", [StringComparison]::Ordinal) -or
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
@@ -163,9 +166,10 @@ debezium.source.offset.flush.interval.ms=1000
     for ($index = 0; $index -lt $commits.Count; $index++)
     {
         $first, $count, $transactionId, $microseconds = $commits[$index].Split('|')
-        if ([long]$first -ne $warmupRows + 1 + $index * [long]$Changes -or [long]$count -ne $Changes -or
-            [long]$transactionId -ne $capture.environment.transactionIds[$index] -or
-            [long]$microseconds -ne $capture.environment.commitMicrosByTransaction[$index])
+        if ([long]$first -ne $warmupRows + 1 + $index * [long]$Changes -or [long]$count -ne $Changes)
+        { throw "The PostgreSQL fixture differs from the requested transaction size at transaction $index." }
+        if (-not $snapshot -and ([long]$transactionId -ne $capture.environment.transactionIds[$index] -or
+            [long]$microseconds -ne $capture.environment.commitMicrosByTransaction[$index]))
         { throw "Debezium delivery timestamps differ from PostgreSQL commit history at measured transaction $index." }
     }
     $finalHead = (& git -C $root rev-parse HEAD).Trim()
@@ -173,7 +177,7 @@ debezium.source.offset.flush.interval.ms=1000
     $dirty = & git -C $root status --porcelain --untracked-files=no
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark tracked worktree changed during capture.' }
     [IO.File]::Copy($captured, $capturePath)
-    "Captured $($capture.measurement.completedOperations) Debezium rows with verified PostgreSQL commit timestamps in '$capturePath'."
+    "Captured $($capture.measurement.completedOperations) Debezium $Scenario rows in '$capturePath'."
 }
 finally
 {

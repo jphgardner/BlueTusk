@@ -5,7 +5,7 @@ param(
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
     [ValidateSet(1, 1000)][int] $Changes = 1,
-    [ValidateSet('commit-to-delivery', 'catch-up')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot')][string] $Scenario = 'commit-to-delivery',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -20,9 +20,9 @@ $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Sourc
 $output = [IO.Path]::GetFullPath($OutputPath)
 $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $repository $fixturePath
-$catchUp = $Scenario -ceq 'catch-up'
-if ($catchUp -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
-if ($catchUp -ne ($WarmupTransactions -eq 0)) { throw 'Only a catch-up capture starts without warmup transactions.' }
+$liveDelivery = $Scenario -ceq 'commit-to-delivery'
+if (-not $liveDelivery -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 0 }
+if ($liveDelivery -eq ($WarmupTransactions -eq 0)) { throw 'Only live commit-to-delivery capture uses warmup transactions.' }
 
 function Assert-CandidateSource
 {
@@ -92,13 +92,13 @@ try
     $schema = 'CREATE TABLE public.streams_capture(id bigint PRIMARY KEY); CREATE PUBLICATION streams_capture FOR TABLE public.streams_capture WITH (publish = ''insert'');'
     & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $schema
     if ($LASTEXITCODE -ne 0) { throw 'Creating the diagnostic source publication failed.' }
-    if ($catchUp)
+    if ($Scenario -ceq 'catch-up')
     {
         $null = & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
             -c "SELECT pg_create_logical_replication_slot('streams_capture', 'pgoutput')"
         if ($LASTEXITCODE -ne 0) { throw 'Creating the backlog replication slot failed.' }
-        Write-Transactions 0 $MeasurementTransactions
     }
+    if (-not $liveDelivery) { Write-Transactions 0 $MeasurementTransactions }
 
     $ready = Join-Path $output 'ready'
     $measurementReady = Join-Path $output 'measurement-ready'
@@ -130,7 +130,7 @@ try
     if ($IsWindows) { $start.WindowStyle = 'Hidden' }
     $candidate = Start-Process @start
 
-    if (-not $catchUp)
+    if ($liveDelivery)
     {
         Wait-CaptureMarker $ready
         Write-Transactions 0 $WarmupTransactions

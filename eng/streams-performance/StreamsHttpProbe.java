@@ -30,7 +30,8 @@ public final class StreamsHttpProbe {
     private final String image;
     private final String hostOs;
     private final String scenario;
-    private final boolean catchUp;
+    private final boolean liveDelivery;
+    private final boolean snapshot;
     private final long[] ticks;
     private final long[] commitMicros;
     private final long[] transactionIds;
@@ -50,7 +51,7 @@ public final class StreamsHttpProbe {
         server.createContext("/events", probe::receive);
         server.createContext("/progress", probe::progress);
         server.createContext("/measure", probe::begin);
-        if (probe.catchUp) {
+        if (!probe.liveDelivery) {
             probe.startMeasurement();
         }
         // One HTTP handler thread keeps the delivery order and measurement boundaries consistent.
@@ -61,7 +62,7 @@ public final class StreamsHttpProbe {
         var fields = arguments.split(",", -1);
         if (fields.length != 8 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
-            !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up") ||
+            !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot") ||
             !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
@@ -71,8 +72,9 @@ public final class StreamsHttpProbe {
         measuredRows = Math.multiplyExact(changes, transactions);
         trial = Integer.parseInt(fields[3]);
         scenario = fields[7];
-        catchUp = scenario.equals("catch-up");
-        if ((changes != 1 && changes != 1_000) || (catchUp ? warmupRows != 0 : warmupRows < 1) || warmupRows > 10_000_000 ||
+        liveDelivery = scenario.equals("commit-to-delivery");
+        snapshot = scenario.equals("snapshot");
+        if ((changes != 1 && changes != 1_000) || (liveDelivery ? warmupRows < 1 : warmupRows != 0) || warmupRows > 10_000_000 ||
             transactions < 1 || transactions > 16_000 || measuredRows > 1_048_576 || trial < 0 || trial >= 50) {
             throw new IllegalArgumentException("The Streams capture exceeds its workload bounds.");
         }
@@ -80,8 +82,8 @@ public final class StreamsHttpProbe {
         image = fields[5];
         hostOs = fields[6];
         ticks = new long[measuredRows];
-        commitMicros = new long[transactions];
-        transactionIds = new long[transactions];
+        commitMicros = new long[snapshot ? 0 : transactions];
+        transactionIds = new long[snapshot ? 0 : transactions];
         if (!threads.isThreadAllocatedMemorySupported()) {
             throw new IllegalStateException("The reference JVM must expose its process allocation counter.");
         }
@@ -145,18 +147,33 @@ public final class StreamsHttpProbe {
     private void recordEvent(JsonNode event, Instant received, long receivedAt) {
         var source = event.required("source");
         var row = event.required("after").required("id");
-        if (delivered >= warmupRows + measuredRows || !row.isIntegralNumber() || row.longValue() != (long) delivered + 1 ||
-            !event.required("op").asText().equals("c") || !source.required("version").asText().equals(VERSION) ||
+        if (delivered >= warmupRows + measuredRows || !row.isIntegralNumber() ||
+            !event.required("op").asText().equals(snapshot ? "r" : "c") || !source.required("version").asText().equals(VERSION) ||
             !source.required("schema").asText().equals("public") || !source.required("table").asText().equals("streams_capture")) {
             throw new IllegalStateException("Debezium delivered an unexpected row, operation, version or table.");
         }
-        if (delivered >= warmupRows) {
-            if (started == 0) {
-                throw new IllegalStateException("A measured row arrived before the measurement marker.");
+        if (snapshot) {
+            recordSnapshotRow(row.longValue(), receivedAt);
+        } else {
+            if (row.longValue() != (long) delivered + 1) {
+                throw new IllegalStateException("Debezium delivered a missing, repeated or out-of-order row.");
             }
-            recordDelivery(source, received, receivedAt);
+            if (delivered >= warmupRows) {
+                if (started == 0) {
+                    throw new IllegalStateException("A measured row arrived before the measurement marker.");
+                }
+                recordDelivery(source, received, receivedAt);
+            }
         }
         delivered++;
+    }
+
+    private void recordSnapshotRow(long row, long receivedAt) {
+        long latency = (receivedAt - started) / 100;
+        if (row < 1 || row > ticks.length || ticks[(int) row - 1] != 0 || latency <= 0) {
+            throw new IllegalStateException("Debezium delivered an unexpected or repeated snapshot row.");
+        }
+        ticks[(int) row - 1] = latency;
     }
 
     private void recordDelivery(JsonNode source, Instant received, long receivedAt) {
@@ -174,7 +191,7 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("Rows in a transaction reported different source positions.");
         }
         long receiveTicks = received.getEpochSecond() * TICKS_PER_SECOND + received.getNano() / 100;
-        long latency = catchUp ? (receivedAt - started) / 100 : receiveTicks - timestamp.longValue() * 10;
+        long latency = liveDelivery ? receiveTicks - timestamp.longValue() * 10 : (receivedAt - started) / 100;
         if (latency <= 0) {
             throw new IllegalStateException("The Streams delivery latency must be positive.");
         }

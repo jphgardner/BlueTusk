@@ -31,12 +31,12 @@ $records = [Collections.Generic.List[object]]::new()
 $implementations = @{}
 $started = [DateTimeOffset]::UtcNow
 
-$workloads = foreach ($scenario in 'commit-to-delivery', 'catch-up')
+$workloads = foreach ($scenario in $contract.workloads.Streams.scenarios)
 {
     foreach ($changes in $contract.workloads.Streams.transactionChanges)
     {
         # Bound row counts while exercising the same transactions on both sides.
-        $warmup = if ($scenario -ceq 'catch-up') { 0 } elseif ($changes -eq 1) { 20 } else { 2 }
+        $warmup = if ($scenario -cne 'commit-to-delivery') { 0 } elseif ($changes -eq 1) { 20 } else { 2 }
         $measurement = if ($changes -eq 1) { 1000 } else { 8 }
         @{ Scenario = $scenario; Changes = $changes; WarmupTransactions = $warmup; MeasurementTransactions = $measurement }
     }
