@@ -105,7 +105,7 @@ internal static class StreamsDeliveryCapture
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var cancellationToken = timeout.Token;
         var transactionTicks = snapshot ? Array.Empty<long>() : new long[options.MeasurementTransactions];
-        var transactionIds = snapshot || sync ? Array.Empty<uint>() : new uint[options.MeasurementTransactions];
+        var transactionIds = snapshot ? Array.Empty<uint>() : new uint[options.MeasurementTransactions];
         var commitMicros = new long[transactionIds.Length];
         var samples = new long[checked(options.MeasurementTransactions * options.ChangesPerTransaction)];
         var spillPayloadSha256 = spill ? new string[options.MeasurementTransactions] : null;
@@ -318,17 +318,17 @@ internal static class StreamsDeliveryCapture
                     throw new InvalidDataException("Replication delivered an unexpected change count or a repeated/out-of-order commit.");
                 }
 
+                if (measurementIndex >= 0)
+                {
+                    transactionIds[measurementIndex] = transaction.TransactionId;
+                    commitMicros[measurementIndex] = (transaction.CommitTimestamp.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / 10;
+                }
+
                 if (syncSink is not null)
                 {
                     await syncSink.ApplyAsync(delivery, cancellationToken);
                     previous = transaction.CommitPosition;
                     return (DateTimeOffset.UtcNow - transaction.CommitTimestamp).Ticks;
-                }
-
-                if (measurementIndex >= 0)
-                {
-                    transactionIds[measurementIndex] = transaction.TransactionId;
-                    commitMicros[measurementIndex] = (transaction.CommitTimestamp.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / 10;
                 }
 
                 var spoolBytes = spoolDirectory?.EnumerateFiles("*.ready").SingleOrDefault()?.Length;

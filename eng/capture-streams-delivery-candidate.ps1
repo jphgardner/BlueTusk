@@ -193,6 +193,8 @@ try
         if ($capture.environment.verifiedSpoolTransactions -ne $MeasurementTransactions -or $capture.environment.minimumReadySpoolBytes -lt $streamsSpillBytes)
         { throw 'The candidate did not verify every measured transaction crossed the physical spool boundary.' }
     }
+    $sourceProof = Confirm-StreamsCaptureSource $postgres $Changes $WarmupTransactions $MeasurementTransactions ($Scenario -ceq 'snapshot') $capture
+    $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
     $verifiedPath = Join-Path $output 'candidate.json'
     if ($sync)
     {
@@ -209,14 +211,8 @@ try
         }
         if ($destinationFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $destinationFixture.Image }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
-        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
     }
-    else
-    {
-        $sourceProof = Confirm-StreamsCaptureSource $postgres $Changes $WarmupTransactions $MeasurementTransactions ($Scenario -ceq 'snapshot') $capture
-        $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
-        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
-    }
+    $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
     "Captured $($capture.measurement.completedOperations) changes in '$verifiedPath'."
 }
 finally

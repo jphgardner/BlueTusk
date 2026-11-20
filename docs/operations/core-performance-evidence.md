@@ -111,6 +111,12 @@ database transaction. If an HTTP batch ends mid-transaction, the reference
 stages that fragment in PostgreSQL before responding. It publishes the staged
 rows together with the final fragment and checkpoint.
 
+All seven Sync destinations retain PostgreSQL transaction IDs and commit times,
+and verify them against the source database after capture. The independent
+checker also matches the destination receipt to the expected mutation count
+and final source transaction. It recalculates candidate latency from the raw
+clock samples and reference latency from the retained acknowledgement times.
+
 The Redis diagnostic uses the same source at all three mutation counts. BlueTusk
 uses its Redis connector and Debezium uses the native Jedis client. Both apply
 documents, their reconciliation index, and the checkpoint atomically. Redis

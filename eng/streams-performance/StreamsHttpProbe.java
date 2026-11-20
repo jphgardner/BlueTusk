@@ -102,7 +102,7 @@ public final class StreamsHttpProbe {
         image = fields[5];
         hostOs = fields[6];
         ticks = new long[measuredRows];
-        deliveryUnixTicks = new long[liveDelivery && !sync ? measuredRows : 0];
+        deliveryUnixTicks = new long[liveDelivery ? measuredRows : 0];
         commitMicros = new long[snapshot ? 0 : transactions];
         transactionIds = new long[snapshot ? 0 : transactions];
         spillPayloadSha256 = new String[spill ? transactions : 0];
@@ -281,11 +281,13 @@ public final class StreamsHttpProbe {
         if (last && delivered >= warmupRows) {
             int batch = (delivered - warmupRows) / changes;
             var committed = Instant.now();
-            long latency = committed.getEpochSecond() * TICKS_PER_SECOND + committed.getNano() / 100 - commitMicros[batch] * 10;
+            long acknowledgementTicks = committed.getEpochSecond() * TICKS_PER_SECOND + committed.getNano() / 100;
+            long latency = acknowledgementTicks - commitMicros[batch] * 10;
             if (latency <= 0) {
                 throw new IllegalStateException("The Sync destination latency must be positive.");
             }
             Arrays.fill(ticks, batch * changes, (batch + 1) * changes, latency);
+            Arrays.fill(deliveryUnixTicks, batch * changes, (batch + 1) * changes, acknowledgementTicks);
         }
     }
 

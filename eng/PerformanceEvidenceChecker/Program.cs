@@ -360,12 +360,13 @@ internal static class Checker
                 $"{familyName} input '{id}' must bind the committed timing, candidate and published baseline.");
         }
         var result = new List<TrialMetrics>();
-        var streamsFixtures = new Dictionary<string, (long Warmup, long Transactions)>(StringComparer.Ordinal);
-        var streamProofVersion = 0;
-        if (family == "Streams" && index.TryGetProperty("sourceProofSchemaVersion", out _))
+        var sourceFixtures = new Dictionary<string, (long Warmup, long Transactions)>(StringComparer.Ordinal);
+        var sourceProofVersion = 0;
+        if (family is "Streams" or "Sync" && index.TryGetProperty("sourceProofSchemaVersion", out _))
         {
-            streamProofVersion = Int(index, "sourceProofSchemaVersion");
-            Require(streamProofVersion is 1 or 2, $"Streams input '{id}' uses an unsupported source proof.");
+            sourceProofVersion = Int(index, "sourceProofSchemaVersion");
+            Require(sourceProofVersion == 1 || (family == "Streams" && sourceProofVersion == 2),
+                $"{family} input '{id}' uses an unsupported source proof.");
         }
         string? matchedRuntime = null;
         foreach (var record in index.GetProperty("records").EnumerateArray())
@@ -385,13 +386,15 @@ internal static class Checker
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
-            if (family == "Streams" && key != $"{os}|Streams|primary-hot-path" && !Bool(index, "synthetic") &&
-                (streamProofVersion != 0 || !Bool(index, "diagnostic") || scan.TryText("environment.sourceFixture.schemaVersion") is not null))
+            if (family is "Streams" or "Sync" && key != $"{os}|{family}|primary-hot-path" && !Bool(index, "synthetic") &&
+                (sourceProofVersion != 0 || !Bool(index, "diagnostic") || scan.TryText("environment.sourceFixture.schemaVersion") is not null))
             {
-                var fixture = VerifyStreamsSourceFixture(scan, images, commit, role, key, path, frequency,
-                    verifyReferenceClock: streamProofVersion >= 2 || !Bool(index, "diagnostic"));
-                Require(streamsFixtures.TryAdd(key, fixture) || streamsFixtures[key] == fixture,
-                    $"Streams workload '{key}' changed its transaction counts between trials.");
+                var fixture = family == "Sync"
+                    ? VerifySyncSourceFixture(scan, images, commit, role, key, path, frequency)
+                    : VerifyStreamsSourceFixture(scan, images, commit, role, key, path, frequency,
+                        verifyReferenceClock: sourceProofVersion >= 2 || !Bool(index, "diagnostic"));
+                Require(sourceFixtures.TryAdd(key, fixture) || sourceFixtures[key] == fixture,
+                    $"{family} workload '{key}' changed its transaction counts between trials.");
             }
             if (family == "Live" && key != $"{os}|Live|primary-hot-path" && !Bool(index, "synthetic"))
             {
@@ -498,33 +501,11 @@ internal static class Checker
                 : implementation == "Debezium Server 3.6.1.Final" && scan.Text("environment.clientOs") == "linux"),
             $"Streams trial '{path}' does not identify the contracted workload, clocks and implementations.");
 
-        const string source = "environment.sourceFixture";
         var changes = int.Parse(workload.Groups[1].Value, CultureInfo.InvariantCulture);
         var scenario = workload.Groups[3].Value;
-        var snapshot = scenario == "snapshot";
         var spill = scenario.Length == 0;
-        var warmup = scan.Long(source + ".warmupTransactions");
-        var transactions = scan.ArrayCount(source + ".transactions");
-        Require(scan.Long(source + ".schemaVersion") == 1 && transactions is >= 1 and <= 16_000 &&
-            (spill || scenario == "commit-to-delivery" ? warmup is >= 1 and <= 10_000 : warmup == 0) &&
-            scan.Long("measurement.completedOperations") == transactions * (long)changes &&
-            scan.ArrayCount("environment.transactionIds") == (snapshot ? 0 : transactions) &&
-            scan.ArrayCount("environment.commitMicrosByTransaction") == (snapshot ? 0 : transactions),
-            $"Streams trial '{path}' does not bind delivered rows to every source transaction.");
-        var observedIds = new HashSet<long>();
-        for (var index = 0; index < transactions; index++)
-        {
-            var prefix = $"{source}.transactions[{index}]";
-            var transactionId = scan.Long(prefix + ".id");
-            var commitMicros = scan.Long(prefix + ".commitMicros");
-            var firstId = (warmup + index) * changes + 1;
-            Require(transactionId is > 0 and <= uint.MaxValue && observedIds.Add(transactionId) &&
-                commitMicros > 0 && scan.Long(prefix + ".firstId") == firstId &&
-                scan.Long(prefix + ".lastId") == firstId + changes - 1 && scan.Long(prefix + ".rows") == changes &&
-                (snapshot || scan.Long($"environment.transactionIds[{index}]") == transactionId &&
-                    scan.Long($"environment.commitMicrosByTransaction[{index}]") == commitMicros),
-                $"Streams trial '{path}' differs from the PostgreSQL source at measured transaction {index}.");
-        }
+        var needsWarmup = spill || scenario == "commit-to-delivery";
+        var (warmup, transactions, _) = VerifySourceTransactions(scan, path, changes, needsWarmup, scenario == "snapshot");
         if (spill)
         {
             Require(warmup + transactions <= 32 && scan.ArrayCount("environment.spillPayloadSha256") == transactions &&
@@ -537,21 +518,104 @@ internal static class Checker
                     $"Streams trial '{path}' has an invalid spill payload digest.");
             }
         }
-        if (spill || scenario == "commit-to-delivery")
+        if (needsWarmup)
         {
             if (role == "candidate")
             {
-                VerifyStreamsCandidateClock(scan, transactions, changes, path);
+                VerifySourceWallClock(scan, transactions, changes, path);
             }
             else if (verifyReferenceClock || scan.DeliveryUnixTicks is not null)
             {
-                VerifyStreamsReferenceClock(scan, transactions, changes, path);
+                VerifyReferenceReceiptClock(scan, transactions, changes, path);
             }
         }
         return (warmup, transactions);
     }
 
-    private static void VerifyStreamsCandidateClock(RawScan scan, int transactions, int changes, string path)
+    private static (long Warmup, long Transactions) VerifySyncSourceFixture(RawScan scan, string[] images,
+        string commit, string role, string key, string path, long frequency)
+    {
+        var workload = Regex.Match(key, @"\|mutations=(1|100|1000)\|destination=([a-z]+)$", RegexOptions.CultureInvariant);
+        Require(workload.Success && frequency == TimeSpan.TicksPerSecond,
+            $"Sync trial '{path}' does not identify a supported destination and clock.");
+        var changes = int.Parse(workload.Groups[1].Value, CultureInfo.InvariantCulture);
+        var sink = workload.Groups[2].Value;
+        var (assembly, nativeClient, receiptField) = sink switch
+        {
+            "postgresql" => ("PostgreSql", "native PostgreSQL JDBC", "finalCheckpointSharedTransaction"),
+            "redis" => ("Redis", "native Redis Jedis", "recoveredFromAppendOnlyFile"),
+            "nats" => ("Nats", "native NATS JetStream jnats", "recoveredFromJetStream"),
+            "opensearch" => ("OpenSearch", "native OpenSearch REST", "recoveredFromOpenSearch"),
+            "kafka" => ("Kafka", "native Apache Kafka Java producer", "recoveredFromKafka"),
+            "s3" => ("S3", "native signed S3 REST and Apache Parquet 1.16.0", "recoveredFromS3"),
+            "webhooks" => ("Webhooks", "native signed JDK HTTP webhook", "recoveredFromWebhooks"),
+            _ => throw new CheckFailedException($"Sync trial '{path}' uses an unknown destination."),
+        };
+        var postgres = scan.Text("environment.postgreSqlImage");
+        var implementation = scan.Text("implementation");
+        Require(scan.Text("environment.sink") == sink && postgres.StartsWith("postgres:", StringComparison.Ordinal) &&
+            images.Contains(postgres, StringComparer.Ordinal) &&
+            (role == "candidate"
+                ? implementation.StartsWith($"BlueTusk.Sync.{assembly} ", StringComparison.Ordinal) &&
+                    implementation.EndsWith($"+{commit}", StringComparison.Ordinal)
+                : implementation == $"Debezium Server 3.6.1.Final plus {nativeClient}" && scan.Text("environment.clientOs") == "linux"),
+            $"Sync trial '{path}' does not identify the source fixture and implementations.");
+        var (warmup, transactions, lastSourceId) = VerifySourceTransactions(scan, path, changes, needsWarmup: true, snapshot: false);
+        var totalTransactions = warmup + transactions;
+        const string destination = "environment.destinationProof";
+        Require(scan.Long(destination + ".transactions") == totalTransactions &&
+            scan.Long(destination + ".documents") == totalTransactions * changes &&
+            scan.Long(destination + ".finalSourceTransactionId") == lastSourceId &&
+            scan.Bool(destination + "." + receiptField) &&
+            (sink == "postgresql" ? scan.Text(destination + ".synchronousCommit") == "on"
+                : images.Contains(scan.Text("environment.destinationImage"), StringComparer.Ordinal)),
+            $"Sync trial '{path}' does not prove recovery of the measured destination mutations and checkpoint.");
+        if (sink == "kafka" && role == "reference")
+        {
+            Require(scan.Long(destination + ".recoveredFragments") == scan.Long("environment.durableHttpFragments"),
+                $"Sync trial '{path}' did not recover the reference HTTP fragments.");
+        }
+        if (role == "candidate")
+        {
+            VerifySourceWallClock(scan, transactions, changes, path);
+        }
+        else
+        {
+            VerifyReferenceReceiptClock(scan, transactions, changes, path);
+        }
+        return (warmup, transactions);
+    }
+
+    private static (long Warmup, int Transactions, long LastSourceId) VerifySourceTransactions(RawScan scan,
+        string path, int changes, bool needsWarmup, bool snapshot)
+    {
+        const string source = "environment.sourceFixture";
+        var warmup = scan.Long(source + ".warmupTransactions");
+        var transactions = scan.ArrayCount(source + ".transactions");
+        Require(scan.Long(source + ".schemaVersion") == 1 && transactions is >= 1 and <= 16_000 &&
+            (needsWarmup ? warmup is >= 1 and <= 10_000 : warmup == 0) &&
+            scan.Long("measurement.completedOperations") == transactions * (long)changes &&
+            scan.ArrayCount("environment.transactionIds") == (snapshot ? 0 : transactions) &&
+            scan.ArrayCount("environment.commitMicrosByTransaction") == (snapshot ? 0 : transactions),
+            $"Trial '{path}' does not bind delivered rows to every source transaction.");
+        var observedIds = new HashSet<long>();
+        for (var index = 0; index < transactions; index++)
+        {
+            var prefix = $"{source}.transactions[{index}]";
+            var transactionId = scan.Long(prefix + ".id");
+            var commitMicros = scan.Long(prefix + ".commitMicros");
+            var firstId = (warmup + index) * changes + 1;
+            Require(transactionId is > 0 and <= uint.MaxValue && observedIds.Add(transactionId) &&
+                commitMicros > 0 && scan.Long(prefix + ".firstId") == firstId &&
+                scan.Long(prefix + ".lastId") == firstId + changes - 1 && scan.Long(prefix + ".rows") == changes &&
+                (snapshot || scan.Long($"environment.transactionIds[{index}]") == transactionId &&
+                    scan.Long($"environment.commitMicrosByTransaction[{index}]") == commitMicros),
+                $"Trial '{path}' differs from the PostgreSQL source at measured transaction {index}.");
+        }
+        return (warmup, transactions, scan.Long($"{source}.transactions[{transactions - 1}].id"));
+    }
+
+    private static void VerifySourceWallClock(RawScan scan, int transactions, int changes, string path)
     {
         var beforeLower = scan.Long("environment.clockBefore.earliestOffsetTicks");
         var beforeUpper = scan.Long("environment.clockBefore.latestOffsetTicks");
@@ -563,26 +627,26 @@ internal static class Checker
             scan.Long("environment.sourceClockUpperOffsetTicks") == upper &&
             scan.ArrayCount(observations) == transactions && scan.Workers.Count == 1 &&
             scan.Workers[0].Length == transactions * changes,
-            $"Streams trial '{path}' has inconsistent clock bounds or transaction samples.");
+            $"Trial '{path}' has inconsistent clock bounds or transaction samples.");
 
         var samples = scan.Workers[0];
         for (var index = 0; index < transactions; index++)
         {
             var expected = (Int128)scan.Long($"{observations}[{index}]") + upper;
             Require(expected > 0 && expected <= long.MaxValue,
-                $"Streams trial '{path}' has an invalid corrected latency at transaction {index}.");
+                $"Trial '{path}' has an invalid corrected latency at transaction {index}.");
             var transactionSamples = samples.AsSpan(index * changes, changes);
             Require(transactionSamples.IndexOfAnyExcept((long)expected) < 0,
-                $"Streams trial '{path}' latency differs from the retained clock observations at transaction {index}.");
+                $"Trial '{path}' latency differs from the retained clock observations at transaction {index}.");
         }
     }
 
-    private static void VerifyStreamsReferenceClock(RawScan scan, int transactions, int changes, string path)
+    private static void VerifyReferenceReceiptClock(RawScan scan, int transactions, int changes, string path)
     {
         var receiptTicks = scan.DeliveryUnixTicks;
         Require(receiptTicks is not null && receiptTicks.Length == transactions * changes &&
             scan.Workers.Count == 1 && scan.Workers[0].Length == receiptTicks.Length,
-            $"Streams reference trial '{path}' has incomplete receipt clock samples.");
+            $"Reference trial '{path}' has incomplete receipt clock samples.");
 
         var samples = scan.Workers[0];
         for (var transaction = 0; transaction < transactions; transaction++)
@@ -593,7 +657,7 @@ internal static class Checker
             {
                 var latency = (Int128)receiptTicks![index] - commit;
                 Require(latency > 0 && latency == samples[index],
-                    $"Streams reference trial '{path}' latency differs from receipt and PostgreSQL commit at row {index + 1}.");
+                    $"Reference trial '{path}' latency differs from receipt and PostgreSQL commit at row {index + 1}.");
             }
         }
     }

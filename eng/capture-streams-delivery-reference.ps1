@@ -219,6 +219,7 @@ debezium.source.offset.flush.interval.ms=1000
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
     { throw 'The reference capture did not match its measured workload.' }
     $sourceProof = Confirm-StreamsCaptureSource $postgres $Changes $WarmupTransactions $MeasurementTransactions $snapshot $capture
+    $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
     if ($spill) { Assert-StreamsSpillPayload $postgres $warmupRows $MeasurementTransactions $capture }
     $finalHead = (& git -C $root rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or $finalHead -cne $ExpectedCommit) { throw 'The benchmark checkout changed during capture.' }
@@ -242,13 +243,8 @@ debezium.source.offset.flush.interval.ms=1000
         if ($destinationFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $destinationFixture.Image }
         if ($s3Libraries) { $capture.environment | Add-Member -NotePropertyName referenceLibrariesLockSha256 -NotePropertyValue $s3Libraries.LockSha256 }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
-        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }
-    else
-    {
-        $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
-        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
-    }
+    $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     "Captured $($capture.measurement.completedOperations) Debezium $Scenario rows in '$capturePath'."
 }
 finally

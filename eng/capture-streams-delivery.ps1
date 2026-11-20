@@ -137,6 +137,6 @@ $trialIndex = [ordered]@{
     containerImageDigests = $images
     records = @($records)
 }
-if ($Family -ceq 'Streams') { $trialIndex.sourceProofSchemaVersion = 2 }
+$trialIndex.sourceProofSchemaVersion = if ($Family -ceq 'Streams') { 2 } else { 1 }
 $trialIndex | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
 Write-Output "Captured $($records.Count) paired $Family diagnostic trials in '$output'."
