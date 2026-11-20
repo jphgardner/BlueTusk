@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -84,6 +85,7 @@ internal static class StreamsCommitDeliveryCapture
         await using var transactions = stream.ReadTransactionsAsync(cancellationToken).GetAsyncEnumerator(cancellationToken);
 
         BlueTuskLogSequenceNumber? previous = null;
+        long nextRow = 1;
         Signal(options.ReadyPath);
 
         for (var index = 0; index < options.WarmupTransactions; index++)
@@ -168,6 +170,27 @@ internal static class StreamsCommitDeliveryCapture
                 previous is { } position && transaction.CommitPosition.CompareTo(position) <= 0)
             {
                 throw new InvalidDataException("Replication delivered an unexpected change count or a repeated/out-of-order commit.");
+            }
+
+            var expectedNextTransaction = nextRow + options.ChangesPerTransaction;
+            await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
+            {
+                if (change is not InsertChange insert || insert.NewRow.Table is not { Schema: "public", Name: "streams_capture" })
+                {
+                    throw new InvalidDataException("Replication delivered an unexpected operation or table.");
+                }
+
+                var id = insert.NewRow["id"];
+                if (id is not { State: ChangeColumnState.Value, Encoding: ChangeValueEncoding.Text } ||
+                    !Utf8Parser.TryParse(id.Data.Span, out long row, out var consumed) || consumed != id.Data.Length || row != nextRow)
+                {
+                    throw new InvalidDataException("Replication delivered a missing, repeated, or out-of-order row.");
+                }
+                nextRow++;
+            }
+            if (nextRow != expectedNextTransaction)
+            {
+                throw new InvalidDataException("Replication did not enumerate every change in the transaction.");
             }
 
             previous = transaction.CommitPosition;
