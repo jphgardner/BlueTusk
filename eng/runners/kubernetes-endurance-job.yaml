@@ -53,6 +53,13 @@ spec:
               test -f "$pwsh_dll"
               printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
               chmod 0755 /tools/bin/pwsh
+              # The Sync workflow checks its fixture ports with the Ubuntu netcat implementation.
+              netcat_directory="$(mktemp -d)"
+              curl --fail --silent --show-error --location --proto '=https' --retry 3 --max-time 60 \
+                --output "$netcat_directory/package.deb" https://archive.ubuntu.com/ubuntu/pool/main/n/netcat-openbsd/netcat-openbsd_1.226-1ubuntu2_amd64.deb
+              printf '%s  %s\n' 'b2b837c2f9939aeda64ddb410c47c5ceee3034cf2157939ed7efdee51961aac4' "$netcat_directory/package.deb" | sha256sum --check --status
+              dpkg-deb --extract "$netcat_directory/package.deb" "$netcat_directory"
+              install -m 0755 "$netcat_directory/bin/nc.openbsd" /tools/bin/nc
           securityContext:
             runAsUser: 1001
             runAsGroup: 1001
