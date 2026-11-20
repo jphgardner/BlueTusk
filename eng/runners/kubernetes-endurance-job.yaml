@@ -37,10 +37,17 @@ spec:
           command: [/bin/sh, -ec]
           args:
             - |
-              mkdir -p /tools/powershell /tools/bin /tools/plugins
+              mkdir -p /tools/powershell /tools/powershell-runtime/shared /tools/bin /tools/plugins
               source="$(dirname "$(readlink -f "$(command -v pwsh)")")"
               cp -R "$source/." /tools/powershell/
-              ln -s ../powershell/pwsh /tools/bin/pwsh
+              dotnet_root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+              cp "$dotnet_root/dotnet" /tools/powershell-runtime/
+              cp -R "$dotnet_root/host" /tools/powershell-runtime/
+              cp -R "$dotnet_root/shared/Microsoft.NETCore.App" /tools/powershell-runtime/shared/
+              pwsh_dll="$(find /tools/powershell -type f -name pwsh.dll)"
+              test -f "$pwsh_dll"
+              printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
+              chmod 0755 /tools/bin/pwsh
           securityContext:
             runAsUser: 1001
             runAsGroup: 1001
