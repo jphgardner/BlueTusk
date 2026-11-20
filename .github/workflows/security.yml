@@ -58,13 +58,15 @@ jobs:
         with:
           fail-on-severity: low
 
-  submit-nuget-dependencies:
-    name: Submit candidate NuGet dependencies
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.submit_nuget_dependencies)
+  verify-nuget-dependencies:
+    name: Verify candidate NuGet dependencies
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.submit_nuget_dependencies)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      snapshot-id: ${{ steps.archive.outputs.artifact-id }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -97,15 +99,46 @@ jobs:
             --output artifacts/nuget-dependency-snapshot.json
 
       - name: Archive the resolved NuGet graph
+        id: archive
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: nuget-dependency-snapshot
+          name: nuget-dependency-snapshot-${{ github.run_attempt }}
           path: artifacts/nuget-dependency-snapshot.json
           if-no-files-found: error
 
+  submit-nuget-dependencies:
+    name: Submit candidate NuGet dependencies
+    needs: verify-nuget-dependencies
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.submit_nuget_dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Require the verification job's artifact ID
+        shell: bash
+        env:
+          SNAPSHOT_ID: ${{ needs.verify-nuget-dependencies.outputs.snapshot-id }}
+        run: '[[ "$SNAPSHOT_ID" =~ ^[1-9][0-9]*$ ]]'
+
+      - name: Retrieve the snapshot from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.verify-nuget-dependencies.outputs.snapshot-id }}
+          merge-multiple: true
+          path: artifacts
+
       - name: Submit the resolved NuGet snapshot
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          snapshot=artifacts/nuget-dependency-snapshot.json
+          jq -e --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF" --arg run "$GITHUB_RUN_ID" '
+            .version == 0 and .sha == $sha and .ref == $ref and
+            .job.id == $run and .job.correlator == "bluetusk-nuget" and
+            (.manifests | type == "object" and length > 0)
+          ' "$snapshot" >/dev/null
           gh api --method POST "repos/$GITHUB_REPOSITORY/dependency-graph/snapshots" \
-            --input artifacts/nuget-dependency-snapshot.json
+            --input "$snapshot"
