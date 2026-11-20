@@ -157,6 +157,7 @@ var request = new LiveSubscriptionRequest
 var connections = new HubConnection?[subscriberCount];
 var clients = new ChannelReader<JsonElement>[subscriberCount];
 var revision = 0;
+long observedDeliveries = 0;
 try
 {
     await Parallel.ForEachAsync(Enumerable.Range(0, subscriberCount),
@@ -185,9 +186,14 @@ try
 
     _ = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], warmupSeconds, 0, token);
     var before = shared?.Status;
+    var deliveriesBefore = observedDeliveries;
     var window = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], measurementSeconds, 262_144, token);
     var after = shared?.Status;
-    var verifiedDeliveries = checked(window.CompletedOperations * subscriberCount);
+    var verifiedDeliveries = observedDeliveries - deliveriesBefore;
+    if (verifiedDeliveries != checked(window.CompletedOperations * subscriberCount))
+    {
+        throw new InvalidDataException("The clients did not observe every timed delivery.");
+    }
     if (before is not null && after is not null &&
         (after.SubscriberCount != subscriberCount || after.QuerySession.ResultCount != resultCount ||
          after.PersistedSequence - before.PersistedSequence != window.CompletedOperations ||
@@ -298,6 +304,7 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
         {
             throw new InvalidDataException("A SignalR client received a different sequence, key or revision.");
         }
+        observedDeliveries++;
     }
 }
 

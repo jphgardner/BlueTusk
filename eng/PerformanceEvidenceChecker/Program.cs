@@ -378,6 +378,12 @@ internal static class Checker
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
+            if (family == "Live" && key != $"{os}|Live|primary-hot-path" && !Bool(index, "synthetic"))
+            {
+                var runtime = scan.Text("environment.runtime");
+                matchedRuntime ??= runtime;
+                VerifyLiveSignalRCapture(index, scan, commit, os, role, key, path, frequency, matchedRuntime);
+            }
             if (approvedPrimary.ValueKind == JsonValueKind.Object && key == $"{os}|{family}|primary-hot-path" && !Bool(index, "synthetic"))
             {
                 var reference = Str(approvedPrimary, "referenceVersion") + "+" + Str(approvedPrimary, "referenceSourceCommit");
@@ -461,6 +467,29 @@ internal static class Checker
             result.Add(new(key, role, trial, path, hash!, Derive(scan, frequency, path)));
         }
         return result;
+    }
+
+    private static void VerifyLiveSignalRCapture(JsonElement index, RawScan scan, string commit, string os, string role,
+        string key, string path, long frequency, string matchedRuntime)
+    {
+        var results = scan.Long("environment.resultCount");
+        var subscribers = scan.Long("environment.subscriberCount");
+        var completed = scan.Long("measurement.completedOperations");
+        var warmup = Int(index, "warmupSeconds");
+        var window = Int(index, "measurementSeconds");
+        Require(Bool(index, "diagnostic") && results is 10 or 1_000 or 100_000 && subscribers is 1 or 64 or 1_000 or 10_000 &&
+            key == $"{os}|Live|results={results}|subscribers={subscribers}|scenario=affected-key-update" &&
+            scan.Text("environment.scenario") == "affected-key-update" &&
+            scan.Text("environment.transport") == "signalr-json-websockets" && scan.Text("environment.source") == "postgresql-pgoutput" &&
+            !string.IsNullOrWhiteSpace(matchedRuntime) && scan.Text("environment.runtime") == matchedRuntime &&
+            Str(index, "candidateImplementation").EndsWith($"+{commit}", StringComparison.Ordinal) &&
+            Str(index, "referenceImplementation").StartsWith("ASP.NET Core SignalR 10.", StringComparison.Ordinal) &&
+            warmup is >= 1 and <= 60 && window is >= 1 and <= 60 && frequency > 0 &&
+            scan.Long("warmupSeconds") == warmup && scan.Long("measurementSeconds") == window &&
+            (double)scan.Long("measurement.elapsedTicks") / frequency >= window &&
+            scan.Workers.Count == 1 && completed > 0 && scan.Long("verifiedDeliveries") == checked(completed * subscribers) &&
+            (role != "candidate" || scan.Long("persistedUpdates") == completed),
+            $"Live SignalR trial '{path}' does not prove matched timing, fixture, reference and subscriber delivery.");
     }
 
     private static Dictionary<string, double> Derive(RawScan scan, long frequency, string path)
