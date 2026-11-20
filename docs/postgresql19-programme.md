@@ -1,9 +1,8 @@
 # PostgreSQL 19 compatibility programme
 
-[PostgreSQL 19 RC 2](https://www.postgresql.org/about/news/postgresql-187-1712-1616-1520-1425-and-19-rc-2-released-3442/)
-was released on 12 November 2026. The PostgreSQL project targets 19 November
-2026 for general availability. BlueTusk's last verified milestone is Beta 3.
-Beta 4, RC 1 and RC 2 still have pending compatibility records.
+[PostgreSQL 19](https://www.postgresql.org/about/news/postgresql-19-released-3449/)
+was released on 19 November 2026. BlueTusk's last verified milestone is Beta 3.
+Beta 4, RC 1, RC 2 and 19.0 have pending compatibility records.
 
 The [Beta 4 announcement](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
 removed SQL/PGQ, including `GRAPH_TABLE`, from PostgreSQL 19. A later PostgreSQL

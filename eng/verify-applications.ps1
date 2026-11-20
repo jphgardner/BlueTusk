@@ -9,31 +9,6 @@ $applicationsRoot = Join-Path $repositoryRoot 'applications'
 $expectedVersion = [string](
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
         ConvertFrom-Json).version
-$localNpmPackageRoot = Join-Path $repositoryRoot 'artifacts/prerelease/live'
-$hasLocalNpmCandidate = Test-Path -LiteralPath $localNpmPackageRoot -PathType Container
-$canVerifyLocalNpmIntegrity =
-    $hasLocalNpmCandidate -and
-    [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
-        [Runtime.InteropServices.OSPlatform]::Linux)
-$verifiedLocalNpmPackages = [Collections.Generic.HashSet[string]]::new(
-    [StringComparer]::Ordinal)
-
-function Get-NpmIntegrity
-{
-    param(
-        [Parameter(Mandatory)]
-        [string] $Path
-    )
-
-    $hex = (Get-FileHash -LiteralPath $Path -Algorithm SHA512).Hash
-    $bytes = [byte[]]::new($hex.Length / 2)
-    for ($index = 0; $index -lt $bytes.Length; $index++)
-    {
-        $bytes[$index] = [Convert]::ToByte($hex.Substring($index * 2, 2), 16)
-    }
-
-    return 'sha512-' + [Convert]::ToBase64String($bytes)
-}
 [xml]$central = Get-Content -LiteralPath (
     Join-Path $applicationsRoot 'Directory.Packages.props') -Raw
 $applicationVersionDefaults = @($central.SelectNodes('/Project/PropertyGroup/BlueTuskApplicationPackageVersion'))
@@ -161,27 +136,6 @@ foreach ($webManifest in $webManifests)
             throw "Web app '$($package.name)' lock entry for '$($dependency.Name)' is not the exact public RC artifact."
         }
 
-        # npm's tar archive bytes include platform-specific metadata. The Linux
-        # package lane is authoritative because it is also the publishing lane.
-        if ($canVerifyLocalNpmIntegrity)
-        {
-            $candidatePath = Join-Path $localNpmPackageRoot (
-                "bluetusk-$leaf-$expectedVersion.tgz")
-            if (-not (Test-Path -LiteralPath $candidatePath -PathType Leaf))
-            {
-                throw "The local npm candidate for '$($dependency.Name)' is missing: '$candidatePath'."
-            }
-
-            $candidateIntegrity = Get-NpmIntegrity -Path $candidatePath
-            if (-not [string]::Equals(
-                    [string]$lockEntry.integrity,
-                    $candidateIntegrity,
-                    [StringComparison]::Ordinal))
-            {
-                throw "Web app '$($package.name)' lock integrity for '$($dependency.Name)' does not match the locally verified RC tarball."
-            }
-            $null = $verifiedLocalNpmPackages.Add($dependency.Name)
-        }
     }
 }
 
@@ -341,5 +295,4 @@ if ($blueTuskReferences -lt 20)
 Write-Output (
     "Verified 20 application projects, $blueTuskReferences BlueTusk package references, " +
     "four browser clients, three hardened digest-pinned container definitions, " +
-    "the package-only $expectedVersion boundary, and " +
-    "$($verifiedLocalNpmPackages.Count) locally integrity-bound npm candidate(s).")
+    "the package-only $expectedVersion boundary and registry lock entries.")

@@ -33,11 +33,18 @@ $packageFiles = @{
     '@bluetusk/live-react' = "bluetusk-live-react-$version.tgz"
     '@bluetusk/live-angular' = "bluetusk-live-angular-$version.tgz"
 }
-foreach ($packageFile in $packageFiles.Values)
+$candidatePackages = @{}
+foreach ($name in $packageFiles.Keys)
 {
-    if (-not (Test-Path -LiteralPath (Join-Path $packageRoot $packageFile) -PathType Leaf))
+    $tarball = Join-Path $packageRoot $packageFiles[$name]
+    if (-not (Test-Path -LiteralPath $tarball -PathType Leaf))
     {
-        throw "Locally packed npm artifact '$packageFile' was not found in '$packageRoot'."
+        throw "Locally packed npm artifact '$tarball' was not found."
+    }
+    $hash = (Get-FileHash -LiteralPath $tarball -Algorithm SHA512).Hash
+    $candidatePackages[$name] = @{
+        path = $tarball
+        integrity = 'sha512-' + [Convert]::ToBase64String([Convert]::FromHexString($hash))
     }
 }
 
@@ -65,20 +72,32 @@ foreach ($entry in $applications.GetEnumerator())
 
     $manifestPath = Join-Path $work 'package.json'
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    foreach ($dependency in @($manifest.dependencies.PSObject.Properties))
+    $localDependencies = @($manifest.dependencies.PSObject.Properties | Where-Object { $candidatePackages.ContainsKey($_.Name) })
+    foreach ($dependency in $localDependencies)
     {
-        if ($packageFiles.ContainsKey($dependency.Name))
-        {
-            $tarball = (Join-Path $packageRoot $packageFiles[$dependency.Name]).Replace('\', '/')
-            $dependency.Value = "file:$tarball"
-        }
+        $relativeTarball = [IO.Path]::GetRelativePath($work, $candidatePackages[$dependency.Name].path).Replace('\', '/')
+        $dependency.Value = "file:$relativeTarball"
     }
     $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 
-    & npm --prefix $work install --ignore-scripts --no-audit --no-fund
+    & npm --prefix $work install --package-lock-only --ignore-scripts --no-audit --no-fund
     if ($LASTEXITCODE -ne 0)
     {
-        throw "npm install failed for $($entry.Key)."
+        throw "Generating the candidate npm lock failed for $($entry.Key)."
+    }
+    $lock = Get-Content -LiteralPath (Join-Path $work 'package-lock.json') -Raw | ConvertFrom-Json -AsHashtable
+    foreach ($dependency in $localDependencies)
+    {
+        $package = $lock.packages["node_modules/$($dependency.Name)"]
+        if ($package.version -cne $version -or $package.resolved -cne $dependency.Value -or
+            $package.integrity -cne $candidatePackages[$dependency.Name].integrity)
+        { throw "The candidate lock for $($entry.Key) does not match the local $($dependency.Name) tarball." }
+    }
+
+    & npm --prefix $work ci --ignore-scripts --no-audit --no-fund
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Installing from the candidate npm lock failed for $($entry.Key)."
     }
     & npm --prefix $work run build
     if ($LASTEXITCODE -ne 0)

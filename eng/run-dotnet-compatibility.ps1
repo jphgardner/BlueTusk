@@ -395,7 +395,10 @@ finally
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name]) }
     foreach ($fixture in $postgresqlFixtures.Values) { Stop-DotNetCompatibilityPostgreSql $fixture }
     if ($null -ne $minio) { Stop-DotNetCompatibilityMinio $minio }
-    foreach ($fixture in $dockerServiceFixtures.Values) { Stop-DotNetCompatibilityService -Fixture $fixture }
+    foreach ($fixture in $dockerServiceFixtures.Values)
+    {
+        Stop-DotNetCompatibilityService -Fixture $fixture -RetainServerLog:($null -ne $failure)
+    }
     if ($null -ne $dockerServiceNetwork)
     {
         & docker network rm $dockerServiceNetwork *> (Join-Path $runRoot 'service-network-cleanup.log')
