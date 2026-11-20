@@ -29,7 +29,26 @@ $confirmation = switch ($release)
     default { throw "Core performance release '$release' is not supported." }
 }
 $output = Join-Path $root "artifacts/core-performance-contract/$ExpectedCommit"
-$null = New-Item -ItemType Directory -Path $output -Force
+$null = [IO.Directory]::CreateDirectory($output)
+
+function Publish-ResolvedDocument([string] $Path, [string] $Content)
+{
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($Content)
+    if (-not [IO.File]::Exists($Path))
+    {
+        $temporary = "$Path.$([Guid]::NewGuid().ToString('N')).tmp"
+        try
+        {
+            [IO.File]::WriteAllBytes($temporary, $bytes)
+            try { [IO.File]::Move($temporary, $Path) }
+            catch [IO.IOException] { if (-not [IO.File]::Exists($Path)) { throw } }
+        }
+        finally { [IO.File]::Delete($temporary) }
+    }
+    # Another resolver may have published this same candidate while this process was building it.
+    if ([Convert]::ToBase64String([IO.File]::ReadAllBytes($Path)) -cne [Convert]::ToBase64String($bytes))
+    { throw "The existing resolved performance document differs from the exact candidate: $Path" }
+}
 
 $historicalRelease = '"release": "1.1.0"'
 $historicalConfirmation = '"confirmationToken": "CAPTURE-1.1-PERFORMANCE-EVIDENCE"'
@@ -44,7 +63,6 @@ $releaseField = '"release": "' + $release + '"'
 $contract = $contract.Replace($historicalRelease, $releaseField)
 $plan = $plan.Replace($historicalRelease, $releaseField).Replace(
     $historicalConfirmation, ('"confirmationToken": "' + $confirmation + '"'))
-$utf8 = [Text.UTF8Encoding]::new($false)
 $mapPath = Join-Path $root $paths[3]
 if ($release -ceq '1.2.0')
 {
@@ -63,12 +81,12 @@ if ($release -ceq '1.2.0')
     $null = $map.variants.linux.Remove('windows')
     $map.profiles.'linux-container-client'.description = 'Linux .NET client on the Windows host using the pinned runtime image and fixture network.'
     $mapPath = Join-Path $output 'performance-variant-map.json'
-    [IO.File]::WriteAllText($mapPath, ($map | ConvertTo-Json -Depth 20).Replace("`r`n", "`n"), $utf8)
+    Publish-ResolvedDocument $mapPath ($map | ConvertTo-Json -Depth 20).Replace("`r`n", "`n")
 }
 $contractPath = Join-Path $output 'performance-leadership-contract.json'
 $planPath = Join-Path $output 'performance-evidence-plan.json'
-[IO.File]::WriteAllText($contractPath, $contract, $utf8)
-[IO.File]::WriteAllText($planPath, $plan, $utf8)
+Publish-ResolvedDocument $contractPath $contract
+Publish-ResolvedDocument $planPath $plan
 [pscustomobject]@{
     Release = $release; Confirmation = $confirmation; ContractPath = $contractPath
     PlanPath = $planPath; VariantMapPath = $mapPath
