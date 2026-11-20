@@ -35,6 +35,12 @@ if (args is ["--sync-redis-verify", var redisChanges, var redisSourceTransaction
     return;
 }
 
+if (args is ["--sync-nats-verify", var natsChanges, var natsSourceTransactions, var natsRole])
+{
+    await NatsSyncCaptureVerification.RunAsync(int.Parse(natsChanges, System.Globalization.CultureInfo.InvariantCulture), natsSourceTransactions, natsRole);
+    return;
+}
+
 if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
 {
     await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);

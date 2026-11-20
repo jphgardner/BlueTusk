@@ -5,9 +5,12 @@ using System.Text;
 using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync;
+using BlueTusk.Sync.Nats;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
 using BlueTusk.TypeSystem;
+using NATS.Client.Core;
+using NATS.Net;
 using StackExchange.Redis;
 
 namespace BlueTusk.Benchmarks;
@@ -15,22 +18,39 @@ namespace BlueTusk.Benchmarks;
 internal sealed class SyncCaptureSink : IAsyncDisposable
 {
     internal const string RedisConnectionVariable = "BLUETUSK_BENCHMARK_REDIS_ENDPOINT";
+    internal const string NatsConnectionVariable = "BLUETUSK_BENCHMARK_NATS_ENDPOINT";
     internal const string PipelineId = "sync_capture";
     internal const string Collection = "streams_capture";
+    internal const string NatsStream = "SYNC_CAPTURE";
+    internal const string NatsStageStream = "SYNC_CAPTURE_STAGE";
+    internal const string NatsSubjectPrefix = "sync.capture";
     private readonly BlueTuskDataSource? _dataSource;
     private readonly ConnectionMultiplexer? _redis;
+    private readonly NatsClient? _nats;
     private readonly SyncPipeline _pipeline;
 
     private SyncCaptureSink(ISyncDestination destination, ChangeSourceIdentity source,
-        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null)
+        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null, NatsClient? nats = null)
     {
         _dataSource = dataSource;
         _redis = redis;
+        _nats = nats;
         _pipeline = new SyncPipeline(new() { PipelineId = PipelineId }, source, new CaptureTransform(), destination);
     }
 
     public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
     {
+        if (sink == "nats")
+        {
+            var nats = CreateNatsClient();
+            return new(new NatsSyncDestination(new()
+            {
+                JetStream = nats.CreateJetStreamContext(),
+                StreamName = NatsStream,
+                SubjectPrefix = NatsSubjectPrefix,
+                MaxMessageBytes = 1024 * 1024,
+            }), source, nats: nats);
+        }
         if (sink == "redis")
         {
             var redis = await ConnectRedisAsync();
@@ -45,6 +65,13 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
     internal static Task<ConnectionMultiplexer> ConnectRedisAsync() =>
         ConnectionMultiplexer.ConnectAsync(Environment.GetEnvironmentVariable(RedisConnectionVariable) ??
             throw new InvalidOperationException("The capture requires a dedicated Redis fixture endpoint."));
+
+    internal static NatsClient CreateNatsClient() => new(NatsOpts.Default with
+    {
+        Url = Environment.GetEnvironmentVariable(NatsConnectionVariable) ??
+            throw new InvalidOperationException("The capture requires a dedicated NATS fixture endpoint."),
+        Name = "sync-performance-capture",
+    });
 
     public ValueTask InitializeAsync(CancellationToken cancellationToken) => _pipeline.ProvisionAsync(cancellationToken);
 
@@ -72,6 +99,7 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         await _pipeline.DisposeAsync();
         if (_dataSource is not null) await _dataSource.DisposeAsync();
         _redis?.Dispose();
+        if (_nats is not null) await _nats.DisposeAsync();
     }
 
     private sealed class CaptureTransform : ISyncTransform

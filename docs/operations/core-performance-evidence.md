@@ -109,9 +109,16 @@ uses its Redis connector and Debezium uses the native Jedis client. Both apply
 documents, their reconciliation index, and the checkpoint atomically. Redis
 uses synchronous append-only writes. After each capture, the harness kills
 and restarts the isolated Redis fixture and checks every recovered document,
-source transaction ID, index entry and final checkpoint. These workloads use
-`evidence_class=diagnostic` and `families=Sync`. Sync qualification also requires
-NATS, OpenSearch, Kafka, S3 and Webhooks measurements.
+source transaction ID, index entry and final checkpoint.
+
+The NATS diagnostic uses one checksummed, file-backed JetStream envelope per
+source transaction at the same three mutation counts. BlueTusk uses its NATS
+connector and Debezium uses the native Java NATS client. The reference persists
+split HTTP fragments before acknowledgement and reassembles them for publication.
+After an abrupt restart, the verifier checks every envelope, source timestamp,
+mutation and stable identity. These workloads use `evidence_class=diagnostic`
+and `families=Sync`. Sync qualification also requires OpenSearch, Kafka, S3 and
+Webhooks measurements.
 
 ## Statistics
 

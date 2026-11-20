@@ -42,15 +42,7 @@ function New-SyncRedisFixture([string] $Network, [string] $FixtureRun, [string] 
 
 function Assert-SyncRedisDelivery([string] $Source, [object] $Redis, [int] $Changes, [int] $Transactions, [string] $DotNet, [string] $Assembly)
 {
-    $commits = @(& docker exec $Source psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
-        -c 'SELECT min(id), count(*), xmin::text FROM public.streams_capture GROUP BY xmin::text ORDER BY min(id)')
-    if ($LASTEXITCODE -or $commits.Count -ne $Transactions) { throw 'The Redis source transaction history is incomplete.' }
-    $sourceIds = for ($index = 0; $index -lt $commits.Count; $index++) {
-        $first, $count, $xid = $commits[$index].Split('|')
-        if ([long]$first -ne 1 + $index * [long]$Changes -or [long]$count -ne $Changes -or $xid -cnotmatch '^[0-9]+$')
-        { throw 'The PostgreSQL source rows differ from the requested Redis benchmark.' }
-        $xid
-    }
+    $sourceIds = (Get-SyncSourceTransactions $Source $Changes $Transactions).Id
     # Crash only the isolated destination created for this trial. Its own named container
     # retains the append-only files, so verification cannot read the live in-memory state.
     $null = & docker kill --signal KILL $Redis.Id

@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
-    [ValidateSet('postgresql','redis')][string] $SyncDestination = 'postgresql',
+    [ValidateSet('postgresql','redis','nats')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -77,7 +77,7 @@ foreach ($workload in $workloads)
                 ExpectedCommit = $ExpectedCommit; Trial = $trial; OutputPath = (Join-Path $work $id)
                 RunId = "$RunId-$workloadNumber-$($role[0])$trial"; Owner = $Owner
             }
-            if ($role -ceq 'candidate' -or $workload.Sink -ceq 'redis') { $arguments.BenchmarkAssemblyPath = $assembly }
+            if ($role -ceq 'candidate' -or $workload.Sink -cin @('redis', 'nats')) { $arguments.BenchmarkAssemblyPath = $assembly }
             & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
@@ -90,6 +90,10 @@ foreach ($workload in $workloads)
                 ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.redis -or
                  $capture.environment.destinationProof.recoveredFromAppendOnlyFile -ne $true))
             { throw "The Redis trial '$id' has no matching append-only recovery proof." }
+            if ($workload.Sink -ceq 'nats' -and
+                ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.nats -or
+                 $capture.environment.destinationProof.recoveredFromJetStream -ne $true))
+            { throw "The NATS trial '$id' has no matching JetStream recovery proof." }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $capture.implementation)
             { throw "The $role implementation changed between $Family trials." }
             $implementations[$role] = $capture.implementation
@@ -105,7 +109,7 @@ foreach ($workload in $workloads)
 }
 
 $images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
-if ($Family -ceq 'Sync' -and $SyncDestination -ceq 'redis') { $images += [string]$plan.families.Sync.destinationImages.redis }
+if ($Family -ceq 'Sync' -and $SyncDestination -cin @('redis', 'nats')) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
 [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false

@@ -46,7 +46,7 @@ final class RedisCaptureSink implements SyncCaptureReference {
         redis.hset(root + ":state", "generation", "0");
     }
 
-    public void deliver(long key, long transactionId, long lsn, boolean last) {
+    public void deliver(long key, long transactionId, long lsn, long commitMicros, boolean last) {
         String text = Long.toString(key);
         byte[] rawKey = bytes(text);
         String identity = String.format(Locale.ROOT, "%s:%016x:%08x:%08x", source, lsn, transactionId, ordinal++);

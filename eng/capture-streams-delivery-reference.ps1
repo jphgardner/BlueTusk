@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
-    [ValidateSet('count', 'postgresql', 'redis')][string] $Sink = 'count',
+    [ValidateSet('count', 'postgresql', 'redis', 'nats')][string] $Sink = 'count',
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
     [ValidateRange(1, 1000)][int] $MaxHttpBatchRows = 1000,
@@ -20,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
 . (Join-Path $PSScriptRoot 'streams-performance/redis-fixture.ps1')
+. (Join-Path $PSScriptRoot 'streams-performance/nats-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
 $sync = $Sink -cne 'count'
 if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
@@ -45,7 +46,7 @@ $image = [string]$plan.families.$family.referenceImage
 if ($image -cnotmatch '^quay\.io/debezium/server:3\.6\.1\.Final@sha256:[0-9a-f]{64}$') { throw 'The Debezium reference must be pinned by digest.' }
 $dotnet = $null
 $assembly = $null
-if ($Sink -ceq 'redis')
+if ($Sink -cin @('redis', 'nats'))
 {
     $dotnet = (Get-Command $DotNetPath -CommandType Application -TotalCount 1).Source
     if (-not $BenchmarkAssemblyPath) { $BenchmarkAssemblyPath = Join-Path $root 'benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll' }
@@ -90,9 +91,11 @@ try
     $postgres = $fixture.containers[0].name
     New-StreamsCaptureTable $postgres $spill
     if ($Sink -ceq 'postgresql') { New-SyncPostgreSqlFixture $postgres $true }
-    $redisFixture = $null
+    $destinationFixture = $null
     if ($Sink -ceq 'redis')
-    { $redisFixture = New-SyncRedisFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.redis }
+    { $destinationFixture = New-SyncRedisFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.redis }
+    if ($Sink -ceq 'nats')
+    { $destinationFixture = New-SyncNatsFixture $fixture.network $RunId $Owner $ExpectedCommit $plan.families.Sync.destinationImages.nats $fixtureDirectory }
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -139,7 +142,7 @@ debezium.source.offset.flush.interval.ms=1000
         --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
         --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" --entrypoint /bin/sh $image -ec $launch
     $created = $true
-    foreach ($java in 'StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java')
+    foreach ($java in 'StreamsHttpProbe.java', 'SyncCaptureReference.java', 'PostgreSqlCaptureSink.java', 'RedisCaptureSink.java', 'NatsCaptureSink.java')
     { $null = Invoke-Docker cp (Join-Path $PSScriptRoot "streams-performance/$java") "${reference}:/tmp/$java" }
     $null = Invoke-Docker cp $manifest "${reference}:/tmp/probe.mf"
     $null = Invoke-Docker cp $configuration "${reference}:/debezium/config/application.properties"
@@ -195,10 +198,13 @@ debezium.source.offset.flush.interval.ms=1000
     if ($sync)
     {
         $transactions = $WarmupTransactions + $MeasurementTransactions
-        $destinationProof = if ($redisFixture)
-        { Assert-SyncRedisDelivery $postgres $redisFixture $Changes $transactions $dotnet $assembly }
-        else { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions -Reference }
-        if ($redisFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $redisFixture.Image }
+        $destinationProof = switch -CaseSensitive ($Sink)
+        {
+            'redis' { Assert-SyncRedisDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly }
+            'nats' { Assert-SyncNatsDelivery $postgres $destinationFixture $Changes $transactions $dotnet $assembly reference }
+            'postgresql' { Assert-SyncPostgreSqlDelivery $postgres $Changes $transactions -Reference }
+        }
+        if ($destinationFixture) { $capture.environment | Add-Member -NotePropertyName destinationImage -NotePropertyValue $destinationFixture.Image }
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }

@@ -61,7 +61,7 @@ final class PostgreSqlCaptureSink implements SyncCaptureReference {
         clearStaged = connection.prepareStatement("DELETE FROM bluetusk_sync.staged_rows WHERE source_transaction_id = ?");
     }
 
-    public void deliver(long key, long transactionId, long lsn, boolean last) throws SQLException {
+    public void deliver(long key, long transactionId, long lsn, long commitMicros, boolean last) throws SQLException {
         pending.add(new Row(key, transactionId, lsn));
         if (!last) {
             return;

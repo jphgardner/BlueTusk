@@ -54,6 +54,7 @@
       "reference": "Debezium Server 3.6.1.Final plus native destination clients",
       "referenceImage": "quay.io/debezium/server:3.6.1.Final@sha256:4e8fe56b859d799eb2e793d0ef5d0f0052b3df84fc835ebb021323043e917039",
       "destinationImages": {
+        "nats": "nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66",
         "redis": "redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241"
       },
       "method": "cross-runtime"

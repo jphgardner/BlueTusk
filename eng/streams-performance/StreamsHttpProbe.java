@@ -59,7 +59,7 @@ public final class StreamsHttpProbe {
     private boolean complete;
     private boolean failed;
 
-    public static void premain(String arguments) throws IOException, SQLException {
+    public static void premain(String arguments) throws IOException, SQLException, InterruptedException {
         var probe = new StreamsHttpProbe(arguments);
         var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8081), 32);
         server.createContext("/events", probe::receive);
@@ -72,12 +72,12 @@ public final class StreamsHttpProbe {
         server.start();
     }
 
-    private StreamsHttpProbe(String arguments) throws IOException, SQLException {
+    private StreamsHttpProbe(String arguments) throws IOException, SQLException, InterruptedException {
         var fields = arguments.split(",", -1);
         if (fields.length != 9 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
             !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
-            !fields[8].matches("count|postgresql|redis") || !System.getProperty("os.arch").equals("amd64")) {
+            !fields[8].matches("count|postgresql|redis|nats") || !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -108,6 +108,7 @@ public final class StreamsHttpProbe {
         destination = switch (sink) {
             case "postgresql" -> new PostgreSqlCaptureSink();
             case "redis" -> new RedisCaptureSink();
+            case "nats" -> new NatsCaptureSink();
             default -> null;
         };
         if (!threads.isThreadAllocatedMemorySupported()) {
@@ -238,11 +239,13 @@ public final class StreamsHttpProbe {
         ticks[sample] = latency;
     }
 
-    private void recordSyncDelivery(long key, JsonNode source) throws SQLException {
+    private void recordSyncDelivery(long key, JsonNode source) throws SQLException, IOException {
         var transaction = source.required("txId");
         var lsn = source.required("lsn");
-        if (!transaction.isIntegralNumber() || !lsn.isIntegralNumber() || transaction.longValue() <= 0 || lsn.longValue() <= 0) {
-            throw new IllegalStateException("The reference Sync sink must receive PostgreSQL positions and transaction IDs.");
+        var timestamp = source.required("ts_us");
+        if (!transaction.isIntegralNumber() || !lsn.isIntegralNumber() || !timestamp.isIntegralNumber() ||
+            transaction.longValue() <= 0 || lsn.longValue() <= 0 || timestamp.longValue() <= 0) {
+            throw new IllegalStateException("The reference Sync sink must receive PostgreSQL positions, transaction IDs and timestamps.");
         }
         int rowInTransaction = delivered % changes;
         if (rowInTransaction == 0) {
@@ -254,7 +257,7 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("The reference Sync sink received an incomplete transaction.");
         }
         boolean last = rowInTransaction == changes - 1;
-        destination.deliver(key, syncTransactionId, lsn.longValue(), last);
+        destination.deliver(key, syncTransactionId, lsn.longValue(), timestamp.longValue(), last);
         if (last && delivered >= warmupRows) {
             int batch = (delivered - warmupRows) / changes;
             var committed = Instant.now();

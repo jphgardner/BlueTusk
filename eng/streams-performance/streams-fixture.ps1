@@ -124,3 +124,18 @@ FROM batches b CROSS JOIN bluetusk_sync.pipelines p WHERE p.pipeline_id = 'sync_
     }
     [ordered]@{ transactions = $Transactions; documents = $rows; finalSourceTransactionId = [long]$sourceXid; finalCheckpointSharedTransaction = $true; synchronousCommit = 'on' }
 }
+
+function Get-SyncSourceTransactions([string] $Source, [int] $Changes, [int] $Transactions)
+{
+    $commits = @(& docker exec $Source psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
+        -c 'SELECT min(id), count(*), xmin::text, (extract(epoch FROM pg_xact_commit_timestamp((xmin::text)::xid)) * 1000000)::bigint FROM public.streams_capture GROUP BY xmin::text ORDER BY min(id)')
+    if ($LASTEXITCODE -or $commits.Count -ne $Transactions) { throw 'The source transaction history is incomplete.' }
+    for ($index = 0; $index -lt $commits.Count; $index++)
+    {
+        $first, $count, $xid, $micros = $commits[$index].Split('|')
+        if ([long]$first -ne 1 + $index * [long]$Changes -or [long]$count -ne $Changes -or
+            $xid -cnotmatch '^[0-9]+$' -or $micros -cnotmatch '^[0-9]+$')
+        { throw 'The PostgreSQL source rows differ from the requested Sync benchmark.' }
+        [pscustomobject]@{ Id = $xid; CommitMicros = $micros }
+    }
+}
