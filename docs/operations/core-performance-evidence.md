@@ -161,8 +161,16 @@ Use the default scenario for an affected-key update. Use `-Scenario churn`
 to replace the final row in one PostgreSQL transaction while keeping the result
 size and all other ranks fixed. Each subscriber must receive the corresponding
 removal and addition in order. A timed operation is one committed transaction
-through receipt of all its events. Slow-client capture and the full timed
-matrix are still required for Live qualification.
+through receipt of all its events.
+
+Use `-Scenario slow-client` to pause outbound writes for one real
+WebSocket subscription during a burst of 16 committed updates. Both roles use
+the same four-event subscriber queue and a 128-byte SignalR transport buffer
+for this scenario. The other subscribers must receive every update during the
+pause. The paused stream must send an explicit reset, then the same client
+must reconnect with its last received resume token and receive every missing
+event in order. This measures one complete burst and replay as an operation.
+The full timed matrix remains required for Live qualification.
 
 Use `-ProfileStages` to time the source commit, change feed, invalidation
 write, publication and subscriber receipts for each timed update. The

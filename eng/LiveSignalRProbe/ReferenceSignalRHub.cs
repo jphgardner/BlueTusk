@@ -21,13 +21,16 @@ internal sealed class ReferenceResultPublisher(
     LiveSubscriptionIdentity identity,
     LiveResumeTokenProtector tokenProtector,
     IReadOnlyList<ResultRow> initialRows,
-    bool churn)
+    bool churn, bool testSlowClient)
 {
-    private readonly ConcurrentDictionary<string, ChannelWriter<JsonElement>> _writers = new();
+    private readonly ConcurrentDictionary<string, Channel<JsonElement>> _subscribers = new();
+    private readonly Queue<JsonElement> _replay = new(SignalRCapture.SlowClientBurstLength);
+    private long _slowClientResets;
     private IReadOnlyList<ResultRow> _previous = initialRows;
     private long _sequence = 1;
 
-    public int SubscriberCount => _writers.Count;
+    public int SubscriberCount => _subscribers.Count;
+    public long SlowClientResets => Interlocked.Read(ref _slowClientResets);
 
     public async IAsyncEnumerable<ReferenceSignalRMessage> SubscribeAsync(
         string connectionId,
@@ -36,33 +39,54 @@ internal sealed class ReferenceResultPublisher(
     {
         var cursor = tokenProtector.Validate(request.ResumeToken ?? string.Empty, identity);
         if (request.Query != SignalRCapture.QueryName || request.Parameters.ValueKind != JsonValueKind.Object ||
-            cursor.Status != LiveResumeTokenValidationStatus.Valid || cursor.Position?.Sequence != 1)
+            cursor.Status != LiveResumeTokenValidationStatus.Valid || cursor.Position is not { } position)
         {
-            throw new HubException("The reference stream requires the fixture's initial cursor.");
+            throw new HubException("The reference stream requires a valid fixture cursor.");
         }
 
-        var queue = Channel.CreateBounded<JsonElement>(new BoundedChannelOptions(churn ? 2 : 1)
+        var capacity = testSlowClient ? SignalRCapture.SlowClientQueueCapacity : churn ? 2 : 1;
+        var queue = Channel.CreateBounded<JsonElement>(new BoundedChannelOptions(capacity)
         {
-            SingleReader = true,
+            SingleReader = !testSlowClient,
             SingleWriter = true,
         });
-        if (!_writers.TryAdd(connectionId, queue.Writer))
+        JsonElement[] pending;
+        lock (_replay)
         {
-            throw new HubException("Each benchmark client may subscribe once.");
+            var earliest = testSlowClient ? Math.Max(1, _sequence - SignalRCapture.SlowClientBurstLength) : _sequence;
+            if (position.Sequence < earliest || position.Sequence > _sequence)
+            {
+                throw new HubException("The reference stream no longer retains the requested position.");
+            }
+            pending = testSlowClient
+                ? _replay.Where(update => update.GetProperty("sequence").GetInt64() > position.Sequence).ToArray()
+                : [];
+            if (!_subscribers.TryAdd(connectionId, queue))
+            {
+                throw new HubException("Each benchmark client may have one active subscription.");
+            }
         }
 
         try
         {
+            foreach (var update in pending)
+            {
+                yield return ToMessage(update);
+            }
+
             await foreach (var update in queue.Reader.ReadAllAsync(cancellationToken))
             {
-                var sequence = update.GetProperty("sequence").GetInt64();
-                yield return new ReferenceSignalRMessage("Event", sequence,
-                    tokenProtector.Protect(identity, sequence, TimeSpan.FromMinutes(30)), update);
+                if (update.ValueKind == JsonValueKind.Undefined)
+                {
+                    yield return new ReferenceSignalRMessage("ResetRequired", null, null, null);
+                    yield break;
+                }
+                yield return ToMessage(update);
             }
         }
         finally
         {
-            _writers.TryRemove(connectionId, out _);
+            _subscribers.TryRemove(new KeyValuePair<string, Channel<JsonElement>>(connectionId, queue));
         }
     }
 
@@ -91,10 +115,10 @@ internal sealed class ReferenceResultPublisher(
             var removed = CreateEvent("RowRemoved", _previous[last].Id, null, last, null);
             var added = CreateEvent("RowAdded", current[last].Id, current[last], null, last);
             _previous = current;
-            foreach (var queue in _writers.Values)
+            foreach (var subscriber in _subscribers)
             {
-                Write(queue, removed);
-                Write(queue, added);
+                PublishToSubscriber(subscriber, removed);
+                PublishToSubscriber(subscriber, added);
             }
             return;
         }
@@ -125,9 +149,20 @@ internal sealed class ReferenceResultPublisher(
         var changed = current[changedIndex];
         var update = CreateEvent("RowUpdated", changed.Id, changed, changedIndex, changedIndex);
         _previous = current;
-        foreach (var queue in _writers.Values)
+        if (testSlowClient)
         {
-            Write(queue, update);
+            lock (_replay)
+            {
+                _replay.Enqueue(update);
+                if (_replay.Count > SignalRCapture.SlowClientBurstLength)
+                {
+                    _replay.Dequeue();
+                }
+            }
+        }
+        foreach (var subscriber in _subscribers)
+        {
+            PublishToSubscriber(subscriber, update);
         }
     }
 
@@ -145,14 +180,33 @@ internal sealed class ReferenceResultPublisher(
             resetReason = (string?)null,
         });
 
-    private static void Write(ChannelWriter<JsonElement> queue, JsonElement update)
+    private ReferenceSignalRMessage ToMessage(JsonElement update)
     {
-        if (!queue.TryWrite(update))
+        var sequence = update.GetProperty("sequence").GetInt64();
+        return new ReferenceSignalRMessage("Event", sequence,
+            tokenProtector.Protect(identity, sequence, TimeSpan.FromMinutes(30)), update);
+    }
+
+    private void PublishToSubscriber(KeyValuePair<string, Channel<JsonElement>> subscriber, JsonElement update)
+    {
+        var queue = subscriber.Value;
+        if (queue.Writer.TryWrite(update))
+        {
+            return;
+        }
+        if (!testSlowClient || !_subscribers.TryRemove(subscriber))
         {
             throw new InvalidDataException("A SignalR reference client fell behind the capture.");
         }
+        Interlocked.Increment(ref _slowClientResets);
+        while (queue.Reader.TryRead(out _)) { }
+        if (!queue.Writer.TryWrite(default))
+        {
+            throw new InvalidDataException("The reference could not signal that the slow client must reset.");
+        }
+        queue.Writer.Complete();
     }
 }
 
 internal sealed record ResultRow(int Id, int Revision);
-internal sealed record ReferenceSignalRMessage(string Kind, long Sequence, string ResumeToken, JsonElement Event);
+internal sealed record ReferenceSignalRMessage(string Kind, long? Sequence, string? ResumeToken, JsonElement? Event);

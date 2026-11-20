@@ -30,15 +30,22 @@ using Microsoft.Extensions.Options;
 
 if (args.Length is not (9 or 10) ||
     args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var scenario, var warmup, var duration, ..] ||
-    role is not ("candidate" or "reference") || scenario is not ("affected-key-update" or "churn"))
+    role is not ("candidate" or "reference") || scenario is not ("affected-key-update" or "churn" or "slow-client"))
 {
     throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, scenario, warmup and measurement seconds, and optionally a stage profile path.");
 }
 
 const int maximumSamples = 262_144;
 var churn = scenario == "churn";
+var testSlowClient = scenario == "slow-client";
+var slowTransport = testSlowClient ? new SlowSignalRTransport() : null;
 var eventsPerTransaction = churn ? 2 : 1;
+var transactionsPerOperation = testSlowClient ? SignalRCapture.SlowClientBurstLength : 1;
 var stageProfilePath = args.Length == 10 ? args[9] : null;
+if (testSlowClient && stageProfilePath is not null)
+{
+    throw new ArgumentException("Per-transaction stage profiles require a one-transaction workload.");
+}
 StageSample[]? stageSamples = null;
 var stageSampleCount = 0;
 var queryTicks = 0L;
@@ -114,9 +121,10 @@ await using var query = candidate ? new LiveQuerySession<ResultRow, int>(plan, a
 await using var shared = query is null ? null : new LiveSharedSubscription<ResultRow, int>(query, store, new()
 {
     MaximumSubscribers = subscriberCount,
-    SubscriberBufferCapacity = eventsPerTransaction,
+    SubscriberBufferCapacity = testSlowClient ? SignalRCapture.SlowClientQueueCapacity : eventsPerTransaction,
+    SlowClientPolicy = testSlowClient ? LiveSlowClientPolicy.RequireReset : LiveSlowClientPolicy.Disconnect,
 });
-var reference = candidate ? null : new ReferenceResultPublisher(identity, protector, await ReadResultAsync(token), churn);
+var reference = candidate ? null : new ReferenceResultPublisher(identity, protector, await ReadResultAsync(token), churn, testSlowClient);
 if (shared is not null)
 {
     await shared.StartAsync(token);
@@ -132,7 +140,14 @@ builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0
 builder.Services.AddAuthentication(SignalRCapture.AuthenticationScheme)
     .AddScheme<AuthenticationSchemeOptions, FixtureAuthentication>(SignalRCapture.AuthenticationScheme, _ => { });
 builder.Services.AddAuthorization();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    if (testSlowClient)
+    {
+        // A paused write must belong to the test burst rather than an idle keepalive.
+        options.KeepAliveInterval = TimeSpan.FromMinutes(10);
+    }
+});
 if (shared is not null)
 {
     builder.Services.AddSingleton<ILiveTransportSubscriptionResolver>(new FixtureResolver(shared));
@@ -145,17 +160,37 @@ else
 await using var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
+if (slowTransport is not null)
+{
+    app.UseWebSockets();
+    app.Use(slowTransport.ApplyAsync);
+}
 if (shared is not null)
 {
-    app.MapBlueTuskLiveHub(SignalRCapture.HubPath);
+    if (testSlowClient)
+    {
+        app.MapHub<BlueTuskLiveHub>(SignalRCapture.HubPath, ConfigureSlowClientBuffer);
+    }
+    else
+    {
+        app.MapBlueTuskLiveHub(SignalRCapture.HubPath);
+    }
 }
 else
 {
-    app.MapHub<ReferenceSignalRHub>(SignalRCapture.HubPath);
+    app.MapHub<ReferenceSignalRHub>(SignalRCapture.HubPath, options =>
+    {
+        if (testSlowClient)
+        {
+            ConfigureSlowClientBuffer(options);
+        }
+    });
 }
 await app.StartAsync(token);
 
 var address = new Uri(new Uri(app.Urls.Single()), SignalRCapture.HubPath);
+var slowAddress = new UriBuilder(address) { Query = $"{SlowSignalRTransport.QueryString}=1" }.Uri;
+var fastSubscriberCount = testSlowClient ? subscriberCount - 1 : subscriberCount;
 var request = new LiveSubscriptionRequest
 {
     Query = SignalRCapture.QueryName,
@@ -166,12 +201,14 @@ var connections = new HubConnection?[subscriberCount];
 var clients = new ChannelReader<JsonElement>[subscriberCount];
 var revision = 0;
 long observedDeliveries = 0;
+long replayedSlowDeliveries = 0;
 try
 {
     await Parallel.ForEachAsync(Enumerable.Range(0, subscriberCount),
         new ParallelOptions { MaxDegreeOfParallelism = 32, CancellationToken = token }, async (index, stop) =>
         {
-            var connection = new HubConnectionBuilder().WithUrl(address, options =>
+            var clientAddress = index < fastSubscriberCount ? address : slowAddress;
+            var connection = new HubConnectionBuilder().WithUrl(clientAddress, options =>
             {
                 options.Transports = HttpTransportType.WebSockets;
                 options.SkipNegotiation = true;
@@ -193,27 +230,40 @@ try
     }
 
     deadline.CancelAfter(TimeSpan.FromSeconds(warmupSeconds + measurementSeconds + 45));
-    _ = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], warmupSeconds, 0, token);
+    Func<CancellationToken, Task> operation = testSlowClient ? ExerciseSlowClientAsync : UpdateAndDeliverAsync;
+    _ = await ProviderRequestCapture.MeasureWindowAsync([operation], warmupSeconds, 0, token);
     var before = shared?.Status;
+    var resetsBefore = SlowClientResets();
     var deliveriesBefore = observedDeliveries;
+    var slowReplayBefore = replayedSlowDeliveries;
     if (stageProfilePath is not null)
     {
         stageSamples = new StageSample[maximumSamples];
     }
-    var window = await ProviderRequestCapture.MeasureWindowAsync([UpdateAndDeliverAsync], measurementSeconds, maximumSamples, token);
+    var window = await ProviderRequestCapture.MeasureWindowAsync([operation], measurementSeconds, maximumSamples, token);
     var after = shared?.Status;
     var verifiedDeliveries = observedDeliveries - deliveriesBefore;
-    var expectedEvents = checked(window.CompletedOperations * eventsPerTransaction);
-    if (verifiedDeliveries != checked(expectedEvents * subscriberCount))
+    var slowReplay = replayedSlowDeliveries - slowReplayBefore;
+    var slowResets = SlowClientResets() - resetsBefore;
+    var expectedEvents = checked(window.CompletedOperations * eventsPerTransaction * transactionsPerOperation);
+    if (verifiedDeliveries != checked(expectedEvents * subscriberCount) ||
+        slowResets != (testSlowClient ? window.CompletedOperations : 0) ||
+        (testSlowClient && (slowReplay < slowResets || slowReplay > expectedEvents - slowResets)))
     {
-        throw new InvalidDataException("The clients did not observe every timed delivery.");
+        throw new InvalidDataException("The clients did not observe every timed delivery, bounded reset and replay.");
     }
-    if (before is not null && after is not null &&
-        (after.SubscriberCount != subscriberCount || after.QuerySession.ResultCount != resultCount ||
-         after.PersistedSequence - before.PersistedSequence != expectedEvents ||
-         after.FanOutDeliveries - before.FanOutDeliveries != verifiedDeliveries))
+    if (before is not null && after is not null)
     {
-        throw new InvalidDataException("The candidate did not persist and deliver every measured update.");
+        var fanOutDeliveries = after.FanOutDeliveries - before.FanOutDeliveries;
+        var expectedFastDeliveries = checked(expectedEvents * fastSubscriberCount);
+        if (after.SubscriberCount != subscriberCount || after.QuerySession.ResultCount != resultCount ||
+            after.PersistedSequence - before.PersistedSequence != expectedEvents ||
+            (!testSlowClient && fanOutDeliveries != verifiedDeliveries) ||
+            (testSlowClient && (fanOutDeliveries < verifiedDeliveries - slowReplay ||
+                fanOutDeliveries > expectedFastDeliveries + expectedEvents - slowResets)))
+        {
+            throw new InvalidDataException("The candidate did not persist and deliver the measured workload.");
+        }
     }
 
     var assembly = candidate ? typeof(LiveQuerySession<ResultRow, int>).Assembly : typeof(Hub).Assembly;
@@ -240,6 +290,8 @@ try
             Transport = "signalr-json-websockets",
             Scenario = scenario,
             EventsPerTransaction = eventsPerTransaction,
+            TransactionsPerOperation = transactionsPerOperation,
+            SlowSubscriberCount = subscriberCount - fastSubscriberCount,
             ResultCount = resultCount,
             SubscriberCount = subscriberCount,
             Source = "postgresql-pgoutput",
@@ -247,6 +299,8 @@ try
             StageProfiling = stageSamples is not null,
         },
         VerifiedDeliveries = verifiedDeliveries,
+        SlowClientResets = slowResets,
+        SlowClientReplayedDeliveries = slowReplay,
         PersistedUpdates = before is not null && after is not null ? after.PersistedSequence - before.PersistedSequence : (long?)null,
         Stopwatch.Frequency,
         Measurement = window with
@@ -342,8 +396,9 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
     }
 
     var published = stageSamples is null ? 0 : Stopwatch.GetTimestamp();
-    foreach (var client in clients)
+    for (var index = 0; index < fastSubscriberCount; index++)
     {
+        var client = clients[index];
         if (churn)
         {
             VerifyDelivery(await client.ReadAsync(stop), expectedSequence, "RowRemoved", expectedKey - 1,
@@ -363,6 +418,84 @@ async Task UpdateAndDeliverAsync(CancellationToken stop)
         stageSamples[stageSampleCount++] = new StageSample(committed - began, received - committed,
             invalidated - received, published - invalidated, Stopwatch.GetTimestamp() - published, queryTicks);
     }
+}
+
+async Task ExerciseSlowClientAsync(CancellationToken stop)
+{
+    var slowClient = clients[^1];
+    var firstSequence = 2L + revision;
+    var resetsBefore = SlowClientResets();
+    using (var pause = slowTransport!.BeginPause())
+    {
+        await UpdateAndDeliverAsync(stop);
+        await pause.WaitForBlockedWriteAsync(stop);
+        for (var transaction = 1; transaction < transactionsPerOperation; transaction++)
+        {
+            await UpdateAndDeliverAsync(stop);
+        }
+        var resets = SlowClientResets() - resetsBefore;
+        var subscribersAfterPause = shared?.Status.SubscriberCount ?? reference!.SubscriberCount;
+        if (resets != 1 || subscribersAfterPause != fastSubscriberCount)
+        {
+            throw new InvalidDataException(
+                $"The paused transport recorded {resets} resets and {subscribersAfterPause} active subscribers. Expected one reset and {fastSubscriberCount} active subscribers.");
+        }
+    }
+
+    var lastSequence = 1L + revision;
+    var nextSequence = firstSequence;
+    string? resumeToken = null;
+    while (true)
+    {
+        var message = await slowClient.ReadAsync(stop);
+        if (message.GetProperty("kind").GetString() == "ResetRequired")
+        {
+            break;
+        }
+        if (nextSequence >= lastSequence)
+        {
+            throw new InvalidDataException("The slow client received the full burst before its reset.");
+        }
+        VerifyUpdatedRow(message, nextSequence++);
+        resumeToken = message.GetProperty("resumeToken").GetString();
+    }
+
+    if (string.IsNullOrWhiteSpace(resumeToken) || await slowClient.WaitToReadAsync(stop))
+    {
+        throw new InvalidDataException("The slow client's stream did not end at a verified resumable position.");
+    }
+
+    // The subscription survives the measurement window's cancellation at the end of warm-up.
+    var resumed = await connections[^1]!.StreamAsChannelAsync<JsonElement>(
+        "SubscribeAsync", request with { ResumeToken = resumeToken }, token);
+    clients[^1] = resumed;
+    var expectedReplay = lastSequence - nextSequence + 1;
+    for (; nextSequence <= lastSequence; nextSequence++)
+    {
+        VerifyUpdatedRow(await resumed.ReadAsync(stop), nextSequence);
+    }
+    if ((shared?.Status.SubscriberCount ?? reference!.SubscriberCount) != subscriberCount)
+    {
+        throw new InvalidDataException("The slow client did not rejoin the subscription after replay.");
+    }
+
+    replayedSlowDeliveries += expectedReplay;
+    observedDeliveries += transactionsPerOperation;
+}
+
+void VerifyUpdatedRow(JsonElement message, long sequence)
+{
+    var rowRevision = checked((int)(sequence - 1));
+    var key = (rowRevision - 1) % resultCount + 1;
+    VerifyDelivery(message, sequence, "RowUpdated", key, key - 1, key - 1, rowRevision);
+}
+
+long SlowClientResets() => shared?.Status.SlowClientDisconnects ?? reference!.SlowClientResets;
+
+static void ConfigureSlowClientBuffer(HttpConnectionDispatcherOptions options)
+{
+    options.TransportMaxBufferSize = 128;
+    options.TransportSendTimeout = TimeSpan.FromMinutes(2);
 }
 
 static void VerifyDelivery(JsonElement message, long sequence, string kind, int key,
@@ -417,6 +550,8 @@ internal static class SignalRCapture
     public const string AuthenticationScheme = "benchmark-loopback";
     public const string HubPath = "/benchmark/live";
     public const string QueryName = "signalr-benchmark";
+    public const int SlowClientBurstLength = 16;
+    public const int SlowClientQueueCapacity = 4;
 }
 
 internal sealed class FixtureAuthentication(

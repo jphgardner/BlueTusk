@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [Parameter(Mandatory)][ValidateSet(10, 1000, 100000)][int] $Results,
     [Parameter(Mandatory)][ValidateSet(1, 64, 1000, 10000)][int] $Subscribers,
-    [ValidateSet('affected-key-update', 'churn')][string] $Scenario = 'affected-key-update',
+    [ValidateSet('affected-key-update', 'churn', 'slow-client')][string] $Scenario = 'affected-key-update',
     [ValidateRange(3, 50)][int] $Trials = 3,
     [ValidateRange(1, 60)][int] $WarmupSeconds = 5,
     [ValidateRange(1, 60)][int] $MeasurementSeconds = 10,
@@ -16,6 +16,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($Scenario -ceq 'slow-client' -and $ProfileStages)
+{ throw 'Per-transaction stage profiles require a one-transaction workload.' }
 $root = Split-Path $PSScriptRoot -Parent
 $artifacts = Join-Path $root 'artifacts'
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
@@ -62,6 +64,8 @@ $implementations = @{}
 $runtime = $null
 $workload = "$os|Live|results=$Results|subscribers=$Subscribers|scenario=$Scenario"
 $eventsPerTransaction = if ($Scenario -ceq 'churn') { 2 } else { 1 }
+$testSlowClient = $Scenario -ceq 'slow-client'
+$transactionsPerOperation = if ($testSlowClient) { 16 } else { 1 }
 $started = [DateTimeOffset]::UtcNow
 
 try
@@ -84,18 +88,24 @@ try
             if ($LASTEXITCODE) { throw "Live SignalR $role trial $trial failed." }
             $sample = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
             $runtime ??= $sample.environment.runtime
-            $expectedEvents = $sample.measurement.completedOperations * $eventsPerTransaction
+            $completed = $sample.measurement.completedOperations
+            $expectedEvents = $completed * $eventsPerTransaction * $transactionsPerOperation
+            $expectedResets = if ($testSlowClient) { $completed } else { 0 }
             if ($sample.sourceCommit -cne $ExpectedCommit -or $sample.workloadKey -cne $workload -or $sample.trial -ne $trial -or
                 $sample.role -cne $role -or $sample.diagnostic -ne $true -or $sample.synthetic -ne $false -or
                 $sample.environment.runtime -cne $runtime -or $sample.environment.os -cne $os -or
                 $sample.environment.architecture -cne 'x64' -or $sample.environment.transport -cne 'signalr-json-websockets' -or
                 $sample.environment.source -cne 'postgresql-pgoutput' -or $sample.environment.stageProfiling -ne [bool]$ProfileStages -or
                 $sample.environment.scenario -cne $Scenario -or $sample.environment.eventsPerTransaction -ne $eventsPerTransaction -or
+                $sample.environment.transactionsPerOperation -ne $transactionsPerOperation -or
+                $sample.environment.slowSubscriberCount -ne [int]$testSlowClient -or
                 $sample.environment.resultCount -ne $Results -or
                 $sample.environment.subscriberCount -ne $Subscribers -or $sample.warmupSeconds -ne $WarmupSeconds -or
                 $sample.measurementSeconds -ne $MeasurementSeconds -or $sample.measurement.elapsedTicks -lt ($MeasurementSeconds * $sample.frequency) -or
-                $sample.measurement.completedOperations -lt 1 -or
-                $sample.verifiedDeliveries -ne ($Subscribers * $expectedEvents) -or
+                $completed -lt 1 -or $sample.verifiedDeliveries -ne ($Subscribers * $expectedEvents) -or
+                $sample.slowClientResets -ne $expectedResets -or
+                $sample.slowClientReplayedDeliveries -lt $expectedResets -or
+                $sample.slowClientReplayedDeliveries -gt ($completed * ($transactionsPerOperation - 1)) -or
                 ($role -ceq 'candidate' -and ($sample.persistedUpdates -ne $expectedEvents -or
                     -not $sample.implementation.EndsWith("+$ExpectedCommit", [StringComparison]::Ordinal))) -or
                 ($role -ceq 'reference' -and $sample.implementation -cnotmatch '^ASP\.NET Core SignalR 10\.'))
