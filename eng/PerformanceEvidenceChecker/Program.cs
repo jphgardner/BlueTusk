@@ -415,7 +415,7 @@ internal static class Checker
                         $"Live trial '{path}' did not persist and deliver each approved update to all subscribers.");
                 }
 
-                if (family is "Streams" or "Sync")
+                if (family == "Streams")
                 {
                     var beforeUpper = scan.Long("clockBefore.latestOffsetTicks");
                     var afterUpper = scan.Long("clockAfter.latestOffsetTicks");
@@ -424,10 +424,8 @@ internal static class Checker
                     var upper = Math.Max(beforeUpper, afterUpper);
                     var applied = !Bool(index, "diagnostic") && role == "reference"
                         ? Math.Min(beforeLower, afterLower) : upper;
-                    var scenario = family == "Streams" ? Str(workload, "scenario") : "commit-to-delivery";
-                    var expectedChanges = family == "Streams" ? Int(workload, "transactionChanges") : 1;
-                    Require(scan.Text("environment.scenario") == scenario &&
-                        scan.Long("environment.changesPerTransaction") == expectedChanges &&
+                    Require(scan.Text("environment.scenario") == Str(workload, "scenario") &&
+                        scan.Long("environment.changesPerTransaction") == Int(workload, "transactionChanges") &&
                         scan.Text("environment.source") == "postgresql-pgoutput" &&
                         scan.Text("environment.sourceWriterImplementation") == reference &&
                         frequency == TimeSpan.TicksPerSecond && scan.Workers.Count == 1 &&
@@ -437,15 +435,19 @@ internal static class Checker
                         scan.WallClockTicks is { } wallTicks && wallTicks.Length == scan.Workers[0].Length &&
                         wallTicks.Zip(scan.Workers[0]).All(sample => checked(sample.First + applied) == sample.Second),
                         $"{family} trial '{path}' did not bind each delivery sample to the approved workload and clock observations.");
-                    if (family == "Sync")
-                    {
-                        Require(scan.Text("environment.destination") == Str(workload, "destination") &&
-                            scan.Long("environment.mutationsPerTransaction") == Int(workload, "mutations") &&
-                            scan.Long("verifiedPersistedMutations") == scan.Long("measurement.completedOperations") &&
-                            ulong.TryParse(scan.Text("destinationCheckpoint"), NumberStyles.None, CultureInfo.InvariantCulture, out var checkpoint) &&
-                            checkpoint > 0 && scan.Long("destinationCheckpointTransaction") is > 0 and <= uint.MaxValue,
-                            $"Sync trial '{path}' did not retain its PostgreSQL mutations and checkpoint.");
-                    }
+                }
+                if (family == "Sync")
+                {
+                    Require(scan.Text("environment.scenario") == "durable-mutation" &&
+                        scan.Text("environment.source") == "postgresql-pgoutput" &&
+                        scan.Text("environment.sourceWriterImplementation") == reference &&
+                        scan.Long("environment.changesPerTransaction") == 1 && scan.Workers.Count == 1 &&
+                        scan.Text("environment.destination") == Str(workload, "destination") &&
+                        scan.Long("environment.mutationsPerTransaction") == Int(workload, "mutations") &&
+                        scan.Long("verifiedPersistedMutations") == scan.Long("measurement.completedOperations") &&
+                        ulong.TryParse(scan.Text("destinationCheckpoint"), NumberStyles.None, CultureInfo.InvariantCulture, out var checkpoint) &&
+                        checkpoint > 0 && scan.Long("destinationCheckpointTransaction") is > 0 and <= uint.MaxValue,
+                        $"Sync trial '{path}' did not retain its PostgreSQL mutations and checkpoint.");
                 }
             }
             if (timedQualification)

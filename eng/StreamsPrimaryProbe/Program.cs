@@ -80,13 +80,13 @@ if (await writer.ReadAsync(token) != baseline)
 var nextKey = 0L;
 BlueTuskLogSequenceNumber? previousPosition = null;
 uint lastTransactionId = 0;
-long[] wallTicks = [];
+long[] operationTicks = [];
 var sampleCount = 0;
 _ = await ProviderRequestCapture.MeasureWindowAsync([ReadOneChangeAsync], warmupSeconds, 0, token);
-var clockBefore = await SampleClockAsync();
-wallTicks = new long[sampleCapacity];
+var clockBefore = sync is null ? await SampleClockAsync() : null;
+operationTicks = new long[sampleCapacity];
 var measurement = await ProviderRequestCapture.MeasureWindowAsync([ReadOneChangeAsync], measurementSeconds, 0, token);
-var clockAfter = await SampleClockAsync();
+var clockAfter = sync is null ? await SampleClockAsync() : null;
 if (sync is not null)
 {
     await sync.VerifyAsync(nextKey, previousPosition!.Value, lastTransactionId, token);
@@ -95,20 +95,24 @@ if (sampleCount != measurement.CompletedOperations)
 {
     throw new InvalidDataException("Every completed Streams transaction must retain a raw delivery sample.");
 }
-var offsetUpperBound = Math.Max(clockBefore.LatestOffsetTicks, clockAfter.LatestOffsetTicks);
-// A qualification result must hold across the captured offset interval. Use the
-// slower bound for the candidate and the faster bound for the released baseline.
-var appliedOffset = evidenceClass == "qualification" && role == "reference"
-    ? Math.Min(clockBefore.EarliestOffsetTicks, clockAfter.EarliestOffsetTicks)
-    : offsetUpperBound;
-var requestTicks = wallTicks.AsSpan(0, sampleCount).ToArray();
-for (var index = 0; index < requestTicks.Length; index++)
+long? offsetUpperBound = null;
+long? appliedOffset = null;
+var requestTicks = operationTicks.AsSpan(0, sampleCount).ToArray();
+if (clockBefore is not null && clockAfter is not null)
 {
-    requestTicks[index] = checked(requestTicks[index] + appliedOffset);
-    if (requestTicks[index] <= 0)
+    offsetUpperBound = Math.Max(clockBefore.LatestOffsetTicks, clockAfter.LatestOffsetTicks);
+    // Qualification must hold across the captured offset interval.
+    appliedOffset = evidenceClass == "qualification" && role == "reference"
+        ? Math.Min(clockBefore.EarliestOffsetTicks, clockAfter.EarliestOffsetTicks)
+        : offsetUpperBound;
+    for (var index = 0; index < requestTicks.Length; index++)
     {
-        throw new InvalidDataException("The Streams commit-to-delivery latency could not be resolved.");
+        requestTicks[index] = checked(requestTicks[index] + appliedOffset.Value);
     }
+}
+if (requestTicks.Any(ticks => ticks <= 0))
+{
+    throw new InvalidDataException("The delivery or mutation latency could not be resolved.");
 }
 var implementationType = sync is null ? typeof(PgOutputChangeStream) : typeof(PostgreSqlSyncDestination);
 var implementation = implementationType.Assembly
@@ -132,7 +136,7 @@ var report = new
         Os = os,
         Architecture = "x64",
         Runtime = RuntimeInformation.FrameworkDescription,
-        Scenario = "commit-to-delivery",
+        Scenario = sync is null ? "commit-to-delivery" : "durable-mutation",
         ChangesPerTransaction = 1,
         Destination = sync is null ? null : "postgresql",
         MutationsPerTransaction = sync is null ? (int?)null : 1,
@@ -147,11 +151,11 @@ var report = new
     ClockAfter = clockAfter,
     SourceClockUpperOffsetTicks = offsetUpperBound,
     SourceClockAppliedOffsetTicks = appliedOffset,
-    RawWallTicksByTransaction = wallTicks.AsSpan(0, sampleCount).ToArray(),
-    Frequency = TimeSpan.TicksPerSecond,
+    RawWallTicksByTransaction = sync is null ? operationTicks.AsSpan(0, sampleCount).ToArray() : null,
+    Frequency = sync is null ? TimeSpan.TicksPerSecond : Stopwatch.Frequency,
     Measurement = measurement with
     {
-        ElapsedTicks = Stopwatch.GetElapsedTime(0, measurement.ElapsedTicks).Ticks,
+        ElapsedTicks = sync is null ? Stopwatch.GetElapsedTime(0, measurement.ElapsedTicks).Ticks : measurement.ElapsedTicks,
         Workers = [new ProviderRequestCapture.WorkerSamples(requestTicks, requestTicks.Length)],
     },
 };
@@ -169,7 +173,8 @@ async Task ReadOneChangeAsync(CancellationToken cancellationToken)
         {
             throw new EndOfStreamException("The replication stream ended before delivering its committed change.");
         }
-        var observedUtc = DateTimeOffset.UtcNow;
+        var observedUtc = sync is null ? DateTimeOffset.UtcNow : default;
+        var mutationTicks = 0L;
         await using var delivery = transactions.Current;
         var transaction = delivery.Transaction;
         if (transaction.Changes.Count != 1 || transaction.Outcome != ChangeTransactionOutcome.Committed ||
@@ -198,18 +203,19 @@ async Task ReadOneChangeAsync(CancellationToken cancellationToken)
         }
         else
         {
+            var started = Stopwatch.GetTimestamp();
             await sync.ApplyAsync(delivery, key, cancellationToken);
-            observedUtc = DateTimeOffset.UtcNow;
+            mutationTicks = Stopwatch.GetTimestamp() - started;
         }
 
         previousPosition = transaction.CommitEndPosition;
         lastTransactionId = transaction.TransactionId;
-        if (wallTicks.Length == 0) return;
-        if (sampleCount == wallTicks.Length)
+        if (operationTicks.Length == 0) return;
+        if (sampleCount == operationTicks.Length)
         {
             throw new InvalidOperationException("Raw sample capacity exhausted. No truncated capture is accepted.");
         }
-        wallTicks[sampleCount++] = (observedUtc - transaction.CommitTimestamp).Ticks;
+        operationTicks[sampleCount++] = sync is null ? (observedUtc - transaction.CommitTimestamp).Ticks : mutationTicks;
     }
     catch
     {

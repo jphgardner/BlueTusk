@@ -177,8 +177,9 @@ PostgreSQL writer for both roles. It validates every committed change and
 retains the raw timing and clock-offset observations. Capture it with
 `capture-core-primary.ps1 -Family Streams -ExpectedCommit <sha>`.
 The PostgreSQL Sync probe uses the same source writer and CDC path as Streams.
-It records completion after the production Sync pipeline acknowledges the
-destination commit, then reads back each row and the checkpoint. Capture it with
+It measures from handing a decoded change to the Sync pipeline through its
+acknowledgement of the destination commit. The probe then reads back every row
+and the checkpoint. Capture it with
 `capture-core-primary.ps1 -Family Sync -ExpectedCommit <sha>`.
 The Core planner requires all five captures on both operating systems before
 full qualification can run. The existing 20% improvement thresholds for P95

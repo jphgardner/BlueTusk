@@ -146,13 +146,15 @@ try
             }
             else
             {
-                if ($sample.environment.scenario -cne 'commit-to-delivery' -or
-                    $sample.environment.changesPerTransaction -ne 1 -or
+                if ($sample.environment.changesPerTransaction -ne 1 -or
                     $sample.environment.source -cne 'postgresql-pgoutput' -or
-                    $sample.environment.sourceWriterImplementation -cne $referenceVersion -or
-                    $sample.rawWallTicksByTransaction.Count -ne $sample.measurement.completedOperations)
-                { throw "The $Family trial did not measure each approved commit-to-delivery operation." }
-                if ($Family -ceq 'Sync' -and ($sample.environment.destination -cne $approved.destination -or
+                    $sample.environment.sourceWriterImplementation -cne $referenceVersion)
+                { throw "The $Family trial did not use the approved PostgreSQL source and fixed writer." }
+                if ($Family -ceq 'Streams' -and ($sample.environment.scenario -cne $approved.scenario -or
+                    $sample.rawWallTicksByTransaction.Count -ne $sample.measurement.completedOperations))
+                { throw 'The Streams trial did not measure each approved commit-to-delivery operation.' }
+                if ($Family -ceq 'Sync' -and ($sample.environment.scenario -cne 'durable-mutation' -or
+                    $sample.environment.destination -cne $approved.destination -or
                     $sample.environment.mutationsPerTransaction -ne $approved.mutations -or
                     $sample.verifiedPersistedMutations -ne $sample.measurement.completedOperations -or
                     $sample.destinationCheckpoint -cnotmatch '^[1-9][0-9]*$' -or $sample.destinationCheckpointTransaction -le 0))
