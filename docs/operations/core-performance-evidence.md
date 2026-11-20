@@ -150,7 +150,7 @@ transaction has a receipt. After a forced restart, the verifier checks the
 stored signatures, commit positions and every ordered mutation against
 PostgreSQL. These workloads use `evidence_class=diagnostic` and `families=Sync`.
 
-`capture-live-signalr.ps1` runs paired diagnostics for an affected-key update
+`capture-live-signalr.ps1` runs paired SignalR captures for an affected-key update
 over authenticated loopback WebSockets. Both roles consume the same PostgreSQL
 change feed, query the same ordered result set, and deliver the same changed row
 through SignalR's streaming JSON protocol. The candidate exercises BlueTusk's
@@ -170,7 +170,12 @@ for this scenario. The other subscribers must receive every update during the
 pause. The paused stream must send an explicit reset, then the same client
 must reconnect with its last received resume token and receive every missing
 event in order. This measures one complete burst and replay as an operation.
-The full timed matrix remains required for Live qualification.
+The Core workflow runs all contracted combinations of result size, subscriber
+count and scenario on each operating system. Qualification requires at least
+30 independent pairs per workload, the committed warm-up and measurement
+windows, and the independent raw-sample check. Standalone captures can select
+individual workloads for diagnostics. Use `-AllWorkloads -Qualification -Trials 30 -Describe` to inspect the complete
+qualification plan without starting the fixture.
 
 Use `-ProfileStages` to time the source commit, change feed, invalidation
 write, publication and subscriber receipts for each timed update. The

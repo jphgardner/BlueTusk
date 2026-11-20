@@ -309,6 +309,29 @@ try
         $inventoryLegs = @($activePlan.capture.include | Where-Object family -ceq 'ControlPlane')
         if ($inventoryLegs.Count -ne 2 -or @($inventoryLegs | Where-Object status -cne 'implemented').Count -ne 0)
         { throw 'The 1.2 plan must include a Control Plane capture on both operating systems.' }
+        $liveLegs = @($activePlan.capture.include | Where-Object family -ceq 'Live')
+        if ($liveLegs.Count -ne 2 -or @($liveLegs | Where-Object status -cne 'implemented').Count -ne 0)
+        { throw 'The 1.2 plan must include SignalR capture on both operating systems.' }
+        $liveScript = Join-Path $PSScriptRoot 'capture-live-signalr.ps1'
+        $liveOutput = Join-Path $root "artifacts/live-matrix-plan-$([Guid]::NewGuid().ToString('N'))"
+        $livePlan = & $liveScript -ExpectedCommit $head -OutputPath $liveOutput -AllWorkloads -Qualification -Trials 30 -Describe |
+            ConvertFrom-Json
+        $liveWorkloads = (Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json).workloads.Live
+        $expectedLiveKeys = @(foreach ($rows in $liveWorkloads.resultCounts) {
+            foreach ($subscribers in $liveWorkloads.subscriberCounts) {
+                foreach ($scenario in $liveWorkloads.scenarios) {
+                    "$($livePlan.os)|Live|results=$rows|subscribers=$subscribers|scenario=$scenario"
+                }
+            }
+        })
+        if ($livePlan.diagnostic -ne $false -or $livePlan.trials -ne 30 -or
+            $livePlan.records -ne (60 * $expectedLiveKeys.Count) -or (Compare-Object $expectedLiveKeys $livePlan.workloads -CaseSensitive))
+        { throw 'The Live qualification plan must include both roles for each full-matrix workload and trial.' }
+        Assert-Rejected 'short-live-qualification' {
+            & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family Live -ExpectedCommit $head `
+                -OutputPath $liveOutput -Trials 3
+        } 'committed minimum trial count and timing'
+        if (Test-Path -LiteralPath $liveOutput) { throw 'Planning and rejection must not create raw Live evidence.' }
         $primaryLegs = @($activePlan.capture.include | Where-Object family -ceq 'primary-hot-path')
         $primaryDescription = & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family primary-hot-path `
             -ExpectedCommit $head -OutputPath (Join-Path $temporary 'primary') -Describe | ConvertFrom-Json

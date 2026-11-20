@@ -36,7 +36,7 @@ $specification = switch ($Family)
     'Live' { [ordered]@{
         reference = $plan.families.Live.reference; referenceImage = $null; mode = 'cross-runtime'
         workloads = "results {$($contract.workloads.Live.resultCounts -join ',')} x subscribers {$($contract.workloads.Live.subscriberCounts -join ',')} x scenario {$($contract.workloads.Live.scenarios -join ',')}"
-        harness = 'An ASP.NET Core SignalR 10 hub that re-queries and pushes the same result set on the same change feed, same serializer and same clients; record change-to-client-receipt ticks.' } }
+        harness = 'Paired SignalR 10 processes consume the same change feed and deliver the same ordered updates to WebSocket clients. The slow-client workload verifies isolation, reset and replay.' } }
     'ControlPlane' { [ordered]@{
         reference = $plan.families.ControlPlane.reference; referenceImage = $null; mode = 'unique'
         workloads = "sources {$($contract.workloads.ControlPlane.sourceCounts -join ',')} x API clients {$($contract.workloads.ControlPlane.apiClientCounts -join ',')}"
@@ -65,6 +65,19 @@ if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
         if ($RunId) { $capture.RunId = "$RunId-$($destination[0])" }
         & $runner @capture -SyncDestination $destination
     }
+    return
+}
+if ($Family -ceq 'Live')
+{
+    if ($WarmupSeconds % 1 -ne 0 -or $MeasurementSeconds % 1 -ne 0)
+    { throw 'Live capture windows use whole seconds.' }
+    $capture = @{
+        ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Trials = $Trials; Owner = $Owner
+        WarmupSeconds = [int] $WarmupSeconds; MeasurementSeconds = [int] $MeasurementSeconds
+        AllWorkloads = $true; Qualification = -not $Diagnostic
+    }
+    if ($RunId) { $capture.RunId = "$RunId-lv" }
+    & (Join-Path $PSScriptRoot 'capture-live-signalr.ps1') @capture
     return
 }
 if ($Family -ceq 'primary-hot-path' -and $active.Release -ceq '1.2.0')

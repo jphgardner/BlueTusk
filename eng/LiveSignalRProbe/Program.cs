@@ -32,7 +32,7 @@ if (args.Length is not (9 or 10) ||
     args is not [var outputPath, var commit, var role, var trial, var results, var subscribers, var scenario, var warmup, var duration, ..] ||
     role is not ("candidate" or "reference") || scenario is not ("affected-key-update" or "churn" or "slow-client"))
 {
-    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, scenario, warmup and measurement seconds, and optionally a stage profile path.");
+    throw new ArgumentException("Provide output, commit, role, trial, results, subscribers, scenario, warmup and measurement seconds. Optionally provide a stage profile path or --qualification.");
 }
 
 const int maximumSamples = 262_144;
@@ -41,7 +41,8 @@ var testSlowClient = scenario == "slow-client";
 var slowTransport = testSlowClient ? new SlowSignalRTransport() : null;
 var eventsPerTransaction = churn ? 2 : 1;
 var transactionsPerOperation = testSlowClient ? SignalRCapture.SlowClientBurstLength : 1;
-var stageProfilePath = args.Length == 10 ? args[9] : null;
+var qualification = args.Length == 10 && args[9] == "--qualification";
+var stageProfilePath = args.Length == 10 && !qualification ? args[9] : null;
 if (testSlowClient && stageProfilePath is not null)
 {
     throw new ArgumentException("Per-transaction stage profiles require a one-transaction workload.");
@@ -277,7 +278,7 @@ try
         Role = role,
         Trial = trialIndex,
         SourceCommit = commit,
-        Diagnostic = true,
+        Diagnostic = !qualification,
         Synthetic = false,
         Implementation = candidate ? implementation : $"ASP.NET Core SignalR {implementation}",
         WarmupSeconds = warmupSeconds,

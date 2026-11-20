@@ -62,7 +62,7 @@
       "method": "cross-runtime"
     },
     "Live": {
-      "status": "stub-fails-closed",
+      "status": "implemented",
       "format": "performance-trial-index/1",
       "reference": "ASP.NET Core SignalR 10",
       "method": "cross-runtime"

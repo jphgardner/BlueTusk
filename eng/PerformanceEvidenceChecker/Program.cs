@@ -472,23 +472,48 @@ internal static class Checker
     private static void VerifyLiveSignalRCapture(JsonElement index, RawScan scan, string commit, string os, string role,
         string key, string path, long frequency, string matchedRuntime)
     {
+        var diagnostic = Bool(index, "diagnostic");
+        var scenario = scan.Text("environment.scenario");
         var results = scan.Long("environment.resultCount");
         var subscribers = scan.Long("environment.subscriberCount");
         var completed = scan.Long("measurement.completedOperations");
         var warmup = Int(index, "warmupSeconds");
         var window = Int(index, "measurementSeconds");
-        Require(Bool(index, "diagnostic") && results is 10 or 1_000 or 100_000 && subscribers is 1 or 64 or 1_000 or 10_000 &&
-            key == $"{os}|Live|results={results}|subscribers={subscribers}|scenario=affected-key-update" &&
-            scan.Text("environment.scenario") == "affected-key-update" &&
+        var slowClient = scenario == "slow-client";
+        var eventsPerTransaction = scenario == "churn" ? 2 : 1;
+        var transactionsPerOperation = slowClient ? 16 : 1;
+        var reportedEvents = scan.TryText("environment.eventsPerTransaction");
+        var hasRecoveryMetadata = scan.Scalars.ContainsKey("environment.transactionsPerOperation") ||
+            scan.Scalars.ContainsKey("environment.slowSubscriberCount") || scan.Scalars.ContainsKey("slowClientResets") ||
+            scan.Scalars.ContainsKey("slowClientReplayedDeliveries");
+        // Earlier single-transaction diagnostics did not have the reset and replay fields.
+        if (!diagnostic || slowClient || hasRecoveryMetadata)
+        {
+            var expectedResets = slowClient ? completed : 0;
+            var replayed = scan.Long("slowClientReplayedDeliveries");
+            Require(scan.Long("environment.transactionsPerOperation") == transactionsPerOperation &&
+                scan.Long("environment.slowSubscriberCount") == (slowClient ? 1 : 0) &&
+                scan.Long("slowClientResets") == expectedResets && replayed >= expectedResets &&
+                replayed <= checked(completed * (transactionsPerOperation - 1)),
+                $"Live SignalR trial '{path}' has invalid transaction, reset or replay counters.");
+        }
+        var expectedEvents = checked(completed * eventsPerTransaction * transactionsPerOperation);
+        Require(results is 10 or 1_000 or 100_000 && subscribers is 1 or 64 or 1_000 or 10_000 &&
+            scenario is "affected-key-update" or "churn" or "slow-client" &&
+            key == $"{os}|Live|results={results}|subscribers={subscribers}|scenario={scenario}" &&
+            ((diagnostic && scenario == "affected-key-update" && reportedEvents is null && !hasRecoveryMetadata) ||
+                scan.Long("environment.eventsPerTransaction") == eventsPerTransaction) &&
             scan.Text("environment.transport") == "signalr-json-websockets" && scan.Text("environment.source") == "postgresql-pgoutput" &&
             !string.IsNullOrWhiteSpace(matchedRuntime) && scan.Text("environment.runtime") == matchedRuntime &&
             Str(index, "candidateImplementation").EndsWith($"+{commit}", StringComparison.Ordinal) &&
             Str(index, "referenceImplementation").StartsWith("ASP.NET Core SignalR 10.", StringComparison.Ordinal) &&
-            warmup is >= 1 and <= 60 && window is >= 1 and <= 60 && frequency > 0 &&
+            (diagnostic || (Int(index, "trials") >= 30 && matchedRuntime.StartsWith(".NET 10.", StringComparison.Ordinal) &&
+                !scan.Bool("environment.stageProfiling"))) &&
+            warmup >= (diagnostic ? 1 : 5) && warmup <= 60 && window >= (diagnostic ? 1 : 10) && window <= 60 && frequency > 0 &&
             scan.Long("warmupSeconds") == warmup && scan.Long("measurementSeconds") == window &&
             (double)scan.Long("measurement.elapsedTicks") / frequency >= window &&
-            scan.Workers.Count == 1 && completed > 0 && scan.Long("verifiedDeliveries") == checked(completed * subscribers) &&
-            (role != "candidate" || scan.Long("persistedUpdates") == completed),
+            scan.Workers.Count == 1 && completed > 0 && scan.Long("verifiedDeliveries") == checked(expectedEvents * subscribers) &&
+            (role != "candidate" || scan.Long("persistedUpdates") == expectedEvents),
             $"Live SignalR trial '{path}' does not prove matched timing, fixture, reference and subscriber delivery.");
     }
 
