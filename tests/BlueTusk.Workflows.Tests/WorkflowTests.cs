@@ -9,13 +9,14 @@ public sealed class WorkflowTests
     public async Task ParallelActivitiesJoinBufferedSignalAndDurableTimerComplete()
     {
         await using var database = await WorkflowDatabase.CreateAsync();
+        var timerDelay = TimeSpan.FromMilliseconds(150);
         WorkflowNode[] nodes =
         [
             new() { Id = "a", Kind = WorkflowNodeKind.Activity, Activity = "a.v1" },
             new() { Id = "b", Kind = WorkflowNodeKind.Activity, Activity = "b.v1" },
             new() { Id = "join", Kind = WorkflowNodeKind.Join, DependsOn = ["a", "b"] },
             new() { Id = "approval", Kind = WorkflowNodeKind.Signal, Signal = "approved", DependsOn = ["join"] },
-            new() { Id = "timer", Kind = WorkflowNodeKind.Timer, Delay = TimeSpan.FromMilliseconds(150), DependsOn = ["approval"] },
+            new() { Id = "timer", Kind = WorkflowNodeKind.Timer, Delay = timerDelay, DependsOn = ["approval"] },
             new() { Id = "finish", Kind = WorkflowNodeKind.Activity, Activity = "finish.v1", DependsOn = ["timer"] },
         ];
         var key = await database.StartAsync(nodes);
@@ -55,9 +56,15 @@ public sealed class WorkflowTests
             Assert.Equal(9, completed.Single(node => node.Id == "finish").Result.Span[0]);
             var history = await database.Store.ReadHistoryAsync(key, 0, 128);
             Assert.Contains(history, entry => entry.Event == "joined");
+            var approved = history.Single(entry => entry.Event == "signal_consumed" && entry.NodeId == "approval");
             var scheduled = history.Single(entry => entry.Event == "timer_scheduled");
             var fired = history.Single(entry => entry.Event == "timer_fired");
-            Assert.True(fired.Timestamp - scheduled.Timestamp >= TimeSpan.FromMilliseconds(140));
+            Assert.True(scheduled.Sequence < fired.Sequence);
+            var timerJobId = Assert.IsType<Guid>(completed.Single(node => node.Id == "timer").JobId);
+            var timerJob = Assert.IsType<JobSnapshot>(await database.Store.Jobs.ReadAsync(database.Scope, timerJobId));
+            var attempt = Assert.Single(await database.Store.Jobs.ReadHistoryAsync(database.Scope, timerJobId));
+            Assert.True(timerJob.AvailableAt >= approved.Timestamp + timerDelay);
+            Assert.True(attempt.StartedAt >= timerJob.AvailableAt);
             Assert.Equal(Enumerable.Range(1, history.Count).Select(value => (long)value), history.Select(entry => entry.Sequence));
             Assert.True((await database.Store.ReplayAsync(key))!.MatchesPersistedState);
         }
