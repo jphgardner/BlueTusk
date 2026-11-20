@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory)][ValidateSet('native', 'tls', 'constrained-network', 'linux-container-client')][string] $CaptureProfile,
     # New directory beneath repository artifacts for fixture state; it is never part of the evidence.
     [Parameter(Mandatory)][string] $OutputPath,
-    [string] $SourceCommit = ''
+    [string] $SourceCommit = '',
+    [switch] $LogicalReplication
 )
 
 Set-StrictMode -Version Latest
@@ -55,6 +56,7 @@ try
     }
     $postgres = "bt-perf-$RunId-postgres"
     $serverArgs = @('-c', "max_connections=$($plan.fixture.maxConnections)")
+    if ($LogicalReplication) { $serverArgs += @('-c', 'wal_level=logical', '-c', 'track_commit_timestamp=on') }
     # create + cp + start: no host bind mounts, so a containerized Linux runner works through the Docker socket.
     $runArgs = @('create', '--name', $postgres, '--network', $network, '--network-alias', 'postgres') + $labels +
         @('--shm-size', $plan.fixture.sharedMemory, '--publish', '127.0.0.1::5432', '--env-file', $envFile)
