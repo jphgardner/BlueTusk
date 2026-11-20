@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][ValidateSet('provider', 'family')][string] $Kind,
     [string] $Variant = '',
     [string] $Family = '',
+    [ValidatePattern('^[a-z][a-z0-9-]{0,39}$')][string] $FamilyWorkload = '',
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [string] $VariantMapPath = (Join-Path $PSScriptRoot 'performance-variant-map.json'),
     # Host-persistent store shared by the capture and summarize jobs of one OS (ephemeral runners lose workspaces).
@@ -23,9 +24,15 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $runtimeOs = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { 'other' }
 if ($runtimeOs -cne $Os) { throw "The $Os leg is running on a $runtimeOs host." }
+if ($FamilyWorkload -and ($Kind -cne 'family' -or $Family -cnotin @('Live', 'Sync')))
+{ throw 'A family workload partition requires Live or Sync.' }
 $inputId = if ($Kind -eq 'provider') {
     "provider-$Variant" + $(if ($Concurrency.Count -eq 1) { "-c$($Concurrency[0])" } else { '' })
-} else { $Family.ToLowerInvariant() }
+} else {
+    $familyId = $Family.ToLowerInvariant()
+    if ($FamilyWorkload) { $familyId += "-$FamilyWorkload" }
+    $familyId
+}
 $store = [IO.Path]::GetFullPath($EvidenceStore)
 $output = Join-Path $store "$Os/raw/$inputId"
 $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
@@ -71,7 +78,9 @@ try
 {
     if ($Kind -eq 'family')
     {
-        & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family $Family -ExpectedCommit $ExpectedCommit `
+        $captureArguments = @{}
+        if ($FamilyWorkload) { $captureArguments.Workload = $FamilyWorkload }
+        & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') @captureArguments -Family $Family -ExpectedCommit $ExpectedCommit `
             -OutputPath $output -Trials $Trials -Diagnostic:$Diagnostic -Owner $Owner `
             -RunId "$RunId-$($Os.Substring(0, 3))" -WarmupSeconds $WarmupSeconds -MeasurementSeconds $MeasurementSeconds
         return

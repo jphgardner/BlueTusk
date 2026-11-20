@@ -7,6 +7,7 @@ param(
     [double] $WarmupSeconds = 5,
     [double] $MeasurementSeconds = 10,
     [string] $RunId,
+    [ValidatePattern('^[a-z][a-z0-9-]{0,39}$')][string] $Workload = '',
     [string] $Owner = 'core-performance-evidence',
     [switch] $Diagnostic,
     # Print the harness contract for this family and exit successfully without capturing.
@@ -53,13 +54,17 @@ if ($Describe)
     $specification | ConvertTo-Json -Depth 4
     return
 }
+if ($Workload -and $Family -cnotin @('Live', 'Sync')) { throw 'A workload partition requires Live or Sync.' }
+if ($Family -ceq 'Sync' -and $Workload -and $Workload -cnotin $contract.workloads.Sync.destinations)
+{ throw 'The Sync destination is absent from the performance contract.' }
 if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
 {
     $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Family = $Family; Trials = $Trials; Owner = $Owner }
     if ($RunId) { $capture.RunId = $RunId }
     $runner = Join-Path $PSScriptRoot 'capture-streams-delivery.ps1'
     if ($Family -ceq 'Streams') { & $runner @capture; return }
-    foreach ($destination in 'postgresql','redis','nats','opensearch','kafka','s3','webhooks')
+    if ($Workload) { & $runner @capture -SyncDestination $Workload; return }
+    foreach ($destination in $contract.workloads.Sync.destinations)
     {
         $capture.OutputPath = "$OutputPath-$destination"
         if ($RunId) { $capture.RunId = "$RunId-$($destination[0])" }
@@ -77,6 +82,7 @@ if ($Family -ceq 'Live')
         AllWorkloads = $true; Qualification = -not $Diagnostic
     }
     if ($RunId) { $capture.RunId = "$RunId-lv" }
+    if ($Workload) { $capture.ContractWorkload = $Workload }
     & (Join-Path $PSScriptRoot 'capture-live-signalr.ps1') @capture
     return
 }

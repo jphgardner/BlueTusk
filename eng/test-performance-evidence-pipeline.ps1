@@ -309,14 +309,27 @@ try
         $inventoryLegs = @($activePlan.capture.include | Where-Object family -ceq 'ControlPlane')
         if ($inventoryLegs.Count -ne 2 -or @($inventoryLegs | Where-Object status -cne 'implemented').Count -ne 0)
         { throw 'The 1.2 plan must include a Control Plane capture on both operating systems.' }
-        $liveLegs = @($activePlan.capture.include | Where-Object family -ceq 'Live')
-        if ($liveLegs.Count -ne 2 -or @($liveLegs | Where-Object status -cne 'implemented').Count -ne 0)
-        { throw 'The 1.2 plan must include SignalR capture on both operating systems.' }
+        $workloads = (Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json).workloads
+        $liveWorkloads = $workloads.Live
+        $expectedPartitions = @(foreach ($scenario in $liveWorkloads.scenarios) {
+            foreach ($rows in $liveWorkloads.resultCounts) { "$scenario-r$rows" }
+        })
+        foreach ($os in 'windows','linux') {
+            $liveLegs = @($activePlan.capture.include | Where-Object { $_.os -ceq $os -and $_.family -ceq 'Live' })
+            $syncLegs = @($activePlan.capture.include | Where-Object { $_.os -ceq $os -and $_.family -ceq 'Sync' })
+            if (@($liveLegs | Where-Object status -cne 'implemented').Count -ne 0 -or
+                (Compare-Object $expectedPartitions @($liveLegs.workload) -CaseSensitive) -or
+                (Compare-Object $workloads.Sync.destinations @($syncLegs.workload) -CaseSensitive))
+            { throw "The 1.2 Live and Sync jobs must cover each workload partition exactly once on $os." }
+        }
+        $partitionIds = @($activePlan.capture.include | Where-Object { $_.kind -ceq 'family' -and $_.workload } |
+            ForEach-Object workload_number)
+        if (($partitionIds | Sort-Object -Unique).Count -ne $partitionIds.Count)
+        { throw 'Each benchmark partition must use a distinct fixture namespace.' }
         $liveScript = Join-Path $PSScriptRoot 'capture-live-signalr.ps1'
         $liveOutput = Join-Path $root "artifacts/live-matrix-plan-$([Guid]::NewGuid().ToString('N'))"
         $livePlan = & $liveScript -ExpectedCommit $head -OutputPath $liveOutput -AllWorkloads -Qualification -Trials 30 -Describe |
             ConvertFrom-Json
-        $liveWorkloads = (Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json).workloads.Live
         $expectedLiveKeys = @(foreach ($rows in $liveWorkloads.resultCounts) {
             foreach ($subscribers in $liveWorkloads.subscriberCounts) {
                 foreach ($scenario in $liveWorkloads.scenarios) {
@@ -327,6 +340,20 @@ try
         if ($livePlan.diagnostic -ne $false -or $livePlan.trials -ne 30 -or
             $livePlan.records -ne (60 * $expectedLiveKeys.Count) -or (Compare-Object $expectedLiveKeys $livePlan.workloads -CaseSensitive))
         { throw 'The Live qualification plan must include both roles for each full-matrix workload and trial.' }
+        $partitionedKeys = @(foreach ($partition in $expectedPartitions) {
+            $parameters = @{ ExpectedCommit = $head; OutputPath = $liveOutput; ContractWorkload = $partition; Trials = 50 }
+            $selection = & $liveScript @parameters -AllWorkloads -Qualification -Describe | ConvertFrom-Json
+            if ($selection.diagnostic -ne $false -or $selection.records -ne (100 * $liveWorkloads.subscriberCounts.Count) -or
+                $selection.workloads.Count -ne $liveWorkloads.subscriberCounts.Count)
+            { throw "Live partition '$partition' must retain both roles and every subscriber count at 50 trials." }
+            $selection.workloads
+        })
+        if (Compare-Object $expectedLiveKeys $partitionedKeys -CaseSensitive)
+        { throw 'Partitioned Live captures must cover the original matrix without gaps or overlaps.' }
+        Assert-Rejected 'uncontracted-sync-partition' {
+            $parameters = @{ Family = 'Sync'; ExpectedCommit = $head; OutputPath = $liveOutput; Workload = 'unavailable' }
+            & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') @parameters -Diagnostic
+        } 'absent from the performance contract'
         Assert-Rejected 'short-live-qualification' {
             & (Join-Path $PSScriptRoot 'capture-family-comparison.ps1') -Family Live -ExpectedCommit $head `
                 -OutputPath $liveOutput -Trials 3

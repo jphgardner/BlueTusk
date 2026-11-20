@@ -137,16 +137,24 @@ jobs:
           LEG_VARIANT: ${{ matrix.variant }}
           LEG_FAMILY: ${{ matrix.family }}
           LEG_CONCURRENCY: ${{ matrix.concurrency }}
+          LEG_WORKLOAD: ${{ matrix.workload }}
+          LEG_WORKLOAD_NUMBER: ${{ matrix.workload_number }}
         run: |
           $release = ./eng/resolve-core-performance-release.ps1 -ExpectedCommit $env:CANDIDATE_SHA
           $providerArguments = @{}
           if ($env:LEG_KIND -eq 'provider') { $providerArguments.Concurrency = @([int]$env:LEG_CONCURRENCY) }
+          $captureArguments = @{}
+          $runId = "r$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          if ($env:LEG_WORKLOAD) {
+            $captureArguments.FamilyWorkload = $env:LEG_WORKLOAD
+            $runId += "-f$env:LEG_WORKLOAD_NUMBER"
+          }
           ./eng/invoke-core-performance-capture.ps1 `
-            @providerArguments `
+            @providerArguments @captureArguments `
             -Os $env:LEG_OS -Kind $env:LEG_KIND -Variant $env:LEG_VARIANT -Family $env:LEG_FAMILY `
             -ExpectedCommit $env:CANDIDATE_SHA -VariantMapPath $release.VariantMapPath `
             -EvidenceStore (Join-Path $env:BLUETUSK_EVIDENCE_STORE "$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT") `
-            -RunId "r$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" `
+            -RunId $runId `
             -Trials ([int]$env:TRIALS) `
             -Diagnostic:($env:EVIDENCE_CLASS -eq 'diagnostic')
       - name: Remove this run's fixture containers

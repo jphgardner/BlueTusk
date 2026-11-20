@@ -53,8 +53,26 @@ foreach ($environment in @($contract.environments | Sort-Object { if ($_.os -eq 
     {
         $status = if ($family -eq 'primary-hot-path') { [string]$plan.primaryHotPaths.status } else { [string]$plan.families.$family.status }
         if ($EvidenceClass -ceq 'diagnostic' -and $family -cin @('Streams', 'Sync')) { $status = 'ready' }
-        $legs.Add([ordered]@{ leg = "$os-$($family.ToLowerInvariant())"; os = $os; runner = $runner; kind = 'family'
-            variant = ''; family = $family; profile = ''; status = $status })
+        $workloads = @('')
+        if ($plan.release -ceq '1.2.0')
+        {
+            if ($family -ceq 'Sync') { $workloads = @($contract.workloads.Sync.destinations) }
+            if ($family -ceq 'Live')
+            {
+                $workloads = @(foreach ($scenario in $contract.workloads.Live.scenarios)
+                {
+                    foreach ($results in $contract.workloads.Live.resultCounts) { "$scenario-r$results" }
+                })
+            }
+        }
+        foreach ($workload in $workloads)
+        {
+            $leg = "$os-$($family.ToLowerInvariant())"
+            if ($workload) { $leg += "-$workload" }
+            $legs.Add([ordered]@{ leg = $leg; os = $os; runner = $runner; kind = 'family'
+                variant = ''; family = $family; profile = ''; status = $status
+                workload = $workload; workload_number = $legs.Count + 1 })
+        }
     }
 }
 if ($legs.Count -eq 0) { throw 'The capture plan is empty.' }

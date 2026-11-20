@@ -7,6 +7,8 @@ param(
     [Parameter(ParameterSetName = 'Selected')][ValidateSet('affected-key-update', 'churn', 'slow-client')]
     [string[]] $Scenario = @('affected-key-update'),
     [Parameter(Mandatory, ParameterSetName = 'Contract')][switch] $AllWorkloads,
+    [Parameter(ParameterSetName = 'Contract')][ValidatePattern('^[a-z][a-z0-9-]*-r[1-9][0-9]{0,5}$')]
+    [string] $ContractWorkload = '',
     [Parameter(ParameterSetName = 'Contract')][switch] $Qualification,
     [ValidateRange(3, 50)][int] $Trials = 3,
     [ValidateRange(1, 60)][int] $WarmupSeconds = 5,
@@ -56,6 +58,12 @@ if ($AllWorkloads)
     $Results = $live.resultCounts
     $Subscribers = $live.subscriberCounts
     $Scenario = $live.scenarios
+    if ($ContractWorkload)
+    {
+        $match = [regex]::Match($ContractWorkload, '^(.+)-r([1-9][0-9]{0,5})$')
+        $Scenario = @($match.Groups[1].Value)
+        $Results = @([int]$match.Groups[2].Value)
+    }
 }
 $os = if ($IsWindows) { 'windows' } elseif ($IsLinux) { 'linux' } else { throw 'Use Windows or Linux.' }
 $cases = @(foreach ($scenarioName in $Scenario)

@@ -390,6 +390,11 @@ variant (16 features x 3 concurrency levels) and 2 providers. One variant theref
 48 x 2 x 30 = 2,880 process runs, which is about 16 hours. The variant is split into three
 concurrency jobs: about 5.3 hours each at 30 trials and 8.9 hours each at 50 trials. This keeps
 each Provider job below the workflow's 24-hour limit and the GitHub token lifetime.
+Each v1.2 Live job measures one scenario and one result count at every required
+subscriber count. Each Sync job measures all mutation counts for one destination.
+The jobs use distinct raw input directories and fixture IDs. The final checker
+still requires every workload on both operating systems, with all trials and both
+implementations. The jobs run sequentially on the shared host.
 
 | Per OS | Windows | Linux |
 |---|---:|---:|
@@ -401,5 +406,5 @@ each Provider job below the workflow's 24-hour limit and the GitHub token lifeti
 
 The two OS legs run one after the other on the same PC, so a full qualification takes about
 roughly 10 days of exclusive host time under these assumptions. This is a planning estimate,
-not a measured completion time. The missing family producers need bounded job chunks before
-they can be enabled, especially at 50 trials. Endurance needs the same host and cannot overlap.
+not a measured completion time. The Streams and Sync qualification adapters must be enabled before a full
+run. Schedule the timed measurements in a reserved host window.
