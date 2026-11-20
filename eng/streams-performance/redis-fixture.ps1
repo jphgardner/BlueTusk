@@ -10,6 +10,14 @@ function Wait-SyncRedis([string] $Name)
     throw 'The isolated Redis destination did not become ready.'
 }
 
+function Get-SyncRedisEndpoint([string] $ContainerId)
+{
+    if (Test-Path -LiteralPath '/.dockerenv') { return 'redis:6379' }
+    $endpoint = & docker port $ContainerId '6379/tcp'
+    if ($LASTEXITCODE -or $endpoint -cnotmatch '^127\.0\.0\.1:[0-9]+$') { throw 'The Redis fixture must bind only to loopback.' }
+    return $endpoint
+}
+
 function New-SyncRedisFixture([string] $Network, [string] $FixtureRun, [string] $FixtureOwner, [string] $Commit, [string] $Image)
 {
     if ($Image -cnotmatch '^redis:8-alpine@sha256:[0-9a-f]{64}$') { throw 'The Redis image must be digest pinned.' }
@@ -29,13 +37,7 @@ function New-SyncRedisFixture([string] $Network, [string] $FixtureRun, [string] 
     if ($settings.appendonly -cne 'yes' -or $settings.appendfsync -cne 'always' -or $settings.'aof-load-truncated' -cne 'no')
     { throw 'Redis did not start with strict synchronous append-only persistence.' }
 
-    $endpoint = 'redis:6379'
-    if (-not (Test-Path -LiteralPath '/.dockerenv'))
-    {
-        $endpoint = & docker port $id '6379/tcp'
-        if ($LASTEXITCODE -or $endpoint -cnotmatch '^127\.0\.0\.1:[0-9]+$') { throw 'The Redis fixture must bind only to loopback.' }
-    }
-    [pscustomobject]@{ Id = $id; Name = $name; Endpoint = $endpoint; Image = $Image }
+    [pscustomobject]@{ Id = $id; Name = $name; Endpoint = (Get-SyncRedisEndpoint $id); Image = $Image }
 }
 
 function Assert-SyncRedisDelivery([string] $Source, [object] $Redis, [int] $Changes, [int] $Transactions, [string] $DotNet, [string] $Assembly)
@@ -60,7 +62,7 @@ function Assert-SyncRedisDelivery([string] $Source, [object] $Redis, [int] $Chan
     $previous = $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT
     try
     {
-        $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT = $Redis.Endpoint
+        $env:BLUETUSK_BENCHMARK_REDIS_ENDPOINT = Get-SyncRedisEndpoint $Redis.Id
         $proof = & $DotNet $Assembly --sync-redis-verify $Changes ($sourceIds -join ',')
         if ($LASTEXITCODE -ne 0) { throw 'Recovered Redis evidence failed document or checkpoint verification.' }
         return ($proof | ConvertFrom-Json)
