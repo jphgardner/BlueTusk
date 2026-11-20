@@ -42,10 +42,13 @@ internal static class OpenSearchSyncCaptureVerification
             var effective = settingsEntry.GetProperty("settings");
             var durability = effective.TryGetProperty("index.translog.durability", out var configured)
                 ? configured : settingsEntry.GetProperty("defaults").GetProperty("index.translog.durability");
-            if (durability.GetString() != "request" || effective.GetProperty("index.number_of_shards").GetString() != "1" ||
-                effective.GetProperty("index.number_of_replicas").GetString() != "0")
+            var durabilityMode = durability.GetString();
+            var shards = effective.GetProperty("index.number_of_shards").GetString();
+            var replicas = effective.GetProperty("index.number_of_replicas").GetString();
+            if (!string.Equals(durabilityMode, "request", StringComparison.OrdinalIgnoreCase) || shards != "1" || replicas != "0")
             {
-                throw new InvalidDataException("Recovered OpenSearch indexes differ from the synchronous single-node fixture.");
+                throw new InvalidDataException($"Recovered OpenSearch index '{index}' has durability '{durabilityMode}', " +
+                    $"{shards} primary shards and {replicas} replicas. The fixture requires request durability, one shard and zero replicas.");
             }
         }
 
