@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
     [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
-    [ValidateSet('postgresql','redis','nats')][string] $SyncDestination = 'postgresql',
+    [ValidateSet('postgresql','redis','nats','opensearch')][string] $SyncDestination = 'postgresql',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,32}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -62,6 +62,7 @@ else
 }
 
 $workloadNumber = 0
+$proofNames = @{ redis = 'recoveredFromAppendOnlyFile'; nats = 'recoveredFromJetStream'; opensearch = 'recoveredFromOpenSearch' }
 foreach ($workload in $workloads)
 {
     $workloadNumber++
@@ -77,7 +78,7 @@ foreach ($workload in $workloads)
                 ExpectedCommit = $ExpectedCommit; Trial = $trial; OutputPath = (Join-Path $work $id)
                 RunId = "$RunId-$workloadNumber-$($role[0])$trial"; Owner = $Owner
             }
-            if ($role -ceq 'candidate' -or $workload.Sink -cin @('redis', 'nats')) { $arguments.BenchmarkAssemblyPath = $assembly }
+            if ($role -ceq 'candidate' -or $proofNames.ContainsKey($workload.Sink)) { $arguments.BenchmarkAssemblyPath = $assembly }
             & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
@@ -86,14 +87,14 @@ foreach ($workload in $workloads)
                 $capture.measurement.completedOperations -ne $workload.Changes * [long]$workload.MeasurementTransactions -or
                 $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
             { throw "The $Family diagnostic trial '$id' differs from its requested source, role or workload." }
-            if ($workload.Sink -ceq 'redis' -and
-                ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.redis -or
-                 $capture.environment.destinationProof.recoveredFromAppendOnlyFile -ne $true))
-            { throw "The Redis trial '$id' has no matching append-only recovery proof." }
-            if ($workload.Sink -ceq 'nats' -and
-                ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.nats -or
-                 $capture.environment.destinationProof.recoveredFromJetStream -ne $true))
-            { throw "The NATS trial '$id' has no matching JetStream recovery proof." }
+            if ($proofNames.ContainsKey($workload.Sink))
+            {
+                $destination = $workload.Sink
+                $proof = $proofNames[$destination]
+                if ($capture.environment.destinationImage -cne $plan.families.Sync.destinationImages.$destination -or
+                    $capture.environment.destinationProof.$proof -ne $true)
+                { throw "The $destination trial '$id' has no matching recovery proof." }
+            }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $capture.implementation)
             { throw "The $role implementation changed between $Family trials." }
             $implementations[$role] = $capture.implementation
@@ -109,7 +110,7 @@ foreach ($workload in $workloads)
 }
 
 $images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
-if ($Family -ceq 'Sync' -and $SyncDestination -cin @('redis', 'nats')) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
+if ($Family -ceq 'Sync' -and $proofNames.ContainsKey($SyncDestination)) { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
 [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false

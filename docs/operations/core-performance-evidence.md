@@ -116,9 +116,17 @@ source transaction at the same three mutation counts. BlueTusk uses its NATS
 connector and Debezium uses the native Java NATS client. The reference persists
 split HTTP fragments before acknowledgement and reassembles them for publication.
 After an abrupt restart, the verifier checks every envelope, source timestamp,
-mutation and stable identity. These workloads use `evidence_class=diagnostic`
-and `families=Sync`. Sync qualification also requires OpenSearch, Kafka, S3 and
-Webhooks measurements.
+mutation and stable identity.
+
+The OpenSearch diagnostic pairs the production connector with a native REST
+reference at the same mutation counts. Both verify bulk document and
+reconciliation writes before advancing the external-version checkpoint. Both
+use request-synchronous translogs. The reference stages incomplete HTTP
+fragments durably before acknowledgement. After restarting the node without a
+normal shutdown, the verifier reads every recovered document, reconciliation
+record and the final checkpoint. These workloads use `evidence_class=diagnostic`
+and `families=Sync`. Sync qualification also requires Kafka, S3 and Webhooks
+measurements.
 
 ## Statistics
 

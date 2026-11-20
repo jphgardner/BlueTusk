@@ -6,6 +6,7 @@ using BlueTusk.Data;
 using BlueTusk.Streams;
 using BlueTusk.Sync;
 using BlueTusk.Sync.Nats;
+using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
 using BlueTusk.TypeSystem;
@@ -19,27 +20,36 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
 {
     internal const string RedisConnectionVariable = "BLUETUSK_BENCHMARK_REDIS_ENDPOINT";
     internal const string NatsConnectionVariable = "BLUETUSK_BENCHMARK_NATS_ENDPOINT";
+    internal const string OpenSearchConnectionVariable = "BLUETUSK_BENCHMARK_OPENSEARCH_ENDPOINT";
     internal const string PipelineId = "sync_capture";
     internal const string Collection = "streams_capture";
     internal const string NatsStream = "SYNC_CAPTURE";
     internal const string NatsStageStream = "SYNC_CAPTURE_STAGE";
     internal const string NatsSubjectPrefix = "sync.capture";
+    internal const string OpenSearchPrefix = "bluetusk-sync";
     private readonly BlueTuskDataSource? _dataSource;
     private readonly ConnectionMultiplexer? _redis;
     private readonly NatsClient? _nats;
+    private readonly HttpClient? _http;
     private readonly SyncPipeline _pipeline;
 
     private SyncCaptureSink(ISyncDestination destination, ChangeSourceIdentity source,
-        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null, NatsClient? nats = null)
+        BlueTuskDataSource? dataSource = null, ConnectionMultiplexer? redis = null, NatsClient? nats = null, HttpClient? http = null)
     {
         _dataSource = dataSource;
         _redis = redis;
         _nats = nats;
+        _http = http;
         _pipeline = new SyncPipeline(new() { PipelineId = PipelineId }, source, new CaptureTransform(), destination);
     }
 
     public static async ValueTask<SyncCaptureSink> CreateAsync(string sink, string sourceConnectionString, ChangeSourceIdentity source)
     {
+        if (sink == "opensearch")
+        {
+            var client = CreateOpenSearchClient();
+            return new(new OpenSearchSyncDestination(new() { Client = client, IndexPrefix = OpenSearchPrefix }), source, http: client);
+        }
         if (sink == "nats")
         {
             var nats = CreateNatsClient();
@@ -73,6 +83,13 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         Name = "sync-performance-capture",
     });
 
+    internal static HttpClient CreateOpenSearchClient() => new()
+    {
+        BaseAddress = new Uri(Environment.GetEnvironmentVariable(OpenSearchConnectionVariable) ??
+            throw new InvalidOperationException("The capture requires a dedicated OpenSearch fixture endpoint.")),
+        Timeout = TimeSpan.FromSeconds(30),
+    };
+
     public ValueTask InitializeAsync(CancellationToken cancellationToken) => _pipeline.ProvisionAsync(cancellationToken);
 
     public async ValueTask ApplyAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken)
@@ -100,6 +117,7 @@ internal sealed class SyncCaptureSink : IAsyncDisposable
         if (_dataSource is not null) await _dataSource.DisposeAsync();
         _redis?.Dispose();
         if (_nats is not null) await _nats.DisposeAsync();
+        _http?.Dispose();
     }
 
     private sealed class CaptureTransform : ISyncTransform

@@ -12,6 +12,7 @@ using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 using BlueTusk.Streams;
 using BlueTusk.Sync.Nats;
+using BlueTusk.Sync.OpenSearch;
 using BlueTusk.Sync.PostgreSql;
 using BlueTusk.Sync.Redis;
 using BlueTusk.TypeSystem;
@@ -53,11 +54,11 @@ internal static class StreamsDeliveryCapture
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
         var spill = options.Scenario == "spill";
-        var sync = options.Sink is "postgresql" or "redis" or "nats";
+        var sync = options.Sink is "postgresql" or "redis" or "nats" or "opensearch";
         var liveDelivery = options.Scenario == "commit-to-delivery" || spill;
         var snapshot = options.Scenario == "snapshot";
         if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot" or "spill") ||
-            options.Sink is not ("count" or "postgresql" or "redis" or "nats") || (sync && options.Scenario != "commit-to-delivery") ||
+            (options.Sink != "count" && !sync) || (sync && options.Scenario != "commit-to-delivery") ||
             options.Trial is < 0 or >= 50 || (options.ChangesPerTransaction is not (1 or 1_000) && !(sync && options.ChangesPerTransaction == 100)) ||
             (liveDelivery ? options.WarmupTransactions is < 1 or > 10_000 : options.WarmupTransactions != 0) ||
             options.MeasurementTransactions is < 1 or > 16_000 ||
@@ -80,6 +81,7 @@ internal static class StreamsDeliveryCapture
             "postgresql" => typeof(PostgreSqlSyncDestination),
             "redis" => typeof(RedisSyncDestination),
             "nats" => typeof(NatsSyncDestination),
+            "opensearch" => typeof(OpenSearchSyncDestination),
             _ => typeof(PgOutputChangeStream),
         };
         var implementation = implementationType.Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;

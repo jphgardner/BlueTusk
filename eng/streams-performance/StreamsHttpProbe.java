@@ -77,7 +77,7 @@ public final class StreamsHttpProbe {
         if (fields.length != 9 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
             !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
-            !fields[8].matches("count|postgresql|redis|nats") || !System.getProperty("os.arch").equals("amd64")) {
+            !fields[8].matches("count|postgresql|redis|nats|opensearch") || !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -109,6 +109,7 @@ public final class StreamsHttpProbe {
             case "postgresql" -> new PostgreSqlCaptureSink();
             case "redis" -> new RedisCaptureSink();
             case "nats" -> new NatsCaptureSink();
+            case "opensearch" -> new OpenSearchCaptureSink();
             default -> null;
         };
         if (!threads.isThreadAllocatedMemorySupported()) {

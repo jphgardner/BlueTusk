@@ -41,6 +41,13 @@ if (args is ["--sync-nats-verify", var natsChanges, var natsSourceTransactions, 
     return;
 }
 
+if (args is ["--sync-opensearch-verify", var searchChanges, var searchSourceTransactions, var searchRole])
+{
+    await OpenSearchSyncCaptureVerification.RunAsync(int.Parse(searchChanges, System.Globalization.CultureInfo.InvariantCulture),
+        searchSourceTransactions, searchRole);
+    return;
+}
+
 if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
 {
     await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);
