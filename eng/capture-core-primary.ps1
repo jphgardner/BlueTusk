@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('Provider','Live')][string] $Family,
+    [Parameter(Mandatory)][ValidateSet('Provider','Live','Streams',IgnoreCase=$false)][string] $Family,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [string] $DotNetPath = 'dotnet',
     [string] $OutputPath,
@@ -31,14 +31,18 @@ if ($Family -ceq 'Provider')
     { throw 'The probe must measure the approved native parameterized Provider query with 64 clients.' }
     $workers = $approved.concurrency
 }
-else
+elseif ($Family -ceq 'Live')
 {
     if ($approved.scenario -cne 'affected-key-update' -or $approved.results -ne 1000 -or $approved.subscribers -ne 64)
     { throw 'The probe must measure a committed affected-key update across 1,000 Live results and 64 subscribers.' }
 }
+elseif ($approved.scenario -cne 'commit-to-delivery' -or $approved.transactionChanges -ne 1)
+{
+    throw 'The Streams probe must measure WAL commit to delivery for one change per transaction.'
+}
 $sampleCapacity = [int][Math]::Floor($plan.timing.maximumTotalSamples / $workers)
-# Live produces one sample per completed fan-out. Keep its reserved buffer small.
-if ($Family -ceq 'Live') { $sampleCapacity = [Math]::Min($sampleCapacity, 262144) }
+# Live and Streams produce one sample per operation. Keep their reserved buffer small.
+if ($Family -cne 'Provider') { $sampleCapacity = [Math]::Min($sampleCapacity, 262144) }
 $evidenceClass = if ($Qualification) { 'qualification' } else { 'diagnostic' }
 
 function Assert-Source
@@ -86,14 +90,16 @@ $implementations = @{}
 $runtime = $null
 $fixture = Join-Path $work 'fixture'
 $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
+$previousWriter = $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY
 $started = [DateTimeOffset]::UtcNow
 try
 {
     & (Join-Path $PSScriptRoot 'start-performance-fixture.ps1') -RunId $RunId -Owner $Owner -CaptureProfile native `
-        -OutputPath ([IO.Path]::GetRelativePath($root, $fixture)) -SourceCommit $ExpectedCommit -LogicalReplication:($Family -ceq 'Live')
+        -OutputPath ([IO.Path]::GetRelativePath($root, $fixture)) -SourceCommit $ExpectedCommit -LogicalReplication:($Family -cne 'Provider')
     $manifest = Get-Content -LiteralPath (Join-Path $fixture 'fixture.json') -Raw | ConvertFrom-Json
     if ($manifest.postgreSqlImage -cne $plan.fixture.postgreSqlImage) { throw "The $Family probe did not start the contracted PostgreSQL image." }
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = Get-Content -LiteralPath (Join-Path $fixture 'connection.secret') -Raw
+    if ($Family -ceq 'Streams') { $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY = $assemblies.reference }
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
         $order = if ($trial % 2 -eq 0) { @('candidate','reference') } else { @('reference','candidate') }
@@ -120,13 +126,22 @@ try
                     $sample.environment.variant -cne $approved.variant -or $sample.environment.tlsActive -ne $false)
                 { throw 'The Provider trial did not exercise the approved query and transport.' }
             }
-            else
+            elseif ($Family -ceq 'Live')
             {
                 if ($sample.environment.scenario -cne $approved.scenario -or $sample.environment.resultCount -ne $approved.results -or
                     $sample.environment.subscriberCount -ne $approved.subscribers -or $sample.environment.source -cne 'postgresql-pgoutput' -or
                     $sample.environment.replay -cne 'postgresql' -or $sample.persistedUpdates -ne $sample.measurement.completedOperations -or
                     $sample.deliveriesObserved -ne ($sample.persistedUpdates * $approved.subscribers))
                 { throw 'The Live trial did not deliver the approved workload to all subscribers.' }
+            }
+            else
+            {
+                if ($sample.environment.scenario -cne $approved.scenario -or
+                    $sample.environment.changesPerTransaction -ne $approved.transactionChanges -or
+                    $sample.environment.source -cne 'postgresql-pgoutput' -or
+                    $sample.environment.sourceWriterImplementation -cne $referenceVersion -or
+                    $sample.rawWallTicksByTransaction.Count -ne $sample.measurement.completedOperations)
+                { throw 'The Streams trial did not measure each approved commit-to-delivery operation.' }
             }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $sample.implementation)
             { throw "The $role assembly changed during the $Family comparison." }
@@ -151,6 +166,7 @@ try
 finally
 {
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $previousConnection
+    $env:BLUETUSK_BENCHMARK_WRITER_ASSEMBLY = $previousWriter
     try { & (Join-Path $PSScriptRoot 'stop-performance-fixture.ps1') -RunId $RunId -Owner $Owner }
     finally
     {

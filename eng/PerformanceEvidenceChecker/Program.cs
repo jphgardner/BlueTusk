@@ -345,9 +345,9 @@ internal static class Checker
         Require(images.Length > 0 && images.All(item => Regex.IsMatch(item, "^\\S+@sha256:[0-9a-f]{64}$")) &&
             images.SequenceEqual(input.GetProperty("containerImageDigests").EnumerateArray().Select(item => item.GetString()!)),
             $"Trial input '{id}' image evidence is not digest pinned or differs from the manifest.");
-        var isLivePrimary = family == "Live" && index.GetProperty("records").EnumerateArray()
-            .Any(record => Str(record, "workloadKey") == $"{os}|Live|primary-hot-path");
-        var timedQualification = (family is "Provider" or "ControlPlane" || isLivePrimary) &&
+        var isTimedPrimary = family is "Live" or "Streams" && index.GetProperty("records").EnumerateArray()
+            .Any(record => Str(record, "workloadKey") == $"{os}|{family}|primary-hot-path");
+        var timedQualification = (family is "Provider" or "ControlPlane" || isTimedPrimary) &&
             !Bool(index, "diagnostic") && !Bool(index, "synthetic");
         var warmup = timedQualification ? Int(index, "warmupSeconds") : 0;
         var window = timedQualification ? Int(index, "measurementSeconds") : 0;
@@ -413,6 +413,28 @@ internal static class Checker
                         scan.Workers.Count == 1 && completed > 0 && scan.Long("persistedUpdates") == completed &&
                         scan.Long("deliveriesObserved") == checked(completed * subscribers),
                         $"Live trial '{path}' did not persist and deliver each approved update to all subscribers.");
+                }
+
+                if (family == "Streams")
+                {
+                    var beforeUpper = scan.Long("clockBefore.latestOffsetTicks");
+                    var afterUpper = scan.Long("clockAfter.latestOffsetTicks");
+                    var beforeLower = scan.Long("clockBefore.earliestOffsetTicks");
+                    var afterLower = scan.Long("clockAfter.earliestOffsetTicks");
+                    var upper = Math.Max(beforeUpper, afterUpper);
+                    var applied = !Bool(index, "diagnostic") && role == "reference"
+                        ? Math.Min(beforeLower, afterLower) : upper;
+                    Require(scan.Text("environment.scenario") == Str(workload, "scenario") &&
+                        scan.Long("environment.changesPerTransaction") == Int(workload, "transactionChanges") &&
+                        scan.Text("environment.source") == "postgresql-pgoutput" &&
+                        scan.Text("environment.sourceWriterImplementation") == reference &&
+                        frequency == TimeSpan.TicksPerSecond && scan.Workers.Count == 1 &&
+                        beforeLower <= beforeUpper &&
+                        afterLower <= afterUpper &&
+                        scan.Long("sourceClockUpperOffsetTicks") == upper && scan.Long("sourceClockAppliedOffsetTicks") == applied &&
+                        scan.WallClockTicks is { } wallTicks && wallTicks.Length == scan.Workers[0].Length &&
+                        wallTicks.Zip(scan.Workers[0]).All(sample => checked(sample.First + applied) == sample.Second),
+                        $"Streams trial '{path}' did not bind each delivery sample to the approved workload and clock observations.");
                 }
             }
             if (timedQualification)
@@ -656,6 +678,7 @@ internal static class Checker
     {
         public Dictionary<string, string> Scalars { get; } = new(StringComparer.Ordinal);
         public List<long[]> Workers { get; } = [];
+        public long[]? WallClockTicks { get; set; }
         public string Text(string path) => Scalars.TryGetValue(path, out var value) ? value : throw new CheckFailedException($"Raw capture is missing '{path}'.");
         public string? TryText(string path) => Scalars.TryGetValue(path, out var value) ? value : null;
         public long Long(string path) => long.Parse(Text(path), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
@@ -673,7 +696,7 @@ internal static class Checker
         public HashSet<string> Names { get; } = new(StringComparer.Ordinal);
     }
 
-    /// <summary>Single-pass streaming scan: request-tick arrays go straight into long buffers, all other scalars by path.</summary>
+    /// <summary>Single-pass streaming scan: timing arrays go straight into long buffers, all other scalars by path.</summary>
     private static RawScan Scan(byte[] bytes)
     {
         var reader = new Utf8JsonReader(bytes, new JsonReaderOptions { MaxDepth = 64 });
@@ -705,7 +728,8 @@ internal static class Checker
                 case JsonTokenType.StartArray:
                     {
                         var path = Child();
-                        if (reader.TokenType == JsonTokenType.StartArray && Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$"))
+                        if (reader.TokenType == JsonTokenType.StartArray &&
+                            (path == "rawWallTicksByTransaction" || Regex.IsMatch(path, "^measurement\\.workers\\[\\d+\\]\\.requestTicks$")))
                         {
                             var buffer = new List<long>();
                             while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
@@ -714,9 +738,16 @@ internal static class Checker
                                 Require(reader.TokenType == JsonTokenType.Number && reader.TryGetInt64(out ticks), "Request ticks must be integers.");
                                 buffer.Add(ticks);
                             }
-                            var worker = int.Parse(path["measurement.workers[".Length..path.IndexOf(']', StringComparison.Ordinal)], CultureInfo.InvariantCulture);
-                            Require(worker == scan.Workers.Count, "Worker sample arrays must appear in order.");
-                            scan.Workers.Add(buffer.ToArray());
+                            if (path == "rawWallTicksByTransaction")
+                            {
+                                scan.WallClockTicks = buffer.ToArray();
+                            }
+                            else
+                            {
+                                var worker = int.Parse(path["measurement.workers[".Length..path.IndexOf(']', StringComparison.Ordinal)], CultureInfo.InvariantCulture);
+                                Require(worker == scan.Workers.Count, "Worker sample arrays must appear in order.");
+                                scan.Workers.Add(buffer.ToArray());
+                            }
                             Advance();
                             break;
                         }
