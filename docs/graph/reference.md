@@ -205,6 +205,7 @@ typed constructs raise `BlueTuskGraphTranslationException`; there is no string
 concatenation fallback. Schema inspection remains read-only.
 
 Applications using raw SQL must not interpolate untrusted identifiers or graph
-patterns. The core PostgreSQL references are [Property Graphs](https://www.postgresql.org/docs/19/ddl-property-graphs.html),
-[Graph Queries](https://www.postgresql.org/docs/19/queries-graph.html), and
-[`CREATE PROPERTY GRAPH`](https://www.postgresql.org/docs/19/sql-create-property-graph.html).
+patterns.
+
+The historical PostgreSQL 19 Beta 3 documentation describes the native SQL/PGQ
+preview exercised on the pinned fixture. [Property Graphs](https://github.com/postgres/postgres/blob/REL_19_BETA3/doc/src/sgml/ddl.sgml#L5300) · [Graph Queries](https://github.com/postgres/postgres/blob/REL_19_BETA3/doc/src/sgml/queries.sgml#L2548) · [`CREATE PROPERTY GRAPH`](https://github.com/postgres/postgres/blob/REL_19_BETA3/doc/src/sgml/ref/create_property_graph.sgml)

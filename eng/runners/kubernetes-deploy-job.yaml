@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: __RUNNER_NAME__
+  namespace: bluetusk-deploy-runners
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 4200
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      hostUsers: false
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile: {type: RuntimeDefault}
+      volumes:
+        - name: tools
+          emptyDir: {sizeLimit: 384Mi}
+      initContainers:
+        - name: powershell
+          image: mcr.microsoft.com/powershell@sha256:73c08403182e3cd1a62176b6723645b2d2037cda8deefc0e2c2c01cb814abe43
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              source="$(dirname "$(readlink -f "$(command -v pwsh)")")"
+              cp -R "$source/." /tools/
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          resources:
+            requests: {cpu: '100m', memory: '64Mi', ephemeral-storage: '250Mi'}
+            limits: {cpu: '1', memory: '384Mi', ephemeral-storage: '400Mi'}
+          volumeMounts:
+            - {name: tools, mountPath: /tools}
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner@sha256:4037925f16bd0626196684aff1853dabd242675c82efe08f0a2d376694738d19
+          command: [/bin/bash, -ec]
+          args:
+            - |
+              export PATH="/tools:$PATH"
+              jit="$RUNNER_JIT_CONFIG"
+              unset RUNNER_JIT_CONFIG
+              exec /home/runner/run.sh --jitconfig "$jit"
+          env:
+            - {name: AGENT_TOOLSDIRECTORY, value: /home/runner/_work/_tool}
+            - name: RUNNER_JIT_CONFIG
+              valueFrom:
+                secretKeyRef: {name: __RUNNER_NAME__, key: config}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          resources:
+            requests: {cpu: '250m', memory: '256Mi', ephemeral-storage: '1Gi'}
+            limits: {cpu: '2', memory: '2Gi', ephemeral-storage: '3Gi'}
+          volumeMounts:
+            - {name: tools, mountPath: /tools, readOnly: true}

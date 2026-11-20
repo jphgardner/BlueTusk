@@ -81,9 +81,9 @@ export const RESOURCES: readonly Resource[] = [
         ],
       },
       {
-        title: 'PostgreSQL 15–18',
+        title: 'PostgreSQL compatibility',
         description:
-          'Use portable BlueTusk Graphs over ordinary mapped tables. Logical replication requires a configured publication and slot, and native SQL/PGQ requires a server that provides it.',
+          'BlueTusk qualifies PostgreSQL 15–18 for stable use and is testing PostgreSQL 19 GA separately. Portable Graph runs over ordinary mapped tables. Native Graph requires server SQL/PGQ support, and logical replication requires a publication and slot.',
         links: [
           guide('Portable and native graphs', 'graph/graph-reference'),
           guide('Configure replication', 'provider/replication-reference'),

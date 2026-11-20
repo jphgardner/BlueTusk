@@ -17,6 +17,10 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -81,9 +85,13 @@ jobs:
         shell: pwsh
         run: |
           npm exec --yes playwright@1.62.1 install --with-deps chromium
-          Get-ChildItem artifacts/application-web -Directory | ForEach-Object {
-            Push-Location (Join-Path $_.FullName 'work')
-            try { npm run test:e2e }
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install Chromium for the application browser tests.' }
+          foreach ($application in Get-ChildItem artifacts/application-web -Directory) {
+            Push-Location (Join-Path $application.FullName 'work')
+            try {
+              npm run test:e2e
+              if ($LASTEXITCODE -ne 0) { throw "Browser tests failed for $($application.Name)." }
+            }
             finally { Pop-Location }
           }
 

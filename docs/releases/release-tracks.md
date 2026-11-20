@@ -7,13 +7,19 @@ uses a separate historical fixture.
 
 | Track | Server support | Required evidence |
 | --- | --- | --- |
-| Five core families | PostgreSQL 15–18 stable; PostgreSQL 19 preview | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
+| Five core families | PostgreSQL 15–18 stable support. PostgreSQL 19 GA qualification pending. | Exact-candidate build, security, performance, compatibility, package consumers, durability/endurance, operational rehearsals and independent approval |
 | Portable Graph preview | PostgreSQL 15–18, with a digest-pinned PostgreSQL 18 release fixture | Exact candidate packages, differential and security tests, Windows and Linux performance, 24-hour recovery, and independent approval |
 | Native SQL/PGQ preview | Historical, digest-pinned PostgreSQL 19 Beta 3 fixture | Capability checks and native regression evidence on the pinned fixture. A future native release also requires result parity and permissions checks. |
 
-PostgreSQL 19 Beta 4 [removed SQL/PGQ](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/).
-Native mode requires the actual server capability. Native PostgreSQL 19 `REPACK` remains preview
-compatibility work until the GA matrix passes.
+The PostgreSQL project released PostgreSQL 19 on November 19, 2026. BlueTusk
+qualifies each PostgreSQL major separately. [PostgreSQL 19 release announcement](https://www.postgresql.org/about/news/postgresql-19-released-3449/)
+
+Portable Graph uses joins over ordinary mapped tables. Native Graph checks the
+running server for SQL/PGQ, which upstream removed in PostgreSQL 19 Beta 4.
+[PostgreSQL 19 Beta 4 release notes](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/)
+
+BlueTusk's integration with PostgreSQL 19 `REPACK` remains in compatibility
+testing until the GA matrix passes.
 
 ## BlueTusk graph engine
 
@@ -120,6 +126,36 @@ for its unique queued job. Keep the runner namespace on nodes that support pod u
 The other Core tracks are `Sync` and `LiveControlPlane`. `ContinuousGraph` uses its own release track
 and does not take a Core package run ID.
 
+### Coordinated Kubernetes deployment
+
+After Core readiness passes, publish the five exact-candidate version tags through the existing
+protected product-family workflow. That workflow publishes the NuGet packages and the npm packages
+for families that ship browser clients. Build the reference application images at the same commit
+with `applications-images.yml`, then dispatch `deploy-bluetusk.yml` from `main` with the candidate,
+Core readiness run ID, application image run ID and a unique label in the form
+`bluetusk-deploy-` followed by 20 lowercase hexadecimal characters. After the protected `deploy`
+job reaches the queue, provision its one-job runner inside the cluster.
+
+```powershell
+./eng/runners/start-kubernetes-deploy-runner.ps1 -KubernetesContext $context `
+    -RunId $deployRunId -RunnerLabel $deployLabel
+```
+
+The deploy workflow checks that the package publication jobs completed and that the published
+candidate is included in the dispatch commit on `main`. It deploys the verified application
+images from the candidate and uses the dispatch commit for the website, docs and Helm charts.
+
+The `bluetusk-production` GitHub environment requires a dedicated Kubernetes deployment identity in
+`BLUETUSK_DEPLOY_KUBECONFIG_BASE64` with `https://kubernetes.default.svc` as the server. Limit that
+identity to the website Deployment and the reference
+application Helm namespaces and grant read access to the cluster health and operator metadata used
+by the preflight. Set the environment variable `BLUETUSK_APP_STORAGE_CLASS` to the StorageClass for
+the reference application databases when it differs from `longhorn`. Provision the PostgreSQL and
+identity operators and the documented reference application secrets before the first run. For
+clusters with several Linux workers, apply
+[`kubernetes-runner-cache.yaml`](../../eng/runners/kubernetes-runner-cache.yaml) to keep the runner
+tool images on each node. The endurance launcher registers one runner per queued release job.
+
 The release keeps both independent application pilots, independent review,
 security, backup and restore, rollback, the incident response exercise, SLO
 approval, and maintainer sign-off. These approvals bind the candidate and must
@@ -134,8 +170,8 @@ attempts.
 The build workflow now measures stable PostgreSQL 15–18 compatibility and
 produces `v1.1-core-packages-<sha>` independently of optional historical
 six-family packaging. The separate `postgresql-preview.yml` workflow retains
-the historical PostgreSQL 19 Beta 3 matrix; it is not current Beta 4 support or
-stable qualification. Compile-time and shared API checks still cover Graph.
+the historical PostgreSQL 19 Beta 3 fixture for native graph regression. Compile-time
+and shared API checks still cover Graph.
 The Core package-only application job runs Orders on its pinned stable database.
 The portable Graph workflow runs Topology and Fraud against the exact candidate
 packages on pinned PostgreSQL 18.
@@ -144,7 +180,7 @@ The existing protected `PostgreSQL 19 live matrix` status is preserved as a
 provider-only check on the last verified historical fixture; it does not run
 Continuous Graph or native SQL/PGQ scenarios. The separate preview matrix still
 tests those scenarios. No protected status or approval rule has been removed.
-This historical compatibility check is not a claim that Beta 4 or GA passed.
+PostgreSQL 19 GA qualification requires a run against the released server.
 
 ```powershell
 ./eng/test-applications-postgresql.ps1 -ReleaseTrack Core

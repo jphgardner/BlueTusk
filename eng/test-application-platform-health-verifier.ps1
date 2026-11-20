@@ -20,6 +20,10 @@ function global:kubectl
 
     if ($command -eq 'config current-context')
     {
+        if ($global:PlatformHealthTestScenario -in @('custom-storage', 'missing-storage'))
+        {
+            return 'application-staging'
+        }
         return 'proxmox-homelab'
     }
 
@@ -61,8 +65,27 @@ function global:kubectl
             }
             break
         }
+        '^get storageclass/longhorn -o json$'
+        {
+            @{ provisioner = 'driver.longhorn.io' }
+            break
+        }
+        '^get storageclass/staging-data -o json$'
+        {
+            if ($global:PlatformHealthTestScenario -eq 'missing-storage')
+            {
+                $global:LASTEXITCODE = 1
+                return 'Storage class is missing.'
+            }
+            @{ provisioner = 'rancher.io/local-path' }
+            break
+        }
         '^get volumes\.longhorn\.io --all-namespaces -o json$'
         {
+            if ($global:PlatformHealthTestScenario -eq 'custom-storage')
+            {
+                throw 'Custom storage should not query Longhorn volumes.'
+            }
             [ordered]@{
                 items = @([ordered]@{
                         metadata = [ordered]@{ name = 'volume-a' }
@@ -136,14 +159,15 @@ function Assert-Rejected
 {
     param(
         [Parameter(Mandatory)] [string] $Scenario,
-        [Parameter(Mandatory)] [string] $Pattern
+        [Parameter(Mandatory)] [string] $Pattern,
+        [hashtable] $Options = @{}
     )
 
     $global:PlatformHealthTestScenario = $Scenario
     $failure = $null
     try
     {
-        & $verifier -MinimumReadyNodes 1 -RequireApplications *> $null
+        & $verifier -MinimumReadyNodes 1 -RequireApplications @Options *> $null
     }
     catch
     {
@@ -163,6 +187,11 @@ try
     Assert-Rejected -Scenario 'kubelet-empty' -Pattern 'not reconciling'
     Assert-Rejected -Scenario 'unhealthy-volume' -Pattern 'unhealthy volumes'
     Assert-Rejected -Scenario 'failed-job' -Pattern 'failed jobs'
+    $custom = @{ KubernetesContext = 'application-staging'; StorageClass = 'staging-data' }
+    $global:PlatformHealthTestScenario = 'custom-storage'
+    & $verifier -MinimumReadyNodes 1 -RequireApplications @custom *> $null
+    Assert-Rejected -Scenario 'custom-storage' -Pattern "requires context 'proxmox-homelab'"
+    Assert-Rejected -Scenario 'missing-storage' -Pattern "storage class 'staging-data'" -Options $custom
 }
 finally
 {
@@ -178,4 +207,4 @@ finally
     }
 }
 
-Write-Output 'Application platform health verifier self-test passed one positive and four fail-closed scenarios.'
+Write-Output 'Application platform health verifier self-test passed two positive and six fail-closed scenarios.'

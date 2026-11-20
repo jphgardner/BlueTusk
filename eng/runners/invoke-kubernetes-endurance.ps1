@@ -47,10 +47,14 @@ $queuedRun = $null
 $queuedJob = $null
 $deadline = [DateTimeOffset]::UtcNow.AddMinutes(3)
 do {
-    $runs = @(& gh run list --repo $Repository --workflow $workflow --commit $Candidate --event workflow_dispatch `
-        --limit 8 --json databaseId --jq '.[].databaseId')
+    # GitHub can expose a fresh dispatch before it appears in its event or SHA filters.
+    $recentRuns = & gh run list --repo $Repository --workflow $workflow --limit 20 --json databaseId,headSha,event
     if ($LASTEXITCODE -ne 0) { throw 'Unable to list the dispatched endurance runs.' }
-    foreach ($runId in $runs) {
+    $runs = @($recentRuns | ConvertFrom-Json | Where-Object {
+        $_.headSha -ceq $Candidate -and $_.event -ceq 'workflow_dispatch'
+    })
+    foreach ($run in $runs) {
+        $runId = $run.databaseId
         $jobs = & gh api "$api/actions/runs/$runId/jobs" | ConvertFrom-Json
         if ($LASTEXITCODE -ne 0) { throw "Unable to read jobs for run $runId." }
         $match = @($jobs.jobs | Where-Object { $_.head_sha -ceq $Candidate -and $name -cin $_.labels })

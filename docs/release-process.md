@@ -164,7 +164,12 @@ stable 1.1 core dependency order is Provider, Streams, Sync, Live, then
 Control Plane. Graph and the expansion families retain separate gates.
 
 Every external GitHub Action reference is pinned to a full commit.
-`security.yml` runs CodeQL and pull-request dependency review, while
+`security.yml` runs CodeQL and pull-request dependency review. Its NuGet job
+restores both solutions and uses the locally built candidate feed for reference
+apps. It retains the resolved project graph on pull requests. On main pushes and explicit manual runs,
+a separate job submits the verified artifact for the same commit and workflow run.
+On each release candidate, check the project graph in addition to CodeQL.
+
 `verify-supply-chain.ps1` enforces the pins and exact per-family API budgets.
 The release job generates CycloneDX 1.6 and SPDX 2.3 SBOMs, plus a provenance
 manifest containing the source commit and SHA-256 of every NuGet, symbols and

@@ -44,10 +44,22 @@ spec:
               cp "$dotnet_root/dotnet" /tools/powershell-runtime/
               cp -R "$dotnet_root/host" /tools/powershell-runtime/
               cp -R "$dotnet_root/shared/Microsoft.NETCore.App" /tools/powershell-runtime/shared/
+              # setup-dotnet installs the candidate SDK alongside the test project's .NET 10 runtime.
+              sdk_directory=/home/runner/_work/.dotnet
+              mkdir -p "$sdk_directory/shared" "$sdk_directory/packs"
+              cp -R "$dotnet_root/shared/." "$sdk_directory/shared/"
+              cp -R "$dotnet_root/packs/." "$sdk_directory/packs/"
               pwsh_dll="$(find /tools/powershell -type f -name pwsh.dll)"
               test -f "$pwsh_dll"
               printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
               chmod 0755 /tools/bin/pwsh
+              # The Sync workflow checks its fixture ports with the Ubuntu netcat implementation.
+              netcat_directory="$(mktemp -d)"
+              curl --fail --silent --show-error --location --proto '=https' --retry 3 --max-time 60 \
+                --output "$netcat_directory/package.deb" https://archive.ubuntu.com/ubuntu/pool/main/n/netcat-openbsd/netcat-openbsd_1.226-1ubuntu2_amd64.deb
+              printf '%s  %s\n' 'b2b837c2f9939aeda64ddb410c47c5ceee3034cf2157939ed7efdee51961aac4' "$netcat_directory/package.deb" | sha256sum --check --status
+              dpkg-deb --extract "$netcat_directory/package.deb" "$netcat_directory"
+              install -m 0755 "$netcat_directory/bin/nc.openbsd" /tools/bin/nc
           securityContext:
             runAsUser: 1001
             runAsGroup: 1001
@@ -60,6 +72,7 @@ spec:
             limits: {cpu: '1', memory: '384Mi', ephemeral-storage: '450Mi'}
           volumeMounts:
             - {name: tools, mountPath: /tools}
+            - {name: workspace, mountPath: /home/runner/_work}
         - name: docker
           image: docker@sha256:9d337aaf171682751be04d67c15d880d6a95c6fd44cb8e12043f605012e5e654
           restartPolicy: Always
@@ -77,8 +90,14 @@ spec:
                 fi
               done
               test -x /tools/plugins/docker-compose
-              printf '%s\n' '{"default-runtime":"pod-cgroup","runtimes":{"pod-cgroup":{"path":"/usr/bin/crun","runtimeArgs":["--cgroup-manager=disabled"]}}}' > /tmp/daemon.json
-              exec dockerd --config-file=/tmp/daemon.json --host=unix:///daemon/docker.sock --group=1001 --data-root=/var/lib/docker --storage-driver=vfs
+              # BuildKit resolves runc separately from the daemon's default container runtime.
+              # Keep nested build processes inside the pod's existing cgroup and resource limits.
+              install -d -m 0755 /usr/local/libexec/pod-oci-runtime
+              printf '%s\n' '#!/bin/sh' 'exec /usr/bin/crun --cgroup-manager=disabled "$@"' > /usr/local/libexec/pod-oci-runtime/runc
+              chmod 0755 /usr/local/libexec/pod-oci-runtime/runc
+              export PATH="/usr/local/libexec/pod-oci-runtime:$PATH"
+              printf '%s\n' '{"features":{"containerd-snapshotter":true},"default-runtime":"pod-cgroup","runtimes":{"pod-cgroup":{"path":"/usr/bin/crun","runtimeArgs":["--cgroup-manager=disabled"]}}}' > /tmp/daemon.json
+              exec dockerd --config-file=/tmp/daemon.json --host=unix:///daemon/docker.sock --group=1001 --data-root=/var/lib/docker --storage-driver=native
           securityContext:
             privileged: true
           startupProbe:
@@ -115,6 +134,8 @@ spec:
               exec /home/runner/run.sh --jitconfig "$jit"
           env:
             - {name: DOTNET_INSTALL_DIR, value: /home/runner/_work/.dotnet}
+            # Endurance entry points run managed test assemblies through dotnet test.
+            - {name: UseAppHost, value: 'false'}
             - {name: DOCKER_HOST, value: 'unix:///daemon/docker.sock'}
             - name: RUNNER_JIT_CONFIG
               valueFrom:

@@ -2,7 +2,12 @@
 param(
     [Parameter(Mandatory)]
     [string] $ImageEvidencePath,
-    [switch] $Apply
+    [string] $KubernetesContext = 'proxmox-homelab',
+    [switch] $Apply,
+    [ValidatePattern('^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$')]
+    [string] $StorageClass = 'longhorn',
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string] $ExpectedImageCommit
 )
 
 Set-StrictMode -Version Latest
@@ -11,15 +16,16 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $commit = (& git -C $repositoryRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the checked-out commit.' }
+if (-not $ExpectedImageCommit) { $ExpectedImageCommit = $commit }
 & (Join-Path $PSScriptRoot 'verify-application-image-evidence.ps1') `
     -EvidencePath $ImageEvidencePath `
-    -ExpectedCommit $commit
+    -ExpectedCommit $ExpectedImageCommit
 $evidence = Get-Content -LiteralPath $ImageEvidencePath -Raw | ConvertFrom-Json
 
 $context = (& kubectl config current-context).Trim()
-if ($LASTEXITCODE -ne 0 -or $context -ne 'proxmox-homelab')
+if ($LASTEXITCODE -ne 0 -or $context -cne $KubernetesContext)
 {
-    throw "RC deployment requires context 'proxmox-homelab'; found '$context'."
+    throw "RC deployment requires context '$KubernetesContext'; found '$context'."
 }
 $nodes = @(& kubectl get nodes -o json | ConvertFrom-Json).items
 $readyNodes = @($nodes | Where-Object {
@@ -31,7 +37,8 @@ if ($readyNodes -lt 2)
 {
     throw "RC staging requires at least two Ready nodes; found $readyNodes."
 }
-& (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') -MinimumReadyNodes 2
+& (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') `
+    -MinimumReadyNodes 2 -KubernetesContext $KubernetesContext -StorageClass $StorageClass
 
 foreach ($crd in @('clusters.postgresql.cnpg.io', 'keycloaks.k8s.keycloak.org'))
 {
@@ -89,7 +96,7 @@ foreach ($application in $applications)
         }
     }
 
-    $setArguments = @()
+    $setArguments = @('--set-string', "database.storageClass=$StorageClass")
     foreach ($component in @('api', 'worker', 'ui'))
     {
         $reference = [string]$images.PSObject.Properties[$component].Value
@@ -152,9 +159,9 @@ foreach ($application in $applications)
 if ($Apply)
 {
     & (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') `
-        -MinimumReadyNodes 2 `
+        -MinimumReadyNodes 2 -KubernetesContext $KubernetesContext -StorageClass $StorageClass `
         -RequireApplications
 }
 
 $mode = if ($Apply) { 'deployed' } else { 'validated without changing cluster state' }
-Write-Output "RC staging $mode for all three applications at commit $commit."
+Write-Output "RC staging $mode for all three applications with images from $ExpectedImageCommit and manifests from $commit."

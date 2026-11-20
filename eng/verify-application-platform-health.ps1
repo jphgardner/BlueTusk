@@ -2,7 +2,11 @@
 param(
     [ValidateRange(1, 100)]
     [int] $MinimumReadyNodes = 2,
-    [switch] $RequireApplications
+    [switch] $RequireApplications,
+    [ValidateNotNullOrEmpty()]
+    [string] $KubernetesContext = 'proxmox-homelab',
+    [ValidateNotNullOrEmpty()]
+    [string] $StorageClass = 'longhorn'
 )
 
 Set-StrictMode -Version Latest
@@ -34,9 +38,9 @@ function Invoke-KubectlJson
 }
 
 $context = (& kubectl config current-context).Trim()
-if ($LASTEXITCODE -ne 0 -or $context -ne 'proxmox-homelab')
+if ($LASTEXITCODE -ne 0 -or $context -cne $KubernetesContext)
 {
-    throw "Application platform health verification requires context 'proxmox-homelab'; found '$context'."
+    throw "Application platform health verification requires context '$KubernetesContext'; found '$context'."
 }
 
 $nodes = Invoke-KubectlJson -Arguments @('get', 'nodes', '-o', 'json') -Context 'nodes'
@@ -88,17 +92,24 @@ foreach ($node in $readyNodes)
     }
 }
 
-$longhornVolumes = Invoke-KubectlJson `
-    -Arguments @('get', 'volumes.longhorn.io', '--all-namespaces', '-o', 'json') `
-    -Context 'Longhorn volumes'
-$unhealthyVolumes = @($longhornVolumes.items | Where-Object {
-        [string]$_.status.robustness -ne 'healthy'
-    } | ForEach-Object {
-        "$($_.metadata.name)=$($_.status.state)/$($_.status.robustness)"
-    })
-if ($unhealthyVolumes.Count -ne 0)
+$storage = Invoke-KubectlJson `
+    -Arguments @('get', "storageclass/$StorageClass", '-o', 'json') -Context "storage class '$StorageClass'"
+$storageSummary = "storage class '$StorageClass'"
+if ($storage.provisioner -ceq 'driver.longhorn.io')
 {
-    throw "Longhorn has unhealthy volumes: $($unhealthyVolumes -join ', ')."
+    $longhornVolumes = Invoke-KubectlJson `
+        -Arguments @('get', 'volumes.longhorn.io', '--all-namespaces', '-o', 'json') `
+        -Context 'Longhorn volumes'
+    $unhealthyVolumes = @($longhornVolumes.items | Where-Object {
+            [string]$_.status.robustness -ne 'healthy'
+        } | ForEach-Object {
+            "$($_.metadata.name)=$($_.status.state)/$($_.status.robustness)"
+        })
+    if ($unhealthyVolumes.Count -ne 0)
+    {
+        throw "Longhorn has unhealthy volumes: $($unhealthyVolumes -join ', ')."
+    }
+    $storageSummary = "$(@($longhornVolumes.items).Count) healthy Longhorn volumes using $storageSummary"
 }
 
 $databaseClusters = Invoke-KubectlJson `
@@ -175,5 +186,5 @@ if ($RequireApplications)
 $applicationSuffix = if ($RequireApplications) { ' and all three RC applications' } else { '' }
 Write-Output (
     "Verified $($readyNodes.Count) Ready Kubernetes nodes, kubelet/API reconciliation, " +
-    "$(@($longhornVolumes.items).Count) healthy Longhorn volumes, " +
+    "$storageSummary, " +
     "$(@($databaseClusters.items).Count) healthy CloudNativePG clusters$applicationSuffix.")
