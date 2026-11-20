@@ -129,12 +129,14 @@ $images = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture
 if ($s3Image) { $images += $s3Image }
 elseif ($Family -ceq 'Sync' -and $SyncDestination -cne 'webhooks' -and $proofNames.ContainsKey($SyncDestination))
 { $images += [string]$plan.families.Sync.destinationImages.$SyncDestination }
-[ordered]@{
+$trialIndex = [ordered]@{
     schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false
     startedUtc = $started.ToString('o'); completedUtc = [DateTimeOffset]::UtcNow.ToString('o')
     candidateImplementation = $implementations.candidate; referenceImplementation = $implementations.reference
     containerImageDigests = $images
     records = @($records)
-} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
+}
+if ($Family -ceq 'Streams') { $trialIndex.sourceProofSchemaVersion = 1 }
+$trialIndex | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
 Write-Output "Captured $($records.Count) paired $Family diagnostic trials in '$output'."

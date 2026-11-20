@@ -88,7 +88,10 @@ either consumer. It measures time from inside consumer startup to each delivery
 using a local monotonic clock. The pinned Debezium JVM counts rows through its
 batched HTTP sink and records its process counters. The harness checks its
 transaction IDs and commit timestamps against PostgreSQL's stored commit
-history. The replay fixture commits exactly 4 MiB of uncompressed binary column
+history. Each Streams trial retains the independently observed source transaction IDs,
+commit timestamps, and row ranges. The evidence checker compares those records with
+the delivery and confirms that both implementations used the same transaction counts
+throughout the workload. The replay fixture commits exactly 4 MiB of uncompressed binary column
 data per transaction. Both sinks hash the full payload in row order and the
 harness compares each digest with PostgreSQL. BlueTusk must have a completed spool
 file before replay and release it on acknowledgement. Debezium measures the same

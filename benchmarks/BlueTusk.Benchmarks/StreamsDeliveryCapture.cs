@@ -105,6 +105,8 @@ internal static class StreamsDeliveryCapture
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var cancellationToken = timeout.Token;
         var transactionTicks = snapshot ? Array.Empty<long>() : new long[options.MeasurementTransactions];
+        var transactionIds = snapshot || sync ? Array.Empty<uint>() : new uint[options.MeasurementTransactions];
+        var commitMicros = new long[transactionIds.Length];
         var samples = new long[checked(options.MeasurementTransactions * options.ChangesPerTransaction)];
         var spillPayloadSha256 = spill ? new string[options.MeasurementTransactions] : null;
         long minimumReadySpoolBytes = long.MaxValue;
@@ -166,6 +168,8 @@ internal static class StreamsDeliveryCapture
                 sourceClockUpperOffsetTicks = liveDelivery ? upperOffset : (long?)null,
                 changesPerTransaction = options.ChangesPerTransaction,
                 rawWallTicksByTransaction = liveDelivery ? transactionTicks : null,
+                transactionIds,
+                commitMicrosByTransaction = commitMicros,
                 spillPayloadSha256,
                 verifiedSpoolTransactions = spill ? verifiedSpoolTransactions : (int?)null,
                 minimumReadySpoolBytes = spill ? minimumReadySpoolBytes : (long?)null,
@@ -319,6 +323,12 @@ internal static class StreamsDeliveryCapture
                     await syncSink.ApplyAsync(delivery, cancellationToken);
                     previous = transaction.CommitPosition;
                     return (DateTimeOffset.UtcNow - transaction.CommitTimestamp).Ticks;
+                }
+
+                if (measurementIndex >= 0)
+                {
+                    transactionIds[measurementIndex] = transaction.TransactionId;
+                    commitMicros[measurementIndex] = (transaction.CommitTimestamp.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / 10;
                 }
 
                 var spoolBytes = spoolDirectory?.EnumerateFiles("*.ready").SingleOrDefault()?.Length;

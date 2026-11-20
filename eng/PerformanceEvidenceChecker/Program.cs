@@ -360,6 +360,12 @@ internal static class Checker
                 $"{familyName} input '{id}' must bind the committed timing, candidate and published baseline.");
         }
         var result = new List<TrialMetrics>();
+        var streamsFixtures = new Dictionary<string, (long Warmup, long Transactions)>(StringComparer.Ordinal);
+        var provesStreamsSource = family == "Streams" && index.TryGetProperty("sourceProofSchemaVersion", out _);
+        if (provesStreamsSource)
+        {
+            Require(Int(index, "sourceProofSchemaVersion") == 1, $"Streams input '{id}' uses an unsupported source proof.");
+        }
         string? matchedRuntime = null;
         foreach (var record in index.GetProperty("records").EnumerateArray())
         {
@@ -378,6 +384,13 @@ internal static class Checker
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
+            if (family == "Streams" && key != $"{os}|Streams|primary-hot-path" && !Bool(index, "synthetic") &&
+                (provesStreamsSource || !Bool(index, "diagnostic") || scan.TryText("environment.sourceFixture.schemaVersion") is not null))
+            {
+                var fixture = VerifyStreamsSourceFixture(scan, images, commit, role, key, path, frequency);
+                Require(streamsFixtures.TryAdd(key, fixture) || streamsFixtures[key] == fixture,
+                    $"Streams workload '{key}' changed its transaction counts between trials.");
+            }
             if (family == "Live" && key != $"{os}|Live|primary-hot-path" && !Bool(index, "synthetic"))
             {
                 var runtime = scan.Text("environment.runtime");
@@ -467,6 +480,62 @@ internal static class Checker
             result.Add(new(key, role, trial, path, hash!, Derive(scan, frequency, path)));
         }
         return result;
+    }
+
+    private static (long Warmup, long Transactions) VerifyStreamsSourceFixture(RawScan scan, string[] images,
+        string commit, string role, string key, string path, long frequency)
+    {
+        var workload = Regex.Match(key, @"\|changes=(1|1000)\|(scenario=(snapshot|catch-up|commit-to-delivery)|spoolBytes=4194304)$",
+            RegexOptions.CultureInvariant);
+        var postgres = scan.Text("environment.postgreSqlImage");
+        var implementation = scan.Text("implementation");
+        Require(workload.Success && frequency == TimeSpan.TicksPerSecond &&
+            postgres.StartsWith("postgres:", StringComparison.Ordinal) && images.Contains(postgres, StringComparer.Ordinal) &&
+            (role == "candidate"
+                ? implementation.StartsWith("BlueTusk.Streams ", StringComparison.Ordinal) && implementation.EndsWith($"+{commit}", StringComparison.Ordinal)
+                : implementation == "Debezium Server 3.6.1.Final" && scan.Text("environment.clientOs") == "linux"),
+            $"Streams trial '{path}' does not identify the contracted workload, clocks and implementations.");
+
+        const string source = "environment.sourceFixture";
+        var changes = int.Parse(workload.Groups[1].Value, CultureInfo.InvariantCulture);
+        var scenario = workload.Groups[3].Value;
+        var snapshot = scenario == "snapshot";
+        var spill = scenario.Length == 0;
+        var warmup = scan.Long(source + ".warmupTransactions");
+        var transactions = scan.ArrayCount(source + ".transactions");
+        Require(scan.Long(source + ".schemaVersion") == 1 && transactions is >= 1 and <= 16_000 &&
+            (spill || scenario == "commit-to-delivery" ? warmup is >= 1 and <= 10_000 : warmup == 0) &&
+            scan.Long("measurement.completedOperations") == transactions * (long)changes &&
+            scan.ArrayCount("environment.transactionIds") == (snapshot ? 0 : transactions) &&
+            scan.ArrayCount("environment.commitMicrosByTransaction") == (snapshot ? 0 : transactions),
+            $"Streams trial '{path}' does not bind delivered rows to every source transaction.");
+        var observedIds = new HashSet<long>();
+        for (var index = 0; index < transactions; index++)
+        {
+            var prefix = $"{source}.transactions[{index}]";
+            var transactionId = scan.Long(prefix + ".id");
+            var commitMicros = scan.Long(prefix + ".commitMicros");
+            var firstId = (warmup + index) * changes + 1;
+            Require(transactionId is > 0 and <= uint.MaxValue && observedIds.Add(transactionId) &&
+                commitMicros > 0 && scan.Long(prefix + ".firstId") == firstId &&
+                scan.Long(prefix + ".lastId") == firstId + changes - 1 && scan.Long(prefix + ".rows") == changes &&
+                (snapshot || scan.Long($"environment.transactionIds[{index}]") == transactionId &&
+                    scan.Long($"environment.commitMicrosByTransaction[{index}]") == commitMicros),
+                $"Streams trial '{path}' differs from the PostgreSQL source at measured transaction {index}.");
+        }
+        if (spill)
+        {
+            Require(warmup + transactions <= 32 && scan.ArrayCount("environment.spillPayloadSha256") == transactions &&
+                (role != "candidate" || (scan.Long("environment.verifiedSpoolTransactions") == transactions &&
+                    scan.Long("environment.minimumReadySpoolBytes") >= 4_194_304)),
+                $"Streams trial '{path}' is missing payload or disk-spool proof.");
+            for (var index = 0; index < transactions; index++)
+            {
+                Require(Regex.IsMatch(scan.Text($"environment.spillPayloadSha256[{index}]"), "^[0-9a-f]{64}$", RegexOptions.CultureInvariant),
+                    $"Streams trial '{path}' has an invalid spill payload digest.");
+            }
+        }
+        return (warmup, transactions);
     }
 
     private static void VerifyLiveSignalRCapture(JsonElement index, RawScan scan, string commit, string os, string role,
@@ -747,6 +816,9 @@ internal static class Checker
     {
         public Dictionary<string, string> Scalars { get; } = new(StringComparer.Ordinal);
         public List<long[]> Workers { get; } = [];
+        public Dictionary<string, int> ArrayLengths { get; } = new(StringComparer.Ordinal);
+        public int ArrayCount(string path) => ArrayLengths.TryGetValue(path, out var count) ? count :
+            throw new CheckFailedException($"Raw capture is missing array '{path}'.");
         public long[]? UncorrectedTicks { get; set; }
         public string Text(string path) => Scalars.TryGetValue(path, out var value) ? value : throw new CheckFailedException($"Raw capture is missing '{path}'.");
         public string? TryText(string path) => Scalars.TryGetValue(path, out var value) ? value : null;
@@ -826,7 +898,11 @@ internal static class Checker
                     }
                 case JsonTokenType.EndObject:
                 case JsonTokenType.EndArray:
-                    stack.Pop();
+                    var frame = stack.Pop();
+                    if (frame.IsArray)
+                    {
+                        scan.ArrayLengths.Add(frame.Path, frame.Index);
+                    }
                     Advance();
                     break;
                 default:

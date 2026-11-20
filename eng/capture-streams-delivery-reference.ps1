@@ -214,23 +214,11 @@ debezium.source.offset.flush.interval.ms=1000
 
     $capture = Get-Content -LiteralPath $captured -Raw | ConvertFrom-Json
     $warmupRows = $Changes * [long]$WarmupTransactions
-    $query = "SELECT min(id), count(*), xmin::text, (extract(epoch FROM pg_xact_commit_timestamp((xmin::text)::xid)) * 1000000)::bigint FROM public.streams_capture WHERE id > $warmupRows GROUP BY xmin::text ORDER BY min(id)"
-    $commits = @(Invoke-Docker exec $postgres psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $query)
-    $expectedCommitTimestamps = if ($snapshot) { 0 } else { $commits.Count }
-    if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $expectedCommitTimestamps -or
-        $capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
+    if ($capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
         -not $capture.workloadKey.EndsWith("|$suffix", [StringComparison]::Ordinal) -or
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
     { throw 'The reference capture did not match its measured workload.' }
-    for ($index = 0; $index -lt $commits.Count; $index++)
-    {
-        $first, $count, $transactionId, $microseconds = $commits[$index].Split('|')
-        if ([long]$first -ne $warmupRows + 1 + $index * [long]$Changes -or [long]$count -ne $Changes)
-        { throw "The PostgreSQL fixture differs from the requested transaction size at transaction $index." }
-        if (-not $snapshot -and ([long]$transactionId -ne $capture.environment.transactionIds[$index] -or
-            [long]$microseconds -ne $capture.environment.commitMicrosByTransaction[$index]))
-        { throw "Debezium delivery timestamps differ from PostgreSQL commit history at measured transaction $index." }
-    }
+    $sourceProof = Confirm-StreamsCaptureSource $postgres $Changes $WarmupTransactions $MeasurementTransactions $snapshot $capture
     if ($spill) { Assert-StreamsSpillPayload $postgres $warmupRows $MeasurementTransactions $capture }
     $finalHead = (& git -C $root rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or $finalHead -cne $ExpectedCommit) { throw 'The benchmark checkout changed during capture.' }
@@ -256,7 +244,11 @@ debezium.source.offset.flush.interval.ms=1000
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
     }
-    else { [IO.File]::Copy($captured, $capturePath) }
+    else
+    {
+        $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
+        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
+    }
     "Captured $($capture.measurement.completedOperations) Debezium $Scenario rows in '$capturePath'."
 }
 finally

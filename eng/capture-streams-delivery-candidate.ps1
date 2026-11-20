@@ -211,7 +211,12 @@ try
         $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
         $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
     }
-    else { [IO.File]::Copy($trialPath, $verifiedPath) }
+    else
+    {
+        $sourceProof = Confirm-StreamsCaptureSource $postgres $Changes $WarmupTransactions $MeasurementTransactions ($Scenario -ceq 'snapshot') $capture
+        $capture.environment | Add-Member -NotePropertyName sourceFixture -NotePropertyValue $sourceProof
+        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
+    }
     "Captured $($capture.measurement.completedOperations) changes in '$verifiedPath'."
 }
 finally

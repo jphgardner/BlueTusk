@@ -33,6 +33,35 @@ function Write-StreamsTransactions([string] $Container, [int] $Changes, [int] $S
     if ($LASTEXITCODE) { throw 'The independent PostgreSQL workload writer failed.' }
 }
 
+function Confirm-StreamsCaptureSource([string] $Container, [int] $Changes, [int] $WarmupTransactions,
+    [int] $MeasurementTransactions, [bool] $Snapshot, [object] $Capture)
+{
+    $warmupRows = $Changes * [long]$WarmupTransactions
+    $query = "SELECT min(id), max(id), count(*), xmin::text, (extract(epoch FROM pg_xact_commit_timestamp((xmin::text)::xid)) * 1000000)::bigint FROM public.streams_capture WHERE id > $warmupRows GROUP BY xmin::text ORDER BY min(id)"
+    $commits = @(& docker exec $Container psql -XqAt -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark -c $query)
+    $deliveryTransactions = if ($Snapshot) { 0 } else { $MeasurementTransactions }
+    if ($LASTEXITCODE -or $commits.Count -ne $MeasurementTransactions -or
+        $Capture.environment.transactionIds.Count -ne $deliveryTransactions -or
+        $Capture.environment.commitMicrosByTransaction.Count -ne $deliveryTransactions)
+    { throw 'The capture must account for every measured transaction in PostgreSQL.' }
+
+    $transactions = [Collections.Generic.List[object]]::new($MeasurementTransactions)
+    for ($index = 0; $index -lt $commits.Count; $index++)
+    {
+        $first, $last, $count, $xid, $micros = $commits[$index].Split('|')
+        $expectedFirst = $warmupRows + 1 + $index * [long]$Changes
+        if ([long]$first -ne $expectedFirst -or [long]$last -ne $expectedFirst + $Changes - 1 -or [long]$count -ne $Changes -or
+            $xid -cnotmatch '^[0-9]+$' -or [long]$xid -lt 1 -or [long]$xid -gt [uint]::MaxValue -or
+            $micros -cnotmatch '^[1-9][0-9]*$')
+        { throw "The PostgreSQL fixture differs from the requested transaction at index $index." }
+        if (-not $Snapshot -and ([long]$xid -ne $Capture.environment.transactionIds[$index] -or
+            [long]$micros -ne $Capture.environment.commitMicrosByTransaction[$index]))
+        { throw "Delivery differs from PostgreSQL commit history at transaction $index." }
+        $transactions.Add([ordered]@{ id = [long]$xid; commitMicros = [long]$micros; firstId = [long]$first; lastId = [long]$last; rows = [long]$count })
+    }
+    [ordered]@{ schemaVersion = 1; warmupTransactions = $WarmupTransactions; transactions = $transactions.ToArray() }
+}
+
 function Assert-StreamsSpillPayload([string] $Container, [long] $WarmupRows, [int] $Transactions, [object] $Capture)
 {
     $query = "SELECT sum(octet_length(payload)), encode(sha256(string_agg(payload, ''::bytea ORDER BY id)), 'hex') FROM public.streams_capture WHERE id > $WarmupRows GROUP BY xmin::text ORDER BY min(id)"
