@@ -150,6 +150,16 @@ transaction has a receipt. After a forced restart, the verifier checks the
 stored signatures, commit positions and every ordered mutation against
 PostgreSQL. These workloads use `evidence_class=diagnostic` and `families=Sync`.
 
+`capture-live-signalr.ps1` runs paired diagnostics for an affected-key update
+over authenticated loopback WebSockets. Both roles consume the same PostgreSQL
+change feed, query the same ordered result set, and deliver the same changed row
+through SignalR's streaming JSON protocol. The candidate exercises BlueTusk's
+durable subscription and replay store. The reference reruns the ordered query,
+diffs it against the prior result, and streams the delta through a SignalR hub.
+The probe verifies the key, revision and sequence received by every subscriber.
+These captures cover the affected-key update scenario. Churn and slow-client
+capture are required separately for the full Live comparison.
+
 ## Primary workloads for v1.2
 
 Each comparison uses the same host and runtime for the candidate and BlueTusk
