@@ -44,6 +44,11 @@ spec:
               cp "$dotnet_root/dotnet" /tools/powershell-runtime/
               cp -R "$dotnet_root/host" /tools/powershell-runtime/
               cp -R "$dotnet_root/shared/Microsoft.NETCore.App" /tools/powershell-runtime/shared/
+              # setup-dotnet installs the candidate SDK alongside the test project's .NET 10 runtime.
+              sdk_directory=/home/runner/_work/.dotnet
+              mkdir -p "$sdk_directory/shared" "$sdk_directory/packs"
+              cp -R "$dotnet_root/shared/." "$sdk_directory/shared/"
+              cp -R "$dotnet_root/packs/." "$sdk_directory/packs/"
               pwsh_dll="$(find /tools/powershell -type f -name pwsh.dll)"
               test -f "$pwsh_dll"
               printf '#!/bin/sh\nexec /tools/powershell-runtime/dotnet "%s" "$@"\n' "$pwsh_dll" > /tools/bin/pwsh
@@ -60,6 +65,7 @@ spec:
             limits: {cpu: '1', memory: '384Mi', ephemeral-storage: '450Mi'}
           volumeMounts:
             - {name: tools, mountPath: /tools}
+            - {name: workspace, mountPath: /home/runner/_work}
         - name: docker
           image: docker@sha256:9d337aaf171682751be04d67c15d880d6a95c6fd44cb8e12043f605012e5e654
           restartPolicy: Always
@@ -121,6 +127,8 @@ spec:
               exec /home/runner/run.sh --jitconfig "$jit"
           env:
             - {name: DOTNET_INSTALL_DIR, value: /home/runner/_work/.dotnet}
+            # Endurance entry points run managed test assemblies through dotnet test.
+            - {name: UseAppHost, value: 'false'}
             - {name: DOCKER_HOST, value: 'unix:///daemon/docker.sock'}
             - name: RUNNER_JIT_CONFIG
               valueFrom:
