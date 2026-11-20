@@ -167,6 +167,11 @@ The Control Plane inventory adapter can capture its primary workload with
 `capture-control-plane-inventory.ps1 -PrimaryHotPath -ExpectedCommit <sha>`.
 The Provider probe uses the same timed measurement loop as the Provider matrix
 and can capture its comparison with `capture-provider-primary.ps1 -ExpectedCommit <sha>`.
+The Live probe commits one update to PostgreSQL, reads the change through
+logical replication, and measures the completed delivery to all 64 persistent
+subscriptions. It verifies the updated key, revision, replay sequence, and
+delivery count each time. Capture this comparison with
+`capture-core-primary.ps1 -Family Live -ExpectedCommit <sha>`.
 The Core planner requires all five captures on both operating systems before
 full qualification can run. The existing 20% improvement thresholds for P95
 latency and allocation apply to each comparison.

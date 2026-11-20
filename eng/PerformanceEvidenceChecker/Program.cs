@@ -345,7 +345,10 @@ internal static class Checker
         Require(images.Length > 0 && images.All(item => Regex.IsMatch(item, "^\\S+@sha256:[0-9a-f]{64}$")) &&
             images.SequenceEqual(input.GetProperty("containerImageDigests").EnumerateArray().Select(item => item.GetString()!)),
             $"Trial input '{id}' image evidence is not digest pinned or differs from the manifest.");
-        var timedQualification = family is "Provider" or "ControlPlane" && !Bool(index, "diagnostic") && !Bool(index, "synthetic");
+        var isLivePrimary = family == "Live" && index.GetProperty("records").EnumerateArray()
+            .Any(record => Str(record, "workloadKey") == $"{os}|Live|primary-hot-path");
+        var timedQualification = (family is "Provider" or "ControlPlane" || isLivePrimary) &&
+            !Bool(index, "diagnostic") && !Bool(index, "synthetic");
         var warmup = timedQualification ? Int(index, "warmupSeconds") : 0;
         var window = timedQualification ? Int(index, "measurementSeconds") : 0;
         var familyName = family == "ControlPlane" ? "Control Plane" : family;
@@ -397,6 +400,19 @@ internal static class Checker
                         scan.Text("environment.variant") == Str(workload, "variant") && !scan.Bool("environment.tlsActive") &&
                         scan.Workers.Count == Int(workload, "concurrency"),
                         $"Provider trial '{path}' did not measure the approved native primary query.");
+                }
+
+                if (family == "Live")
+                {
+                    var completed = scan.Long("measurement.completedOperations");
+                    var subscribers = Int(workload, "subscribers");
+                    Require(scan.Text("environment.scenario") == Str(workload, "scenario") &&
+                        scan.Long("environment.resultCount") == Int(workload, "results") &&
+                        scan.Long("environment.subscriberCount") == subscribers &&
+                        scan.Text("environment.source") == "postgresql-pgoutput" && scan.Text("environment.replay") == "postgresql" &&
+                        scan.Workers.Count == 1 && completed > 0 && scan.Long("persistedUpdates") == completed &&
+                        scan.Long("deliveriesObserved") == checked(completed * subscribers),
+                        $"Live trial '{path}' did not persist and deliver each approved update to all subscribers.");
                 }
             }
             if (timedQualification)
