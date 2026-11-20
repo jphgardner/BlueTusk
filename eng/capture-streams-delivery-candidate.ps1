@@ -4,8 +4,9 @@ param(
     [Parameter(Mandatory)][string] $OutputPath,
     [string] $DotNetPath = 'dotnet',
     [string] $BenchmarkAssemblyPath,
-    [ValidateSet(1, 1000)][int] $Changes = 1,
+    [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('count', 'postgresql')][string] $Sink = 'count',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -22,6 +23,10 @@ $fixturePath = "artifacts/performance-fixtures/$RunId"
 $fixtureDirectory = Join-Path $repository $fixturePath
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
+$sync = $Sink -ceq 'postgresql'
+if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
+{ throw 'The PostgreSQL Sync sink supports the live delivery scenario and 1, 100 or 1000 mutations.' }
+$suffix = if ($sync) { 'destination=postgresql' } else { Get-StreamsWorkloadSuffix $Scenario }
 $liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
 if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
 if ($spill -and -not $PSBoundParameters.ContainsKey('MeasurementTransactions')) { $MeasurementTransactions = 8 }
@@ -81,6 +86,7 @@ try
     $postgres = $fixture.containers[0].name
     $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = [IO.File]::ReadAllText((Join-Path $fixtureDirectory 'connection.secret'))
     New-StreamsCaptureTable $postgres $spill
+    if ($sync) { New-SyncPostgreSqlFixture $postgres $false }
     if ($Scenario -ceq 'catch-up')
     {
         $null = & docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -98,6 +104,7 @@ try
         sourceCommit = $ExpectedCommit
         postgreSqlImage = $fixture.postgreSqlImage
         scenario = $Scenario
+        sink = $Sink
         trial = $Trial
         changesPerTransaction = $Changes
         warmupTransactions = $WarmupTransactions
@@ -133,7 +140,7 @@ try
     Assert-CandidateSource
     $capture = Get-Content -LiteralPath $trialPath -Raw | ConvertFrom-Json
     if ($capture.sourceCommit -cne $ExpectedCommit -or $capture.role -cne 'candidate' -or
-        -not $capture.workloadKey.EndsWith("|$(Get-StreamsWorkloadSuffix $Scenario)", [StringComparison]::Ordinal) -or
+        -not $capture.workloadKey.EndsWith("|$suffix", [StringComparison]::Ordinal) -or
         -not $capture.diagnostic -or $capture.synthetic -or
         $capture.measurement.completedOperations -ne [long]$Changes * $MeasurementTransactions)
     { throw "The captured candidate trial did not match its requested workload at '$trialPath'." }
@@ -144,7 +151,13 @@ try
         { throw 'The candidate did not verify every measured transaction crossed the physical spool boundary.' }
     }
     $verifiedPath = Join-Path $output 'candidate.json'
-    [IO.File]::Copy($trialPath, $verifiedPath)
+    if ($sync)
+    {
+        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions)
+        $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
+        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $verifiedPath -Encoding utf8NoBOM
+    }
+    else { [IO.File]::Copy($trialPath, $verifiedPath) }
     "Captured $($capture.measurement.completedOperations) changes in '$verifiedPath'."
 }
 finally

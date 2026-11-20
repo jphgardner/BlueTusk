@@ -2,6 +2,7 @@
 param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
+    [ValidateSet('Streams','Sync')][string] $Family = 'Streams',
     [ValidateRange(3, 50)][int] $Trials = 10,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,29}$')][string] $RunId = ('streams-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'streams-benchmark'
@@ -32,28 +33,39 @@ $records = [Collections.Generic.List[object]]::new()
 $implementations = @{}
 $started = [DateTimeOffset]::UtcNow
 
-$workloads = foreach ($scenario in $contract.workloads.Streams.scenarios)
+$workloads = if ($Family -ceq 'Sync')
 {
-    foreach ($changes in $contract.workloads.Streams.transactionChanges)
+    foreach ($changes in $contract.workloads.Sync.mutationCounts)
     {
-        # Bound row counts while exercising the same transactions on both sides.
-        $warmup = if ($scenario -cne 'commit-to-delivery') { 0 } elseif ($changes -eq 1) { 20 } else { 2 }
-        $measurement = if ($changes -eq 1) { 1000 } else { 8 }
-        @{ Scenario = $scenario; Changes = $changes; WarmupTransactions = $warmup; MeasurementTransactions = $measurement }
+        @{ Sink = 'postgresql'; Scenario = 'commit-to-delivery'; Changes = $changes; WarmupTransactions = 4; MeasurementTransactions = 20 }
     }
 }
-if (@($contract.workloads.Streams.spoolBytes).Count -ne 1 -or $contract.workloads.Streams.spoolBytes[0] -ne $streamsSpillBytes)
-{ throw 'The Streams spill harness requires the contracted 4 MiB workload.' }
-foreach ($changes in $contract.workloads.Streams.transactionChanges)
+else
 {
-    $workloads += @{ Scenario = 'spill'; Changes = $changes; WarmupTransactions = 2; MeasurementTransactions = 8 }
+    foreach ($scenario in $contract.workloads.Streams.scenarios)
+    {
+        foreach ($changes in $contract.workloads.Streams.transactionChanges)
+        {
+            # Bound row counts while exercising the same transactions on both sides.
+            $warmup = if ($scenario -cne 'commit-to-delivery') { 0 } elseif ($changes -eq 1) { 20 } else { 2 }
+            $measurement = if ($changes -eq 1) { 1000 } else { 8 }
+            @{ Sink = 'count'; Scenario = $scenario; Changes = $changes; WarmupTransactions = $warmup; MeasurementTransactions = $measurement }
+        }
+    }
+    if (@($contract.workloads.Streams.spoolBytes).Count -ne 1 -or $contract.workloads.Streams.spoolBytes[0] -ne $streamsSpillBytes)
+    { throw 'The Streams spill harness requires the contracted 4 MiB workload.' }
+    foreach ($changes in $contract.workloads.Streams.transactionChanges)
+    {
+        @{ Sink = 'count'; Scenario = 'spill'; Changes = $changes; WarmupTransactions = 2; MeasurementTransactions = 8 }
+    }
 }
 
 $workloadNumber = 0
 foreach ($workload in $workloads)
 {
     $workloadNumber++
-    $key = "$os|Streams|changes=$($workload.Changes)|$(Get-StreamsWorkloadSuffix $workload.Scenario)"
+    $key = if ($Family -ceq 'Sync') { "$os|Sync|mutations=$($workload.Changes)|destination=postgresql" }
+        else { "$os|Streams|changes=$($workload.Changes)|$(Get-StreamsWorkloadSuffix $workload.Scenario)" }
     for ($trial = 0; $trial -lt $Trials; $trial++)
     {
         $order = if ($trial % 2 -eq 0) { @('candidate', 'reference') } else { @('reference', 'candidate') }
@@ -68,13 +80,13 @@ foreach ($workload in $workloads)
             & (Join-Path $PSScriptRoot "capture-streams-delivery-$role.ps1") @arguments
             $capturePath = Join-Path $arguments.OutputPath "$role.json"
             $capture = Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json
-            if ($capture.workloadKey -cne $key -or $capture.role -cne $role -or $capture.trial -ne $trial -or
+            if ($capture.family -cne $Family -or $capture.workloadKey -cne $key -or $capture.role -cne $role -or $capture.trial -ne $trial -or
                 $capture.sourceCommit -cne $ExpectedCommit -or $capture.environment.postgreSqlImage -cne $plan.fixture.postgreSqlImage -or
                 $capture.measurement.completedOperations -ne $workload.Changes * [long]$workload.MeasurementTransactions -or
                 $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
-            { throw "The Streams diagnostic trial '$id' differs from its requested source, role or workload." }
+            { throw "The $Family diagnostic trial '$id' differs from its requested source, role or workload." }
             if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $capture.implementation)
-            { throw "The $role implementation changed between Streams trials." }
+            { throw "The $role implementation changed between $Family trials." }
             $implementations[$role] = $capture.implementation
             $path = "$id.json"
             $destination = Join-Path $output $path
@@ -88,11 +100,11 @@ foreach ($workload in $workloads)
 }
 
 [ordered]@{
-    schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = 'Streams'; sourceCommit = $ExpectedCommit
+    schemaVersion = 1; evidenceKind = 'bluetusk-performance-trial-index'; family = $Family; sourceCommit = $ExpectedCommit
     os = $os; diagnostic = $true; synthetic = $false; trials = $Trials; leadershipGatePassed = $false
     startedUtc = $started.ToString('o'); completedUtc = [DateTimeOffset]::UtcNow.ToString('o')
     candidateImplementation = $implementations.candidate; referenceImplementation = $implementations.reference
-    containerImageDigests = @([string]$plan.families.Streams.referenceImage, [string]$plan.fixture.postgreSqlImage)
+    containerImageDigests = @([string]$plan.families.$Family.referenceImage, [string]$plan.fixture.postgreSqlImage)
     records = @($records)
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'trial-index.json') -Encoding utf8NoBOM
-Write-Output "Captured $($records.Count) paired Streams diagnostic trials in '$output'."
+Write-Output "Captured $($records.Count) paired $Family diagnostic trials in '$output'."

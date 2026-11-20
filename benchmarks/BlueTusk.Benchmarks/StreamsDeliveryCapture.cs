@@ -11,6 +11,7 @@ using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 using BlueTusk.Streams;
+using BlueTusk.Sync.PostgreSql;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Benchmarks;
@@ -33,6 +34,7 @@ internal static class StreamsDeliveryCapture
         string SourceCommit,
         string PostgreSqlImage,
         string Scenario,
+        string Sink,
         int Trial,
         int ChangesPerTransaction,
         int WarmupTransactions,
@@ -49,10 +51,12 @@ internal static class StreamsDeliveryCapture
         var options = JsonSerializer.Deserialize<Options>(await File.ReadAllBytesAsync(optionsPath), JsonOptions)
             ?? throw new InvalidDataException("Streams capture options are empty.");
         var spill = options.Scenario == "spill";
+        var sync = options.Sink == "postgresql";
         var liveDelivery = options.Scenario == "commit-to-delivery" || spill;
         var snapshot = options.Scenario == "snapshot";
         if (options.Scenario is not ("commit-to-delivery" or "catch-up" or "snapshot" or "spill") ||
-            options.Trial is < 0 or >= 50 || options.ChangesPerTransaction is not (1 or 1_000) ||
+            options.Sink is not ("count" or "postgresql") || (sync && options.Scenario != "commit-to-delivery") ||
+            options.Trial is < 0 or >= 50 || (options.ChangesPerTransaction is not (1 or 1_000) && !(sync && options.ChangesPerTransaction == 100)) ||
             (liveDelivery ? options.WarmupTransactions is < 1 or > 10_000 : options.WarmupTransactions != 0) ||
             options.MeasurementTransactions is < 1 or > 16_000 ||
             (spill && (options.WarmupTransactions + options.MeasurementTransactions > 32 ||
@@ -69,7 +73,8 @@ internal static class StreamsDeliveryCapture
         {
             throw new PlatformNotSupportedException("Streams capture targets x64.");
         }
-        var implementation = typeof(PgOutputChangeStream).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+        var implementationType = sync ? typeof(PostgreSqlSyncDestination) : typeof(PgOutputChangeStream);
+        var implementation = implementationType.Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
         if (!implementation.EndsWith($"+{options.SourceCommit}", StringComparison.Ordinal))
         {
             throw new InvalidDataException("The Streams assembly was not built from the requested source commit.");
@@ -119,22 +124,25 @@ internal static class StreamsDeliveryCapture
 
         var measurement = new ProviderRequestCapture.Window(
             counters.Elapsed, samples.Length, counters.Allocated, counters.Cpu, counters.PeakRss, counters.Gc, [new(samples, samples.Length)]);
-        var workload = spill ? $"spoolBytes={SpillBytes}" : $"scenario={options.Scenario}";
+        var family = sync ? "Sync" : "Streams";
+        var workload = sync ? $"{os}|Sync|mutations={options.ChangesPerTransaction}|destination=postgresql" :
+            $"{os}|Streams|changes={options.ChangesPerTransaction}|{(spill ? $"spoolBytes={SpillBytes}" : $"scenario={options.Scenario}")}";
         var report = new PerformanceEvidenceGenerator.TrialFile(
-            1, "bluetusk-performance-trial", "Streams",
-            $"{os}|Streams|changes={options.ChangesPerTransaction}|{workload}",
-            "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, $"BlueTusk.Streams {implementation}",
+            1, "bluetusk-performance-trial", family, workload,
+            "candidate", options.Trial, options.SourceCommit, Diagnostic: true, Synthetic: false, $"{implementationType.Assembly.GetName().Name} {implementation}",
             JsonSerializer.SerializeToElement(new
             {
                 os,
                 architecture = "x64",
                 runtime = RuntimeInformation.FrameworkDescription,
                 postgreSqlImage = options.PostgreSqlImage,
+                sink = options.Sink,
                 latency = options.Scenario switch
                 {
                     "snapshot" => "Time from starting the consumer to delivering each row of the consistent snapshot",
                     "catch-up" => "Time from starting the consumer to delivering each row of an already committed backlog",
                     "spill" => "WAL commit to complete disk replay, payload validation and acknowledgement",
+                    "commit-to-delivery" when sync => "WAL commit to durable PostgreSQL mutations, checkpoint and source acknowledgement",
                     _ => "WAL commit to delivery UTC ticks plus the largest sampled source-clock offset bound",
                 },
                 clockBefore,
@@ -223,6 +231,8 @@ internal static class StreamsDeliveryCapture
         {
             await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString, cancellationToken);
             var source = await ReadIdentityAsync(replication);
+            await using var syncSink = sync ? new PostgreSqlSyncCaptureSink(connectionString, source) : null;
+            if (syncSink is not null) await syncSink.InitializeAsync(cancellationToken);
             if (liveDelivery)
             {
                 await clockConnection.OpenAsync(cancellationToken);
@@ -268,6 +278,7 @@ internal static class StreamsDeliveryCapture
             {
                 transactionTicks[index] = await ReadDeliveryAsync(index);
             }
+            syncSink?.VerifyCompleted(options.WarmupTransactions + options.MeasurementTransactions);
             return StopMeasurement();
 
             async ValueTask<long> ReadDeliveryAsync(int measurementIndex = -1)
@@ -285,6 +296,13 @@ internal static class StreamsDeliveryCapture
                     previous is { } position && transaction.CommitPosition.CompareTo(position) <= 0)
                 {
                     throw new InvalidDataException("Replication delivered an unexpected change count or a repeated/out-of-order commit.");
+                }
+
+                if (syncSink is not null)
+                {
+                    await syncSink.ApplyAsync(delivery, cancellationToken);
+                    previous = transaction.CommitPosition;
+                    return (DateTimeOffset.UtcNow - transaction.CommitTimestamp).Ticks;
                 }
 
                 var spoolBytes = spoolDirectory?.EnumerateFiles("*.ready").SingleOrDefault()?.Length;

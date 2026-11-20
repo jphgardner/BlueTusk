@@ -47,9 +47,9 @@ if ($Describe)
     $specification | ConvertTo-Json -Depth 4
     return
 }
-if ($Family -ceq 'Streams' -and $Diagnostic)
+if ($Family -cin @('Streams', 'Sync') -and $Diagnostic)
 {
-    $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Trials = $Trials; Owner = $Owner }
+    $capture = @{ ExpectedCommit = $ExpectedCommit; OutputPath = $OutputPath; Family = $Family; Trials = $Trials; Owner = $Owner }
     if ($RunId) { $capture.RunId = $RunId }
     & (Join-Path $PSScriptRoot 'capture-streams-delivery.ps1') @capture
     return

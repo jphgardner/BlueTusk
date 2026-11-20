@@ -1,0 +1,92 @@
+using System.Buffers.Text;
+using System.Data.Common;
+using System.Globalization;
+using System.Text;
+using BlueTusk.Data;
+using BlueTusk.Streams;
+using BlueTusk.Sync;
+using BlueTusk.Sync.PostgreSql;
+using BlueTusk.TypeSystem;
+
+namespace BlueTusk.Benchmarks;
+
+internal sealed class PostgreSqlSyncCaptureSink : IAsyncDisposable
+{
+    private readonly BlueTuskDataSource _dataSource;
+    private readonly SyncPipeline _pipeline;
+
+    public PostgreSqlSyncCaptureSink(string sourceConnectionString, ChangeSourceIdentity source)
+    {
+        var connection = new DbConnectionStringBuilder { ConnectionString = sourceConnectionString };
+        connection["Database"] = "bluetusk_sync_sink";
+        _dataSource = BlueTuskDataSource.Create(connection.ConnectionString);
+        _pipeline = new SyncPipeline(new() { PipelineId = "sync_capture" }, source, new CaptureTransform(),
+            new PostgreSqlSyncDestination(new() { DestinationDataSource = _dataSource }));
+    }
+
+    public ValueTask InitializeAsync(CancellationToken cancellationToken) => _pipeline.ProvisionAsync(cancellationToken);
+
+    public async ValueTask ApplyAsync(ChangeTransactionDelivery delivery, CancellationToken cancellationToken)
+    {
+        await _pipeline.ConsumeTransactionAsync(delivery, cancellationToken);
+        if (delivery.State != ChangeDeliveryState.Acknowledged)
+        {
+            throw new InvalidDataException("Sync did not acknowledge the committed destination transaction.");
+        }
+    }
+
+    public void VerifyCompleted(int transactions)
+    {
+        var status = _pipeline.Status;
+        if (status is not { State: SyncPipelineState.Running, QuarantinedTransactions: 0, RetryAttempts: 0 } ||
+            status.AppliedTransactions != transactions)
+        {
+            throw new InvalidDataException("Sync did not durably apply each expected transaction on its first attempt.");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _pipeline.DisposeAsync();
+        await _dataSource.DisposeAsync();
+    }
+
+    private sealed class CaptureTransform : ISyncTransform
+    {
+        private long _nextKey = 1;
+
+        public SyncTransformVersion Version { get; } = SyncTransformVersion.Create("sync-capture", "1");
+
+        public async ValueTask<IReadOnlyList<SyncMutation>> TransformTransactionAsync(
+            ChangeTransaction transaction, CancellationToken cancellationToken = default)
+        {
+            var mutations = new List<SyncMutation>(transaction.Changes.Count);
+            await foreach (var change in transaction.Changes.WithCancellation(cancellationToken))
+            {
+                if (change is not InsertChange { NewRow: var row } || row.Table is not { Schema: "public", Name: "streams_capture" })
+                {
+                    throw new InvalidDataException("Sync received an unexpected source operation or relation.");
+                }
+                var id = row["id"];
+                if (id is not { State: ChangeColumnState.Value, Encoding: ChangeValueEncoding.Text } ||
+                    !Utf8Parser.TryParse(id.Data.Span, out long key, out var consumed) || consumed != id.Data.Length || key != _nextKey)
+                {
+                    throw new InvalidDataException("Sync received an unexpected source key.");
+                }
+                var text = key.ToString(CultureInfo.InvariantCulture);
+                mutations.Add(new(new ChangeId(transaction.Source, transaction.CommitEndPosition, transaction.TransactionId, mutations.Count),
+                    SyncMutationKind.Upsert, "streams_capture", text, Encoding.UTF8.GetBytes($"{{\"id\":{text}}}"), "application/json"));
+                _nextKey++;
+            }
+            if (mutations.Count != transaction.Changes.Count)
+            {
+                throw new InvalidDataException("Sync did not transform every source change.");
+            }
+            return mutations;
+        }
+
+        public ValueTask<IReadOnlyList<SyncSnapshotMutation>> TransformSnapshotBatchAsync(
+            ChangeSnapshotBatch batch, CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("The Sync benchmark uses committed WAL transactions.");
+    }
+}

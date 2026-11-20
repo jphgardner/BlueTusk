@@ -94,6 +94,16 @@ file before replay and release it on acknowledgement. Debezium measures the same
 committed input through its HTTP sink. These runs use
 `evidence_class=diagnostic` and `families=Streams`.
 
+The Sync diagnostic covers the PostgreSQL destination at 1, 100 and 1,000
+mutations per source transaction. BlueTusk uses its Sync pipeline and PostgreSQL
+destination. Debezium uses an in-process native JDBC sink. Both write documents
+and a checkpoint in a single transaction to a separate database on the pinned
+PostgreSQL fixture. The capture checks that every destination batch persisted
+its exact row range and that the final checkpoint shares the final batch's
+database transaction. Choose `evidence_class=diagnostic` and `families=Sync` for
+these runs. Sync qualification also requires NATS, Redis, OpenSearch, Kafka,
+S3 and Webhooks measurements.
+
 ## Statistics
 
 The generator implements this method, and the checker re-implements it separately, from this text:

@@ -52,7 +52,7 @@ foreach ($environment in @($contract.environments | Sort-Object { if ($_.os -eq 
     foreach ($family in @($selected | Where-Object { $_ -cne 'Provider' }))
     {
         $status = if ($family -eq 'primary-hot-path') { [string]$plan.primaryHotPaths.status } else { [string]$plan.families.$family.status }
-        if ($EvidenceClass -ceq 'diagnostic' -and $family -ceq 'Streams') { $status = 'ready' }
+        if ($EvidenceClass -ceq 'diagnostic' -and $family -cin @('Streams', 'Sync')) { $status = 'ready' }
         $legs.Add([ordered]@{ leg = "$os-$($family.ToLowerInvariant())"; os = $os; runner = $runner; kind = 'family'
             variant = ''; family = $family; profile = ''; status = $status })
     }

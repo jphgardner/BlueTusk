@@ -2,8 +2,9 @@
 param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
-    [ValidateSet(1, 1000)][int] $Changes = 1,
+    [ValidateSet(1, 100, 1000)][int] $Changes = 1,
     [ValidateSet('commit-to-delivery', 'catch-up', 'snapshot', 'spill')][string] $Scenario = 'commit-to-delivery',
+    [ValidateSet('count', 'postgresql')][string] $Sink = 'count',
     [ValidateRange(0, 10000)][int] $WarmupTransactions = 20,
     [ValidateRange(1, 16000)][int] $MeasurementTransactions = 1000,
     [ValidateRange(0, 49)][int] $Trial = 0,
@@ -16,6 +17,10 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'streams-performance/streams-fixture.ps1')
 $spill = $Scenario -ceq 'spill'
+$sync = $Sink -ceq 'postgresql'
+if (($sync -and $Scenario -cne 'commit-to-delivery') -or (-not $sync -and $Changes -eq 100))
+{ throw 'The PostgreSQL Sync sink supports the live delivery scenario and 1, 100 or 1000 mutations.' }
+$suffix = if ($sync) { 'destination=postgresql' } else { Get-StreamsWorkloadSuffix $Scenario }
 $liveDelivery = $Scenario -ceq 'commit-to-delivery' -or $spill
 $snapshot = $Scenario -ceq 'snapshot'
 if ($spill -and -not $PSBoundParameters.ContainsKey('WarmupTransactions')) { $WarmupTransactions = 2 }
@@ -31,7 +36,8 @@ if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark requires a clean trac
 if ($Changes * [long]$MeasurementTransactions -gt 1048576) { throw 'The reference capture supports up to 1,048,576 measured rows.' }
 
 $plan = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-evidence-plan.json') -Raw | ConvertFrom-Json
-$image = [string]$plan.families.Streams.referenceImage
+$family = if ($sync) { 'Sync' } else { 'Streams' }
+$image = [string]$plan.families.$family.referenceImage
 if ($image -cnotmatch '^quay\.io/debezium/server:3\.6\.1\.Final@sha256:[0-9a-f]{64}$') { throw 'The Debezium reference must be pinned by digest.' }
 $output = [IO.Path]::GetFullPath($OutputPath, $root)
 if (Test-Path -LiteralPath $output) { throw 'The reference capture requires a new output directory.' }
@@ -71,6 +77,7 @@ try
     $fixture = Get-Content -LiteralPath (Join-Path $fixtureDirectory 'fixture.json') -Raw | ConvertFrom-Json
     $postgres = $fixture.containers[0].name
     New-StreamsCaptureTable $postgres $spill
+    if ($sync) { New-SyncPostgreSqlFixture $postgres $true }
     if ($Scenario -ceq 'catch-up')
     {
         $null = Invoke-Docker exec $postgres psql -X -q -v ON_ERROR_STOP=1 -U postgres -d bluetusk_benchmark `
@@ -111,13 +118,14 @@ debezium.source.offset.flush.interval.ms=1000
 "@
     [IO.File]::WriteAllText($configuration, $properties)
     [IO.File]::WriteAllText($manifest, "Premain-Class: StreamsHttpProbe`n`n")
-    $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario"
-    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
+    $agentArguments = "$Changes,$WarmupTransactions,$MeasurementTransactions,$Trial,$ExpectedCommit,$($fixture.postgreSqlImage),$os,$Scenario,$Sink"
+    $launch = 'mkdir /tmp/streams-probe-classes && javac -cp "/debezium/lib/*" -d /tmp/streams-probe-classes /tmp/StreamsHttpProbe.java /tmp/PostgreSqlCaptureSink.java && jar cfm /tmp/streams-probe.jar /tmp/probe.mf -C /tmp/streams-probe-classes . && exec /debezium/run.sh'
     $null = Invoke-Docker create --name $reference --network $fixture.network --label "bluetusk.owner=$Owner" `
         --label "bluetusk.run=$RunId" --label "bluetusk.commit=$ExpectedCommit" `
         --env "JAVA_OPTS=-javaagent:/tmp/streams-probe.jar=$agentArguments" --entrypoint /bin/sh $image -ec $launch
     $created = $true
     $null = Invoke-Docker cp (Join-Path $PSScriptRoot 'streams-performance/StreamsHttpProbe.java') "${reference}:/tmp/StreamsHttpProbe.java"
+    $null = Invoke-Docker cp (Join-Path $PSScriptRoot 'streams-performance/PostgreSqlCaptureSink.java') "${reference}:/tmp/PostgreSqlCaptureSink.java"
     $null = Invoke-Docker cp $manifest "${reference}:/tmp/probe.mf"
     $null = Invoke-Docker cp $configuration "${reference}:/debezium/config/application.properties"
     [IO.File]::Delete($configuration)
@@ -152,7 +160,7 @@ debezium.source.offset.flush.interval.ms=1000
     $expectedCommitTimestamps = if ($snapshot) { 0 } else { $commits.Count }
     if ($commits.Count -ne $MeasurementTransactions -or $capture.environment.commitMicrosByTransaction.Count -ne $expectedCommitTimestamps -or
         $capture.measurement.completedOperations -ne $Changes * [long]$MeasurementTransactions -or $capture.sourceCommit -cne $ExpectedCommit -or
-        -not $capture.workloadKey.EndsWith("|$(Get-StreamsWorkloadSuffix $Scenario)", [StringComparison]::Ordinal) -or
+        -not $capture.workloadKey.EndsWith("|$suffix", [StringComparison]::Ordinal) -or
         $capture.role -cne 'reference' -or $capture.diagnostic -ne $true -or $capture.synthetic -ne $false)
     { throw 'The reference capture did not match its measured workload.' }
     for ($index = 0; $index -lt $commits.Count; $index++)
@@ -169,7 +177,13 @@ debezium.source.offset.flush.interval.ms=1000
     if ($LASTEXITCODE -ne 0 -or $finalHead -cne $ExpectedCommit) { throw 'The benchmark checkout changed during capture.' }
     $dirty = & git -C $root status --porcelain --untracked-files=no
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'The benchmark tracked worktree changed during capture.' }
-    [IO.File]::Copy($captured, $capturePath)
+    if ($sync)
+    {
+        $destinationProof = Assert-SyncPostgreSqlDelivery $postgres $Changes ($WarmupTransactions + $MeasurementTransactions)
+        $capture.environment | Add-Member -NotePropertyName destinationProof -NotePropertyValue $destinationProof
+        $capture | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath $capturePath -Encoding utf8NoBOM
+    }
+    else { [IO.File]::Copy($captured, $capturePath) }
     "Captured $($capture.measurement.completedOperations) Debezium $Scenario rows in '$capturePath'."
 }
 finally

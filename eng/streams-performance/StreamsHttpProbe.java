@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HexFormat;
@@ -39,6 +40,7 @@ public final class StreamsHttpProbe {
     private final boolean liveDelivery;
     private final boolean snapshot;
     private final boolean spill;
+    private final PostgreSqlCaptureSink postgres;
     private final long[] ticks;
     private final long[] commitMicros;
     private final long[] transactionIds;
@@ -48,6 +50,7 @@ public final class StreamsHttpProbe {
     private final OperatingSystemMXBean process = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
     private int delivered;
     private int spillPayloadBytes;
+    private long syncTransactionId;
     private long started;
     private long allocationBefore;
     private long cpuBefore;
@@ -55,7 +58,7 @@ public final class StreamsHttpProbe {
     private boolean complete;
     private boolean failed;
 
-    public static void premain(String arguments) throws IOException {
+    public static void premain(String arguments) throws IOException, SQLException {
         var probe = new StreamsHttpProbe(arguments);
         var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8081), 32);
         server.createContext("/events", probe::receive);
@@ -68,12 +71,12 @@ public final class StreamsHttpProbe {
         server.start();
     }
 
-    private StreamsHttpProbe(String arguments) {
+    private StreamsHttpProbe(String arguments) throws IOException, SQLException {
         var fields = arguments.split(",", -1);
-        if (fields.length != 8 || !fields[4].matches("[0-9a-f]{40}") ||
+        if (fields.length != 9 || !fields[4].matches("[0-9a-f]{40}") ||
             !fields[5].matches("postgres:[^@\\s]+@sha256:[0-9a-f]{64}") ||
             !fields[6].matches("windows|linux") || !fields[7].matches("commit-to-delivery|catch-up|snapshot|spill") ||
-            !System.getProperty("os.arch").equals("amd64")) {
+            !fields[8].matches("count|postgresql") || !System.getProperty("os.arch").equals("amd64")) {
             throw new IllegalArgumentException("An exact x64 benchmark identity is required.");
         }
         changes = Integer.parseInt(fields[0]);
@@ -82,10 +85,12 @@ public final class StreamsHttpProbe {
         measuredRows = Math.multiplyExact(changes, transactions);
         trial = Integer.parseInt(fields[3]);
         scenario = fields[7];
+        boolean sync = fields[8].equals("postgresql");
         spill = scenario.equals("spill");
         liveDelivery = scenario.equals("commit-to-delivery") || spill;
         snapshot = scenario.equals("snapshot");
-        if ((changes != 1 && changes != 1_000) || (liveDelivery ? warmupRows < 1 : warmupRows != 0) || warmupRows > 10_000_000 ||
+        if ((changes != 1 && changes != 1_000 && !(sync && changes == 100)) || (sync && !scenario.equals("commit-to-delivery")) ||
+            (liveDelivery ? warmupRows < 1 : warmupRows != 0) || warmupRows > 10_000_000 ||
             transactions < 1 || transactions > 16_000 || measuredRows > 1_048_576 || trial < 0 || trial >= 50 ||
             (spill && warmupRows / changes + transactions > 32)) {
             throw new IllegalArgumentException("The Streams capture exceeds its workload bounds.");
@@ -98,6 +103,7 @@ public final class StreamsHttpProbe {
         transactionIds = new long[snapshot ? 0 : transactions];
         spillPayloadSha256 = new String[spill ? transactions : 0];
         spillHash = spill ? sha256() : null;
+        postgres = sync ? new PostgreSqlCaptureSink() : null;
         if (!threads.isThreadAllocatedMemorySupported()) {
             throw new IllegalStateException("The reference JVM must expose its process allocation counter.");
         }
@@ -152,14 +158,14 @@ public final class StreamsHttpProbe {
                 complete = true;
             }
             respond(exchange, 200, "accepted");
-        } catch (IOException | RuntimeException exception) {
+        } catch (IOException | RuntimeException | SQLException exception) {
             failed = true;
             System.err.println("Streams benchmark probe: " + exception.getMessage());
             respond(exchange, 409, "The Streams benchmark rejected the delivery.");
         }
     }
 
-    private void recordEvent(JsonNode event, Instant received, long receivedAt) throws IOException {
+    private void recordEvent(JsonNode event, Instant received, long receivedAt) throws IOException, SQLException {
         var source = event.required("source");
         var after = event.required("after");
         var row = after.required("id");
@@ -182,6 +188,9 @@ public final class StreamsHttpProbe {
             }
             if (spill) {
                 recordSpillPayload(after.required("payload"));
+            }
+            if (postgres != null) {
+                recordSyncDelivery(row.longValue(), source);
             }
         }
         delivered++;
@@ -209,7 +218,7 @@ public final class StreamsHttpProbe {
         } else if (commitMicros[batch] != timestamp.longValue() || transactionIds[batch] != transaction.longValue()) {
             throw new IllegalStateException("Rows in a transaction reported different source positions.");
         }
-        if (spill) {
+        if (spill || postgres != null) {
             return;
         }
         long receiveTicks = received.getEpochSecond() * TICKS_PER_SECOND + received.getNano() / 100;
@@ -218,6 +227,34 @@ public final class StreamsHttpProbe {
             throw new IllegalStateException("The Streams delivery latency must be positive.");
         }
         ticks[sample] = latency;
+    }
+
+    private void recordSyncDelivery(long key, JsonNode source) throws SQLException {
+        var transaction = source.required("txId");
+        var lsn = source.required("lsn");
+        if (!transaction.isIntegralNumber() || !lsn.isIntegralNumber() || transaction.longValue() <= 0 || lsn.longValue() <= 0) {
+            throw new IllegalStateException("The reference Sync sink must receive PostgreSQL positions and transaction IDs.");
+        }
+        int rowInTransaction = delivered % changes;
+        if (rowInTransaction == 0) {
+            if (transaction.longValue() <= syncTransactionId) {
+                throw new IllegalStateException("The reference Sync sink received a repeated or out-of-order source transaction.");
+            }
+            syncTransactionId = transaction.longValue();
+        } else if (transaction.longValue() != syncTransactionId) {
+            throw new IllegalStateException("The reference Sync sink received an incomplete transaction.");
+        }
+        boolean last = rowInTransaction == changes - 1;
+        postgres.deliver(key, syncTransactionId, lsn.longValue(), last);
+        if (last && delivered >= warmupRows) {
+            int batch = (delivered - warmupRows) / changes;
+            var committed = Instant.now();
+            long latency = committed.getEpochSecond() * TICKS_PER_SECOND + committed.getNano() / 100 - commitMicros[batch] * 10;
+            if (latency <= 0) {
+                throw new IllegalStateException("The Sync destination latency must be positive.");
+            }
+            Arrays.fill(ticks, batch * changes, (batch + 1) * changes, latency);
+        }
     }
 
     private void recordSpillPayload(JsonNode payload) throws IOException {
@@ -269,15 +306,23 @@ public final class StreamsHttpProbe {
             "allocation", "JVM-wide allocated-byte counter delta", "gc", "Total collections across JVM collectors in the first counter",
             "peakRss", "JVM process VmHWM, including the loopback HTTP sink");
         var capture = JSON.createObjectNode();
-        capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", "Streams")
-            .put("workloadKey", hostOs + "|Streams|changes=" + changes + (spill ? "|spoolBytes=" + SPILL_BYTES : "|scenario=" + scenario))
+        var workload = postgres == null
+            ? hostOs + "|Streams|changes=" + changes + (spill ? "|spoolBytes=" + SPILL_BYTES : "|scenario=" + scenario)
+            : hostOs + "|Sync|mutations=" + changes + "|destination=postgresql";
+        capture.put("schemaVersion", 1).put("evidenceKind", "bluetusk-performance-trial").put("family", postgres == null ? "Streams" : "Sync")
+            .put("workloadKey", workload)
             .put("role", "reference").put("trial", trial).put("sourceCommit", commit).put("diagnostic", true)
-            .put("synthetic", false).put("implementation", "Debezium Server " + VERSION).put("frequency", TICKS_PER_SECOND);
+            .put("synthetic", false).put("implementation", "Debezium Server " + VERSION + (postgres == null ? "" : " plus native PostgreSQL JDBC"))
+            .put("frequency", TICKS_PER_SECOND);
         var environmentNode = JSON.createObjectNode();
         environment.forEach((key, value) -> environmentNode.set(key, JSON.valueToTree(value)));
         if (spill) {
             environmentNode.set("spillPayloadSha256", JSON.valueToTree(spillPayloadSha256));
             environmentNode.put("latency", "WAL commit to complete payload validation in the reference HTTP sink");
+        }
+        if (postgres != null) {
+            environmentNode.put("sink", "postgresql");
+            environmentNode.put("latency", "WAL commit to durable mutations and checkpoint in the PostgreSQL JDBC sink");
         }
         capture.set("environment", environmentNode);
         capture.set("measurement", JSON.valueToTree(measurement));
