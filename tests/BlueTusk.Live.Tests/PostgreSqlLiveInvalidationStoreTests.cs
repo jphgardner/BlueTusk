@@ -45,9 +45,29 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
                 cursor,
                 TestContext.Current.CancellationToken));
 
+            var otherTable = Table("crm,\"regional\"", "contacts");
+            var position = new BlueTuskLogSequenceNumber(200);
+            var change = new TruncateChange(
+                new ChangeId(Source, position, 43, 0), [table, otherTable, table], Cascade: false, RestartIdentity: false);
+            await using var multiple = ChangeDeliveryTestFactory.CreateCommitted(Source, 43, position, [change]);
+            await using var duplicate = ChangeDeliveryTestFactory.CreateCommitted(Source, 43, position, [change]);
+            await Task.WhenAll(
+                consumer.ConsumeTransactionAsync(multiple, TestContext.Current.CancellationToken).AsTask(),
+                consumer.ConsumeTransactionAsync(duplicate, TestContext.Current.CancellationToken).AsTask());
+            var next = await store.GetCurrentCursorAsync("primary", TestContext.Current.CancellationToken);
+            Assert.True(next > cursor);
+            Assert.Equal(ChangeDeliveryState.Acknowledged, multiple.State);
+            Assert.Equal(ChangeDeliveryState.Acknowledged, duplicate.State);
+            foreach (var dependency in new[] { table, otherTable })
+            {
+                Assert.True(await store.HasChangesAsync(
+                    "primary", [new LiveTableDependency(dependency.Schema, dependency.Name)],
+                    cursor, next, TestContext.Current.CancellationToken));
+            }
+
             await using var redelivery = Delivery(table, transactionId: 42, position: 100);
             await consumer.ConsumeTransactionAsync(redelivery, TestContext.Current.CancellationToken);
-            Assert.Equal(cursor, await store.GetCurrentCursorAsync("primary", TestContext.Current.CancellationToken));
+            Assert.Equal(next, await store.GetCurrentCursorAsync("primary", TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -127,6 +147,64 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
             var expired = await store.ReadAsync(identity, 0, 10, TestContext.Current.CancellationToken);
             Assert.Equal(LiveReplayReadStatus.Expired, expired.Status);
             Assert.Equal(3, expired.FirstAvailableSequence);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
+    [PostgreSqlFact]
+    public async Task Concurrent_single_replay_appends_preserve_sequence_and_roll_back_failed_event()
+    {
+        var schema = "bluetusk_live_single_" + Guid.NewGuid().ToString("N");
+        var token = TestContext.Current.CancellationToken;
+        await using var dataSource = BlueTuskDataSource.Create(PostgreSqlFixture.GetConnectionString());
+        var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
+        {
+            ControlDataSource = dataSource,
+            ControlSchema = schema,
+        });
+        var identity = Identity();
+        try
+        {
+            var initial = new LiveReplayAppendRequest(identity, 0,
+                [new LiveReplayEvent(1, LiveEventKind.InitialResult, LiveReplayJsonSerializer.ContentType, "initial"u8)]);
+            Assert.Equal(LiveReplayAppendStatus.Stored, (await store.AppendReplayAsync(initial, token)).Status);
+
+            var contenders = new[]
+            {
+                new LiveReplayAppendRequest(identity, 1,
+                    [new LiveReplayEvent(2, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, "first"u8)]),
+                new LiveReplayAppendRequest(identity, 1,
+                    [new LiveReplayEvent(2, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, "second"u8)]),
+            };
+            var outcomes = await Task.WhenAll(contenders.Select(request => store.AppendReplayAsync(request, token).AsTask()));
+            var winner = Array.FindIndex(outcomes, outcome => outcome.Status == LiveReplayAppendStatus.Stored);
+            Assert.InRange(winner, 0, 1);
+            Assert.Equal(LiveReplayAppendStatus.SequenceConflict, outcomes[1 - winner].Status);
+            Assert.Equal(LiveReplayAppendStatus.AlreadyStored,
+                (await store.AppendReplayAsync(contenders[winner], token)).Status);
+            var replay = await store.ReadAsync(identity, 1, 10, token);
+            Assert.Equal(contenders[winner].Events[0].Payload.ToArray(), Assert.Single(replay.Events).Payload.ToArray());
+
+            await using (var connection = await dataSource.OpenConnectionAsync(token))
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText =
+                    $"ALTER TABLE \"{schema}\".live_replay_events ADD CHECK (octet_length(payload) > 0)";
+                _ = await command.ExecuteNonQueryAsync(token);
+            }
+            var rejected = new LiveReplayAppendRequest(identity, 2,
+                [new LiveReplayEvent(3, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, [])]);
+            await Assert.ThrowsAnyAsync<DbException>(async () => await store.AppendReplayAsync(rejected, token));
+
+            var current = await store.ReadAsync(identity, 2, 10, token);
+            Assert.Equal(LiveReplayReadStatus.Current, current.Status);
+            Assert.Equal(2, current.LastSequence);
+            var next = new LiveReplayAppendRequest(identity, 2,
+                [new LiveReplayEvent(3, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, "third"u8)]);
+            Assert.Equal(LiveReplayAppendStatus.Stored, (await store.AppendReplayAsync(next, token)).Status);
         }
         finally
         {

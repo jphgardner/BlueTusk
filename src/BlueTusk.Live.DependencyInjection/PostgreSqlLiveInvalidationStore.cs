@@ -1,8 +1,10 @@
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using BlueTusk.Streams;
 
 namespace BlueTusk.Live.DependencyInjection;
@@ -123,34 +125,58 @@ public sealed class PostgreSqlLiveInvalidationStore :
             return await GetCurrentCursorAsync(databaseIdentity, cancellationToken).ConfigureAwait(false);
         }
 
-        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using var dbTransaction = await connection.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted,
-            cancellationToken).ConfigureAwait(false);
-        var cursor = await InsertInvalidationAsync(
-            connection,
-            dbTransaction,
-            databaseIdentity,
-            transaction,
-            cancellationToken).ConfigureAwait(false);
-        foreach (var dependency in dependencies)
+        // Text binding works with the configured DbDataSource without provider-specific array types.
+        var dependencyJson = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(dependencyJson))
         {
-            await ExecuteAsync(
-                connection,
-                dbTransaction,
-                $"""
-                INSERT INTO {_dependenciesTable} (invalidation_cursor, schema_name, table_name)
-                VALUES (@cursor, @schema, @table)
-                ON CONFLICT DO NOTHING
-                """,
-                cancellationToken,
-                ("cursor", cursor.Value),
-                ("schema", dependency.Schema),
-                ("table", dependency.Table)).ConfigureAwait(false);
+            writer.WriteStartArray();
+            foreach (var dependency in dependencies)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("schema_name", dependency.Schema);
+                writer.WriteString("table_name", dependency.Table);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
         }
 
-        await dbTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return cursor;
+        var hasAmbientTransaction = System.Transactions.Transaction.Current is not null;
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        // Keep the explicit commit when a provider can enlist connections in an ambient transaction.
+        await using var dbTransaction = hasAmbientTransaction
+            ? await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false)
+            : null;
+        await using var command = connection.CreateCommand();
+        command.Transaction = dbTransaction;
+        // The invalidation and its dependency rows become visible in the same commit.
+        command.CommandText = $"""
+            WITH invalidation AS (
+                INSERT INTO {_invalidationsTable} (
+                    database_identity, source_fingerprint, commit_position, transaction_id, committed_at)
+                VALUES (@database, @source, @position, @transaction_id, @committed_at)
+                ON CONFLICT (database_identity, source_fingerprint, commit_position, transaction_id)
+                DO UPDATE SET transaction_id = {_invalidationsTable}.transaction_id
+                RETURNING cursor),
+            dependencies AS (
+                INSERT INTO {_dependenciesTable} (invalidation_cursor, schema_name, table_name)
+                SELECT i.cursor, d.schema_name, d.table_name
+                FROM invalidation i
+                CROSS JOIN jsonb_to_recordset(CAST(@dependencies AS jsonb)) AS d(schema_name text, table_name text)
+                ON CONFLICT DO NOTHING)
+            SELECT cursor FROM invalidation
+            """;
+        AddParameter(command, "database", databaseIdentity);
+        AddParameter(command, "source", transaction.Source.Fingerprint);
+        AddParameter(command, "position", (decimal)transaction.CommitEndPosition.Value);
+        AddParameter(command, "transaction_id", (long)transaction.TransactionId);
+        AddParameter(command, "committed_at", transaction.CommitTimestamp);
+        AddParameter(command, "dependencies", Encoding.UTF8.GetString(dependencyJson.WrittenSpan));
+        var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        if (dbTransaction is not null)
+        {
+            await dbTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        return new LiveInvalidationCursor(Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     public async ValueTask<LiveInvalidationCursor> GetCurrentCursorAsync(
@@ -249,6 +275,12 @@ public sealed class PostgreSqlLiveInvalidationStore :
 
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        if (System.Transactions.Transaction.Current is null && request.ExpectedLastSequence > 0 && request.Events.Count == 1 &&
+            await TryAppendSingleReplayAsync(connection, request, cancellationToken).ConfigureAwait(false))
+        {
+            return new LiveReplayAppendResult(LiveReplayAppendStatus.Stored, request.Events[0].Sequence);
+        }
+
         await using var transaction = await connection.BeginTransactionAsync(
             IsolationLevel.ReadCommitted,
             cancellationToken).ConfigureAwait(false);
@@ -320,6 +352,42 @@ public sealed class PostgreSqlLiveInvalidationStore :
             ("identity", request.Identity.Fingerprint)).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new LiveReplayAppendResult(LiveReplayAppendStatus.Stored, finalSequence);
+    }
+
+    private async ValueTask<bool> TryAppendSingleReplayAsync(
+        DbConnection connection,
+        LiveReplayAppendRequest request,
+        CancellationToken cancellationToken)
+    {
+        var replayEvent = request.Events[0];
+        // If another writer advanced the sequence, the UPDATE returns nothing.
+        // The existing conflict path then checks whether the request was already stored.
+        var inserted = await ExecuteAsync(
+            connection,
+            transaction: null,
+            $"""
+            WITH advanced AS (
+                UPDATE {_replaySubscriptionsTable}
+                SET last_sequence = @sequence,
+                    retain_until = clock_timestamp() + (@retention_ms * interval '1 millisecond'),
+                    updated_at = clock_timestamp()
+                WHERE identity_fingerprint = @identity AND last_sequence = @expected
+                RETURNING identity_fingerprint)
+            INSERT INTO {_replayEventsTable} (
+                identity_fingerprint, sequence, event_kind, content_type, payload, integrity_hash)
+            SELECT identity_fingerprint, @sequence, @kind, @content_type, @payload, @integrity
+            FROM advanced
+            """,
+            cancellationToken,
+            ("identity", request.Identity.Fingerprint),
+            ("expected", request.ExpectedLastSequence),
+            ("sequence", replayEvent.Sequence),
+            ("kind", (int)replayEvent.Kind),
+            ("content_type", replayEvent.ContentType),
+            ("payload", replayEvent.Payload.ToArray()),
+            ("integrity", replayEvent.IntegrityHash.ToArray()),
+            ("retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds)).ConfigureAwait(false);
+        return inserted == 1;
     }
 
     ValueTask<LiveReplayAppendResult> ILiveReplayStore.AppendAsync(
@@ -500,32 +568,6 @@ public sealed class PostgreSqlLiveInvalidationStore :
         }
 
         await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
-    }
-
-    private async ValueTask<LiveInvalidationCursor> InsertInvalidationAsync(
-        DbConnection connection,
-        DbTransaction transaction,
-        string databaseIdentity,
-        ChangeTransaction sourceTransaction,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = $"""
-            INSERT INTO {_invalidationsTable} (
-                database_identity, source_fingerprint, commit_position, transaction_id, committed_at)
-            VALUES (@database, @source, @position, @transaction_id, @committed_at)
-            ON CONFLICT (database_identity, source_fingerprint, commit_position, transaction_id)
-            DO UPDATE SET transaction_id = {_invalidationsTable}.transaction_id
-            RETURNING cursor
-            """;
-        AddParameter(command, "database", databaseIdentity);
-        AddParameter(command, "source", sourceTransaction.Source.Fingerprint);
-        AddParameter(command, "position", (decimal)sourceTransaction.CommitEndPosition.Value);
-        AddParameter(command, "transaction_id", (long)sourceTransaction.TransactionId);
-        AddParameter(command, "committed_at", sourceTransaction.CommitTimestamp);
-        var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-        return new LiveInvalidationCursor(Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     private string[] CreateSchemaStatements() =>
