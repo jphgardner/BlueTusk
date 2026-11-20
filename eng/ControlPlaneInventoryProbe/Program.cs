@@ -39,13 +39,14 @@ if (args is ["seed", var seedCount])
 }
 
 if (args is not [var outputPath, var role, var commit, var trialNumber, var warmup, var duration, var sources, var clients, .. var flags] ||
-    flags is not ([] or ["qualification"]))
+    flags is not ([] or ["qualification"] or ["primary-hot-path"] or ["qualification", "primary-hot-path"]))
 {
-    throw new ArgumentException("Specify seed and source count, or an output path, role, commit, trial number, warmup seconds, measurement seconds, source count, client count, and optional qualification flag.");
+    throw new ArgumentException("Specify seed and source count, or an output path, role, commit, trial number, warmup seconds, measurement seconds, source count, client count, and optional qualification and primary-hot-path flags.");
 }
 
 var sourceCount = ParseCount(sources);
 var clientCount = ParseCount(clients);
+var primaryHotPath = flags.Contains("primary-hot-path", StringComparer.Ordinal);
 // The published reader opens a slot connection while holding its inventory connection.
 var connectionOptions = new BlueTuskConnectionStringBuilder(connectionString)
 {
@@ -94,11 +95,13 @@ var result = new
     SchemaVersion = 1,
     EvidenceKind = "bluetusk-performance-trial",
     Family = "ControlPlane",
-    WorkloadKey = $"{os}|ControlPlane|sources={sourceCount}|clients={clientCount}",
+    WorkloadKey = primaryHotPath
+        ? $"{os}|ControlPlane|primary-hot-path"
+        : $"{os}|ControlPlane|sources={sourceCount}|clients={clientCount}",
     Role = role,
     SourceCommit = commit,
     Trial = int.Parse(trialNumber, CultureInfo.InvariantCulture),
-    Diagnostic = flags.Length == 0,
+    Diagnostic = !flags.Contains("qualification", StringComparer.Ordinal),
     Synthetic = false,
     Implementation = implementation,
     WarmupSeconds = warmupSeconds,
@@ -109,6 +112,8 @@ var result = new
         Architecture = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant(),
         Runtime = RuntimeInformation.FrameworkDescription,
         Scope = "Kestrel API and HTTP clients in one process",
+        SourceCount = sourceCount,
+        ApiClientCount = clientCount,
     },
     Frequency = Stopwatch.Frequency,
     Measurement = new

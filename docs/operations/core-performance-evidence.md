@@ -142,9 +142,11 @@ Each comparison uses the same host and runtime for the candidate and BlueTusk
 | Live | Affected-key update with 1,000 results and 64 subscribers |
 | Control Plane | Inventory read with 100 sources and 32 API clients |
 
-The planner requires the primary capture on both operating systems and blocks
-qualification until the producer is implemented. The existing 20% improvement
-thresholds for P95 latency and allocation apply to each comparison.
+The Control Plane inventory adapter can capture its primary workload with
+`capture-control-plane-inventory.ps1 -PrimaryHotPath -ExpectedCommit <sha>`.
+The Core planner requires all five captures on both operating systems before
+full qualification can run. The existing 20% improvement thresholds for P95
+latency and allocation apply to each comparison.
 
 ## Statistics
 

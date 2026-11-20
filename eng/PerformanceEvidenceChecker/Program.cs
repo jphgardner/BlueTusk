@@ -80,6 +80,7 @@ internal static class Checker
         using var summaryDocument = JsonDocument.Parse(summaryBytes, DocumentOptions);
         var summary = summaryDocument.RootElement;
         var release = "1.1.0";
+        (int Sources, int Clients)? controlPlanePrimary = null;
         if (contractPath is not null)
         {
             var contractBytes = File.ReadAllBytes(contractPath);
@@ -88,6 +89,11 @@ internal static class Checker
             Require(release is "1.1.0" or "1.2.0", "The selected contract must identify a supported release.");
             Require(Str(summary.GetProperty("contract"), "sha256") == Convert.ToHexStringLower(SHA256.HashData(contractBytes)),
                 "Summary contract hash differs from the selected contract.");
+            if (release == "1.2.0" && contract.RootElement.TryGetProperty("primaryHotPaths", out var primaryHotPaths))
+            {
+                var inventory = primaryHotPaths.GetProperty("workloads").GetProperty("ControlPlane");
+                controlPlanePrimary = (Int(inventory, "sources"), Int(inventory, "clients"));
+            }
         }
         Require(Int(summary, "schemaVersion") == 1 && Str(summary, "evidenceKind") == "bluetusk-performance-summary" &&
             Str(summary, "release") == release && Str(summary, "scope") == "Core" && Str(summary, "sourceCommit") == commit &&
@@ -155,7 +161,7 @@ internal static class Checker
             var produced = format switch
             {
                 "provider-request-capture-index/1" => ReadProvider(root, id, index.RootElement, input, commit, os, mapDocument.RootElement, bound),
-                "performance-trial-index/1" => ReadTrials(root, id, index.RootElement, input, commit, os, bound),
+                "performance-trial-index/1" => ReadTrials(root, id, index.RootElement, input, commit, os, bound, controlPlanePrimary),
                 _ => throw new CheckFailedException($"Input '{id}' has unknown format '{format}'."),
             };
             foreach (var trial in produced)
@@ -328,7 +334,7 @@ internal static class Checker
     }
 
     private static List<TrialMetrics> ReadTrials(string root, string id, JsonElement index, JsonElement input, string commit,
-        string os, Dictionary<string, string> bound)
+        string os, Dictionary<string, string> bound, (int Sources, int Clients)? controlPlanePrimary)
     {
         var family = Str(index, "family");
         Require(Int(index, "schemaVersion") == 1 && Str(index, "evidenceKind") == "bluetusk-performance-trial-index" &&
@@ -368,6 +374,12 @@ internal static class Checker
                 key.StartsWith($"{os}|{family}|", StringComparison.Ordinal),
                 $"Trial capture '{path}' identity differs from its index.");
             var frequency = scan.Long("frequency");
+            if (controlPlanePrimary is { } inventory && key == $"{os}|ControlPlane|primary-hot-path" && !Bool(index, "synthetic"))
+            {
+                Require(scan.Long("environment.sourceCount") == inventory.Sources &&
+                    scan.Long("environment.apiClientCount") == inventory.Clients && scan.Workers.Count == inventory.Clients,
+                    $"Control Plane trial '{path}' did not measure the approved primary inventory workload.");
+            }
             if (controlPlaneQualification)
             {
                 Require(frequency > 0 && scan.Long("warmupSeconds") == warmup && scan.Long("measurementSeconds") == window &&

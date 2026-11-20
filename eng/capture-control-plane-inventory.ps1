@@ -8,7 +8,8 @@ param(
     [string] $OutputPath,
     [ValidatePattern('^[a-z0-9][a-z0-9-]{2,40}$')][string] $RunId = ('cp-inventory-' + [guid]::NewGuid().ToString('N').Substring(0, 12)),
     [ValidatePattern('^[a-z0-9][a-z0-9.-]{1,63}$')][string] $Owner = 'control-plane-inventory-probe',
-    [switch] $Qualification
+    [switch] $Qualification,
+    [switch] $PrimaryHotPath
 )
 
 # Capture comparisons of the Dashboard inventory endpoint. Standalone runs default to diagnostics.
@@ -31,9 +32,25 @@ if ($Qualification)
     $dirty = & git -C $root status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Control Plane qualification requires a clean checkout.' }
 }
+$contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
+$dimensions = $contract.workloads.ControlPlane
+$referenceImplementation = '1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8'
+if ($PrimaryHotPath)
+{
+    if (-not $ExpectedCommit) { throw 'The primary workload requires an exact 1.2 candidate commit.' }
+    $active = & (Join-Path $PSScriptRoot 'resolve-core-performance-release.ps1') -ExpectedCommit $ExpectedCommit
+    if ($active.Release -cne '1.2.0') { throw 'The primary workload requires an exact 1.2 candidate commit.' }
+    $resolved = Get-Content -LiteralPath $active.ContractPath -Raw | ConvertFrom-Json
+    $primary = $resolved.primaryHotPaths
+    $approved = $primary.workloads.ControlPlane
+    if ($approved.operation -cne 'inventory-read') { throw 'The primary workload must use the Dashboard inventory read.' }
+    $dimensions = @{ sourceCounts = @($approved.sources); apiClientCounts = @($approved.clients) }
+    $referenceImplementation = "$($primary.referenceVersion)+$($primary.referenceSourceCommit)"
+}
 $artifacts = Join-Path $root 'artifacts'
 $work = Join-Path $artifacts "control-plane-inventory/$RunId"
-$raw = if ($OutputPath) { [IO.Path]::GetFullPath($OutputPath, $root) } else { Join-Path $work 'raw/controlplane' }
+$inputName = if ($PrimaryHotPath) { 'controlplane-primary-hot-path' } else { 'controlplane' }
+$raw = if ($OutputPath) { [IO.Path]::GetFullPath($OutputPath, $root) } else { Join-Path $work "raw/$inputName" }
 $evidenceRoot = if ($env:BLUETUSK_EVIDENCE_STORE) { [IO.Path]::GetFullPath($env:BLUETUSK_EVIDENCE_STORE) } else { $artifacts }
 $pathComparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
 $separator = [IO.Path]::DirectorySeparatorChar
@@ -44,8 +61,6 @@ if ((-not $raw.StartsWith("$artifacts$separator", $pathComparison) -and
 New-Item -ItemType Directory -Path $work, $raw -Force | Out-Null
 $fixture = Join-Path $work 'fixture'
 $project = Join-Path $PSScriptRoot 'ControlPlaneInventoryProbe/ControlPlaneInventoryProbe.csproj'
-$contract = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'performance-leadership-contract.json') -Raw | ConvertFrom-Json
-$dimensions = $contract.workloads.ControlPlane
 $workloads = @(foreach ($sourceCount in $dimensions.sourceCounts)
 {
     foreach ($clientCount in $dimensions.apiClientCounts)
@@ -53,7 +68,7 @@ $workloads = @(foreach ($sourceCount in $dimensions.sourceCounts)
         @{
             sourceCount = $sourceCount
             clientCount = $clientCount
-            key = "$os|ControlPlane|sources=$sourceCount|clients=$clientCount"
+            key = if ($PrimaryHotPath) { "$os|ControlPlane|primary-hot-path" } else { "$os|ControlPlane|sources=$sourceCount|clients=$clientCount" }
         }
     }
 })
@@ -91,6 +106,7 @@ foreach ($role in 'candidate', 'reference')
 $previousConnection = $env:BLUETUSK_INVENTORY_PROBE_CONNECTION
 $captureArguments = @()
 if ($Qualification) { $captureArguments += 'qualification' }
+if ($PrimaryHotPath) { $captureArguments += 'primary-hot-path' }
 $startedUtc = [DateTimeOffset]::UtcNow
 try
 {
@@ -121,13 +137,15 @@ try
                 $runtime ??= $sample.environment.runtime
                 if ($sample.sourceCommit -cne $commit -or $sample.diagnostic -cne (-not $Qualification) -or
                     $sample.workloadKey -cne $workload.key -or $sample.environment.architecture -cne 'x64' -or
+                    $sample.environment.sourceCount -ne $workload.sourceCount -or
+                    $sample.environment.apiClientCount -ne $workload.clientCount -or
                     $sample.environment.runtime -cne $runtime -or $sample.measurement.completedOperations -le 0 -or
                     $sample.warmupSeconds -ne $WarmupSeconds -or $sample.measurementSeconds -ne $MeasurementSeconds -or
                     $sample.measurement.workers.Count -ne $workload.clientCount -or
                     $sample.measurement.elapsedTicks -lt $MeasurementSeconds * $sample.frequency)
                 { throw 'Inventory trials require nonempty measurements of the same workload and runtime.' }
                 if (($role -ceq 'candidate' -and -not $sample.implementation.EndsWith("+$commit", [StringComparison]::Ordinal)) -or
-                    ($role -ceq 'reference' -and $sample.implementation -cne '1.0.0+7380d7b028c72b2aae348b778711d104d022a3f8'))
+                    ($role -ceq 'reference' -and $sample.implementation -cne $referenceImplementation))
                 { throw "The $role trial used a different Control Plane assembly." }
                 if ($implementations.ContainsKey($role) -and $implementations[$role] -cne $sample.implementation)
                 { throw "The $role assembly changed between inventory trials." }
