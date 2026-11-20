@@ -70,8 +70,14 @@ spec:
                 fi
               done
               test -x /tools/plugins/docker-compose
-              printf '%s\n' '{"default-runtime":"pod-cgroup","runtimes":{"pod-cgroup":{"path":"/usr/bin/crun","runtimeArgs":["--cgroup-manager=disabled"]}}}' > /tmp/daemon.json
-              exec dockerd --config-file=/tmp/daemon.json --host=unix:///daemon/docker.sock --group=1001 --data-root=/var/lib/docker --storage-driver=vfs
+              # BuildKit resolves runc separately from the daemon's default container runtime.
+              # Keep nested build processes inside the pod's existing cgroup and resource limits.
+              install -d -m 0755 /usr/local/libexec/pod-oci-runtime
+              printf '%s\n' '#!/bin/sh' 'exec /usr/bin/crun --cgroup-manager=disabled "$@"' > /usr/local/libexec/pod-oci-runtime/runc
+              chmod 0755 /usr/local/libexec/pod-oci-runtime/runc
+              export PATH="/usr/local/libexec/pod-oci-runtime:$PATH"
+              printf '%s\n' '{"features":{"containerd-snapshotter":true},"default-runtime":"pod-cgroup","runtimes":{"pod-cgroup":{"path":"/usr/bin/crun","runtimeArgs":["--cgroup-manager=disabled"]}}}' > /tmp/daemon.json
+              exec dockerd --config-file=/tmp/daemon.json --host=unix:///daemon/docker.sock --group=1001 --data-root=/var/lib/docker --storage-driver=native
           securityContext:
             privileged: true
           startupProbe:
