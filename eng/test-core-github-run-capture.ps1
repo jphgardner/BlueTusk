@@ -26,6 +26,18 @@ function Verify([object] $Fixture)
     return ConvertTo-CoreGithubRunRecord -Run $Fixture.run -Workflow $Fixture.workflow -JobPages $Fixture.pages `
         -WorkflowFile build.yml -RunId $runId -RunAttempt 1 -ExpectedCommit $commit -CandidateCommitUtc $commitUtc
 }
+function Add-ConditionalSkip([object] $Fixture)
+{
+    $skip = $Fixture.pages[0].jobs[0] | ConvertTo-Json | ConvertFrom-Json -DateKind String
+    $skip.id = 54322
+    $skip.html_url = 'https://github.com/jphgardner/BlueTusk/actions/runs/12345/job/54322'
+    $skip.conclusion = 'skipped'
+    $skip.started_at = '2026-01-01T00:00:03Z'
+    $skip.completed_at = '2026-01-01T00:00:02Z'
+    $skip | Add-Member -NotePropertyName steps -NotePropertyValue @()
+    $Fixture.pages[0].total_count = 2
+    $Fixture.pages[0].jobs += $skip
+}
 function Reject([string] $Name, [scriptblock] $Change, [string] $Guard)
 {
     $value = Fresh
@@ -90,6 +102,15 @@ Reject 'job-completion-missing' { param($f) $f.pages[0].jobs[0].completed_at=$nu
 Reject 'job-completed-before-start' { param($f) $f.pages[0].jobs[0].completed_at='2026-01-01T00:00:01Z' } 'lifecycle'
 Reject 'job-after-run-completion' { param($f) $f.pages[0].jobs[0].completed_at='2026-01-01T00:00:11Z' } 'lifecycle'
 Reject 'only-skipped-jobs' { param($f) $f.pages[0].jobs[0].conclusion='skipped' } 'not only skipped'
+Reject 'inverted-skip-with-step' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].steps=@([pscustomobject]@{conclusion='success'}) } 'lifecycle'
+Reject 'inverted-skip-outside-run' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].started_at='2026-01-01T00:00:01Z'; $f.pages[0].jobs[1].completed_at='2026-01-01T00:00:00Z' } 'lifecycle'
+Reject 'skip-inversion-over-one-second' { param($f) Add-ConditionalSkip $f; $f.pages[0].jobs[1].started_at='2026-01-01T00:00:04Z' } 'lifecycle'
+
+$conditional = Fresh
+Add-ConditionalSkip $conditional
+$record = Verify $conditional
+if ($record.completedUtc -cne '2026-01-01T00:00:09Z')
+{ throw 'A nonexecuting GitHub conditional skip must not invalidate the successful run.' }
 
 $paginated = Fresh
 $second = $paginated.pages[0].jobs[0] | ConvertTo-Json | ConvertFrom-Json -DateKind String

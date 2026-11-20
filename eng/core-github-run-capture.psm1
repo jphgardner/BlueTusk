@@ -88,15 +88,24 @@ function ConvertTo-CoreGithubRunRecord
         Require ($ids.Add($id)) 'GitHub job ID is duplicated across pages.'
         Require ($jobRunId -eq $RunId -and $jobAttempt -eq $RunAttempt -and
             (Value $job 'head_sha') -ceq $ExpectedCommit) 'GitHub job belongs to another run, attempt or candidate.'
+        $jobConclusion = Value $job 'conclusion'
         Require ((Value $job 'status') -ceq 'completed' -and
-            (Value $job 'conclusion') -cin @('success', 'skipped')) 'GitHub attempt contains an unfinished or unsuccessful job.'
-        if ((Value $job 'conclusion') -ceq 'success') { $successful++ }
+            $jobConclusion -cin @('success', 'skipped')) 'GitHub attempt contains an unfinished or unsuccessful job.'
+        if ($jobConclusion -ceq 'success') { $successful++ }
         Require ((Value $job 'html_url') -ceq "$runUrl/job/$id") 'GitHub job URL differs from its run identity.'
         $jobStarted = Utc (Value $job 'started_at') 'GitHub job start'
         $jobCompletedText = Value $job 'completed_at'
         $jobCompleted = Utc $jobCompletedText 'GitHub job completion'
-        Require ($jobStarted -ge $started -and $jobCompleted -ge $jobStarted -and
-            $jobCompleted -le $updated) 'GitHub job lifecycle timestamps are inconsistent with the run.'
+        $ordered = $jobCompleted -ge $jobStarted
+        if (-not $ordered -and $jobConclusion -ceq 'skipped' -and $jobStarted -eq $jobCompleted.AddSeconds(1))
+        {
+            # GitHub can record a conditional skip one second before its nominal start.
+            $steps = Value $job 'steps'
+            $ordered = $steps -is [array] -and $steps.Count -eq 0
+        }
+        Require ($jobStarted -ge $started -and $jobStarted -le $updated -and
+            $jobCompleted -ge $started -and $jobCompleted -le $updated -and
+            $ordered) 'GitHub job lifecycle timestamps are inconsistent with the run.'
         if ($null -eq $completedUtc -or $jobCompleted -gt $latest)
         { $latest = $jobCompleted; $completedUtc = $jobCompletedText }
     }
